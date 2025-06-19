@@ -49,13 +49,6 @@ exports.updatePatientRecord = (0, catchAsyncError_1.catchAsyncError)(async (req,
     }
     const partialSchema = schemas_1.patientSchema.partial();
     const validatedData = partialSchema.parse(req.body);
-    // Check if updating Aadhaar to an existing one
-    if (validatedData.aadhaarNumber) {
-        const existingPatient = await (0, patientService_1.getPatientByAadhaar)(validatedData.aadhaarNumber);
-        if (existingPatient && existingPatient.id !== id) {
-            return next(new errorHandler_1.ErrorHandler("Another patient with this Aadhaar already exists", statusCodes_1.StatusCodes.CONFLICT));
-        }
-    }
     const updatedPatient = await (0, patientService_1.updatePatient)(id, validatedData);
     if (!updatedPatient) {
         return next(new errorHandler_1.ErrorHandler("Patient not found", statusCodes_1.StatusCodes.NOT_FOUND));

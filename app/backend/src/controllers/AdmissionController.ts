@@ -15,6 +15,8 @@ import { admissionSchema } from "@hospital/schemas";
 export const createAdmission = catchAsyncError(
   async (req: Request, res: Response, next: NextFunction) => {
     const validated = admissionSchema.parse(req.body);
+
+  
     const admission = await prisma.admission.create({ data: validated });
 
     sendResponse(res, {

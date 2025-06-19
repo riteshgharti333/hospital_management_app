@@ -36,7 +36,7 @@ const supplierLedgerRoute_1 = __importDefault(require("./routes/ledgerRoutes/sup
 // item/service
 const brandRoute_1 = __importDefault(require("./routes/itemRoutes/brandRoute"));
 const productRoute_1 = __importDefault(require("./routes/itemRoutes/productRoute"));
-const productEntryRoute_1 = __importDefault(require("./routes/itemRoutes/productEntryRoute"));
+// import productEnteryRoutes from "./routes/itemRoutes/productEntryRoute";
 const ServiceChargesRoute_1 = __importDefault(require("./routes/itemRoutes/ServiceChargesRoute"));
 // transection
 const billRoute_1 = __importDefault(require("./routes/transectionRoutes/billRoute"));
@@ -91,7 +91,7 @@ app.use("/api/v1/ledger/supplier-ledger", supplierLedgerRoute_1.default);
 // item/service
 app.use("/api/v1/brand", brandRoute_1.default);
 app.use("/api/v1/product", productRoute_1.default);
-app.use("/api/v1/product-entry", productEntryRoute_1.default);
+// app.use("/api/v1/product-entry", productEnteryRoutes);
 app.use("/api/v1/service-charges", ServiceChargesRoute_1.default);
 // transection
 app.use("/api/v1/transection/bill", billRoute_1.default);

@@ -101,7 +101,6 @@ exports.deleteDoctorRecord = (0, catchAsyncError_1.catchAsyncError)(async (req, 
             error.code === "P2003") {
             return next(new errorHandler_1.ErrorHandler("Cannot delete doctor: Prescriptions linked to this doctor exist.", statusCodes_1.StatusCodes.CONFLICT));
         }
-        // Generic error fallback
-        return next(new errorHandler_1.ErrorHandler("An error occurred while deleting doctor", statusCodes_1.StatusCodes.INTERNAL_SERVER_ERROR));
+        return next(new errorHandler_1.ErrorHandler("An error occurred while deleting doctor", statusCodes_1.StatusCodes.INTERNAL_ERROR));
     }
 });

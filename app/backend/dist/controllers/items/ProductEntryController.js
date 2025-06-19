@@ -1,83 +1,101 @@
 "use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
-exports.deleteProductRecord = exports.updateProductRecord = exports.getProductRecordById = exports.getAllProductRecords = exports.createProductRecord = void 0;
-const catchAsyncError_1 = require("../../middlewares/catchAsyncError");
-const errorHandler_1 = require("../../middlewares/errorHandler");
-const sendResponse_1 = require("../../utils/sendResponse");
-const statusCodes_1 = require("../../constants/statusCodes");
-const productEntryService_1 = require("../../services/itemService/productEntryService");
-const schemas_1 = require("@hospital/schemas");
-exports.createProductRecord = (0, catchAsyncError_1.catchAsyncError)(async (req, res, next) => {
-    const validated = schemas_1.productMaterialSchema.parse(req.body);
-    const product = await (0, productEntryService_1.createProduct)(validated);
-    (0, sendResponse_1.sendResponse)(res, {
-        success: true,
-        statusCode: statusCodes_1.StatusCodes.CREATED,
-        message: "Product created successfully",
-        data: product,
-    });
-});
-exports.getAllProductRecords = (0, catchAsyncError_1.catchAsyncError)(async (req, res) => {
-    const category = req.query.category;
-    const products = category
-        ? await (0, productEntryService_1.getProductsByCategory)(category)
-        : await (0, productEntryService_1.getAllProducts)();
-    (0, sendResponse_1.sendResponse)(res, {
-        success: true,
-        statusCode: statusCodes_1.StatusCodes.OK,
-        message: category
-            ? `Products in ${category} category fetched`
-            : "All products fetched",
-        data: products,
-    });
-});
-exports.getProductRecordById = (0, catchAsyncError_1.catchAsyncError)(async (req, res, next) => {
-    const id = Number(req.params.id);
-    if (isNaN(id)) {
-        return next(new errorHandler_1.ErrorHandler("Invalid ID", statusCodes_1.StatusCodes.BAD_REQUEST));
-    }
-    const product = await (0, productEntryService_1.getProductById)(id);
-    if (!product) {
-        return next(new errorHandler_1.ErrorHandler("Product not found", statusCodes_1.StatusCodes.NOT_FOUND));
-    }
-    (0, sendResponse_1.sendResponse)(res, {
-        success: true,
-        statusCode: statusCodes_1.StatusCodes.OK,
-        message: "Product details fetched",
-        data: product,
-    });
-});
-exports.updateProductRecord = (0, catchAsyncError_1.catchAsyncError)(async (req, res, next) => {
-    const id = Number(req.params.id);
-    if (isNaN(id)) {
-        return next(new errorHandler_1.ErrorHandler("Invalid ID", statusCodes_1.StatusCodes.BAD_REQUEST));
-    }
-    const partialSchema = schemas_1.productMaterialSchema.partial();
-    const validatedData = partialSchema.parse(req.body);
-    const updatedProduct = await (0, productEntryService_1.updateProduct)(id, validatedData);
-    if (!updatedProduct) {
-        return next(new errorHandler_1.ErrorHandler("Product not found", statusCodes_1.StatusCodes.NOT_FOUND));
-    }
-    (0, sendResponse_1.sendResponse)(res, {
-        success: true,
-        statusCode: statusCodes_1.StatusCodes.OK,
-        message: "Product updated successfully",
-        data: updatedProduct,
-    });
-});
-exports.deleteProductRecord = (0, catchAsyncError_1.catchAsyncError)(async (req, res, next) => {
-    const id = Number(req.params.id);
-    if (isNaN(id)) {
-        return next(new errorHandler_1.ErrorHandler("Invalid ID", statusCodes_1.StatusCodes.BAD_REQUEST));
-    }
-    const deletedProduct = await (0, productEntryService_1.deleteProduct)(id);
-    if (!deletedProduct) {
-        return next(new errorHandler_1.ErrorHandler("Product not found", statusCodes_1.StatusCodes.NOT_FOUND));
-    }
-    (0, sendResponse_1.sendResponse)(res, {
-        success: true,
-        statusCode: statusCodes_1.StatusCodes.OK,
-        message: "Product deleted successfully",
-        data: deletedProduct,
-    });
-});
+// import { Request, Response, NextFunction } from "express";
+// import { z } from "zod";
+// import { catchAsyncError } from "../../middlewares/catchAsyncError";
+// import { ErrorHandler } from "../../middlewares/errorHandler";
+// import { sendResponse } from "../../utils/sendResponse";
+// import { StatusCodes } from "../../constants/statusCodes";
+// import {
+//   createProduct,
+//   getAllProducts,
+//   getProductById,
+//   getProductsByCategory,
+//   updateProduct,
+//   deleteProduct,
+// } from "../../services/itemService/productEntryService";
+// import {materialSpecSchema} from "@hospital/schemas"
+// import {productMaterialSchema} from "@hospital/schemas"
+// export const createProductRecord = catchAsyncError(
+//   async (req: Request, res: Response, next: NextFunction) => {
+//     const validated = productMaterialSchema.parse(req.body);
+//     const product = await createProduct(validated);
+//     sendResponse(res, {
+//       success: true,
+//       statusCode: StatusCodes.CREATED,
+//       message: "Product created successfully",
+//       data: product,
+//     });
+//   }
+// );
+// export const getAllProductRecords = catchAsyncError(
+//   async (req: Request, res: Response) => {
+//     const category = req.query.category as string | undefined;
+//     const products = category 
+//       ? await getProductsByCategory(category)
+//       : await getAllProducts();
+//     sendResponse(res, {
+//       success: true,
+//       statusCode: StatusCodes.OK,
+//       message: category
+//         ? `Products in ${category} category fetched`
+//         : "All products fetched",
+//       data: products,
+//     });
+//   }
+// );
+// export const getProductRecordById = catchAsyncError(
+//   async (req: Request, res: Response, next: NextFunction) => {
+//     const id = Number(req.params.id);
+//     if (isNaN(id)) {
+//       return next(new ErrorHandler("Invalid ID", StatusCodes.BAD_REQUEST));
+//     }
+//     const product = await getProductById(id);
+//     if (!product) {
+//       return next(new ErrorHandler("Product not found", StatusCodes.NOT_FOUND));
+//     }
+//     sendResponse(res, {
+//       success: true,
+//       statusCode: StatusCodes.OK,
+//       message: "Product details fetched",
+//       data: product,
+//     });
+//   }
+// );
+// export const updateProductRecord = catchAsyncError(
+//   async (req: Request, res: Response, next: NextFunction) => {
+//     const id = Number(req.params.id);
+//     if (isNaN(id)) {
+//       return next(new ErrorHandler("Invalid ID", StatusCodes.BAD_REQUEST));
+//     }
+//     const partialSchema = productMaterialSchema.partial();
+//     const validatedData = partialSchema.parse(req.body);
+//     const updatedProduct = await updateProduct(id, validatedData);
+//     if (!updatedProduct) {
+//       return next(new ErrorHandler("Product not found", StatusCodes.NOT_FOUND));
+//     }
+//     sendResponse(res, {
+//       success: true,
+//       statusCode: StatusCodes.OK,
+//       message: "Product updated successfully",
+//       data: updatedProduct,
+//     });
+//   }
+// );
+// export const deleteProductRecord = catchAsyncError(
+//   async (req: Request, res: Response, next: NextFunction) => {
+//     const id = Number(req.params.id);
+//     if (isNaN(id)) {
+//       return next(new ErrorHandler("Invalid ID", StatusCodes.BAD_REQUEST));
+//     }
+//     const deletedProduct = await deleteProduct(id);
+//     if (!deletedProduct) {
+//       return next(new ErrorHandler("Product not found", StatusCodes.NOT_FOUND));
+//     }
+//     sendResponse(res, {
+//       success: true,
+//       statusCode: StatusCodes.OK,
+//       message: "Product deleted successfully",
+//       data: deletedProduct,
+//     });
+//   }
+// );

@@ -4,11 +4,15 @@ exports.deleteBill = exports.updateBill = exports.getBillsByPatient = exports.ge
 const client_1 = require("@prisma/client");
 const prisma = new client_1.PrismaClient();
 const createBill = async (data) => {
+    const processedItems = data.billItems.map(item => ({
+        ...item,
+        totalAmount: item.totalAmount ?? item.mrp * item.quantity
+    }));
     return prisma.bill.create({
         data: {
             ...data,
             billItems: {
-                create: data.billItems,
+                create: processedItems,
             },
         },
         include: { billItems: true },

@@ -4,7 +4,13 @@ exports.deleteInsuranceLedgerEntry = exports.updateInsuranceLedgerEntry = export
 const client_1 = require("@prisma/client");
 const prisma = new client_1.PrismaClient();
 const createInsuranceLedgerEntry = async (data) => {
-    return prisma.insuranceLedger.create({ data });
+    // Remove undefined fields to satisfy Prisma's type requirements
+    const cleanedData = {};
+    Object.entries(data).forEach(([key, value]) => {
+        if (value !== undefined)
+            cleanedData[key] = value;
+    });
+    return prisma.insuranceLedger.create({ data: cleanedData });
 };
 exports.createInsuranceLedgerEntry = createInsuranceLedgerEntry;
 const getAllInsuranceLedgerEntries = async (filters) => {

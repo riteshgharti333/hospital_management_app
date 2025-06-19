@@ -4,7 +4,13 @@ exports.deleteDiagnosticsEntry = exports.updateDiagnosticsEntry = exports.getPat
 const client_1 = require("@prisma/client");
 const prisma = new client_1.PrismaClient();
 const createDiagnosticsEntry = async (data) => {
-    return prisma.diagnosticsLedger.create({ data });
+    return prisma.diagnosticsLedger.create({
+        data: {
+            ...data,
+            amount: new client_1.Prisma.Decimal(data.amount.toString()), // Force Decimal conversion
+            attachReport: data.attachReport ?? null, // Convert undefined → null
+        },
+    });
 };
 exports.createDiagnosticsEntry = createDiagnosticsEntry;
 const getAllDiagnosticsEntries = async (filters) => {
@@ -43,7 +49,13 @@ exports.getPatientDiagnosticsTotal = getPatientDiagnosticsTotal;
 const updateDiagnosticsEntry = async (id, data) => {
     return prisma.diagnosticsLedger.update({
         where: { id },
-        data,
+        data: {
+            ...data,
+            amount: data.amount !== undefined
+                ? new client_1.Prisma.Decimal(data.amount.toString())
+                : undefined,
+            attachReport: data.attachReport ?? null // Convert undefined to null
+        },
     });
 };
 exports.updateDiagnosticsEntry = updateDiagnosticsEntry;

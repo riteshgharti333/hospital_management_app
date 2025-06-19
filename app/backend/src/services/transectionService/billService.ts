@@ -18,7 +18,7 @@ export type BillInput = {
   admissionDate: Date;
   dateOfBirth: Date;
   gender: string;
-  dischargeDate?: Date;
+  dischargeDate?: Date | null;
   address: string;
   doctorName: string;
   wardNo: string;
@@ -28,16 +28,23 @@ export type BillInput = {
 };
 
 export const createBill = async (data: BillInput) => {
+  
+  const processedItems = data.billItems.map(item => ({
+    ...item,
+    totalAmount: item.totalAmount ?? item.mrp * item.quantity
+  }));
+
   return prisma.bill.create({
     data: {
       ...data,
       billItems: {
-        create: data.billItems,
+        create: processedItems,
       },
     },
     include: { billItems: true },
   });
 };
+
 
 export const getAllBills = async () => {
   return prisma.bill.findMany({

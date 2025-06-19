@@ -13,8 +13,7 @@ import {
   deletePrescription,
 } from "../services/prescriptionService";
 
-import {prescriptionSchema} from "@hospital/schemas"
-
+import { prescriptionSchema } from "@hospital/schemas";
 
 export const createPrescriptionRecord = async (
   req: Request,
@@ -40,19 +39,21 @@ export const createPrescriptionRecord = async (
     });
   } catch (error) {
     // ❌ If validation or DB fails, send error
-    console.log(error)
+    console.log(error);
     next(error); // Forward error to Express error handler middleware
   }
 };
 
 export const getAllPrescriptionRecords = catchAsyncError(
   async (req: Request, res: Response) => {
-    const patientId = req.query.patientId ? Number(req.query.patientId) : undefined;
-    
+    const patientId = req.query.patientId
+      ? Number(req.query.patientId)
+      : undefined;
+
     const prescriptions = patientId
       ? await getPrescriptionsByPatient(patientId)
       : await getAllPrescriptions();
-      
+
     sendResponse(res, {
       success: true,
       statusCode: StatusCodes.OK,
@@ -73,7 +74,9 @@ export const getPrescriptionRecordById = catchAsyncError(
 
     const prescription = await getPrescriptionById(id);
     if (!prescription) {
-      return next(new ErrorHandler("Prescription not found", StatusCodes.NOT_FOUND));
+      return next(
+        new ErrorHandler("Prescription not found", StatusCodes.NOT_FOUND)
+      );
     }
 
     sendResponse(res, {
@@ -95,12 +98,21 @@ export const updatePrescriptionRecord = catchAsyncError(
     const partialSchema = prescriptionSchema.partial();
     const validatedData = partialSchema.parse({
       ...req.body,
-      prescriptionDate: req.body.prescriptionDate ? new Date(req.body.prescriptionDate) : undefined
+      prescriptionDate: req.body.prescriptionDate
+        ? new Date(req.body.prescriptionDate)
+        : undefined,
     });
+
+    // Ensure prescriptionDoc is never null
+    if (validatedData.prescriptionDoc === null) {
+      validatedData.prescriptionDoc = undefined;
+    }
 
     const updatedPrescription = await updatePrescription(id, validatedData);
     if (!updatedPrescription) {
-      return next(new ErrorHandler("Prescription not found", StatusCodes.NOT_FOUND));
+      return next(
+        new ErrorHandler("Prescription not found", StatusCodes.NOT_FOUND)
+      );
     }
 
     sendResponse(res, {
@@ -121,7 +133,9 @@ export const deletePrescriptionRecord = catchAsyncError(
 
     const deletedPrescription = await deletePrescription(id);
     if (!deletedPrescription) {
-      return next(new ErrorHandler("Prescription not found", StatusCodes.NOT_FOUND));
+      return next(
+        new ErrorHandler("Prescription not found", StatusCodes.NOT_FOUND)
+      );
     }
 
     sendResponse(res, {

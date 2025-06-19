@@ -4,11 +4,14 @@ exports.deleteProduct = exports.updateProduct = exports.getProductsByCategory = 
 const client_1 = require("@prisma/client");
 const prisma = new client_1.PrismaClient();
 const createProduct = async (data) => {
+    const createData = {
+        ...data,
+        specifications: data.specifications
+            ? { create: data.specifications }
+            : undefined
+    };
     return prisma.productEntery.create({
-        data: {
-            ...data,
-            specifications: data.specifications ? { create: data.specifications } : undefined,
-        },
+        data: createData,
         include: { specifications: true },
     });
 };

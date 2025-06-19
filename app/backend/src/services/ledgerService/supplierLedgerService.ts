@@ -1,4 +1,4 @@
-import { PrismaClient } from "@prisma/client";
+import { PrismaClient, Prisma } from "@prisma/client";
 
 const prisma = new PrismaClient();
 
@@ -7,14 +7,48 @@ export const createSupplierLedgerEntry = async (data: {
   date: Date;
   invoiceNo: string;
   description: string;
-  amountType: string;
-  amount: number;
+  amountType: "Credit" | "Debit"; // Match Zod enum
+  amount: number | Prisma.Decimal; // Accept both
   paymentMode?: string;
   transactionId?: string;
-  attachBill?: string;
+  attachBill?: string | null; // Add null to match schema
   remarks?: string;
 }) => {
-  return prisma.supplierLedger.create({ data });
+  return prisma.supplierLedger.create({ 
+    data: {
+      ...data,
+      amount: new Prisma.Decimal(data.amount.toString()), // Convert to Decimal
+      attachBill: data.attachBill ?? null // Handle undefined → null
+    }
+  });
+};
+
+// Update the update function similarly
+export const updateSupplierLedgerEntry = async (
+  id: number,
+  data: {
+    supplierName?: string;
+    date?: Date;
+    invoiceNo?: string;
+    description?: string;
+    amountType?: "Credit" | "Debit";
+    amount?: number | Prisma.Decimal;
+    paymentMode?: string;
+    transactionId?: string;
+    attachBill?: string | null;
+    remarks?: string;
+  }
+) => {
+  return prisma.supplierLedger.update({
+    where: { id },
+    data: {
+      ...data,
+      amount: data.amount !== undefined 
+        ? new Prisma.Decimal(data.amount.toString()) 
+        : undefined,
+      attachBill: data.attachBill ?? null
+    }
+  });
 };
 
 export const getAllSupplierLedgerEntries = async (filters: {
@@ -80,26 +114,6 @@ export const getSupplierSummary = async () => {
   });
 };
 
-export const updateSupplierLedgerEntry = async (
-  id: number,
-  data: {
-    supplierName?: string;
-    date?: Date;
-    invoiceNo?: string;
-    description?: string;
-    amountType?: string;
-    amount?: number;
-    paymentMode?: string;
-    transactionId?: string;
-    attachBill?: string;
-    remarks?: string;
-  }
-) => {
-  return prisma.supplierLedger.update({
-    where: { id },
-    data,
-  });
-};
 
 export const deleteSupplierLedgerEntry = async (id: number) => {
   return prisma.supplierLedger.delete({ where: { id } });

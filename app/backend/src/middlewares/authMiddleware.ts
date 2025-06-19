@@ -4,7 +4,7 @@ import { catchAsyncError } from "./catchAsyncError";
 import { ErrorHandler } from "./errorHandler";
 
 interface JwtPayload {
-  id: number;
+  id: string;
   iat: number;
   exp: number;
 }

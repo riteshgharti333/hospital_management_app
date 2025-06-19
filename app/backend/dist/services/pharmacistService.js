@@ -1,92 +1,71 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.deletePrescription = exports.updatePrescription = exports.getPrescriptionsByPatient = exports.getPrescriptionById = exports.getAllPrescriptions = exports.createPrescription = void 0;
+exports.deletePharmacist = exports.updatePharmacist = exports.getPharmacistsByDepartment = exports.getPharmacistByRegistration = exports.getPharmacistById = exports.getAllPharmacists = exports.createPharmacist = void 0;
 const client_1 = require("@prisma/client");
 const prisma = new client_1.PrismaClient();
-const createPrescription = async (data) => {
-    return prisma.prescription.create({
+const createPharmacist = async (data) => {
+    // Check for duplicate registration number
+    const existing = await prisma.pharmacist.findUnique({
+        where: { registrationNo: data.registrationNo }
+    });
+    if (existing) {
+        throw new Error("Pharmacist with this registration number already exists");
+    }
+    return prisma.pharmacist.create({
         data: {
             ...data,
-            medicines: {
-                create: data.medicines,
-            },
-        },
-        include: {
-            medicines: true,
-            doctor: true,
-            patient: true,
-        },
+            status: data.status ?? "Active" // Default status
+        }
     });
 };
-exports.createPrescription = createPrescription;
-const getAllPrescriptions = async () => {
-    return prisma.prescription.findMany({
-        orderBy: { prescriptionDate: "desc" },
-        include: {
-            medicines: true,
-            doctor: true,
-            patient: true,
-        },
+exports.createPharmacist = createPharmacist;
+const getAllPharmacists = async () => {
+    return prisma.pharmacist.findMany({
+        orderBy: { createdAt: "desc" }
     });
 };
-exports.getAllPrescriptions = getAllPrescriptions;
-const getPrescriptionById = async (id) => {
-    return prisma.prescription.findUnique({
-        where: { id },
-        include: {
-            medicines: true,
-            doctor: true,
-            patient: true,
-        },
+exports.getAllPharmacists = getAllPharmacists;
+const getPharmacistById = async (id) => {
+    return prisma.pharmacist.findUnique({
+        where: { id }
     });
 };
-exports.getPrescriptionById = getPrescriptionById;
-const getPrescriptionsByPatient = async (patientId) => {
-    return prisma.prescription.findMany({
-        where: { patientId },
-        orderBy: { prescriptionDate: "desc" },
-        include: {
-            medicines: true,
-            doctor: true,
-        },
+exports.getPharmacistById = getPharmacistById;
+const getPharmacistByRegistration = async (registrationNo) => {
+    return prisma.pharmacist.findUnique({
+        where: { registrationNo }
     });
 };
-exports.getPrescriptionsByPatient = getPrescriptionsByPatient;
-const updatePrescription = async (id, data) => {
-    const updatedPrescription = await prisma.prescription.update({
-        where: { id },
-        data: {
-            prescriptionDate: data.prescriptionDate,
-            doctorId: data.doctorId,
-            patientId: data.patientId,
-            prescriptionDoc: data.prescriptionDoc,
-            status: data.status,
-        },
-        include: {
-            medicines: true,
-        },
+exports.getPharmacistByRegistration = getPharmacistByRegistration;
+const getPharmacistsByDepartment = async (department) => {
+    return prisma.pharmacist.findMany({
+        where: { department },
+        orderBy: { fullName: "asc" }
     });
-    if (data.medicines) {
-        await prisma.medicine.deleteMany({ where: { prescriptionId: id } });
-        await prisma.medicine.createMany({
-            data: data.medicines.map((med) => ({
-                ...med,
-                prescriptionId: id,
-            })),
+};
+exports.getPharmacistsByDepartment = getPharmacistsByDepartment;
+const updatePharmacist = async (id, data) => {
+    // Prevent duplicate registration numbers on update
+    if (data.registrationNo) {
+        const existing = await prisma.pharmacist.findFirst({
+            where: {
+                registrationNo: data.registrationNo,
+                NOT: { id }
+            }
         });
+        if (existing) {
+            throw new Error("Another pharmacist with this registration number already exists");
+        }
     }
-    return prisma.prescription.findUnique({
+    return prisma.pharmacist.update({
         where: { id },
-        include: {
-            medicines: true,
-            doctor: true,
-            patient: true,
-        },
+        data
     });
 };
-exports.updatePrescription = updatePrescription;
-const deletePrescription = async (id) => {
-    await prisma.medicine.deleteMany({ where: { prescriptionId: id } });
-    return prisma.prescription.delete({ where: { id } });
+exports.updatePharmacist = updatePharmacist;
+const deletePharmacist = async (id) => {
+    return prisma.pharmacist.delete({
+        where: { id }
+    });
 };
-exports.deletePrescription = deletePrescription;
+exports.deletePharmacist = deletePharmacist;

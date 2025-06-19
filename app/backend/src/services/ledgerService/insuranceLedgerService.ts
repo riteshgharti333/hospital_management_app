@@ -14,7 +14,12 @@ export const createInsuranceLedgerEntry = async (data: {
   approvalDate?: Date;
   settlementDate?: Date;
 }) => {
-  return prisma.insuranceLedger.create({ data });
+  // Remove undefined fields to satisfy Prisma's type requirements
+  const cleanedData: any = {};
+  Object.entries(data).forEach(([key, value]) => {
+    if (value !== undefined) cleanedData[key] = value;
+  });
+  return prisma.insuranceLedger.create({ data: cleanedData });
 };
 
 export const getAllInsuranceLedgerEntries = async (filters: {

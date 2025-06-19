@@ -1,12 +1,32 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.deleteSupplierLedgerEntry = exports.updateSupplierLedgerEntry = exports.getSupplierSummary = exports.getSupplierOutstanding = exports.getSupplierLedgerEntryById = exports.getAllSupplierLedgerEntries = exports.createSupplierLedgerEntry = void 0;
+exports.deleteSupplierLedgerEntry = exports.getSupplierSummary = exports.getSupplierOutstanding = exports.getSupplierLedgerEntryById = exports.getAllSupplierLedgerEntries = exports.updateSupplierLedgerEntry = exports.createSupplierLedgerEntry = void 0;
 const client_1 = require("@prisma/client");
 const prisma = new client_1.PrismaClient();
 const createSupplierLedgerEntry = async (data) => {
-    return prisma.supplierLedger.create({ data });
+    return prisma.supplierLedger.create({
+        data: {
+            ...data,
+            amount: new client_1.Prisma.Decimal(data.amount.toString()), // Convert to Decimal
+            attachBill: data.attachBill ?? null // Handle undefined → null
+        }
+    });
 };
 exports.createSupplierLedgerEntry = createSupplierLedgerEntry;
+// Update the update function similarly
+const updateSupplierLedgerEntry = async (id, data) => {
+    return prisma.supplierLedger.update({
+        where: { id },
+        data: {
+            ...data,
+            amount: data.amount !== undefined
+                ? new client_1.Prisma.Decimal(data.amount.toString())
+                : undefined,
+            attachBill: data.attachBill ?? null
+        }
+    });
+};
+exports.updateSupplierLedgerEntry = updateSupplierLedgerEntry;
 const getAllSupplierLedgerEntries = async (filters) => {
     const where = {};
     if (filters.supplierName) {
@@ -60,13 +80,6 @@ const getSupplierSummary = async () => {
     });
 };
 exports.getSupplierSummary = getSupplierSummary;
-const updateSupplierLedgerEntry = async (id, data) => {
-    return prisma.supplierLedger.update({
-        where: { id },
-        data,
-    });
-};
-exports.updateSupplierLedgerEntry = updateSupplierLedgerEntry;
 const deleteSupplierLedgerEntry = async (id) => {
     return prisma.supplierLedger.delete({ where: { id } });
 };

@@ -7,6 +7,7 @@ const createPrescription = async (data) => {
     return prisma.prescription.create({
         data: {
             ...data,
+            prescriptionDoc: data.prescriptionDoc ?? null,
             medicines: {
                 create: data.medicines
             }
@@ -60,7 +61,7 @@ const updatePrescription = async (id, data) => {
             prescriptionDate: data.prescriptionDate,
             doctorId: data.doctorId,
             patientId: data.patientId,
-            prescriptionDoc: data.prescriptionDoc,
+            prescriptionDoc: data.prescriptionDoc ?? null, // Handle undefined → null
             status: data.status
         },
         include: {
@@ -69,17 +70,19 @@ const updatePrescription = async (id, data) => {
     });
     // Then update medicines if provided
     if (data.medicines) {
-        // Delete existing medicines
-        await prisma.medicine.deleteMany({
-            where: { prescriptionId: id }
-        });
-        // Create new medicines
-        await prisma.medicine.createMany({
-            data: data.medicines.map(medicine => ({
-                ...medicine,
-                prescriptionId: id
-            }))
-        });
+        await prisma.$transaction([
+            // Delete existing medicines
+            prisma.medicine.deleteMany({
+                where: { prescriptionId: id }
+            }),
+            // Create new medicines
+            prisma.medicine.createMany({
+                data: data.medicines.map(medicine => ({
+                    ...medicine,
+                    prescriptionId: id
+                }))
+            })
+        ]);
     }
     return prisma.prescription.findUnique({
         where: { id },

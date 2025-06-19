@@ -19,6 +19,7 @@ export type ProductInput = {
   gstPercentage: string;
   status?: string;
   specifications?: MaterialSpecificationInput[];
+  categoryLogo? : string
 };
 
 export type ProductUpdateInput = Partial<ProductInput> & {

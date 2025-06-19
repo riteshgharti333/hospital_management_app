@@ -49,12 +49,19 @@ exports.getBillRecordById = (0, catchAsyncError_1.catchAsyncError)(async (req, r
 });
 exports.updateBillRecord = (0, catchAsyncError_1.catchAsyncError)(async (req, res, next) => {
     const id = Number(req.params.id);
-    if (isNaN(id)) {
+    if (isNaN(id))
         return next(new errorHandler_1.ErrorHandler("Invalid ID", statusCodes_1.StatusCodes.BAD_REQUEST));
-    }
     const partialSchema = schemas_1.billSchema.partial();
-    const validatedData = partialSchema.parse(req.body);
-    const updatedBill = await (0, billService_1.updateBill)(id, validatedData);
+    const validated = partialSchema.parse(req.body);
+    // Transform data to match updateBill expectations
+    const updateData = {
+        ...validated,
+        dischargeDate: validated.dischargeDate ?? undefined,
+        billItems: validated.billItems
+            ? { create: validated.billItems }
+            : undefined,
+    };
+    const updatedBill = await (0, billService_1.updateBill)(id, updateData);
     if (!updatedBill) {
         return next(new errorHandler_1.ErrorHandler("Bill not found", statusCodes_1.StatusCodes.NOT_FOUND));
     }

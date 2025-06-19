@@ -4,7 +4,7 @@ const prisma = new PrismaClient();
 // Types
 export type CreateBrandInput = {
   brandName: string;
-  brandLogo: string;
+  brandLogo?: string | null; 
   description: string;
   status?: string;
 };

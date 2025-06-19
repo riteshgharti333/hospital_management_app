@@ -10,14 +10,12 @@ const errorHandler_1 = require("../middlewares/errorHandler");
 const sendResponse_1 = require("../utils/sendResponse");
 const statusCodes_1 = require("../constants/statusCodes");
 const authService_1 = require("../services/authService");
-const schemas_1 = require("@hospital/schemas");
-const validateWithZod_1 = require("../utils/validateWithZod");
 const cookie_1 = require("../utils/cookie");
 const JWT_SECRET = process.env.JWT_SECRET;
 const JWT_EXPIRES_IN = "60d";
 // 🔐 Register
 exports.register = (0, catchAsyncError_1.catchAsyncError)(async (req, res, next) => {
-    const validated = (0, validateWithZod_1.validateWithZod)(schemas_1.authSchema, req.body);
+    const validated = req.body;
     const existingUser = await (0, authService_1.getUserByEmail)(validated.email);
     if (existingUser) {
         return next(new errorHandler_1.ErrorHandler("Email already in use", statusCodes_1.StatusCodes.CONFLICT));

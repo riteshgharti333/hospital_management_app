@@ -155,11 +155,10 @@ export const deleteDoctorRecord = catchAsyncError(
         );
       }
 
-      // Generic error fallback
       return next(
         new ErrorHandler(
           "An error occurred while deleting doctor",
-          StatusCodes.INTERNAL_SERVER_ERROR
+          StatusCodes.INTERNAL_ERROR
         )
       );
     }

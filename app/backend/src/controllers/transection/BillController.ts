@@ -12,15 +12,14 @@ import {
   updateBill,
   deleteBill,
 } from "../../services/transectionService/billService";
-import {billItemSchema} from "@hospital/schemas"
-import {billSchema} from "@hospital/schemas"
-
+import { billItemSchema } from "@hospital/schemas";
+import { billSchema } from "@hospital/schemas";
 
 export const createBillRecord = catchAsyncError(
   async (req: Request, res: Response, next: NextFunction) => {
     const validated = billSchema.parse(req.body);
     const bill = await createBill(validated);
-    
+
     sendResponse(res, {
       success: true,
       statusCode: StatusCodes.CREATED,
@@ -33,11 +32,11 @@ export const createBillRecord = catchAsyncError(
 export const getAllBillRecords = catchAsyncError(
   async (req: Request, res: Response) => {
     const mobile = req.query.mobile as string | undefined;
-    
-    const bills = mobile 
+
+    const bills = mobile
       ? await getBillsByPatient(mobile)
       : await getAllBills();
-      
+
     sendResponse(res, {
       success: true,
       statusCode: StatusCodes.OK,
@@ -73,14 +72,22 @@ export const getBillRecordById = catchAsyncError(
 export const updateBillRecord = catchAsyncError(
   async (req: Request, res: Response, next: NextFunction) => {
     const id = Number(req.params.id);
-    if (isNaN(id)) {
+    if (isNaN(id))
       return next(new ErrorHandler("Invalid ID", StatusCodes.BAD_REQUEST));
-    }
 
     const partialSchema = billSchema.partial();
-    const validatedData = partialSchema.parse(req.body);
+    const validated = partialSchema.parse(req.body);
 
-    const updatedBill = await updateBill(id, validatedData);
+    // Transform data to match updateBill expectations
+    const updateData = {
+      ...validated,
+      dischargeDate: validated.dischargeDate ?? undefined,
+      billItems: validated.billItems
+        ? { create: validated.billItems }
+        : undefined,
+    };
+
+    const updatedBill = await updateBill(id, updateData);
     if (!updatedBill) {
       return next(new ErrorHandler("Bill not found", StatusCodes.NOT_FOUND));
     }

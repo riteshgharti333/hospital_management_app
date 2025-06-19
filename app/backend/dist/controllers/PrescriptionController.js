@@ -32,7 +32,9 @@ const createPrescriptionRecord = async (req, res, next) => {
 };
 exports.createPrescriptionRecord = createPrescriptionRecord;
 exports.getAllPrescriptionRecords = (0, catchAsyncError_1.catchAsyncError)(async (req, res) => {
-    const patientId = req.query.patientId ? Number(req.query.patientId) : undefined;
+    const patientId = req.query.patientId
+        ? Number(req.query.patientId)
+        : undefined;
     const prescriptions = patientId
         ? await (0, prescriptionService_1.getPrescriptionsByPatient)(patientId)
         : await (0, prescriptionService_1.getAllPrescriptions)();
@@ -69,8 +71,14 @@ exports.updatePrescriptionRecord = (0, catchAsyncError_1.catchAsyncError)(async 
     const partialSchema = schemas_1.prescriptionSchema.partial();
     const validatedData = partialSchema.parse({
         ...req.body,
-        prescriptionDate: req.body.prescriptionDate ? new Date(req.body.prescriptionDate) : undefined
+        prescriptionDate: req.body.prescriptionDate
+            ? new Date(req.body.prescriptionDate)
+            : undefined,
     });
+    // Ensure prescriptionDoc is never null
+    if (validatedData.prescriptionDoc === null) {
+        validatedData.prescriptionDoc = undefined;
+    }
     const updatedPrescription = await (0, prescriptionService_1.updatePrescription)(id, validatedData);
     if (!updatedPrescription) {
         return next(new errorHandler_1.ErrorHandler("Prescription not found", statusCodes_1.StatusCodes.NOT_FOUND));

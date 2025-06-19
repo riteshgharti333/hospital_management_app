@@ -35,7 +35,7 @@ import supplierLedgerRoutes from "./routes/ledgerRoutes/supplierLedgerRoute";
 // item/service
 import brandRoutes from "./routes/itemRoutes/brandRoute";
 import productRoutes from "./routes/itemRoutes/productRoute";
-import productEnteryRoutes from "./routes/itemRoutes/productEntryRoute";
+// import productEnteryRoutes from "./routes/itemRoutes/productEntryRoute";
 import serviceChargesRoutes from "./routes/itemRoutes/ServiceChargesRoute";
 
 // transection
@@ -102,7 +102,7 @@ app.use("/api/v1/ledger/supplier-ledger", supplierLedgerRoutes);
 // item/service
 app.use("/api/v1/brand", brandRoutes);
 app.use("/api/v1/product", productRoutes);
-app.use("/api/v1/product-entry", productEnteryRoutes);
+// app.use("/api/v1/product-entry", productEnteryRoutes);
 app.use("/api/v1/service-charges", serviceChargesRoutes);
 
 // transection

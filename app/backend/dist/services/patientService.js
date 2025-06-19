@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.deletePatient = exports.updatePatient = exports.getPatientByAadhaar = exports.getPatientById = exports.getAllPatients = exports.createPatient = void 0;
+exports.deletePatient = exports.updatePatient = exports.getPatientById = exports.getAllPatients = exports.createPatient = void 0;
 const client_1 = require("@prisma/client");
 const prisma = new client_1.PrismaClient();
 const createPatient = async (data) => {
@@ -15,10 +15,9 @@ const getPatientById = async (id) => {
     return prisma.patient.findUnique({ where: { id } });
 };
 exports.getPatientById = getPatientById;
-const getPatientByAadhaar = async (aadhaarNumber) => {
-    return prisma.patient.findUnique({ where: { aadhaarNumber } });
-};
-exports.getPatientByAadhaar = getPatientByAadhaar;
+// export const getPatientByAadhaar = async (aadhaarNumber: string) => {
+//   return prisma.patient.findUnique({ where: { aadhaarNumber } });
+// };
 const updatePatient = async (id, data) => {
     return prisma.patient.update({
         where: { id },

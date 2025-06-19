@@ -2,14 +2,6 @@ import { PrismaClient } from "@prisma/client";
 
 const prisma = new PrismaClient();
 
-export type MaterialSpecificationInput = {
-  uom: string;
-  description?: string;
-  alterUnit?: string;
-  alterUnitValue?: number;
-  serialUniqueNo?: string;
-};
-
 export type ProductInput = {
   brand: string;
   category: string;
@@ -19,6 +11,14 @@ export type ProductInput = {
   gstPercentage: string;
   status?: string;
   specifications?: MaterialSpecificationInput[];
+};
+
+export type MaterialSpecificationInput = {
+  uom: string;
+  description?: string;
+  alterUnit?: string;
+  alterUnitValue?: number;
+  serialUniqueNo?: string;
 };
 
 export type ProductUpdateInput = Partial<Omit<ProductInput, 'specifications'>> & {
@@ -32,12 +32,17 @@ export type ProductUpdateInput = Partial<Omit<ProductInput, 'specifications'>> &
   };
 };
 
+
 export const createProduct = async (data: ProductInput) => {
+  const createData = {
+    ...data,
+    specifications: data.specifications 
+      ? { create: data.specifications }
+      : undefined
+  };
+
   return prisma.productEntery.create({
-    data: {
-      ...data,
-      specifications: data.specifications ? { create: data.specifications } : undefined,
-    },
+    data: createData,
     include: { specifications: true },
   });
 };

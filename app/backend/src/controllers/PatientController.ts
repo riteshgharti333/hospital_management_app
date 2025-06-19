@@ -8,7 +8,6 @@ import {
   createPatient,
   getAllPatients,
   getPatientById,
-  getPatientByAadhaar,
   updatePatient,
   deletePatient,
 } from "../services/patientService";
@@ -17,8 +16,8 @@ import { patientSchema } from "@hospital/schemas";
 export const createPatientRecord = catchAsyncError(
   async (req: Request, res: Response, next: NextFunction) => {
     const validated = patientSchema.parse(req.body);
-
     const patient = await createPatient(validated);
+    
     sendResponse(res, {
       success: true,
       statusCode: StatusCodes.CREATED,
@@ -68,21 +67,6 @@ export const updatePatientRecord = catchAsyncError(
 
     const partialSchema = patientSchema.partial();
     const validatedData = partialSchema.parse(req.body);
-
-    // Check if updating Aadhaar to an existing one
-    if (validatedData.aadhaarNumber) {
-      const existingPatient = await getPatientByAadhaar(
-        validatedData.aadhaarNumber
-      );
-      if (existingPatient && existingPatient.id !== id) {
-        return next(
-          new ErrorHandler(
-            "Another patient with this Aadhaar already exists",
-            StatusCodes.CONFLICT
-          )
-        );
-      }
-    }
 
     const updatedPatient = await updatePatient(id, validatedData);
     if (!updatedPatient) {

@@ -8,31 +8,25 @@ import {
   createProduct,
   getAllProducts,
   getProductById,
-  getProductByCode,
   getProductsByCategory,
   updateProduct,
   deleteProduct,
 } from "../../services/itemService/productService";
-
-import {productSchema} from "@hospital/schemas"
-
+import { productSchema } from "@hospital/schemas";
 
 export const createProductRecord = catchAsyncError(
   async (req: Request, res: Response, next: NextFunction) => {
     const validated = productSchema.parse(req.body);
-
-    // Check if product code already exists
-    const existingProduct = await getProductByCode(validated.productCode);
-    if (existingProduct) {
-      return next(
-        new ErrorHandler(
-          "Product with this code already exists",
-          StatusCodes.CONFLICT
-        )
-      );
-    }
-
-    const product = await createProduct(validated);
+    // Ensure all required fields for ProductInput are present
+    const productInput = {
+      ...validated,
+      brand: req.body.brand,
+      category: req.body.category,
+      hsnCode: req.body.hsnCode,
+      gstPercentage: req.body.gstPercentage,
+    };
+    const product = await createProduct(productInput);
+    
     sendResponse(res, {
       success: true,
       statusCode: StatusCodes.CREATED,
@@ -48,7 +42,7 @@ export const getAllProductRecords = catchAsyncError(
     const subCategory = req.query.subCategory as string | undefined;
     
     const products = parentCategory 
-      ? await getProductsByCategory(parentCategory, subCategory)
+      ? await getProductsByCategory(parentCategory)
       : await getAllProducts();
       
     sendResponse(res, {
@@ -94,19 +88,6 @@ export const updateProductRecord = catchAsyncError(
 
     const partialSchema = productSchema.partial();
     const validatedData = partialSchema.parse(req.body);
-
-    // Check if updating product code to an existing one
-    if (validatedData.productCode) {
-      const existingProduct = await getProductByCode(validatedData.productCode);
-      if (existingProduct && existingProduct.id !== id) {
-        return next(
-          new ErrorHandler(
-            "Another product with this code already exists",
-            StatusCodes.CONFLICT
-          )
-        );
-      }
-    }
 
     const updatedProduct = await updateProduct(id, validatedData);
     if (!updatedProduct) {

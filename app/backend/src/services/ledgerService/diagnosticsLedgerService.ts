@@ -1,4 +1,4 @@
-import { PrismaClient } from "@prisma/client";
+import { PrismaClient, Prisma } from "@prisma/client";
 
 const prisma = new PrismaClient();
 
@@ -7,12 +7,18 @@ export const createDiagnosticsEntry = async (data: {
   date: Date;
   testName: string;
   description: string;
-  amount: number;
+  amount: number | string | Prisma.Decimal; // Accept multiple types
   paymentMode: string;
-  attachReport?: string;
+  attachReport?: string | null; // Explicitly allow null
   remarks?: string;
 }) => {
-  return prisma.diagnosticsLedger.create({ data });
+  return prisma.diagnosticsLedger.create({
+    data: {
+      ...data,
+      amount: new Prisma.Decimal(data.amount.toString()), // Force Decimal conversion
+      attachReport: data.attachReport ?? null, // Convert undefined → null
+    },
+  });
 };
 
 export const getAllDiagnosticsEntries = async (filters: {
@@ -55,7 +61,6 @@ export const getPatientDiagnosticsTotal = async (patientName: string) => {
 
   return entries.reduce((total, entry) => total + entry.amount.toNumber(), 0);
 };
-
 export const updateDiagnosticsEntry = async (
   id: number,
   data: {
@@ -63,15 +68,21 @@ export const updateDiagnosticsEntry = async (
     date?: Date;
     testName?: string;
     description?: string;
-    amount?: number;
+    amount?: number | Prisma.Decimal; // Accept both number and Decimal
     paymentMode?: string;
-    attachReport?: string;
+    attachReport?: string | null; // Explicitly allow null
     remarks?: string;
   }
 ) => {
   return prisma.diagnosticsLedger.update({
     where: { id },
-    data,
+    data: {
+      ...data,
+      amount: data.amount !== undefined 
+        ? new Prisma.Decimal(data.amount.toString()) 
+        : undefined,
+      attachReport: data.attachReport ?? null // Convert undefined to null
+    },
   });
 };
 

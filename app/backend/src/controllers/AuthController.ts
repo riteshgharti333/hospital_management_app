@@ -16,7 +16,7 @@ const JWT_EXPIRES_IN = "60d";
 // 🔐 Register
 export const register = catchAsyncError(
   async (req: Request, res: Response, next: NextFunction) => {
-    const validated = validateWithZod(authSchema, req.body);
+    const validated = req.body;
 
     const existingUser = await getUserByEmail(validated.email);
     if (existingUser) {

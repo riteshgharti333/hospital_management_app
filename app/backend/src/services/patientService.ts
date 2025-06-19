@@ -25,9 +25,9 @@ export const getPatientById = async (id: number) => {
   return prisma.patient.findUnique({ where: { id } });
 };
 
-export const getPatientByAadhaar = async (aadhaarNumber: string) => {
-  return prisma.patient.findUnique({ where: { aadhaarNumber } });
-};
+// export const getPatientByAadhaar = async (aadhaarNumber: string) => {
+//   return prisma.patient.findUnique({ where: { aadhaarNumber } });
+// };
 
 export const updatePatient = async (id: number, data: Partial<PatientInput>) => {
   return prisma.patient.update({

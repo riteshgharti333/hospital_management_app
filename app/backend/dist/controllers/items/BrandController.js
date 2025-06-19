@@ -9,37 +9,18 @@ const brandService_1 = require("../../services/itemService/brandService");
 const schemas_1 = require("@hospital/schemas");
 exports.createBrandRecord = (0, catchAsyncError_1.catchAsyncError)(async (req, res, next) => {
     const { file } = req;
-    // Parse and validate req.body (excluding file)
-    const validated = schemas_1.brandSchema
-        .omit({ brandLogo: true }) // remove brandLogo from validation
-        .parse(req.body);
-    // Validate file if exists
-    if (file) {
-        const acceptedTypes = [
-            "image/jpeg",
-            "image/jpg",
-            "image/png",
-            "image/webp",
-            "image/svg+xml",
-        ];
-        if (!acceptedTypes.includes(file.mimetype)) {
-            return next(new errorHandler_1.ErrorHandler("Invalid file type. Must be an image", statusCodes_1.StatusCodes.BAD_REQUEST));
-        }
-        if (file.size > 5000000) {
-            return next(new errorHandler_1.ErrorHandler("File too large. Max 5MB allowed", statusCodes_1.StatusCodes.BAD_REQUEST));
-        }
-    }
+    // Parse and validate req.body
+    const validated = schemas_1.brandSchema.parse({
+        ...req.body,
+        brandLogo: file?.path // This can be string or undefined
+    });
     // Check for duplicate brand name
     const existing = await (0, brandService_1.getBrandByName)(validated.brandName);
     if (existing) {
         return next(new errorHandler_1.ErrorHandler("Brand with this name already exists", statusCodes_1.StatusCodes.CONFLICT));
     }
-    // Prepare final data to save
-    const payload = {
-        ...validated,
-        brandLogo: file?.path || null, // assuming multer saves file to disk or Cloudinary
-    };
-    const brand = await (0, brandService_1.createBrand)(payload);
+    // Create brand - no need for separate payload object
+    const brand = await (0, brandService_1.createBrand)(validated);
     (0, sendResponse_1.sendResponse)(res, {
         success: true,
         statusCode: statusCodes_1.StatusCodes.CREATED,

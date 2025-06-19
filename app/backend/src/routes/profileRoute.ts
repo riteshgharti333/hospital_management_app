@@ -1,21 +1,21 @@
-import express from 'express';
-import {
-  createProfile,
-  getAllProfiles,
-  getProfileById,
-  updateProfile,
-  deleteProfile,
-} from '../controllers/profileController';
+// import express from 'express';
+// import {
+//   createProfile,
+//   getAllProfiles,
+//   getProfileById,
+//   updateProfile,
+//   deleteProfile,
+// } from '../controllers/profileController';
 
-const router = express.Router();
+// const router = express.Router();
 
-router.route('/')
-  .post(createProfile)
-  .get(getAllProfiles);
+// router.route('/')
+//   .post(createProfile)
+//   .get(getAllProfiles);
 
-router.route('/:id')
-  .get(getProfileById)
-  .put(updateProfile)
-  .delete(deleteProfile);
+// router.route('/:id')
+//   .get(getProfileById)
+//   .put(updateProfile)
+//   .delete(deleteProfile);
 
-export default router;
+// export default router;
