@@ -100,7 +100,7 @@ app.use("/api/v1/ledger/pharmacy-ledger", pharmacyLedgerRoutes);
 app.use("/api/v1/ledger/supplier-ledger", supplierLedgerRoutes);
 
 // item/service
-app.use("/api/v1/brand", brandRoutes);
+app.use("/api/v1/brand", brandRoutes); 
 app.use("/api/v1/product", productRoutes);
 // app.use("/api/v1/product-entry", productEnteryRoutes);
 app.use("/api/v1/service-charges", serviceChargesRoutes);

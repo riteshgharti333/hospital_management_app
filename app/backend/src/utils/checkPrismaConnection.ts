@@ -3,6 +3,8 @@ import { PrismaClient } from "@prisma/client";
 
 const prisma = new PrismaClient();
 
+console.log(process.env.DATABASE_URL)
+
 export const checkDB = async () => {
   try {
     await prisma.$connect();
@@ -11,4 +13,4 @@ export const checkDB = async () => {
     console.error("❌ Prisma connection failed:", err);
     process.exit(1);
   }
-};
+}; 
