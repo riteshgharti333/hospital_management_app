@@ -36,8 +36,8 @@ export const admissionSchema = z.object({
     guardianName: z.string().min(1, "Guardian name is required"),
     phoneNo: z.string().min(10, "Phone number must be at least 10 digits"),
     patientAddress: z.string().min(1, "Address is required"),
-    bodyWeightKg: z.number().optional(),
-    bodyHeightCm: z.number().optional(),
+    bodyWeightKg: z.number().min(0).default(0),
+    bodyHeightCm: z.number().min(0).default(0),
     literacy: z.string().min(1, "Literacy status is required"),
     occupation: z.string().min(1, "Occupation is required"),
     doctorName: z.string().min(1, "Doctor name is required"),
@@ -145,7 +145,7 @@ export const prescriptionSchema = z.object({
     prescriptionDate: z.coerce.date(),
     doctorId: z.number().min(1, "Doctor ID is required"),
     patientId: z.number().min(1, "Patient ID is required"),
-    prescriptionDoc: z.string().url().nullable().optional(),
+    prescriptionDoc: z.string().url().optional(),
     status: z.string().optional().default("Active"),
     medicines: z
         .array(medicineSchema)
@@ -182,43 +182,23 @@ export const billItemSchema = z.object({
     itemOrService: z.string().min(1, "Item/Service is required"),
     quantity: z.number().min(1, "Quantity must be at least 1"),
     mrp: z.number().min(0, "MRP must be a non-negative number"),
-    totalAmount: z.number().optional(),
+    totalAmount: z.number().min(0).optional(),
 });
 export const billSchema = z.object({
-    billDate: z.string().transform((val) => new Date(val)),
+    billDate: z.coerce.date(),
     billType: z.string().min(1, "Bill type is required"),
     mobile: z.string().min(10, "Mobile must be at least 10 digits"),
     admissionNo: z.string().min(1, "Admission number is required"),
-    admissionDate: z
-        .string()
-        .min(1, "Admission date is required")
-        .refine((val) => !isNaN(new Date(val).getTime()), {
-        message: "Invalid date format",
-    })
-        .transform((val) => new Date(val)),
-    dateOfBirth: z
-        .string()
-        .min(1, "Date of birth is required")
-        .refine((val) => !isNaN(new Date(val).getTime()), {
-        message: "Invalid date format",
-    })
-        .transform((val) => new Date(val)),
+    admissionDate: z.coerce.date(),
+    dateOfBirth: z.coerce.date(),
     gender: z.enum(["Male", "Female", "Other"]),
-    dischargeDate: z.preprocess((val) => {
-        if (typeof val === "string" && val.trim() !== "") {
-            const date = new Date(val);
-            return isNaN(date.getTime()) ? undefined : date;
-        }
-        return undefined;
-    }, z.date().optional()),
+    dischargeDate: z.coerce.date().optional().nullable(),
     address: z.string().min(1, "Address is required"),
     doctorName: z.string().min(1, "Doctor name is required"),
     wardNo: z.string().min(1, "Ward number is required"),
     bedNo: z.string().min(1, "Bed number is required"),
     status: z.string().optional().default("Pending"),
-    billItems: z
-        .array(billItemSchema)
-        .min(1, "At least one bill item is required"),
+    billItems: z.array(billItemSchema).min(1, "At least one bill item is required")
 });
 export const employeeSchema = z.object({
     employeeName: z.string().min(1, "Employee name is required"),
@@ -287,22 +267,7 @@ const ACCEPTED_IMAGE_TYPES = [
 ];
 export const brandSchema = z.object({
     brandName: z.string().min(1, "Brand name is required"),
-    brandLogo: z
-        .any()
-        .optional()
-        .refine((val) => {
-        // No file selected = valid (optional)
-        if (!val || val.length === 0)
-            return true;
-        // Get first file from FileList[]
-        const file = val[0];
-        // If file exists, check type and size
-        return (file instanceof File &&
-            file.size <= 5000000 &&
-            ACCEPTED_IMAGE_TYPES.includes(file.type));
-    }, {
-        message: "Invalid image. Must be JPG, PNG, SVG, WEBP under 5MB.",
-    }),
+    brandLogo: z.string().optional().nullable(),
     description: z.string().min(1, "Description is required"),
     status: z.enum(["Active", "Inactive"]).default("Active"),
 });
@@ -311,19 +276,7 @@ export const productSchema = z.object({
     productCode: z.string().min(1, "Product code is required"),
     parentCategory: z.string().min(1, "Parent category is required"),
     subCategory: z.string().min(1, "Sub category is required"),
-    categoryLogo: z
-        .any()
-        .optional()
-        .refine((val) => {
-        if (!val || val.length === 0)
-            return true;
-        const file = val[0];
-        return (file instanceof File &&
-            file.size <= 5000000 &&
-            ACCEPTED_IMAGE_TYPES.includes(file.type));
-    }, {
-        message: "Invalid image. Must be JPG, PNG, SVG, WEBP under 5MB.",
-    }),
+    categoryLogo: z.string().optional(),
     description: z.string().optional(),
     unit: z.string().min(1, "Unit is required"),
     price: z.number().min(0, "Price must be positive"),
@@ -343,8 +296,8 @@ export const productMaterialSchema = z.object({
     productName: z.string().min(1, "Product name is required"),
     shortDescription: z.string().optional(),
     hsnCode: z.string().min(1, "HSN Code is required"),
-    gstPercentage: z.string().min(0, "GST is required"),
-    status: z.string().optional().default("Active"),
+    gstPercentage: z.string().min(1, "GST Percentage is required"),
+    status: z.string().default("Active"),
     specifications: z.array(materialSpecSchema).optional(),
 });
 export const serviceChargeSchema = z.object({
@@ -403,10 +356,11 @@ export const expenseLedgerSchema = z.object({
     transactionId: z.string().optional(),
     remarks: z.string().optional(),
 });
+// src/schemas/insuranceLedgerSchema.ts
 export const insuranceLedgerSchema = z.object({
-    patientName: z.string().min(1, "Patient name is required"),
-    tpaInsuranceCompany: z.string().min(1, "TPA/Insurance Company is required"),
-    claimAmount: z.number().positive("Claim amount must be positive"),
+    patientName: z.string().min(1),
+    tpaInsuranceCompany: z.string().min(1),
+    claimAmount: z.number().positive(),
     approvedAmount: z.number().min(0).optional(),
     settledAmount: z.number().min(0).optional(),
     status: z.enum([

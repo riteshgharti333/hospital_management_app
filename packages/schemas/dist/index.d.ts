@@ -45,8 +45,8 @@ export declare const admissionSchema: z.ZodObject<{
     guardianName: z.ZodString;
     phoneNo: z.ZodString;
     patientAddress: z.ZodString;
-    bodyWeightKg: z.ZodOptional<z.ZodNumber>;
-    bodyHeightCm: z.ZodOptional<z.ZodNumber>;
+    bodyWeightKg: z.ZodDefault<z.ZodNumber>;
+    bodyHeightCm: z.ZodDefault<z.ZodNumber>;
     literacy: z.ZodString;
     occupation: z.ZodString;
     doctorName: z.ZodString;
@@ -66,14 +66,14 @@ export declare const admissionSchema: z.ZodObject<{
     guardianName: string;
     phoneNo: string;
     patientAddress: string;
+    bodyWeightKg: number;
+    bodyHeightCm: number;
     literacy: string;
     occupation: string;
     doctorName: string;
     isDelivery: boolean;
     dischargeDate?: Date | undefined;
     urnNo?: string | undefined;
-    bodyWeightKg?: number | undefined;
-    bodyHeightCm?: number | undefined;
 }, {
     admissionDate: Date;
     admissionTime: string;
@@ -340,7 +340,7 @@ export declare const prescriptionSchema: z.ZodObject<{
     prescriptionDate: z.ZodDate;
     doctorId: z.ZodNumber;
     patientId: z.ZodNumber;
-    prescriptionDoc: z.ZodOptional<z.ZodNullable<z.ZodString>>;
+    prescriptionDoc: z.ZodOptional<z.ZodString>;
     status: z.ZodDefault<z.ZodOptional<z.ZodString>>;
     medicines: z.ZodArray<z.ZodObject<{
         medicineName: z.ZodString;
@@ -361,7 +361,7 @@ export declare const prescriptionSchema: z.ZodObject<{
         description: string;
         medicineName: string;
     }[];
-    prescriptionDoc?: string | null | undefined;
+    prescriptionDoc?: string | undefined;
 }, {
     prescriptionDate: Date;
     doctorId: number;
@@ -371,7 +371,7 @@ export declare const prescriptionSchema: z.ZodObject<{
         medicineName: string;
     }[];
     status?: string | undefined;
-    prescriptionDoc?: string | null | undefined;
+    prescriptionDoc?: string | undefined;
 }>;
 export declare const xrayReportSchema: z.ZodObject<{
     billDate: z.ZodDate;
@@ -445,14 +445,14 @@ export declare const billItemSchema: z.ZodObject<{
     totalAmount?: number | undefined;
 }>;
 export declare const billSchema: z.ZodObject<{
-    billDate: z.ZodEffects<z.ZodString, Date, string>;
+    billDate: z.ZodDate;
     billType: z.ZodString;
     mobile: z.ZodString;
     admissionNo: z.ZodString;
-    admissionDate: z.ZodEffects<z.ZodEffects<z.ZodString, string, string>, Date, string>;
-    dateOfBirth: z.ZodEffects<z.ZodEffects<z.ZodString, string, string>, Date, string>;
+    admissionDate: z.ZodDate;
+    dateOfBirth: z.ZodDate;
     gender: z.ZodEnum<["Male", "Female", "Other"]>;
-    dischargeDate: z.ZodEffects<z.ZodOptional<z.ZodDate>, Date | undefined, unknown>;
+    dischargeDate: z.ZodNullable<z.ZodOptional<z.ZodDate>>;
     address: z.ZodString;
     doctorName: z.ZodString;
     wardNo: z.ZodString;
@@ -497,19 +497,19 @@ export declare const billSchema: z.ZodObject<{
         mrp: number;
         totalAmount?: number | undefined;
     }[];
-    dischargeDate?: Date | undefined;
+    dischargeDate?: Date | null | undefined;
 }, {
-    admissionDate: string;
+    admissionDate: Date;
     wardNo: string;
     bedNo: string;
     doctorName: string;
     address: string;
     gender: "Male" | "Female" | "Other";
-    billDate: string;
+    billDate: Date;
     billType: string;
     mobile: string;
     admissionNo: string;
-    dateOfBirth: string;
+    dateOfBirth: Date;
     billItems: {
         company: string;
         itemOrService: string;
@@ -518,7 +518,7 @@ export declare const billSchema: z.ZodObject<{
         totalAmount?: number | undefined;
     }[];
     status?: string | undefined;
-    dischargeDate?: unknown;
+    dischargeDate?: Date | null | undefined;
 }>;
 export declare const employeeSchema: z.ZodObject<{
     employeeName: z.ZodString;
@@ -627,26 +627,26 @@ export declare const voucherSchema: z.ZodObject<{
 }>;
 export declare const brandSchema: z.ZodObject<{
     brandName: z.ZodString;
-    brandLogo: z.ZodEffects<z.ZodOptional<z.ZodAny>, any, any>;
+    brandLogo: z.ZodNullable<z.ZodOptional<z.ZodString>>;
     description: z.ZodString;
     status: z.ZodDefault<z.ZodEnum<["Active", "Inactive"]>>;
 }, "strip", z.ZodTypeAny, {
     status: "Active" | "Inactive";
     description: string;
     brandName: string;
-    brandLogo?: any;
+    brandLogo?: string | null | undefined;
 }, {
     description: string;
     brandName: string;
     status?: "Active" | "Inactive" | undefined;
-    brandLogo?: any;
+    brandLogo?: string | null | undefined;
 }>;
 export declare const productSchema: z.ZodObject<{
     productName: z.ZodString;
     productCode: z.ZodString;
     parentCategory: z.ZodString;
     subCategory: z.ZodString;
-    categoryLogo: z.ZodEffects<z.ZodOptional<z.ZodAny>, any, any>;
+    categoryLogo: z.ZodOptional<z.ZodString>;
     description: z.ZodOptional<z.ZodString>;
     unit: z.ZodString;
     price: z.ZodNumber;
@@ -662,7 +662,7 @@ export declare const productSchema: z.ZodObject<{
     price: number;
     taxRate: number;
     description?: string | undefined;
-    categoryLogo?: any;
+    categoryLogo?: string | undefined;
 }, {
     productName: string;
     productCode: string;
@@ -673,7 +673,7 @@ export declare const productSchema: z.ZodObject<{
     taxRate: number;
     status?: string | undefined;
     description?: string | undefined;
-    categoryLogo?: any;
+    categoryLogo?: string | undefined;
 }>;
 export declare const materialSpecSchema: z.ZodObject<{
     uom: z.ZodString;
@@ -701,7 +701,7 @@ export declare const productMaterialSchema: z.ZodObject<{
     shortDescription: z.ZodOptional<z.ZodString>;
     hsnCode: z.ZodString;
     gstPercentage: z.ZodString;
-    status: z.ZodDefault<z.ZodOptional<z.ZodString>>;
+    status: z.ZodDefault<z.ZodString>;
     specifications: z.ZodOptional<z.ZodArray<z.ZodObject<{
         uom: z.ZodString;
         description: z.ZodOptional<z.ZodString>;
