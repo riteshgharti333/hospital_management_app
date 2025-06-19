@@ -1,0 +1,57 @@
+@import url("https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap");
+
+@import "tailwindcss";
+
+* {
+  scroll-behavior: smooth;
+  box-sizing: border-box;
+  font-family: "Inter", sans-serif;
+}
+
+@theme {
+  --color-main-color: #2671fe;
+}
+
+.btn-primary {
+  @apply flex items-center cursor-pointer gap-2 px-6 py-2 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500;
+}
+
+.btn-secondary {
+  @apply flex items-center space-x-2 px-4 py-2 rounded-lg bg-green-600 hover:bg-green-700 text-white transition-colors duration-200 cursor-pointer;
+}
+
+.btn-danger {
+  @apply flex items-center gap-2 space-x-2 px-4 py-2 rounded-lg transition-colors duration-200 cursor-pointer;
+  @apply bg-red-500 hover:bg-red-600 text-white;
+}
+
+.btn-cancel {
+  @apply flex items-center px-4 py-2 border cursor-pointer border-gray-300 rounded-lg text-sm font-medium text-gray-700 bg-white hover:bg-gray-200 mr-3;
+}
+
+.btn-edit {
+  @apply flex items-center px-4 cursor-pointer py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors;
+}
+
+.btn-delete {
+  @apply flex items-center px-4 py-2 cursor-pointer bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors;
+}
+
+a {
+  text-decoration: none;
+}
+
+html,
+body {
+  background: #f1f1f1;
+}
+
+.app {
+  /* background: #f1f1f1; */
+  /* min-height:  130vh; */
+}
+
+button:disabled {
+  background: #ccc !important;
+  cursor: not-allowed !important;
+}

@@ -1,0 +1,601 @@
+generator client {
+  provider = "prisma-client-js"
+  // output   = ""
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+
+model User {
+  id        String   @id @default(uuid())
+  name      String
+  email     String   @unique
+  password  String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+
+/////////////////
+
+model Admission {
+id                       Int      @id @default(autoincrement())
+admissionDate           DateTime
+admissionTime           String   
+dischargeDate           DateTime? 
+gsRsRegNo               String
+wardNo                  String
+bedNo                   String
+bloodGroup              String
+aadhaarNo               String   
+urnNo                   String?  
+patientName             String
+patientAge              Int
+patientSex              String
+guardianType            String
+guardianName            String
+phoneNo                 String
+patientAddress          String
+bodyWeightKg            Float
+bodyHeightCm            Float
+literacy                String
+occupation              String
+doctorName              String
+isDelivery              Boolean   @default(false) 
+
+createdAt               DateTime  @default(now())
+updatedAt               DateTime  @updatedAt
+}
+
+////////////////////
+
+
+model Birth {
+  id               Int      @id @default(autoincrement())
+  birthTime        String
+  birthDate        DateTime
+  babySex          String
+  babyWeightKg     Float
+  fathersName      String
+  mothersName      String
+  mobileNumber     String
+  deliveryType     String
+  placeOfBirth     String
+  attendantsName   String
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+}
+
+/////////////////
+
+model Patient {
+  id            Int      @id @default(autoincrement())
+  fullName      String
+  age           Int
+  mobileNumber  String
+  gender        String
+  bedNumber     String
+  aadhaarNumber String 
+  address       String
+  medicalHistory String
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+   prescriptions  Prescription[]
+}
+
+//////////////////
+
+model Department {
+  id             Int      @id @default(autoincrement())
+  name           String   @unique
+  head           String
+  contactNumber  String
+  email          String
+  location       String
+  description    String
+  status         String   @default("Active")
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+}
+
+//////////////////
+
+
+model Bed {
+  id          Int      @id @default(autoincrement())
+  bedNumber   String   @unique
+  wardNumber  String
+  status      String   @default("Available") 
+  description String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+//////////////////
+
+model BedAssignment {
+  id            Int      @id @default(autoincrement())
+  wardNumber    String
+  bedNumber     String
+  bedType       String  
+  notes         String?   
+  patientName   String
+  allocateDate  DateTime
+  dischargeDate DateTime?
+  status        String   @default("Active") 
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@index([wardNumber])
+  @@index([bedNumber])
+  @@index([patientName])
+}
+
+/////////////////
+
+model Appointment {
+  id              Int      @id @default(autoincrement())
+  appointmentDate DateTime
+  doctorName      String
+  department      String
+  appointmentTime String
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}
+
+
+////////////////
+
+model Nurse {
+  id             Int      @id @default(autoincrement())
+  fullName       String
+  mobileNumber   String
+  registrationNo String   @unique
+  department     String
+  address        String
+  shift          String
+  status         String   @default("Active")
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+}
+
+///////////
+
+
+model Doctor {
+  id             Int      @id @default(autoincrement())
+  fullName       String
+  mobileNumber   String
+  registrationNo String   @unique
+  qualification  String
+  designation    String
+  department     String
+  specialization String
+  status         String   @default("Active")
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+   prescriptions  Prescription[]
+}
+
+/////////////
+
+
+model Pharmacist {
+  id             Int      @id @default(autoincrement())
+  fullName       String
+  mobileNumber   String
+  registrationNo String   @unique
+  address        String
+  department     String
+  status         String   @default("Active")
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+}
+
+/////////////////
+
+
+model Prescription {
+  id               Int           @id @default(autoincrement())
+  prescriptionDate DateTime
+  doctorId         Int
+  patientId        Int
+  prescriptionDoc  String?      
+  status           String        @default("Active")
+  createdAt        DateTime      @default(now())
+  updatedAt        DateTime      @updatedAt
+  medicines        Medicine[]
+  doctor           Doctor        @relation(fields: [doctorId], references: [id])
+  patient          Patient       @relation(fields: [patientId], references: [id])
+}
+
+model Medicine {
+  id             Int          @id @default(autoincrement())
+  medicineName   String
+  description    String
+  prescriptionId Int
+  prescription   Prescription @relation(fields: [prescriptionId], references: [id])
+}
+
+/////////////////////
+
+model Ambulance {
+  id             Int      @id @default(autoincrement())
+  modelName      String
+  brand          String
+  registrationNo String   @unique
+  driverName     String
+  driverContact  String
+  status         String   @default("Available") 
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+} 
+
+/////////// Ledgers 
+
+model PatientLedger {
+  id            Int      @id @default(autoincrement())
+  patientName   String
+  date          DateTime
+  description   String
+  amountType    String   // Credit or Debit
+  amount        Decimal
+  paymentMode   String   // Cash, Card, UPI, etc.
+  transactionId String?
+  remarks       String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@index([patientName])
+  @@index([date])
+  @@index([amountType])
+}
+
+
+model BankLedger {
+  id            Int      @id @default(autoincrement())
+  bankName      String
+  date          DateTime
+  description   String
+  amountType    String   // "Credit" or "Debit"
+  amount        Decimal
+  transactionId String?
+  remarks       String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@index([bankName])
+  @@index([date])
+  @@index([amountType])
+}
+
+
+model CashLedger {
+  id          Int      @id @default(autoincrement())
+  date        DateTime
+  purpose     String
+  amountType  String   // "Income" or "Expense"
+  amount      Decimal
+  remarks     String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([date])
+  @@index([amountType])
+}
+
+
+model DiagnosticsLedger {
+  id           Int      @id @default(autoincrement())
+  patientName  String
+  date         DateTime
+  testName     String
+  description  String
+  amount       Decimal
+  paymentMode  String   // Cash, Card, UPI, Insurance, etc.
+  attachReport String?  // File path or URL to diagnostic report
+  remarks      String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@index([patientName])
+  @@index([date])
+  @@index([testName])
+}
+
+
+model DoctorLedger {
+  id            Int      @id @default(autoincrement())
+  doctorName    String
+  date          DateTime
+  description   String
+  amountType    String   // "Credit" or "Debit"
+  amount        Decimal
+  paymentMode   String   // Cash, Bank Transfer, UPI, etc.
+  transactionId String?
+  remarks       String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@index([doctorName])
+  @@index([date])
+  @@index([amountType])
+}
+
+model ExpenseLedger {
+  id              Int      @id @default(autoincrement())
+  expenseCategory String
+  date            DateTime
+  description     String
+  amount          Decimal
+  paymentMode     String   // Cash, Bank Transfer, UPI, etc.
+  transactionId   String?
+  remarks         String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([expenseCategory])
+  @@index([date])
+}
+
+model InsuranceLedger {
+  id                  Int      @id @default(autoincrement())
+  patientName         String
+  tpaInsuranceCompany String
+  claimAmount         Decimal
+  approvedAmount      Decimal
+  settledAmount       Decimal
+  status              String   // Pending, Approved, Rejected, Partially Approved, Settled
+  remarks             String?
+  claimDate           DateTime
+  approvalDate        DateTime?
+  settlementDate      DateTime?
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+
+  @@index([patientName])
+  @@index([tpaInsuranceCompany])
+  @@index([status])
+  @@index([claimDate])
+}
+
+
+model PharmacyLedger {
+  id            Int      @id @default(autoincrement())
+  date          DateTime
+  medicineName  String
+  category      String
+  description   String
+  amountType    String   // "Income" or "Expense"
+  amount        Decimal
+  paymentMode   String   // Cash, Card, UPI, Insurance, etc.
+  remarks       String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@index([date])
+  @@index([medicineName])
+  @@index([category])
+  @@index([amountType])
+}
+
+
+model SupplierLedger {
+  id            Int      @id @default(autoincrement())
+  supplierName  String
+  date          DateTime
+  invoiceNo     String
+  description   String
+  amountType    String   // "Credit" (Payable) or "Debit" (Payment)
+  amount        Decimal
+  paymentMode   String?  // Cash, Cheque, Bank Transfer, UPI, etc.
+  transactionId String?
+  attachBill    String?  // File path or URL to attached bill
+  remarks       String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@index([supplierName])
+  @@index([date])
+  @@index([invoiceNo])
+  @@index([amountType])
+}
+
+////////////////
+
+
+model XrayReport {
+  id              Int      @id @default(autoincrement())
+  billDate        DateTime
+  patientMobile   String
+  patientName     String
+  patientSex      String
+  age             Int
+  referredDoctor  String
+  testDate        DateTime
+  reportDate      DateTime
+  patientAddress  String?
+  examDescription String
+  department      String
+  billAmount      Decimal
+  discountPercent Decimal
+  netBillAmount   Decimal
+  commissionPercent Decimal
+  doctorEarning   Decimal
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([patientMobile])
+  @@index([patientName])
+  @@index([referredDoctor])
+  @@index([billDate])
+  @@index([testDate])
+  @@index([department])
+}
+
+////////// item service
+
+
+model Brand {
+  id          Int      @id @default(autoincrement())
+  brandName   String   @unique
+  brandLogo   String?
+  description String
+  status      String   @default("Active")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+
+model ProductEntery {
+  id               Int                    @id @default(autoincrement())
+  brand            String
+  category         String
+  productName      String
+  shortDescription String?
+  hsnCode          String
+  gstPercentage    String
+  status           String                @default("Active")
+  createdAt        DateTime              @default(now())
+  updatedAt        DateTime              @updatedAt
+  specifications   MaterialSpecification[]
+}
+
+model MaterialSpecification {
+  id               Int         @id @default(autoincrement())
+  productEntryId   Int
+  productEntry     ProductEntery @relation(fields: [productEntryId], references: [id], onDelete: Cascade)
+  uom              String
+  description      String?
+  alterUnit        String?
+  alterUnitValue   Float?
+  serialUniqueNo   String?
+  createdAt        DateTime    @default(now())
+}
+
+model Product {
+  id              Int      @id @default(autoincrement())
+  productName     String
+  productCode     String   @unique
+  parentCategory  String
+  subCategory     String
+  categoryLogo    String?
+  description     String?
+  unit            String
+  price           Float
+  taxRate         Float
+  status          String   @default("Active")
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}
+
+
+model ServiceCharge {
+  id            Int      @id @default(autoincrement())
+  serviceName   String
+  category      String
+  chargeType    String
+  baseAmount    Float
+  taxApplicable Boolean  @default(false)
+  taxPercentage Float?   @default(0)
+  status        String   @default("Active")
+  notes         String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+// transection 
+
+model Bill {
+  id             Int          @id @default(autoincrement())
+  billDate       DateTime
+  billType       String
+  mobile         String
+  admissionNo    String
+  admissionDate  DateTime
+  dateOfBirth    DateTime
+  gender         String
+  dischargeDate  DateTime?
+  address        String
+  doctorName     String
+  wardNo         String
+  bedNo          String
+  status         String       @default("Pending")
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+  billItems      BillItem[]
+}
+
+model BillItem {
+  id             Int      @id @default(autoincrement())
+  billId         Int
+  bill           Bill     @relation(fields: [billId], references: [id], onDelete: Cascade)
+  company        String
+  itemOrService  String
+  quantity       Int
+  mrp            Float  
+  totalAmount    Float   
+  createdAt      DateTime @default(now())
+}
+
+
+model Employee {
+  id                  Int       @id @default(autoincrement())
+  photoUrl            String?
+  employeeName        String
+  fathersName         String
+  dateOfRegistration  DateTime
+  contactNo           String
+  dateOfBirth         DateTime
+  email               String?   @unique
+  gender              String
+  maritalStatus       String
+  aadharNo            String?   @unique
+  voterId             String?   @unique
+  bloodGroup          String?
+  department          String
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
+}
+
+
+
+
+model Voucher {
+  id          Int       @id @default(autoincrement())
+  voucherDate DateTime
+  paymentFor  String
+  voucherType String
+  vendorName  String
+  paymentDate DateTime
+  amount      Float
+  paymentMode String
+  referenceNo String?
+  description String?
+  status      String    @default("Pending")
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+}
+
+
+model MoneyReceipt {
+  id           Int       @id @default(autoincrement())
+  date         DateTime
+  patientName  String
+  mobile       String
+  amount       Float
+  paymentMode  String
+  remarks      String?
+  receivedBy   String
+  status       String    @default("Active")
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  @@index([mobile])
+  @@index([patientName])
+  @@index([amount])
+  @@index([paymentMode])
+}
