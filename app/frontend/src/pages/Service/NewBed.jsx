@@ -68,7 +68,7 @@ const NewBed = () => {
     defaultValues: {
       bedNumber: "",
       wardNumber: "",
-      status: "",
+      status: "Available",
       description: "",
     },
   });
@@ -82,9 +82,7 @@ const NewBed = () => {
     };
     const response = await mutateAsync(cleanedData);
 
-    if (response?.data?.success) {
-      navigate("/bed/:id");
-    }
+    navigate(`/bed/${response.data.data.id}`);
   };
 
   return (

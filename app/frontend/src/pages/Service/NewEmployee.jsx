@@ -145,7 +145,7 @@ const NewEmployee = () => {
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {/* Photo Upload */}
-            {/* <div className="space-y-1 md:col-span-2 flex items-start">
+             <div className="space-y-1 md:col-span-2 flex items-start">
               <div className="mr-4">
                 <div className="w-24 h-24 rounded-full bg-gray-200 border border-gray-300 overflow-hidden flex items-center justify-center">
                   {previewPhoto ? (
@@ -179,19 +179,8 @@ const NewEmployee = () => {
                   <p className="text-red-600 text-sm mt-1">{errors.photo.message}</p>
                 )}
               </div>
-            </div> */}
+            </div>
 
-            <div className="space-y-1">
-        <label className="block text-sm font-medium text-gray-700">
-          Photo URL (Dummy)
-        </label>
-        <input
-          type="hidden"
-          {...register("photoUrl")}
-          value="https://example.com/image.jpg"
-        />
-        <p className="text-sm text-gray-500">Using placeholder image URL</p>
-      </div>
 
 
             {/* Employee Name */}

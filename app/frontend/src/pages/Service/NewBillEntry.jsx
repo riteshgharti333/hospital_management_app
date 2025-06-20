@@ -49,7 +49,7 @@ const NewBillEntry = () => {
       admissionNo: "",
       admissionDate: "",
       dateOfBirth: "",
-      gender: undefined,
+      gender: "Male",
       dischargeDate: "",
       address: "",
       doctorName: "",

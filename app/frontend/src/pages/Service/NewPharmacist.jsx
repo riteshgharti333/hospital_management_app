@@ -97,7 +97,7 @@ const NewPharmacist = () => {
    
       const response = await mutateAsync(data);
       if (response?.data?.success) {
-        navigate(`/pharmacist/${response.data.id}`); 
+        navigate(`/pharmacist/${response.data.data.id}`); 
   };
 }
 

@@ -130,9 +130,7 @@ const NewDoctor = () => {
 
     const response = await mutateAsync(cleanedData);
 
-    if (response?.data?.success) {
-      navigate("/doctor/:id");
-    }
+       navigate(`/doctor/${response.data.data.id}`);
   };
 
   return (

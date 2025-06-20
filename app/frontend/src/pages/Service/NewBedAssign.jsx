@@ -126,6 +126,7 @@ const NewBedAssign = () => {
   const onSubmit = async (data) => {
     const cleanedData = {
       ...data,
+      allocateDate: new Date(data.allocateDate),
       dischargeDate: data.dischargeDate || undefined,
       notes: data.notes?.trim() || undefined,
     };
@@ -133,7 +134,7 @@ const NewBedAssign = () => {
     const response = await mutateAsync(cleanedData);
 
     if (response?.data?.success) {
-      navigate("/bed/:id");
+       navigate(`/bed-assign/${response.data.data.id}`);
     }
   };
 

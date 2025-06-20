@@ -82,6 +82,7 @@ const Login = () => {
             <div className="flex items-center justify-center space-x-3 mb-4">
               <MdLocalHospital className="text-3xl text-white" />
               <h1 className="text-2xl font-bold text-white">MediCare</h1>
+              {/* <img src={logo} alt=""  className="h-30 w-30"/> */}
             </div>
             <p className="text-blue-100">Hospital Management System</p>
           </div>

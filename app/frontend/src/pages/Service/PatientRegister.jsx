@@ -103,7 +103,7 @@ const PatientRegister = () => {
     resolver: zodResolver(patientSchema),
     defaultValues: {
       fullName: "",
-      age: "",
+      age: 0,
       mobileNumber: "",
       gender: "",
       bedNumber: "",

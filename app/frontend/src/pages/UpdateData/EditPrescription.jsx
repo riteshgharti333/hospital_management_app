@@ -37,12 +37,12 @@ const EditPrescription = () => {
   const [editMode, setEditMode] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [doctors] = useState([
-    { id: 1, name: "Dr. Smith" },
+    { id: 5, name: "Dr. Smith" },
     { id: 2, name: "Dr. Johnson" },
     { id: 3, name: "Dr. Williams" },
   ]);
   const [patients] = useState([
-    { id: 1, name: "John Doe" },
+    { id: 13, name: "John Doe" },
     { id: 2, name: "Jane Smith" },
     { id: 3, name: "Robert Johnson" },
   ]);
@@ -63,8 +63,10 @@ const EditPrescription = () => {
   });
 
   const { data: prescriptionData, isLoading } = useGetPrescriptionById(id);
-  const { mutateAsync: updatePrescription, isPending: isUpdating } = useUpdatePrescription();
-  const { mutateAsync: deletePrescription, isPending: isDeleting } = useDeletePrescription();
+  const { mutateAsync: updatePrescription, isPending: isUpdating } =
+    useUpdatePrescription();
+  const { mutateAsync: deletePrescription, isPending: isDeleting } =
+    useDeletePrescription();
 
   // Reusable function for disabled styles
   const getDisabledStyles = (isDisabled) =>
@@ -75,8 +77,11 @@ const EditPrescription = () => {
     if (prescriptionData) {
       const formattedData = {
         ...prescriptionData,
-        prescriptionDate: prescriptionData.prescriptionDate?.split("T")[0] || "",
-        medicines: prescriptionData.medicines || [{ medicineName: "", description: "" }],
+        prescriptionDate:
+          prescriptionData.prescriptionDate?.split("T")[0] || "",
+        medicines: prescriptionData.medicines || [
+          { medicineName: "", description: "" },
+        ],
       };
       reset(formattedData);
     }
@@ -98,13 +103,15 @@ const EditPrescription = () => {
       };
 
       const response = await updatePrescription({ id, data: payload });
-      
+
       if (response?.data?.success) {
         toast.success(response.data.message);
         setEditMode(false);
       }
     } catch (error) {
-      toast.error(error?.response?.data?.message || "Failed to update prescription");
+      toast.error(
+        error?.response?.data?.message || "Failed to update prescription"
+      );
     }
   };
 
@@ -121,7 +128,9 @@ const EditPrescription = () => {
         navigate("/prescriptions");
       }
     } catch (error) {
-      toast.error(error?.response?.data?.message || "Failed to delete prescription");
+      toast.error(
+        error?.response?.data?.message || "Failed to delete prescription"
+      );
     } finally {
       setShowDeleteModal(false);
     }

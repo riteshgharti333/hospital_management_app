@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useRef } from "react";
 import {
   FaCalendarAlt,
   FaUserMd,
@@ -20,14 +20,17 @@ import { useNavigate } from "react-router-dom";
 
 const NewPrescription = () => {
   const navigate = useNavigate();
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const fileInputRef = useRef(null);
+  
   const [doctors] = useState([
-    { id: 1, name: "Dr. Smith" }, // Changed to numbers to match schema
+    { id: 5, name: "Dr. Smith" },
     { id: 2, name: "Dr. Johnson" },
     { id: 3, name: "Dr. Williams" },
   ]);
 
   const [patients] = useState([
-    { id: 1, name: "John Doe" }, // Changed to numbers to match schema
+    { id: 13, name: "John Doe" },
     { id: 2, name: "Jane Smith" },
     { id: 3, name: "Robert Johnson" },
   ]);
@@ -44,7 +47,6 @@ const NewPrescription = () => {
       prescriptionDate: new Date().toISOString().split("T")[0],
       doctorId: undefined,
       patientId: undefined,
-      prescriptionDoc: "",
       status: "Active",
       medicines: [{ medicineName: "", description: "" }],
     },
@@ -55,26 +57,84 @@ const NewPrescription = () => {
     name: "medicines",
   });
 
-  const { mutateAsync, isPending } = useCreatePrescription();
+  const { mutateAsync } = useCreatePrescription();
+
+  const handleFileChange = (e) => {
+    const file = e.target.files?.[0];
+    if (file && file.size > 5 * 1024 * 1024) {
+      toast.warning("File size should be less than 5MB");
+      e.target.value = "";
+    }
+  };
 
   const onSubmit = async (data) => {
-    const payload = {
-      ...data,
-      prescriptionDate: new Date(data.prescriptionDate).toISOString(),
-      doctorId: Number(data.doctorId),
-      patientId: Number(data.patientId),
-      prescriptionDoc: data.prescriptionDoc || "",
-      medicines: data.medicines.map((med) => ({
-        medicineName: med.medicineName.trim(),
-        description: med.description.trim(),
-      })),
-    };
+    setIsSubmitting(true);
+    
+    try {
+      // Check if there's a file to upload
+      const hasFile = fileInputRef.current?.files?.[0];
+      
+      if (hasFile) {
+        // If there's a file, use FormData
+        const formData = new FormData();
+        
+        formData.append("prescriptionDate", new Date(data.prescriptionDate).toISOString());
+        formData.append("doctorId", data.doctorId.toString());
+        formData.append("patientId", data.patientId.toString());
+        formData.append("status", data.status);
+        
+        // Append each medicine separately for FormData
+        const medicinesData = data.medicines.map(med => ({
+          medicineName: med.medicineName.trim(),
+          description: med.description.trim()
+        }));
+        
+        medicinesData.forEach((medicine, index) => {
+          formData.append(`medicines[${index}][medicineName]`, medicine.medicineName);
+          formData.append(`medicines[${index}][description]`, medicine.description);
+        });
+        
+        formData.append("file", fileInputRef.current.files[0]);
+        
+        const response = await mutateAsync(formData);
+        
+        if (response?.data?.success) {
+          toast.success("Prescription created successfully");
+          navigate(`/prescription/${response.data.data.id}`);
+        }
+      } else {
+        // If no file, send as JSON
+        const jsonData = {
+          prescriptionDate: new Date(data.prescriptionDate).toISOString(),
+          doctorId: data.doctorId,
+          patientId: data.patientId,
+          status: data.status,
+          medicines: data.medicines.map(med => ({
+            medicineName: med.medicineName.trim(),
+            description: med.description.trim()
+          }))
+        };
+        
+        const response = await mutateAsync(jsonData);
+        
+        if (response?.data?.success) {
+          toast.success("Prescription created successfully");
+          navigate(`/prescription/${response.data.id}`);
+        }
+      }
+    } catch (error) {
+      toast.error("Failed to create prescription");
+      console.error("Submission error:", error);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
-    console.log(payload);
-
-    const response = await mutateAsync(payload);
-    if (response?.data?.success) {
-      navigate("/prescription/:id");
+  const handleReset = () => {
+    reset();
+    // Clear the file input using ref
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
     }
   };
 
@@ -196,23 +256,12 @@ const NewPrescription = () => {
                 Prescription Document
               </label>
               <input
+                ref={fileInputRef}
                 type="file"
-                onChange={(e) => {
-                  const file = e.target.files?.[0];
-
-                  if (file) {
-                    const dummyUrl = `https://example.com/${file.name}`;
-                  }
-                }}
                 className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
                 accept=".pdf,.jpg,.png,.doc,.docx"
+                onChange={handleFileChange}
               />
-
-              {errors.prescriptionDoc && (
-                <p className="text-red-600 text-sm mt-1">
-                  {errors.prescriptionDoc.message}
-                </p>
-              )}
             </div>
           </div>
         </div>
@@ -303,13 +352,13 @@ const NewPrescription = () => {
         <div className="bg-gray-50 px-6 py-4 border-t border-gray-200 flex justify-end">
           <button
             type="button"
-            onClick={() => reset()}
+            onClick={handleReset}
             className="px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 mr-3"
           >
             Reset
           </button>
-          <LoadingButton isLoading={isPending} type="submit">
-            {isPending ? "Saving..." : "Save Prescription"}
+          <LoadingButton isLoading={isSubmitting} type="submit">
+            {isSubmitting ? "Saving..." : "Save Prescription"}
           </LoadingButton>
         </div>
       </form>

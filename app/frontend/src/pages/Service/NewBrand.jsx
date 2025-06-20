@@ -1,10 +1,9 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useRef } from "react";
 import { FaBox, FaImage } from "react-icons/fa";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod";
-import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
+import { useNavigate } from "react-router-dom";
 import BackButton from "../../components/BackButton/BackButton";
 import LoadingButton from "../../components/LoadingButton/LoadingButton";
 import { useCreateBrand } from "../../feature/itemHooks/useBrand";
@@ -52,15 +51,17 @@ const formFields = [
     ],
   },
 ];
+
 const NewBrand = () => {
   const navigate = useNavigate();
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [logoPreview, setLogoPreview] = useState("");
-  const { mutateAsync, isPending } = useCreateBrand();
+  const fileInputRef = useRef(null);
+  const { mutateAsync } = useCreateBrand();
 
   const {
     register,
     handleSubmit,
-    watch,
     setValue,
     formState: { errors },
   } = useForm({
@@ -73,7 +74,7 @@ const NewBrand = () => {
     },
   });
 
-  // 1. Get the file input ref and props
+  // Get the file input ref and props from react-hook-form
   const {
     ref: fileRef,
     onChange: fileOnChange,
@@ -82,36 +83,44 @@ const NewBrand = () => {
 
   const handleFileChange = (e) => {
     const file = e.target.files?.[0];
-
+    
     if (file) {
-      setValue("brandLogo", file, { shouldValidate: true });
+      if (file.size > 5 * 1024 * 1024) {
+        toast.warning("File size should be less than 5MB");
+        if (fileInputRef.current) {
+          fileInputRef.current.value = "";
+        }
+        return;
+      }
 
+      // Create preview
       const reader = new FileReader();
       reader.onload = (event) => {
         setLogoPreview(event.target.result);
       };
       reader.readAsDataURL(file);
     } else {
-      setValue("brandLogo", undefined, { shouldValidate: true }); // ✅ important
       setLogoPreview("");
     }
   };
 
-  // 3. Combine props for file input
+  // Combine props for file input
   const fileInputProps = {
     ...fileRest,
     ref: (e) => {
       fileRef(e);
-      // You can save the ref if needed
+      fileInputRef.current = e; // Assign the ref
     },
     onChange: (e) => {
-      fileOnChange(e); // RHForm's onChange
+      fileOnChange(e); // react-hook-form's onChange
       handleFileChange(e); // Our custom handler
+      setValue("brandLogo", e.target.files?.[0], { shouldValidate: true }); // Update form value
     },
   };
 
   const onSubmit = async (data) => {
-    console.log(data);
+    setIsSubmitting(true);
+    
     try {
       const formData = new FormData();
       formData.append("brandName", data.brandName);
@@ -126,14 +135,26 @@ const NewBrand = () => {
 
       if (response?.data?.success) {
         toast.success("Brand created successfully!");
-        navigate(`/item/brand/${response.data.data.id}`);
+        navigate(`/brand/${response.data.data.id}`);
       }
     } catch (error) {
-      console.log(error);
+      toast.error(error?.response?.data?.message || "Failed to create brand");
+      console.error("Submission error:", error);
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
-  // In your file input JSX, replace with:
+  const handleReset = () => {
+    setValue("brandName", "");
+    setValue("description", "");
+    setValue("status", "Active");
+    setValue("brandLogo", undefined);
+    setLogoPreview("");
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
+  };
 
   return (
     <div className="mx-auto">
@@ -160,9 +181,7 @@ const NewBrand = () => {
         {formFields.map((section, sectionIndex) => (
           <div
             key={sectionIndex}
-            className={`p-6 ${
-              sectionIndex !== 0 ? "border-t border-gray-100" : ""
-            }`}
+            className={`p-6 ${sectionIndex !== 0 ? "border-t border-gray-100" : ""}`}
           >
             <div className="flex items-center mb-6">
               {section.icon}
@@ -196,9 +215,7 @@ const NewBrand = () => {
                       id={field.name}
                       {...register(field.name)}
                       className={`block w-full px-4 py-2 border rounded-lg focus:ring-blue-500 focus:border-blue-500 bg-white ${
-                        errors[field.name]
-                          ? "border-red-500"
-                          : "border-gray-300"
+                        errors[field.name] ? "border-red-500" : "border-gray-300"
                       }`}
                     >
                       {field.options.map((option, i) => (
@@ -212,41 +229,47 @@ const NewBrand = () => {
                       id={field.name}
                       {...register(field.name)}
                       placeholder={field.placeholder}
-                      rows="3"
+                      rows={3}
                       className={`block w-full px-4 py-2 border rounded-lg focus:ring-blue-500 focus:border-blue-500 ${
-                        errors[field.name]
-                          ? "border-red-500"
-                          : "border-gray-300"
+                        errors[field.name] ? "border-red-500" : "border-gray-300"
                       }`}
                     />
                   ) : field.type === "file" ? (
-                    <div className="flex items-center">
-                      <label
-                        htmlFor="brandLogo"
-                        className={`flex flex-col items-center justify-center w-full h-32 border-2 border-dashed rounded-lg cursor-pointer bg-gray-50 hover:bg-gray-100 ${
-                          errors[field.name]
-                            ? "border-red-500"
-                            : "border-gray-300"
-                        }`}
-                      >
-                        <div className="flex flex-col items-center justify-center pt-5 pb-6">
-                          <FaImage className="w-8 h-8 mb-3 text-gray-400" />
-                          <p className="mb-2 text-sm text-gray-500">
-                            <span className="font-semibold">
-                              Click to upload
-                            </span>{" "}
-                            or drag and drop
-                          </p>
-                          <p className="text-xs text-gray-500">
-                            PNG, JPG, SVG (MAX. 5MB)
-                          </p>
-                        </div>
-                      </label>
-
+                    <div className="space-y-2">
+                      <div className="flex items-center gap-3">
+                        <label
+                          htmlFor="brandLogo"
+                          className={`flex flex-col items-center justify-center w-full h-32 border-2 border-dashed rounded-lg cursor-pointer bg-gray-50 hover:bg-gray-100 ${
+                            errors[field.name]
+                              ? "border-red-500"
+                              : "border-gray-300"
+                          }`}
+                        >
+                          {logoPreview ? (
+                            <img
+                              src={logoPreview}
+                              alt="Logo preview"
+                              className="h-full w-full object-contain p-2"
+                            />
+                          ) : (
+                            <div className="flex flex-col items-center justify-center pt-5 pb-6">
+                              <FaImage className="w-8 h-8 mb-3 text-gray-400" />
+                              <p className="mb-2 text-sm text-gray-500">
+                                <span className="font-semibold">
+                                  Click to upload
+                                </span>{" "}
+                                or drag and drop
+                              </p>
+                              <p className="text-xs text-gray-500">
+                                PNG, JPG, SVG (MAX. 5MB)
+                              </p>
+                            </div>
+                          )}
+                        </label>
+                      </div>
                       <input
                         id="brandLogo"
                         type="file"
-                        accept="image/*"
                         {...fileInputProps}
                         className="hidden"
                       />
@@ -258,9 +281,7 @@ const NewBrand = () => {
                       {...register(field.name)}
                       placeholder={field.placeholder}
                       className={`block w-full px-4 py-2 border rounded-lg focus:ring-blue-500 focus:border-blue-500 ${
-                        errors[field.name]
-                          ? "border-red-500"
-                          : "border-gray-300"
+                        errors[field.name] ? "border-red-500" : "border-gray-300"
                       }`}
                     />
                   )}
@@ -276,8 +297,15 @@ const NewBrand = () => {
         ))}
 
         <div className="bg-gray-50 px-6 py-4 border-t border-gray-200 flex justify-end">
-          <LoadingButton type="submit" isLoading={isPending}>
-            Create Brand
+          <button
+            type="button"
+            onClick={handleReset}
+            className="px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 mr-3"
+          >
+            Reset
+          </button>
+          <LoadingButton isLoading={isSubmitting} type="submit">
+            {isSubmitting ? "Creating..." : "Create Brand"}
           </LoadingButton>
         </div>
       </form>

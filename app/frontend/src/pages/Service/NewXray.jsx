@@ -42,7 +42,7 @@ const NewXray = () => {
       patientMobile: "",
       patientName: "",
       patientSex: "Male",
-      age: "",
+      age: 0,
       referredDoctor: "",
       testDate: today,
       reportDate: "",
@@ -269,7 +269,7 @@ const NewXray = () => {
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700">
-                Report Date
+                Report Date <span className="text-red-500 ml-1">*</span>
               </label>
               <div className="relative">
                 <input

@@ -66,7 +66,7 @@ const formFields = [
 ];
 
 const NewAmbulance = () => {
-   const navigate = useNavigate();
+  const navigate = useNavigate();
   const {
     register,
     handleSubmit,
@@ -90,7 +90,7 @@ const NewAmbulance = () => {
     const response = await mutateAsync(data);
 
     if (response?.data?.success) {
-      navigate("/ambulance/:id");
+      navigate(`/ambulance/${response.data.data.id}`);
     }
   };
 
@@ -157,8 +157,8 @@ const NewAmbulance = () => {
                           aria-invalid={error ? "true" : "false"}
                         >
                           <option value="" disabled selected hidden>
-                                                     {field.placeholder}
-                                                   </option>
+                            {field.placeholder}
+                          </option>
                           {field.options.map((option, i) => (
                             <option key={i} value={option}>
                               {option}

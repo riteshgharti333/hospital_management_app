@@ -40,15 +40,14 @@ const NewVoucher = () => {
     defaultValues: {
       voucherDate: new Date().toISOString().split("T")[0],
       paymentFor: "",
-      voucherType: "",
+      voucherType: "Payment",
       vendorName: "",
       paymentDate: "",
-      amount: "",
-      paymentMode: "",
-      // --- NEW: Add default values for the new fields ---
+      amount: 0,
+      paymentMode: "Cash",
       referenceNo: "",
       description: "",
-      status: "Pending", // Default status
+      status: "Pending", 
     },
   });
 

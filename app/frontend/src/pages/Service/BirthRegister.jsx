@@ -152,7 +152,7 @@ const BirthRegister = () => {
 
   return (
     <div className="mx-auto">
-      <div className="mb-8">
+      <div className="mb-5">
         <div className="flex items-center">
           <BackButton />
           <div>

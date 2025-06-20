@@ -103,9 +103,7 @@ const NewNurse = () => {
 
   const onSubmit = async (data) => {
     const response = await mutateAsync(data);
-    if (response?.data?.success) {
-      navigate("/nurse/:id");
-    }
+     navigate(`/nurse/${response.data.data.id}`);
   };
 
   return (

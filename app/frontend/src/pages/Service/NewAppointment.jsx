@@ -78,7 +78,7 @@ const NewAppointment = () => {
     const response = await mutateAsync(cleanedData);
 
     if (response?.data?.success) {
-      navigate("/appointment/:id");
+         navigate(`/appointment/${response.data.data.id}`);
     }
   };
 

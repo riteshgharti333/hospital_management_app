@@ -183,8 +183,8 @@ export const sidebarData = [
     subItems: [
       { title: "Company Creation", link: "/company-creation" },
       { title: "Product Category", link: "/product-category" },
-      { title: "Add Item / Service", link: "/add-product" },
-      { title: "View All Item / Service", link: "/all-products" },
+      // { title: "Add Item / Service", link: "/add-product" },
+      // { title: "View All Item / Service", link: "/all-products" },
       // { title: "Service Charges Update", link: "/service-charges-update" },
     ],
   },
