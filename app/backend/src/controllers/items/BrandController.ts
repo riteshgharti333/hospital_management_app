@@ -1,5 +1,4 @@
 import { Request, Response, NextFunction } from "express";
-import { z } from "zod";
 import { catchAsyncError } from "../../middlewares/catchAsyncError";
 import { ErrorHandler } from "../../middlewares/errorHandler";
 import { sendResponse } from "../../utils/sendResponse";
@@ -12,28 +11,36 @@ import {
   updateBrand,
   deleteBrand,
 } from "../../services/itemService/brandService";
-import {brandSchema} from "@hospital/schemas"
+import { brandSchema } from "@hospital/schemas";
+import { uploadToCloudinary, deleteFromCloudinary } from "../../utils/cloudinaryUploader";
 
+export const createBrandRecord = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    let uploadedUrl: string | undefined;
 
-export const createBrandRecord = catchAsyncError(
-  async (req: Request, res: Response, next: NextFunction) => {
-    const { file } = req;
+    if (req.file) {
+      uploadedUrl = await uploadToCloudinary(req.file.buffer);
+    }
 
-    // Parse and validate req.body
     const validated = brandSchema.parse({
       ...req.body,
-      brandLogo: file?.path // This can be string or undefined
+      brandLogo: uploadedUrl,
     });
 
-    // Check for duplicate brand name
     const existing = await getBrandByName(validated.brandName);
     if (existing) {
       return next(
-        new ErrorHandler("Brand with this name already exists", StatusCodes.CONFLICT)
+        new ErrorHandler(
+          "Brand with this name already exists",
+          StatusCodes.CONFLICT
+        )
       );
     }
 
-    // Create brand - no need for separate payload object
     const brand = await createBrand(validated);
 
     sendResponse(res, {
@@ -42,8 +49,10 @@ export const createBrandRecord = catchAsyncError(
       message: "Brand created successfully",
       data: brand,
     });
+  } catch (error) {
+    next(error);
   }
-);
+};
 
 export const getAllBrandRecords = catchAsyncError(
   async (_req: Request, res: Response) => {
@@ -85,23 +94,45 @@ export const updateBrandRecord = catchAsyncError(
       return next(new ErrorHandler("Invalid ID", StatusCodes.BAD_REQUEST));
     }
 
-    const validated = brandSchema.partial().parse(req.body);
+    const existingBrand = await getBrandById(id);
+    if (!existingBrand) {
+      return next(new ErrorHandler("Brand not found", StatusCodes.NOT_FOUND));
+    }
 
-    if (validated.brandName) {
-      const existing = await getBrandByName(validated.brandName);
+    let uploadedUrl: string | undefined;
+
+    if (req.file) {
+      if (existingBrand.brandLogo) {
+        await deleteFromCloudinary(existingBrand.brandLogo);
+      }
+      uploadedUrl = await uploadToCloudinary(req.file.buffer);
+    }
+
+    const partialSchema = brandSchema.partial();
+    const validatedData = partialSchema.parse({
+      ...req.body,
+      brandLogo: uploadedUrl ?? req.body.brandLogo ?? undefined,
+    });
+
+    if (validatedData.brandName) {
+      const existing = await getBrandByName(validatedData.brandName);
       if (existing && existing.id !== id) {
         return next(
-          new ErrorHandler("Another brand with this name already exists", StatusCodes.CONFLICT)
+          new ErrorHandler(
+            "Another brand with this name already exists",
+            StatusCodes.CONFLICT
+          )
         );
       }
     }
 
-    const updated = await updateBrand(id, validated);
+    const updatedBrand = await updateBrand(id, validatedData);
+
     sendResponse(res, {
       success: true,
       statusCode: StatusCodes.OK,
       message: "Brand updated successfully",
-      data: updated,
+      data: updatedBrand,
     });
   }
 );
@@ -113,16 +144,21 @@ export const deleteBrandRecord = catchAsyncError(
       return next(new ErrorHandler("Invalid ID", StatusCodes.BAD_REQUEST));
     }
 
-    const deleted = await deleteBrand(id);
-    if (!deleted) {
+    const existingBrand = await getBrandById(id);
+    if (!existingBrand) {
       return next(new ErrorHandler("Brand not found", StatusCodes.NOT_FOUND));
     }
+
+    if (existingBrand.brandLogo) {
+      await deleteFromCloudinary(existingBrand.brandLogo);
+    }
+
+    await deleteBrand(id);
 
     sendResponse(res, {
       success: true,
       statusCode: StatusCodes.OK,
       message: "Brand deleted successfully",
-      data: deleted,
     });
   }
 );

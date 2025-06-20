@@ -7,15 +7,18 @@ import {
   deleteEmployeeRecord,
 } from "../../controllers/transection/EmployeeController";
 
+import { uploadMiddleware } from "../../middlewares/multer.middleware";
+
+
 const router = express.Router();
 
 router.route("/")
-  .post(createEmployeeRecord)
+  .post(uploadMiddleware.single("file") , createEmployeeRecord)
   .get(getAllEmployeeRecords);
 
 router.route("/:id")
   .get(getEmployeeRecordById)
-  .patch(updateEmployeeRecord)
+  .patch( uploadMiddleware.single("file"),updateEmployeeRecord)
   .delete(deleteEmployeeRecord);
 
 export default router;

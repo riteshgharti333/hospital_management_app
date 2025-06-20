@@ -2,30 +2,38 @@ import { PrismaClient } from "@prisma/client";
 
 const prisma = new PrismaClient();
 
-export const createPrescription = async (data: {
+export type MedicineInput = {
+  medicineName: string;
+  description: string;
+};
+
+export type PrescriptionInput = {
   prescriptionDate: Date;
   doctorId: number;
   patientId: number;
-  prescriptionDoc?: string | null; 
+  prescriptionDoc?: string | null;
   status?: string;
-  medicines: {
-    medicineName: string;
-    description: string;
-  }[];
-}) => {
+  medicines: MedicineInput[];
+};
+
+export type UpdatePrescriptionInput = Partial<Omit<PrescriptionInput, 'medicines'>> & {
+  medicines?: MedicineInput[];
+};
+
+export const createPrescription = async (data: PrescriptionInput) => {
   return prisma.prescription.create({
     data: {
       ...data,
-       prescriptionDoc: data.prescriptionDoc ?? null, 
+      prescriptionDoc: data.prescriptionDoc ?? null,
       medicines: {
-        create: data.medicines
-      }
+        create: data.medicines,
+      },
     },
     include: {
       medicines: true,
       doctor: true,
-      patient: true
-    }
+      patient: true,
+    },
   });
 };
 
@@ -35,8 +43,8 @@ export const getAllPrescriptions = async () => {
     include: {
       medicines: true,
       doctor: true,
-      patient: true
-    }
+      patient: true,
+    },
   });
 };
 
@@ -46,8 +54,8 @@ export const getPrescriptionById = async (id: number) => {
     include: {
       medicines: true,
       doctor: true,
-      patient: true
-    }
+      patient: true,
+    },
   });
 };
 
@@ -57,54 +65,42 @@ export const getPrescriptionsByPatient = async (patientId: number) => {
     orderBy: { prescriptionDate: "desc" },
     include: {
       medicines: true,
-      doctor: true
-    }
+      doctor: true,
+    },
   });
 };
 
 export const updatePrescription = async (
   id: number,
-  data: {
-    prescriptionDate?: Date;
-    doctorId?: number;
-    patientId?: number;
-    prescriptionDoc?: string | null;  // Added null to match schema
-    status?: string;
-    medicines?: {
-      medicineName: string;
-      description: string;
-    }[];
-  }
+  data: UpdatePrescriptionInput
 ) => {
-  // First update prescription details
+  // First update main prescription
   const updatedPrescription = await prisma.prescription.update({
     where: { id },
     data: {
       prescriptionDate: data.prescriptionDate,
       doctorId: data.doctorId,
       patientId: data.patientId,
-      prescriptionDoc: data.prescriptionDoc ?? null,  // Handle undefined → null
-      status: data.status
+      prescriptionDoc: data.prescriptionDoc ?? null,
+      status: data.status,
     },
     include: {
-      medicines: true
-    }
+      medicines: true,
+    },
   });
 
-  // Then update medicines if provided
+  // Then handle medicines if provided
   if (data.medicines) {
     await prisma.$transaction([
-      // Delete existing medicines
       prisma.medicine.deleteMany({
-        where: { prescriptionId: id }
+        where: { prescriptionId: id },
       }),
-      // Create new medicines
       prisma.medicine.createMany({
-        data: data.medicines.map(medicine => ({
+        data: data.medicines.map((medicine) => ({
           ...medicine,
-          prescriptionId: id
-        }))
-      })
+          prescriptionId: id,
+        })),
+      }),
     ]);
   }
 
@@ -113,19 +109,17 @@ export const updatePrescription = async (
     include: {
       medicines: true,
       doctor: true,
-      patient: true
-    }
+      patient: true,
+    },
   });
 };
 
 export const deletePrescription = async (id: number) => {
-  // First delete all medicines
   await prisma.medicine.deleteMany({
-    where: { prescriptionId: id }
+    where: { prescriptionId: id },
   });
 
-  // Then delete the prescription
   return prisma.prescription.delete({
-    where: { id }
+    where: { id },
   });
 };

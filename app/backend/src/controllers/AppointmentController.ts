@@ -16,10 +16,7 @@ import {appointmentSchema} from "@hospital/schemas"
 
 export const createAppointmentRecord = catchAsyncError(
   async (req: Request, res: Response) => {
-    const validated = appointmentSchema.parse({
-      ...req.body,
-      appointmentDate: new Date(req.body.appointmentDate)
-    });
+    const validated = appointmentSchema.parse(req.body);
 
     const appointment = await createAppointment(validated);
     sendResponse(res, {

@@ -17,12 +17,7 @@ import { xrayReportSchema } from "@hospital/schemas";
 
 export const createXrayReportRecord = catchAsyncError(
   async (req: Request, res: Response, next: NextFunction) => {
-    const validated = xrayReportSchema.parse({
-      ...req.body,
-      billDate: new Date(req.body.billDate),
-      testDate: new Date(req.body.testDate),
-      reportDate: new Date(req.body.reportDate),
-    });
+    const validated = xrayReportSchema.parse(req.body);
 
     // Validate netBillAmount calculation
     const calculatedNet =

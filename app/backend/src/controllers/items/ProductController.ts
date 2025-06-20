@@ -13,20 +13,24 @@ import {
   deleteProduct,
 } from "../../services/itemService/productService";
 import { productSchema } from "@hospital/schemas";
+import { uploadToCloudinary, deleteFromCloudinary } from "../../utils/cloudinaryUploader";
 
+// ✅ CREATE
 export const createProductRecord = catchAsyncError(
   async (req: Request, res: Response, next: NextFunction) => {
-    const validated = productSchema.parse(req.body);
-    // Ensure all required fields for ProductInput are present
-    const productInput = {
-      ...validated,
-      brand: req.body.brand,
-      category: req.body.category,
-      hsnCode: req.body.hsnCode,
-      gstPercentage: req.body.gstPercentage,
-    };
-    const product = await createProduct(productInput);
-    
+    let uploadedLogoUrl: string | undefined;
+
+    if (req.file) {
+      uploadedLogoUrl = await uploadToCloudinary(req.file.buffer);
+    }
+
+    const validated = productSchema.parse({
+      ...req.body,
+      categoryLogo: uploadedLogoUrl, // ✅ attach cloudinary URL
+    });
+
+    const product = await createProduct(validated);
+
     sendResponse(res, {
       success: true,
       statusCode: StatusCodes.CREATED,
@@ -36,15 +40,16 @@ export const createProductRecord = catchAsyncError(
   }
 );
 
+// ✅ GET ALL
 export const getAllProductRecords = catchAsyncError(
   async (req: Request, res: Response) => {
     const parentCategory = req.query.parentCategory as string | undefined;
     const subCategory = req.query.subCategory as string | undefined;
-    
-    const products = parentCategory 
+
+    const products = parentCategory
       ? await getProductsByCategory(parentCategory)
       : await getAllProducts();
-      
+
     sendResponse(res, {
       success: true,
       statusCode: StatusCodes.OK,
@@ -58,6 +63,7 @@ export const getAllProductRecords = catchAsyncError(
   }
 );
 
+// ✅ GET BY ID
 export const getProductRecordById = catchAsyncError(
   async (req: Request, res: Response, next: NextFunction) => {
     const id = Number(req.params.id);
@@ -79,6 +85,7 @@ export const getProductRecordById = catchAsyncError(
   }
 );
 
+// ✅ UPDATE
 export const updateProductRecord = catchAsyncError(
   async (req: Request, res: Response, next: NextFunction) => {
     const id = Number(req.params.id);
@@ -86,23 +93,39 @@ export const updateProductRecord = catchAsyncError(
       return next(new ErrorHandler("Invalid ID", StatusCodes.BAD_REQUEST));
     }
 
-    const partialSchema = productSchema.partial();
-    const validatedData = partialSchema.parse(req.body);
-
-    const updatedProduct = await updateProduct(id, validatedData);
-    if (!updatedProduct) {
+    const existing = await getProductById(id);
+    if (!existing) {
       return next(new ErrorHandler("Product not found", StatusCodes.NOT_FOUND));
     }
+
+    let uploadedLogoUrl: string | undefined;
+
+    if (req.file) {
+      // ❌ delete old logo
+      if (existing.categoryLogo) {
+        await deleteFromCloudinary(existing.categoryLogo);
+      }
+      uploadedLogoUrl = await uploadToCloudinary(req.file.buffer);
+    }
+
+    const partialSchema = productSchema.partial();
+    const validated = partialSchema.parse({
+      ...req.body,
+      categoryLogo: uploadedLogoUrl ?? req.body.categoryLogo ?? undefined,
+    });
+
+    const updated = await updateProduct(id, validated);
 
     sendResponse(res, {
       success: true,
       statusCode: StatusCodes.OK,
       message: "Product updated successfully",
-      data: updatedProduct,
+      data: updated,
     });
   }
 );
 
+// ✅ DELETE
 export const deleteProductRecord = catchAsyncError(
   async (req: Request, res: Response, next: NextFunction) => {
     const id = Number(req.params.id);
@@ -110,10 +133,17 @@ export const deleteProductRecord = catchAsyncError(
       return next(new ErrorHandler("Invalid ID", StatusCodes.BAD_REQUEST));
     }
 
-    const deletedProduct = await deleteProduct(id);
-    if (!deletedProduct) {
+    const product = await getProductById(id);
+    if (!product) {
       return next(new ErrorHandler("Product not found", StatusCodes.NOT_FOUND));
     }
+
+    // ✅ Delete file from Cloudinary
+    if (product.categoryLogo) {
+      await deleteFromCloudinary(product.categoryLogo);
+    }
+
+    const deletedProduct = await deleteProduct(id);
 
     sendResponse(res, {
       success: true,
