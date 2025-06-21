@@ -1,18 +1,13 @@
 import { PrismaClient } from "@prisma/client";
 
 const globalForPrisma = globalThis as unknown as {
-  prisma?: PrismaClient;
+  prisma: PrismaClient | undefined;
 };
 
-// ✅ Create a single PrismaClient instance
-const prismaClient = globalForPrisma.prisma ?? new PrismaClient({
-  log: ['error', 'warn'], // log errors and warnings only
-});
+export const prisma =
+  globalForPrisma.prisma ??
+  new PrismaClient({
+    log: ["error", "warn"], 
+  });
 
-// ✅ In development, store it on the global object to prevent re-instantiations
-if (process.env.NODE_ENV !== "production") {
-  globalForPrisma.prisma = prismaClient;
-}
-
-// ✅ Export the instance for use across the app
-export const prisma = prismaClient;
+if (process.env.NODE_ENV !== "production") globalForPrisma.prisma = prisma;
