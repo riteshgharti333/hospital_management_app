@@ -2,9 +2,9 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.deleteDiagnosticsEntry = exports.updateDiagnosticsEntry = exports.getPatientDiagnosticsTotal = exports.getDiagnosticsEntryById = exports.getAllDiagnosticsEntries = exports.createDiagnosticsEntry = void 0;
 const client_1 = require("@prisma/client");
-const prisma = new client_1.PrismaClient();
+const prisma_1 = require("../../lib/prisma");
 const createDiagnosticsEntry = async (data) => {
-    return prisma.diagnosticsLedger.create({
+    return prisma_1.prisma.diagnosticsLedger.create({
         data: {
             ...data,
             amount: new client_1.Prisma.Decimal(data.amount.toString()), // Force Decimal conversion
@@ -28,18 +28,18 @@ const getAllDiagnosticsEntries = async (filters) => {
     if (filters.testName) {
         where.testName = filters.testName;
     }
-    return prisma.diagnosticsLedger.findMany({
+    return prisma_1.prisma.diagnosticsLedger.findMany({
         where,
         orderBy: { date: "desc" },
     });
 };
 exports.getAllDiagnosticsEntries = getAllDiagnosticsEntries;
 const getDiagnosticsEntryById = async (id) => {
-    return prisma.diagnosticsLedger.findUnique({ where: { id } });
+    return prisma_1.prisma.diagnosticsLedger.findUnique({ where: { id } });
 };
 exports.getDiagnosticsEntryById = getDiagnosticsEntryById;
 const getPatientDiagnosticsTotal = async (patientName) => {
-    const entries = await prisma.diagnosticsLedger.findMany({
+    const entries = await prisma_1.prisma.diagnosticsLedger.findMany({
         where: { patientName },
         select: { amount: true },
     });
@@ -47,7 +47,7 @@ const getPatientDiagnosticsTotal = async (patientName) => {
 };
 exports.getPatientDiagnosticsTotal = getPatientDiagnosticsTotal;
 const updateDiagnosticsEntry = async (id, data) => {
-    return prisma.diagnosticsLedger.update({
+    return prisma_1.prisma.diagnosticsLedger.update({
         where: { id },
         data: {
             ...data,
@@ -60,6 +60,6 @@ const updateDiagnosticsEntry = async (id, data) => {
 };
 exports.updateDiagnosticsEntry = updateDiagnosticsEntry;
 const deleteDiagnosticsEntry = async (id) => {
-    return prisma.diagnosticsLedger.delete({ where: { id } });
+    return prisma_1.prisma.diagnosticsLedger.delete({ where: { id } });
 };
 exports.deleteDiagnosticsEntry = deleteDiagnosticsEntry;

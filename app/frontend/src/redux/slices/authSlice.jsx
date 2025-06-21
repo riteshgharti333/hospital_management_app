@@ -3,9 +3,10 @@ import {
   loginAsyncUser,
   registerAsyncUser,
   logoutAsyncUser,
-  userProfileAsync,
-  updateProfileAsync,
-  updatePasswordAsync,
+  getUserProfile,
+  updateUserProfile,
+  updateUserPassword,
+  refreshAccessToken 
 } from "../asyncThunks/authThunks";
 
 const initialState = {
@@ -57,49 +58,21 @@ const authSlice = createSlice({
         localStorage.removeItem("user");
       });
 
+    // Add to builder
     builder
-      // profile
-      .addCase(userProfileAsync.pending, (state) => {
-        state.status = "loading";
+      .addCase(getUserProfile.fulfilled, (state, action) => {
+        state.profile = action.payload?.data;
       })
-      .addCase(userProfileAsync.fulfilled, (state, action) => {
-        state.status = "succeeded";
-        state.profile = action.payload;
-        // console.log(action.payload.profile);
+      .addCase(updateUserProfile.fulfilled, (state, action) => {
+        state.user = action.payload?.data;
+        state.profile = action.payload?.data;
       })
-      .addCase(userProfileAsync.rejected, (state, action) => {
-        state.status = "failed";
-        state.error = action.payload;
-      });
-
-    builder
-      // update profile
-      .addCase(updateProfileAsync.pending, (state) => {
-        state.status = "loading";
-      })
-      .addCase(updateProfileAsync.fulfilled, (state, action) => {
-        state.status = "succeeded";
-        const updatedProfile = action.payload.user;
-        if (state.profile) {
-          state.profile.userDetails.user = updatedProfile;
-        }
-      })
-      .addCase(updateProfileAsync.rejected, (state, action) => {
-        state.status = "failed";
-        state.error = action.payload;
-      });
-
-    builder
-      // update password
-      .addCase(updatePasswordAsync.pending, (state) => {
-        state.status = "loading";
-      })
-      .addCase(updatePasswordAsync.fulfilled, (state) => {
+      .addCase(updateUserPassword.fulfilled, (state) => {
         state.status = "succeeded";
       })
-      .addCase(updatePasswordAsync.rejected, (state, action) => {
-        state.status = "failed";
-        state.error = action.payload;
+      .addCase(refreshAccessToken.rejected, (state) => {
+        state.user = null;
+        state.status = "unauthenticated";
       });
   },
 });

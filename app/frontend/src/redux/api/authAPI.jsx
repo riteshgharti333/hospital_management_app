@@ -21,21 +21,26 @@ export const logoutUser = () => {
   return axios.post(`${baseUrl}/auth/logout`, { withCredentials: true });
 };
 
-// USER PROFILE
-export const userProfile = () => {
+// GET PROFILE
+export const getProfile = () => {
   return axios.get(`${baseUrl}/auth/profile`, { withCredentials: true });
 };
 
 // UPDATE PROFILE
-export const updateProfile = (profileData) => {
-  return axios.put(`${baseUrl}/auth/profile`, profileData, {
+export const updateProfile = (userData) => {
+  return axios.put(`${baseUrl}/auth/update-profile`, userData, {
     withCredentials: true,
   });
 };
 
-// UPDATE PASSWORD
-export const updatePassword = (passwordData) => {
-  return axios.put(`${baseUrl}/auth/update-password`, passwordData, {
+// CHANGE PASSWORD
+export const changePassword = (passwords) => {
+  return axios.put(`${baseUrl}/auth/change-password`, passwords, {
     withCredentials: true,
   });
+};
+
+// REFRESH TOKEN
+export const refreshToken = () => {
+  return axios.post(`${baseUrl}/auth/refresh-token`, {}, { withCredentials: true });
 };

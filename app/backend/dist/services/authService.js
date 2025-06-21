@@ -1,34 +1,34 @@
 "use strict";
-// src/services/authService.ts
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.deleteUser = exports.updateUser = exports.getUserById = exports.getUserByEmail = exports.createUser = void 0;
-const client_1 = require("@prisma/client");
-const prisma = new client_1.PrismaClient();
-// Create user (register)
+exports.updateUserPassword = exports.updateUserDetails = exports.getUserById = exports.getUserByEmail = exports.createUser = void 0;
+const prisma_1 = require("../lib/prisma");
 const createUser = async (data) => {
-    return prisma.user.create({ data });
+    return prisma_1.prisma.user.create({ data });
 };
 exports.createUser = createUser;
 // Get user by email (for login or checking duplicates)
 const getUserByEmail = async (email) => {
-    return prisma.user.findUnique({ where: { email } });
+    return prisma_1.prisma.user.findUnique({ where: { email } });
 };
 exports.getUserByEmail = getUserByEmail;
-// Get user by ID (for auth middleware or profile)
+// Get user by ID
 const getUserById = async (id) => {
-    return prisma.user.findUnique({ where: { id } });
+    return prisma_1.prisma.user.findUnique({ where: { id } });
 };
 exports.getUserById = getUserById;
-// Optional: Update user details
-const updateUser = async (id, data) => {
-    return prisma.user.update({
+// Update user (name and email)
+const updateUserDetails = async (id, data) => {
+    return prisma_1.prisma.user.update({
         where: { id },
         data,
     });
 };
-exports.updateUser = updateUser;
-// Optional: Delete user (soft delete or full delete)
-const deleteUser = async (id) => {
-    return prisma.user.delete({ where: { id } });
+exports.updateUserDetails = updateUserDetails;
+// Update password
+const updateUserPassword = async (id, hashedPassword) => {
+    return prisma_1.prisma.user.update({
+        where: { id },
+        data: { password: hashedPassword },
+    });
 };
-exports.deleteUser = deleteUser;
+exports.updateUserPassword = updateUserPassword;

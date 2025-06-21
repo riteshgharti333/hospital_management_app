@@ -1,16 +1,12 @@
-// src/services/authService.ts
+import { prisma } from "../lib/prisma";
 
-import { PrismaClient } from "@prisma/client";
-
-const prisma = new PrismaClient();
 
 export type RegisterInput = {
   name: string;
   email: string;
-  password: string; // Already hashed before calling this service
+  password: string; 
 };
 
-// Create user (register)
 export const createUser = async (data: RegisterInput) => {
   return prisma.user.create({ data });
 };
@@ -20,20 +16,31 @@ export const getUserByEmail = async (email: string) => {
   return prisma.user.findUnique({ where: { email } });
 };
 
-// Get user by ID (for auth middleware or profile)
+
+
+// Get user by ID
 export const getUserById = async (id: string) => {
   return prisma.user.findUnique({ where: { id } });
 };
 
-// Optional: Update user details
-export const updateUser = async (id: string, data: Partial<RegisterInput>) => {
+// Update user (name and email)
+export const updateUserDetails = async (
+  id: string,
+  data: { name?: string; email?: string }
+) => {
   return prisma.user.update({
     where: { id },
     data,
   });
 };
 
-// Optional: Delete user (soft delete or full delete)
-export const deleteUser = async (id: string) => {
-  return prisma.user.delete({ where: { id } });
+// Update password
+export const updateUserPassword = async (id: string, hashedPassword: string) => {
+  return prisma.user.update({
+    where: { id },
+    data: { password: hashedPassword },
+  });
 };
+
+
+

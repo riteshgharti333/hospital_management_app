@@ -51,7 +51,7 @@ const ledgerTitles = [
   },
   {
     title: "Lab/Diagnostics Ledger",
-    link: "ledger/lab-ledger",
+    link: "ledger/diagnostics-ledger",
   },
   {
     title: "Cash Ledger",

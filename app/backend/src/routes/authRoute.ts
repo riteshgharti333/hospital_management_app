@@ -1,15 +1,22 @@
 import express from "express";
-import { login, register, logout } from "../controllers/AuthController";
+import { register, login, logout, refreshAccessToken, getMyProfile, updateProfile, changePassword } from "../controllers/AuthController";
+import { authLimiter } from "../middlewares/rateLimiter";
+import { isAuthenticated } from "../middlewares/isAuthenticated";
+// import { isAuthenticated } from "../middlewares/authMiddleware";
 
 const router = express.Router();
 
-// Register
 router.post("/register", register);
 
-// Login
-router.post("/login", login);
+router.post("/login", authLimiter, login);
 
 router.post("/logout", logout);
+router.post("/refresh-token", refreshAccessToken);
+
+router.get("/profile" , isAuthenticated, getMyProfile);
+router.put("/update-profile" , isAuthenticated, updateProfile);
+router.put("/change-password" , isAuthenticated, changePassword);
+
 
 
 

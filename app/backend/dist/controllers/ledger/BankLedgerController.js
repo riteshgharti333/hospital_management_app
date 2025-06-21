@@ -10,7 +10,7 @@ const schemas_1 = require("@hospital/schemas");
 exports.createBankLedgerRecord = (0, catchAsyncError_1.catchAsyncError)(async (req, res, next) => {
     const validated = schemas_1.bankLedgerSchema.parse({
         ...req.body,
-        date: new Date(req.body.date)
+        date: new Date(req.body.date),
     });
     const entry = await (0, bankLedgerService_1.createBankLedgerEntry)(validated);
     (0, sendResponse_1.sendResponse)(res, {
@@ -23,9 +23,13 @@ exports.createBankLedgerRecord = (0, catchAsyncError_1.catchAsyncError)(async (r
 exports.getAllBankLedgerRecords = (0, catchAsyncError_1.catchAsyncError)(async (req, res) => {
     const filters = {
         bankName: req.query.bankName,
-        startDate: req.query.startDate ? new Date(req.query.startDate) : undefined,
-        endDate: req.query.endDate ? new Date(req.query.endDate) : undefined,
-        amountType: req.query.amountType
+        startDate: req.query.startDate
+            ? new Date(req.query.startDate)
+            : undefined,
+        endDate: req.query.endDate
+            ? new Date(req.query.endDate)
+            : undefined,
+        amountType: req.query.amountType,
     };
     const entries = await (0, bankLedgerService_1.getAllBankLedgerEntries)(filters);
     (0, sendResponse_1.sendResponse)(res, {
@@ -72,7 +76,7 @@ exports.updateBankLedgerRecord = (0, catchAsyncError_1.catchAsyncError)(async (r
     const partialSchema = schemas_1.bankLedgerSchema.partial();
     const validatedData = partialSchema.parse({
         ...req.body,
-        date: req.body.date ? new Date(req.body.date) : undefined
+        date: req.body.date ? new Date(req.body.date) : undefined,
     });
     const updatedEntry = await (0, bankLedgerService_1.updateBankLedgerEntry)(id, validatedData);
     if (!updatedEntry) {

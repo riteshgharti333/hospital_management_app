@@ -1,5 +1,5 @@
 import { z } from "zod";
-export declare const authSchema: z.ZodObject<{
+export declare const registerSchema: z.ZodObject<{
     name: z.ZodOptional<z.ZodString>;
     email: z.ZodString;
     password: z.ZodString;
@@ -11,6 +11,16 @@ export declare const authSchema: z.ZodObject<{
     email: string;
     password: string;
     name?: string | undefined;
+}>;
+export declare const loginSchema: z.ZodObject<{
+    email: z.ZodString;
+    password: z.ZodString;
+}, "strip", z.ZodTypeAny, {
+    email: string;
+    password: string;
+}, {
+    email: string;
+    password: string;
 }>;
 export declare const bedSchema: z.ZodObject<{
     bedNumber: z.ZodString;
@@ -45,8 +55,8 @@ export declare const admissionSchema: z.ZodObject<{
     guardianName: z.ZodString;
     phoneNo: z.ZodString;
     patientAddress: z.ZodString;
-    bodyWeightKg: z.ZodDefault<z.ZodNumber>;
-    bodyHeightCm: z.ZodDefault<z.ZodNumber>;
+    bodyWeightKg: z.ZodNumber;
+    bodyHeightCm: z.ZodNumber;
     literacy: z.ZodString;
     occupation: z.ZodString;
     doctorName: z.ZodString;
@@ -89,13 +99,13 @@ export declare const admissionSchema: z.ZodObject<{
     guardianName: string;
     phoneNo: string;
     patientAddress: string;
+    bodyWeightKg: number;
+    bodyHeightCm: number;
     literacy: string;
     occupation: string;
     doctorName: string;
     dischargeDate?: unknown;
     urnNo?: string | undefined;
-    bodyWeightKg?: number | undefined;
-    bodyHeightCm?: number | undefined;
     isDelivery?: boolean | undefined;
 }>;
 export declare const ambulanceSchema: z.ZodObject<{
@@ -121,7 +131,7 @@ export declare const ambulanceSchema: z.ZodObject<{
     status?: "Available" | "Maintenance" | "On-Call" | undefined;
 }>;
 export declare const appointmentSchema: z.ZodObject<{
-    appointmentDate: z.ZodDate;
+    appointmentDate: z.ZodEffects<z.ZodEffects<z.ZodString, string, string>, Date, string>;
     doctorName: z.ZodString;
     department: z.ZodString;
     appointmentTime: z.ZodString;
@@ -132,7 +142,7 @@ export declare const appointmentSchema: z.ZodObject<{
     appointmentTime: string;
 }, {
     doctorName: string;
-    appointmentDate: Date;
+    appointmentDate: string;
     department: string;
     appointmentTime: string;
 }>;
@@ -141,8 +151,8 @@ export declare const bedAssignmentSchema: z.ZodObject<{
     bedNumber: z.ZodString;
     bedType: z.ZodString;
     patientName: z.ZodString;
-    allocateDate: z.ZodDate;
-    dischargeDate: z.ZodOptional<z.ZodDate>;
+    allocateDate: z.ZodEffects<z.ZodEffects<z.ZodString, string, string>, Date, string>;
+    dischargeDate: z.ZodEffects<z.ZodOptional<z.ZodDate>, Date | undefined, unknown>;
     status: z.ZodDefault<z.ZodEnum<["Active", "Discharged", "Transferred"]>>;
     notes: z.ZodOptional<z.ZodString>;
 }, "strip", z.ZodTypeAny, {
@@ -159,14 +169,14 @@ export declare const bedAssignmentSchema: z.ZodObject<{
     wardNumber: string;
     patientName: string;
     bedType: string;
-    allocateDate: Date;
+    allocateDate: string;
     status?: "Active" | "Discharged" | "Transferred" | undefined;
-    dischargeDate?: Date | undefined;
+    dischargeDate?: unknown;
     notes?: string | undefined;
 }>;
 export declare const birthSchema: z.ZodObject<{
     birthTime: z.ZodString;
-    birthDate: z.ZodDate;
+    birthDate: z.ZodEffects<z.ZodEffects<z.ZodString, string, string>, Date, string>;
     babySex: z.ZodString;
     babyWeightKg: z.ZodNumber;
     fathersName: z.ZodString;
@@ -188,7 +198,7 @@ export declare const birthSchema: z.ZodObject<{
     attendantsName: string;
 }, {
     birthTime: string;
-    birthDate: Date;
+    birthDate: string;
     babySex: string;
     babyWeightKg: number;
     fathersName: string;
@@ -381,7 +391,7 @@ export declare const xrayReportSchema: z.ZodObject<{
     age: z.ZodNumber;
     referredDoctor: z.ZodString;
     testDate: z.ZodDate;
-    reportDate: z.ZodDate;
+    reportDate: z.ZodEffects<z.ZodEffects<z.ZodString, string, string>, Date, string>;
     patientAddress: z.ZodOptional<z.ZodString>;
     examDescription: z.ZodString;
     department: z.ZodString;
@@ -416,7 +426,7 @@ export declare const xrayReportSchema: z.ZodObject<{
     patientMobile: string;
     referredDoctor: string;
     testDate: Date;
-    reportDate: Date;
+    reportDate: string;
     examDescription: string;
     billAmount: number;
     discountPercent: number;
@@ -449,10 +459,10 @@ export declare const billSchema: z.ZodObject<{
     billType: z.ZodString;
     mobile: z.ZodString;
     admissionNo: z.ZodString;
-    admissionDate: z.ZodDate;
-    dateOfBirth: z.ZodDate;
+    admissionDate: z.ZodEffects<z.ZodEffects<z.ZodString, string, string>, Date, string>;
+    dateOfBirth: z.ZodEffects<z.ZodEffects<z.ZodString, string, string>, Date, string>;
     gender: z.ZodEnum<["Male", "Female", "Other"]>;
-    dischargeDate: z.ZodNullable<z.ZodOptional<z.ZodDate>>;
+    dischargeDate: z.ZodEffects<z.ZodOptional<z.ZodDate>, Date | undefined, unknown>;
     address: z.ZodString;
     doctorName: z.ZodString;
     wardNo: z.ZodString;
@@ -497,9 +507,9 @@ export declare const billSchema: z.ZodObject<{
         mrp: number;
         totalAmount?: number | undefined;
     }[];
-    dischargeDate?: Date | null | undefined;
+    dischargeDate?: Date | undefined;
 }, {
-    admissionDate: Date;
+    admissionDate: string;
     wardNo: string;
     bedNo: string;
     doctorName: string;
@@ -509,7 +519,7 @@ export declare const billSchema: z.ZodObject<{
     billType: string;
     mobile: string;
     admissionNo: string;
-    dateOfBirth: Date;
+    dateOfBirth: string;
     billItems: {
         company: string;
         itemOrService: string;
@@ -518,7 +528,7 @@ export declare const billSchema: z.ZodObject<{
         totalAmount?: number | undefined;
     }[];
     status?: string | undefined;
-    dischargeDate?: Date | null | undefined;
+    dischargeDate?: unknown;
 }>;
 export declare const employeeSchema: z.ZodObject<{
     employeeName: z.ZodString;
@@ -627,19 +637,16 @@ export declare const voucherSchema: z.ZodObject<{
 }>;
 export declare const brandSchema: z.ZodObject<{
     brandName: z.ZodString;
-    brandLogo: z.ZodNullable<z.ZodOptional<z.ZodString>>;
     description: z.ZodString;
     status: z.ZodDefault<z.ZodEnum<["Active", "Inactive"]>>;
 }, "strip", z.ZodTypeAny, {
     status: "Active" | "Inactive";
     description: string;
     brandName: string;
-    brandLogo?: string | null | undefined;
 }, {
     description: string;
     brandName: string;
     status?: "Active" | "Inactive" | undefined;
-    brandLogo?: string | null | undefined;
 }>;
 export declare const productSchema: z.ZodObject<{
     productName: z.ZodString;
@@ -914,8 +921,8 @@ export declare const insuranceLedgerSchema: z.ZodObject<{
     status: z.ZodEnum<["Pending", "Approved", "Rejected", "Partially Approved", "Settled"]>;
     remarks: z.ZodOptional<z.ZodString>;
     claimDate: z.ZodDate;
-    approvalDate: z.ZodOptional<z.ZodDate>;
-    settlementDate: z.ZodOptional<z.ZodDate>;
+    approvalDate: z.ZodEffects<z.ZodUnion<[z.ZodDate, z.ZodLiteral<"">, z.ZodUndefined]>, Date | undefined, "" | Date | undefined>;
+    settlementDate: z.ZodEffects<z.ZodUnion<[z.ZodDate, z.ZodLiteral<"">, z.ZodUndefined]>, Date | undefined, "" | Date | undefined>;
 }, "strip", z.ZodTypeAny, {
     status: "Pending" | "Approved" | "Rejected" | "Partially Approved" | "Settled";
     patientName: string;
@@ -936,8 +943,8 @@ export declare const insuranceLedgerSchema: z.ZodObject<{
     remarks?: string | undefined;
     approvedAmount?: number | undefined;
     settledAmount?: number | undefined;
-    approvalDate?: Date | undefined;
-    settlementDate?: Date | undefined;
+    approvalDate?: "" | Date | undefined;
+    settlementDate?: "" | Date | undefined;
 }>;
 export declare const patientLedgerSchema: z.ZodObject<{
     patientName: z.ZodString;

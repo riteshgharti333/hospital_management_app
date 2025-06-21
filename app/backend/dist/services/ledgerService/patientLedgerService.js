@@ -1,10 +1,9 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.deleteLedgerEntry = exports.updateLedgerEntry = exports.getPatientBalance = exports.getLedgerEntryById = exports.getAllLedgerEntries = exports.createLedgerEntry = void 0;
-const client_1 = require("@prisma/client");
-const prisma = new client_1.PrismaClient();
+const prisma_1 = require("../../lib/prisma");
 const createLedgerEntry = async (data) => {
-    return prisma.patientLedger.create({ data });
+    return prisma_1.prisma.patientLedger.create({ data });
 };
 exports.createLedgerEntry = createLedgerEntry;
 const getAllLedgerEntries = async (filters) => {
@@ -22,18 +21,18 @@ const getAllLedgerEntries = async (filters) => {
     if (filters.amountType) {
         where.amountType = filters.amountType;
     }
-    return prisma.patientLedger.findMany({
+    return prisma_1.prisma.patientLedger.findMany({
         where,
         orderBy: { date: "desc" },
     });
 };
 exports.getAllLedgerEntries = getAllLedgerEntries;
 const getLedgerEntryById = async (id) => {
-    return prisma.patientLedger.findUnique({ where: { id } });
+    return prisma_1.prisma.patientLedger.findUnique({ where: { id } });
 };
 exports.getLedgerEntryById = getLedgerEntryById;
 const getPatientBalance = async (patientName) => {
-    const entries = await prisma.patientLedger.findMany({
+    const entries = await prisma_1.prisma.patientLedger.findMany({
         where: { patientName },
         select: { amountType: true, amount: true },
     });
@@ -44,13 +43,13 @@ const getPatientBalance = async (patientName) => {
 };
 exports.getPatientBalance = getPatientBalance;
 const updateLedgerEntry = async (id, data) => {
-    return prisma.patientLedger.update({
+    return prisma_1.prisma.patientLedger.update({
         where: { id },
         data,
     });
 };
 exports.updateLedgerEntry = updateLedgerEntry;
 const deleteLedgerEntry = async (id) => {
-    return prisma.patientLedger.delete({ where: { id } });
+    return prisma_1.prisma.patientLedger.delete({ where: { id } });
 };
 exports.deleteLedgerEntry = deleteLedgerEntry;

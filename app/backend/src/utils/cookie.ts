@@ -1,39 +1,40 @@
 import { Response } from "express";
 import jwt from "jsonwebtoken";
 
-interface Payload {
-  id: string;
-}
+export const createAccessToken = (payload: object) => {
+  return jwt.sign(payload, process.env.JWT_SECRET!, { expiresIn: "15m" });
+};
 
-export const sendCookie = (
-  user: { id: string; name: string; email: string },
+export const createRefreshToken = (payload: object) => {
+  return jwt.sign(payload, process.env.JWT_REFRESH_SECRET!, { expiresIn: "7d" });
+};
+
+export const sendTokenCookies = (
+  payload: { id: string; name: string; email: string },
   res: Response,
   message: string,
-  statusCode: number = 200
+  statusCode: number
 ) => {
-  const token = jwt.sign(
-    { id: user.id } as Payload,
-    process.env.JWT_SECRET as string,
-    {
-      expiresIn: "15m",
-    }
-  );
+  const accessToken = createAccessToken(payload);
+  const refreshToken = createRefreshToken(payload);
 
-  res
-    .status(statusCode)
-    .cookie("hospital-token", token, {
-      httpOnly: true,
-      maxAge: 15 * 60 * 1000,
-      sameSite: process.env.NODE_ENV === "development" ? "lax" : "none",
-      secure: process.env.NODE_ENV !== "development",
-    })
-    .json({
-      success: true,
-      message,
-      user: {
-        id: user.id,
-        name: user.name,
-        email: user.email,
-      },
-    });
+  // Set cookies
+  res.cookie("accessToken", accessToken, {
+    httpOnly: true,
+    sameSite: "lax",
+    secure: process.env.NODE_ENV === "production",
+    maxAge: 15 * 60 * 1000, // 15 minutes
+  });
+
+  res.cookie("refreshToken", refreshToken, {
+    httpOnly: true,
+    sameSite: "lax",
+    secure: process.env.NODE_ENV === "production",
+    maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+  });
+
+  res.status(statusCode).json({
+    success: true,
+    message,
+  });
 };

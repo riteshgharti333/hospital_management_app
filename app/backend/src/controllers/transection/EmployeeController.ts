@@ -32,8 +32,6 @@ export const createEmployeeRecord = async (
 
     const validated = employeeSchema.parse({
       ...req.body,
-      dateOfRegistration: new Date(req.body.dateOfRegistration),
-      dateOfBirth: new Date(req.body.dateOfBirth),
       photoUrl: uploadedUrl,
     });
 
@@ -134,8 +132,6 @@ export const updateEmployeeRecord = async (
     const partialSchema = employeeSchema.partial();
     const validatedData = partialSchema.parse({
       ...req.body,
-      dateOfRegistration: req.body.dateOfRegistration ? new Date(req.body.dateOfRegistration) : undefined,
-      dateOfBirth: req.body.dateOfBirth ? new Date(req.body.dateOfBirth) : undefined,
       photoUrl: uploadedUrl ?? req.body.photoUrl ?? undefined,
     });
 

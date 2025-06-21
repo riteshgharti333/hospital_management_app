@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { useLocation, useNavigate, useParams } from "react-router-dom";
 import {
   FaUser,
   FaUserMd,
@@ -30,7 +30,6 @@ import {
   SaveButton,
 } from "../../components/ActionButtons/ActionButtons";
 
-// --- Import all your hooks (assuming they exist) ---
 import {
   useGetBankLedgerEntryById,
   useUpdateBankLedgerEntry,
@@ -150,7 +149,7 @@ const ledgerMappings = {
     },
     title: "Lab Ledger",
     icon: <FaFlask />,
-    navPath: "/ledger/lab-ledger",
+    navPath: "/ledger/diagnostics-ledger",
   },
   cash: {
     schema: cashLedgerSchema,
@@ -202,9 +201,6 @@ const ledgerMappings = {
   },
 };
 
-// --- (Your form config objects would be here) ---
-// I'm using placeholder objects; in a real app, these would be your detailed configs.
-// To keep the code clean, these could be imported from a separate file.
 const allFormConfigs = {
   patient: {
     fields: [
@@ -519,26 +515,37 @@ const allFormConfigs = {
 };
 
 const EditLedger = () => {
-  const { ledgerType, id } = useParams();
+  const { id } = useParams();
+  const location = useLocation();
   const navigate = useNavigate();
+
+  // Extract ledger type from URL path
+  const pathSegments = location.pathname.split("/");
+  const ledgerType = pathSegments[2];
+
+  const cleanLedgerType = ledgerType.replace("-ledger", "");
+
+  console.log(cleanLedgerType);
+
+  // --- Dynamically select the correct configuration ---
+  const currentLedger = ledgerMappings[cleanLedgerType];
+    console.log(currentLedger)
+
+  const formConfig = allFormConfigs[cleanLedgerType];
 
   const [editMode, setEditMode] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
 
-  // --- Dynamically select the correct configuration ---
-  const currentLedger = ledgerMappings[ledgerType];
-  const formConfig = allFormConfigs[ledgerType];
-
   if (!currentLedger || !formConfig) {
-    return <NoData message={`Invalid ledger type: ${ledgerType}`} />;
+    return <NoData message={`Invalid ledger type: ${cleanLedgerType}`} />;
   }
 
-  // --- Dynamically instantiate hooks ---
   const { data: ledgerData, isLoading } = currentLedger.getHook(id);
   const { mutateAsync: updateLedgerEntry, isPending: isUpdating } =
     currentLedger.updateHook();
   const { mutateAsync: deleteLedgerEntry, isPending: isDeleting } =
     currentLedger.deleteHook();
+
 
   const {
     register,

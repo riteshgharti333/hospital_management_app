@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-export const authSchema = z.object({
+export const registerSchema = z.object({
   name: z.string().min(3, "Name is too short").max(50).optional(),
   email: z.string().email("Invalid email format"),
   password: z
@@ -11,6 +11,11 @@ export const authSchema = z.object({
     .regex(/[a-z]/, "Must include at least one lowercase letter")
     .regex(/[0-9]/, "Must include at least one number")
     .regex(/[^a-zA-Z0-9]/, "Must include at least one special character"),
+});
+
+export const loginSchema = z.object({
+  email: z.string().email("Invalid email"),
+  password: z.string().min(1, "Password is required"),
 });
 
 //////////////////
@@ -69,7 +74,13 @@ export const ambulanceSchema = z.object({
 ////////////
 
 export const appointmentSchema = z.object({
-  appointmentDate: z.coerce.date(),
+  appointmentDate: z
+    .string()
+    .min(1, "Appointment date is required")
+    .refine((val) => !isNaN(new Date(val).getTime()), {
+      message: "Invalid date format",
+    })
+    .transform((val) => new Date(val)),
   doctorName: z.string().min(1, "Doctor name is required"),
   department: z.string().min(1, "Department is required"),
   appointmentTime: z.string().min(1, "Appointment time is required"),
@@ -82,8 +93,19 @@ export const bedAssignmentSchema = z.object({
   bedNumber: z.string().min(1, "Bed number is required"),
   bedType: z.string().min(1, "Bed type is required"),
   patientName: z.string().min(1, "Patient name is required"),
-  allocateDate: z.coerce.date(),
-  dischargeDate: z.coerce.date().optional(),
+  allocateDate: z
+    .string()
+    .min(1, "Allocation date is required")
+    .refine((val) => !isNaN(new Date(val).getTime()), {
+      message: "Invalid date format",
+    })
+    .transform((val) => new Date(val)),
+
+  dischargeDate: z.preprocess(
+    (val) => (val === "" ? undefined : val),
+    z.coerce.date().optional()
+  ),
+
   status: z.enum(["Active", "Discharged", "Transferred"]).default("Active"),
   notes: z.string().optional(),
 });
@@ -92,7 +114,13 @@ export const bedAssignmentSchema = z.object({
 
 export const birthSchema = z.object({
   birthTime: z.string().min(1, "Birth time is required"),
-  birthDate: z.coerce.date(),
+  birthDate: z
+    .string()
+    .min(1, "Birth date is required")
+    .refine((val) => !isNaN(new Date(val).getTime()), {
+      message: "Invalid date format",
+    })
+    .transform((val) => new Date(val)),
   babySex: z.string().min(1, "Baby's sex is required"),
   babyWeightKg: z.number().positive("Weight must be positive"),
   fathersName: z.string().min(1, "Father's name is required"),
@@ -144,7 +172,7 @@ export const nurseSchema = z.object({
 
 export const patientSchema = z.object({
   fullName: z.string().min(1, "Full name is required"),
-  age: z.number().int().positive("Age must be positive"),
+  age: z.number().positive("Age must be positive"),
   mobileNumber: z.string().min(10, "Mobile number must be 10 digits"),
   gender: z.string().min(1, "Gender is required"),
   bedNumber: z.string().min(1, "Bed number is required"),
@@ -175,7 +203,7 @@ export const prescriptionSchema = z.object({
   prescriptionDate: z.coerce.date(),
   doctorId: z.number().min(1, "Doctor ID is required"),
   patientId: z.number().min(1, "Patient ID is required"),
-   prescriptionDoc: z.string().url().optional(),
+  prescriptionDoc: z.string().url().optional(),
   status: z.string().optional().default("Active"),
   medicines: z
     .array(medicineSchema)
@@ -189,10 +217,16 @@ export const xrayReportSchema = z.object({
   patientMobile: z.string().min(10, "Valid mobile number required"),
   patientName: z.string().min(1, "Patient name is required"),
   patientSex: z.enum(["Male", "Female", "Other"]),
-  age: z.number().int().min(0, "Age must be positive"),
+  age: z.number().positive("Age must be positive"),
   referredDoctor: z.string().min(1, "Referred doctor is required"),
   testDate: z.coerce.date(),
-  reportDate: z.coerce.date(),
+  reportDate: z
+    .string()
+    .min(1, "Report date is required")
+    .refine((val) => !isNaN(new Date(val).getTime()), {
+      message: "Invalid date format",
+    })
+    .transform((val) => new Date(val)),
   patientAddress: z.string().optional(),
   examDescription: z.string().min(1, "Exam description is required"),
   department: z.string().min(1, "Department is required"),
@@ -221,19 +255,37 @@ export const billItemSchema = z.object({
 
 export const billSchema = z.object({
   billDate: z.coerce.date(),
+
   billType: z.string().min(1, "Bill type is required"),
   mobile: z.string().min(10, "Mobile must be at least 10 digits"),
   admissionNo: z.string().min(1, "Admission number is required"),
-  admissionDate: z.coerce.date(),
-  dateOfBirth: z.coerce.date(),
+  admissionDate: z
+    .string()
+    .min(1, "Admission date is required")
+    .refine((val) => !isNaN(new Date(val).getTime()), {
+      message: "Invalid date format",
+    })
+    .transform((val) => new Date(val)),
+  dateOfBirth: z
+    .string()
+    .min(1, "Date of Birth is required")
+    .refine((val) => !isNaN(new Date(val).getTime()), {
+      message: "Invalid date format",
+    })
+    .transform((val) => new Date(val)),
   gender: z.enum(["Male", "Female", "Other"]),
-  dischargeDate: z.coerce.date().optional().nullable(),
+  dischargeDate: z.preprocess(
+    (val) => (val === "" ? undefined : val),
+    z.coerce.date().optional()
+  ),
   address: z.string().min(1, "Address is required"),
   doctorName: z.string().min(1, "Doctor name is required"),
   wardNo: z.string().min(1, "Ward number is required"),
   bedNo: z.string().min(1, "Bed number is required"),
   status: z.string().optional().default("Pending"),
-  billItems: z.array(billItemSchema).min(1, "At least one bill item is required")
+  billItems: z
+    .array(billItemSchema)
+    .min(1, "At least one bill item is required"),
 });
 
 export const employeeSchema = z.object({
@@ -309,7 +361,7 @@ const ACCEPTED_IMAGE_TYPES = [
 export const brandSchema = z.object({
   brandName: z.string().min(1, "Brand name is required"),
 
-   brandLogo: z.string().optional().nullable(),
+  // brandLogo: z.string().url().optional(),
 
   description: z.string().min(1, "Description is required"),
 
@@ -321,7 +373,7 @@ export const productSchema = z.object({
   productCode: z.string().min(1, "Product code is required"),
   parentCategory: z.string().min(1, "Parent category is required"),
   subCategory: z.string().min(1, "Sub category is required"),
-  categoryLogo: z.string().optional(),
+  categoryLogo: z.string().url().optional(),
   description: z.string().optional(),
   unit: z.string().min(1, "Unit is required"),
   price: z.number().min(0, "Price must be positive"),
@@ -360,6 +412,7 @@ export const serviceChargeSchema = z.object({
 });
 
 ////////////// ledger
+
 
 export const bankLedgerSchema = z.object({
   bankName: z.string().min(1, "Bank name is required"),
@@ -411,7 +464,7 @@ export const expenseLedgerSchema = z.object({
   remarks: z.string().optional(),
 });
 
-// src/schemas/insuranceLedgerSchema.ts
+
 export const insuranceLedgerSchema = z.object({
   patientName: z.string().min(1),
   tpaInsuranceCompany: z.string().min(1),
@@ -427,8 +480,17 @@ export const insuranceLedgerSchema = z.object({
   ]),
   remarks: z.string().optional(),
   claimDate: z.coerce.date(),
-  approvalDate: z.coerce.date().optional(),
-  settlementDate: z.coerce.date().optional(),
+  approvalDate: z.union([
+  z.coerce.date(),
+  z.literal(""),
+  z.undefined()
+]).transform(val => val === "" ? undefined : val),
+
+settlementDate: z.union([
+  z.coerce.date(),
+  z.literal(""),
+  z.undefined()
+]).transform(val => val === "" ? undefined : val),
 });
 
 export const patientLedgerSchema = z.object({

@@ -1,10 +1,9 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.deletePharmacyLedgerEntry = exports.updatePharmacyLedgerEntry = exports.getCategoryWiseSummary = exports.getPharmacySummary = exports.getPharmacyLedgerEntryById = exports.getAllPharmacyLedgerEntries = exports.createPharmacyLedgerEntry = void 0;
-const client_1 = require("@prisma/client");
-const prisma = new client_1.PrismaClient();
+const prisma_1 = require("../../lib/prisma");
 const createPharmacyLedgerEntry = async (data) => {
-    return prisma.pharmacyLedger.create({ data });
+    return prisma_1.prisma.pharmacyLedger.create({ data });
 };
 exports.createPharmacyLedgerEntry = createPharmacyLedgerEntry;
 const getAllPharmacyLedgerEntries = async (filters) => {
@@ -25,22 +24,22 @@ const getAllPharmacyLedgerEntries = async (filters) => {
     if (filters.amountType) {
         where.amountType = filters.amountType;
     }
-    return prisma.pharmacyLedger.findMany({
+    return prisma_1.prisma.pharmacyLedger.findMany({
         where,
         orderBy: { date: "desc" },
     });
 };
 exports.getAllPharmacyLedgerEntries = getAllPharmacyLedgerEntries;
 const getPharmacyLedgerEntryById = async (id) => {
-    return prisma.pharmacyLedger.findUnique({ where: { id } });
+    return prisma_1.prisma.pharmacyLedger.findUnique({ where: { id } });
 };
 exports.getPharmacyLedgerEntryById = getPharmacyLedgerEntryById;
 const getPharmacySummary = async () => {
-    const income = await prisma.pharmacyLedger.aggregate({
+    const income = await prisma_1.prisma.pharmacyLedger.aggregate({
         _sum: { amount: true },
         where: { amountType: "Income" },
     });
-    const expense = await prisma.pharmacyLedger.aggregate({
+    const expense = await prisma_1.prisma.pharmacyLedger.aggregate({
         _sum: { amount: true },
         where: { amountType: "Expense" },
     });
@@ -53,7 +52,7 @@ const getPharmacySummary = async () => {
 };
 exports.getPharmacySummary = getPharmacySummary;
 const getCategoryWiseSummary = async () => {
-    return prisma.pharmacyLedger.groupBy({
+    return prisma_1.prisma.pharmacyLedger.groupBy({
         by: ["category", "amountType"],
         _sum: { amount: true },
         orderBy: { category: "asc" },
@@ -61,13 +60,13 @@ const getCategoryWiseSummary = async () => {
 };
 exports.getCategoryWiseSummary = getCategoryWiseSummary;
 const updatePharmacyLedgerEntry = async (id, data) => {
-    return prisma.pharmacyLedger.update({
+    return prisma_1.prisma.pharmacyLedger.update({
         where: { id },
         data,
     });
 };
 exports.updatePharmacyLedgerEntry = updatePharmacyLedgerEntry;
 const deletePharmacyLedgerEntry = async (id) => {
-    return prisma.pharmacyLedger.delete({ where: { id } });
+    return prisma_1.prisma.pharmacyLedger.delete({ where: { id } });
 };
 exports.deletePharmacyLedgerEntry = deletePharmacyLedgerEntry;

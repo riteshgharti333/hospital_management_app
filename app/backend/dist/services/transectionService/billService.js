@@ -1,14 +1,13 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.deleteBill = exports.updateBill = exports.getBillsByPatient = exports.getBillById = exports.getAllBills = exports.createBill = void 0;
-const client_1 = require("@prisma/client");
-const prisma = new client_1.PrismaClient();
+const prisma_1 = require("../../lib/prisma");
 const createBill = async (data) => {
     const processedItems = data.billItems.map(item => ({
         ...item,
         totalAmount: item.totalAmount ?? item.mrp * item.quantity
     }));
-    return prisma.bill.create({
+    return prisma_1.prisma.bill.create({
         data: {
             ...data,
             billItems: {
@@ -20,21 +19,21 @@ const createBill = async (data) => {
 };
 exports.createBill = createBill;
 const getAllBills = async () => {
-    return prisma.bill.findMany({
+    return prisma_1.prisma.bill.findMany({
         orderBy: { createdAt: "desc" },
         include: { billItems: true },
     });
 };
 exports.getAllBills = getAllBills;
 const getBillById = async (id) => {
-    return prisma.bill.findUnique({
+    return prisma_1.prisma.bill.findUnique({
         where: { id },
         include: { billItems: true },
     });
 };
 exports.getBillById = getBillById;
 const getBillsByPatient = async (mobile) => {
-    return prisma.bill.findMany({
+    return prisma_1.prisma.bill.findMany({
         where: { mobile },
         orderBy: { billDate: "desc" },
         include: { billItems: true },
@@ -69,7 +68,7 @@ const updateBill = async (id, data) => {
             }
             : {}),
     };
-    return prisma.bill.update({
+    return prisma_1.prisma.bill.update({
         where: { id },
         data: {
             ...rest,
@@ -82,7 +81,7 @@ const updateBill = async (id, data) => {
 };
 exports.updateBill = updateBill;
 const deleteBill = async (id) => {
-    return prisma.bill.delete({
+    return prisma_1.prisma.bill.delete({
         where: { id },
         include: { billItems: true },
     });

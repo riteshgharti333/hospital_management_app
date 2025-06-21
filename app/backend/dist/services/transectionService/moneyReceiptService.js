@@ -1,10 +1,9 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.deleteMoneyReceipt = exports.updateMoneyReceipt = exports.getMoneyReceiptsByDateRange = exports.getMoneyReceiptById = exports.getAllMoneyReceipts = exports.createMoneyReceipt = void 0;
-const client_1 = require("@prisma/client");
-const prisma = new client_1.PrismaClient();
+const prisma_1 = require("../../lib/prisma");
 const createMoneyReceipt = async (data) => {
-    return prisma.moneyReceipt.create({ data });
+    return prisma_1.prisma.moneyReceipt.create({ data });
 };
 exports.createMoneyReceipt = createMoneyReceipt;
 const getAllMoneyReceipts = async (filters) => {
@@ -24,18 +23,18 @@ const getAllMoneyReceipts = async (filters) => {
     if (filters?.paymentMode) {
         where.paymentMode = filters.paymentMode;
     }
-    return prisma.moneyReceipt.findMany({
+    return prisma_1.prisma.moneyReceipt.findMany({
         where,
         orderBy: { date: "desc" },
     });
 };
 exports.getAllMoneyReceipts = getAllMoneyReceipts;
 const getMoneyReceiptById = async (id) => {
-    return prisma.moneyReceipt.findUnique({ where: { id } });
+    return prisma_1.prisma.moneyReceipt.findUnique({ where: { id } });
 };
 exports.getMoneyReceiptById = getMoneyReceiptById;
 const getMoneyReceiptsByDateRange = async (startDate, endDate) => {
-    return prisma.moneyReceipt.findMany({
+    return prisma_1.prisma.moneyReceipt.findMany({
         where: {
             date: {
                 gte: startDate,
@@ -47,13 +46,13 @@ const getMoneyReceiptsByDateRange = async (startDate, endDate) => {
 };
 exports.getMoneyReceiptsByDateRange = getMoneyReceiptsByDateRange;
 const updateMoneyReceipt = async (id, data) => {
-    return prisma.moneyReceipt.update({
+    return prisma_1.prisma.moneyReceipt.update({
         where: { id },
         data,
     });
 };
 exports.updateMoneyReceipt = updateMoneyReceipt;
 const deleteMoneyReceipt = async (id) => {
-    return prisma.moneyReceipt.delete({ where: { id } });
+    return prisma_1.prisma.moneyReceipt.delete({ where: { id } });
 };
 exports.deleteMoneyReceipt = deleteMoneyReceipt;

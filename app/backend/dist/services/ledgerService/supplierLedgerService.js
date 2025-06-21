@@ -2,9 +2,9 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.deleteSupplierLedgerEntry = exports.getSupplierSummary = exports.getSupplierOutstanding = exports.getSupplierLedgerEntryById = exports.getAllSupplierLedgerEntries = exports.updateSupplierLedgerEntry = exports.createSupplierLedgerEntry = void 0;
 const client_1 = require("@prisma/client");
-const prisma = new client_1.PrismaClient();
+const prisma_1 = require("../../lib/prisma");
 const createSupplierLedgerEntry = async (data) => {
-    return prisma.supplierLedger.create({
+    return prisma_1.prisma.supplierLedger.create({
         data: {
             ...data,
             amount: new client_1.Prisma.Decimal(data.amount.toString()), // Convert to Decimal
@@ -15,7 +15,7 @@ const createSupplierLedgerEntry = async (data) => {
 exports.createSupplierLedgerEntry = createSupplierLedgerEntry;
 // Update the update function similarly
 const updateSupplierLedgerEntry = async (id, data) => {
-    return prisma.supplierLedger.update({
+    return prisma_1.prisma.supplierLedger.update({
         where: { id },
         data: {
             ...data,
@@ -45,18 +45,18 @@ const getAllSupplierLedgerEntries = async (filters) => {
     if (filters.amountType) {
         where.amountType = filters.amountType;
     }
-    return prisma.supplierLedger.findMany({
+    return prisma_1.prisma.supplierLedger.findMany({
         where,
         orderBy: { date: "desc" },
     });
 };
 exports.getAllSupplierLedgerEntries = getAllSupplierLedgerEntries;
 const getSupplierLedgerEntryById = async (id) => {
-    return prisma.supplierLedger.findUnique({ where: { id } });
+    return prisma_1.prisma.supplierLedger.findUnique({ where: { id } });
 };
 exports.getSupplierLedgerEntryById = getSupplierLedgerEntryById;
 const getSupplierOutstanding = async (supplierName) => {
-    const entries = await prisma.supplierLedger.findMany({
+    const entries = await prisma_1.prisma.supplierLedger.findMany({
         where: { supplierName },
         select: { amountType: true, amount: true },
     });
@@ -67,7 +67,7 @@ const getSupplierOutstanding = async (supplierName) => {
 };
 exports.getSupplierOutstanding = getSupplierOutstanding;
 const getSupplierSummary = async () => {
-    return prisma.supplierLedger.groupBy({
+    return prisma_1.prisma.supplierLedger.groupBy({
         by: ["supplierName"],
         _sum: {
             amount: true,
@@ -81,6 +81,6 @@ const getSupplierSummary = async () => {
 };
 exports.getSupplierSummary = getSupplierSummary;
 const deleteSupplierLedgerEntry = async (id) => {
-    return prisma.supplierLedger.delete({ where: { id } });
+    return prisma_1.prisma.supplierLedger.delete({ where: { id } });
 };
 exports.deleteSupplierLedgerEntry = deleteSupplierLedgerEntry;

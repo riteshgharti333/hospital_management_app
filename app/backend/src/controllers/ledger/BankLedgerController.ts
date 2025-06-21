@@ -19,7 +19,7 @@ export const createBankLedgerRecord = catchAsyncError(
   async (req: Request, res: Response, next: NextFunction) => {
     const validated = bankLedgerSchema.parse({
       ...req.body,
-      date: new Date(req.body.date)
+      date: new Date(req.body.date),
     });
 
     const entry = await createBankLedgerEntry(validated);
@@ -36,9 +36,13 @@ export const getAllBankLedgerRecords = catchAsyncError(
   async (req: Request, res: Response) => {
     const filters = {
       bankName: req.query.bankName as string | undefined,
-      startDate: req.query.startDate ? new Date(req.query.startDate as string) : undefined,
-      endDate: req.query.endDate ? new Date(req.query.endDate as string) : undefined,
-      amountType: req.query.amountType as string | undefined
+      startDate: req.query.startDate
+        ? new Date(req.query.startDate as string)
+        : undefined,
+      endDate: req.query.endDate
+        ? new Date(req.query.endDate as string)
+        : undefined,
+      amountType: req.query.amountType as string | undefined,
     };
 
     const entries = await getAllBankLedgerEntries(filters);
@@ -60,7 +64,9 @@ export const getBankLedgerRecordById = catchAsyncError(
 
     const entry = await getBankLedgerEntryById(id);
     if (!entry) {
-      return next(new ErrorHandler("Bank ledger entry not found", StatusCodes.NOT_FOUND));
+      return next(
+        new ErrorHandler("Bank ledger entry not found", StatusCodes.NOT_FOUND)
+      );
     }
 
     sendResponse(res, {
@@ -76,7 +82,9 @@ export const getBankBalanceRecord = catchAsyncError(
   async (req: Request, res: Response, next: NextFunction) => {
     const bankName = req.query.bankName as string;
     if (!bankName) {
-      return next(new ErrorHandler("Bank name is required", StatusCodes.BAD_REQUEST));
+      return next(
+        new ErrorHandler("Bank name is required", StatusCodes.BAD_REQUEST)
+      );
     }
 
     const balance = await getBankBalance(bankName);
@@ -99,12 +107,14 @@ export const updateBankLedgerRecord = catchAsyncError(
     const partialSchema = bankLedgerSchema.partial();
     const validatedData = partialSchema.parse({
       ...req.body,
-      date: req.body.date ? new Date(req.body.date) : undefined
+      date: req.body.date ? new Date(req.body.date) : undefined,
     });
 
     const updatedEntry = await updateBankLedgerEntry(id, validatedData);
     if (!updatedEntry) {
-      return next(new ErrorHandler("Bank ledger entry not found", StatusCodes.NOT_FOUND));
+      return next(
+        new ErrorHandler("Bank ledger entry not found", StatusCodes.NOT_FOUND)
+      );
     }
 
     sendResponse(res, {
@@ -125,7 +135,9 @@ export const deleteBankLedgerRecord = catchAsyncError(
 
     const deletedEntry = await deleteBankLedgerEntry(id);
     if (!deletedEntry) {
-      return next(new ErrorHandler("Bank ledger entry not found", StatusCodes.NOT_FOUND));
+      return next(
+        new ErrorHandler("Bank ledger entry not found", StatusCodes.NOT_FOUND)
+      );
     }
 
     sendResponse(res, {

@@ -1,5 +1,5 @@
-import { PrismaClient, Brand } from "@prisma/client";
-const prisma = new PrismaClient();
+import { Brand } from "@prisma/client";
+import { prisma } from "../../lib/prisma";
 
 // Types
 export type CreateBrandInput = {

@@ -1,8 +1,7 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.deleteInsuranceLedgerEntry = exports.updateInsuranceLedgerEntry = exports.getInsuranceSummary = exports.getInsuranceLedgerEntryById = exports.getAllInsuranceLedgerEntries = exports.createInsuranceLedgerEntry = void 0;
-const client_1 = require("@prisma/client");
-const prisma = new client_1.PrismaClient();
+const prisma_1 = require("../../lib/prisma");
 const createInsuranceLedgerEntry = async (data) => {
     // Remove undefined fields to satisfy Prisma's type requirements
     const cleanedData = {};
@@ -10,7 +9,7 @@ const createInsuranceLedgerEntry = async (data) => {
         if (value !== undefined)
             cleanedData[key] = value;
     });
-    return prisma.insuranceLedger.create({ data: cleanedData });
+    return prisma_1.prisma.insuranceLedger.create({ data: cleanedData });
 };
 exports.createInsuranceLedgerEntry = createInsuranceLedgerEntry;
 const getAllInsuranceLedgerEntries = async (filters) => {
@@ -31,18 +30,18 @@ const getAllInsuranceLedgerEntries = async (filters) => {
         if (filters.endDate)
             where.claimDate.lte = filters.endDate;
     }
-    return prisma.insuranceLedger.findMany({
+    return prisma_1.prisma.insuranceLedger.findMany({
         where,
         orderBy: { claimDate: 'desc' }
     });
 };
 exports.getAllInsuranceLedgerEntries = getAllInsuranceLedgerEntries;
 const getInsuranceLedgerEntryById = async (id) => {
-    return prisma.insuranceLedger.findUnique({ where: { id } });
+    return prisma_1.prisma.insuranceLedger.findUnique({ where: { id } });
 };
 exports.getInsuranceLedgerEntryById = getInsuranceLedgerEntryById;
 const getInsuranceSummary = async () => {
-    const summary = await prisma.insuranceLedger.groupBy({
+    const summary = await prisma_1.prisma.insuranceLedger.groupBy({
         by: ['tpaInsuranceCompany', 'status'],
         _sum: {
             claimAmount: true,
@@ -53,7 +52,7 @@ const getInsuranceSummary = async () => {
             tpaInsuranceCompany: 'asc'
         }
     });
-    const totals = await prisma.insuranceLedger.aggregate({
+    const totals = await prisma_1.prisma.insuranceLedger.aggregate({
         _sum: {
             claimAmount: true,
             approvedAmount: true,
@@ -64,13 +63,13 @@ const getInsuranceSummary = async () => {
 };
 exports.getInsuranceSummary = getInsuranceSummary;
 const updateInsuranceLedgerEntry = async (id, data) => {
-    return prisma.insuranceLedger.update({
+    return prisma_1.prisma.insuranceLedger.update({
         where: { id },
         data,
     });
 };
 exports.updateInsuranceLedgerEntry = updateInsuranceLedgerEntry;
 const deleteInsuranceLedgerEntry = async (id) => {
-    return prisma.insuranceLedger.delete({ where: { id } });
+    return prisma_1.prisma.insuranceLedger.delete({ where: { id } });
 };
 exports.deleteInsuranceLedgerEntry = deleteInsuranceLedgerEntry;

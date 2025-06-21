@@ -1,57 +1,54 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.deleteProduct = exports.updateProduct = exports.getProductsByCategory = exports.getProductById = exports.getAllProducts = exports.createProduct = void 0;
-const client_1 = require("@prisma/client");
-const prisma = new client_1.PrismaClient();
+const prisma_1 = require("../../lib/prisma");
+// ✅ Create Product
 const createProduct = async (data) => {
-    return prisma.productEntery.create({
+    return prisma_1.prisma.product.create({
         data: {
             ...data,
-            specifications: data.specifications
-                ? { create: data.specifications }
-                : undefined,
+            status: data.status ?? "Active", // default fallback
         },
-        include: { specifications: true },
     });
 };
 exports.createProduct = createProduct;
+// ✅ Get All Products
 const getAllProducts = async () => {
-    return prisma.productEntery.findMany({
+    return prisma_1.prisma.product.findMany({
         orderBy: { createdAt: "desc" },
-        include: { specifications: true },
     });
 };
 exports.getAllProducts = getAllProducts;
+// ✅ Get Product by ID
 const getProductById = async (id) => {
-    return prisma.productEntery.findUnique({
+    return prisma_1.prisma.product.findUnique({
         where: { id },
-        include: { specifications: true },
     });
 };
 exports.getProductById = getProductById;
-const getProductsByCategory = async (category) => {
-    return prisma.productEntery.findMany({
-        where: { category },
+// ✅ Get Products by Category (Parent + Subcategory)
+const getProductsByCategory = async (parentCategory, subCategory) => {
+    return prisma_1.prisma.product.findMany({
+        where: {
+            parentCategory,
+            ...(subCategory && { subCategory }),
+        },
         orderBy: { productName: "asc" },
-        include: { specifications: true },
     });
 };
 exports.getProductsByCategory = getProductsByCategory;
+// ✅ Update Product
 const updateProduct = async (id, data) => {
-    return prisma.productEntery.update({
+    return prisma_1.prisma.product.update({
         where: { id },
-        data: {
-            ...data,
-            specifications: data.specifications,
-        },
-        include: { specifications: true },
+        data,
     });
 };
 exports.updateProduct = updateProduct;
+// ✅ Delete Product
 const deleteProduct = async (id) => {
-    return prisma.productEntery.delete({
+    return prisma_1.prisma.product.delete({
         where: { id },
-        include: { specifications: true },
     });
 };
 exports.deleteProduct = deleteProduct;

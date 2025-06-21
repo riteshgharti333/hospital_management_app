@@ -3,6 +3,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.checkDB = void 0;
 const client_1 = require("@prisma/client");
 const prisma = new client_1.PrismaClient();
+console.log(process.env.DATABASE_URL);
 const checkDB = async () => {
     try {
         await prisma.$connect();

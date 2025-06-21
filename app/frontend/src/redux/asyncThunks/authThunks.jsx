@@ -1,11 +1,12 @@
 import { createAsyncThunk } from "@reduxjs/toolkit";
 import {
+  changePassword,
+  getProfile,
   loginUser,
   logoutUser,
+  refreshToken,
   registerUser,
-  updatePassword,
   updateProfile,
-  userProfile,
 } from "../api/authAPI";
 
 // LOGIN ASYNC THUNK
@@ -54,51 +55,55 @@ export const logoutAsyncUser = createAsyncThunk(
   }
 );
 
-// USER PROFILE ASYNC THUNK
-export const userProfileAsync = createAsyncThunk(
-  "auth/userProfile",
+
+// GET PROFILE THUNK
+export const getUserProfile = createAsyncThunk(
+  "auth/getUserProfile",
   async (_, { rejectWithValue }) => {
     try {
-      const response = await userProfile();
-      // console.log(res.data);
-      return response.data;
+      const res = await getProfile();
+      return res.data;
     } catch (error) {
-      console.error("Failed to fetch user profile:", error);
-      return rejectWithValue(
-        error.response.data || "Failed to fetch user profile"
-      );
+      return rejectWithValue(error.response?.data || "Failed to fetch profile");
     }
   }
 );
 
-// UPDATE PROFILE ASYNC THUNK
-export const updateProfileAsync = createAsyncThunk(
-  "auth/updateProfile",
-  async (profileData, { rejectWithValue }) => {
+// UPDATE PROFILE THUNK
+export const updateUserProfile = createAsyncThunk(
+  "auth/updateUserProfile",
+  async (userData, { rejectWithValue }) => {
     try {
-      const response = await updateProfile(profileData);
-      return response.data;
+      const res = await updateProfile(userData);
+      return res.data;
     } catch (error) {
-      console.error("Failed to fetch user profile:", error);
-      return rejectWithValue(
-        error.response.data || "Failed to fetch user profile"
-      );
+      return rejectWithValue(error.response?.data || "Failed to update profile");
     }
   }
 );
 
-// UPDATE PASSWORD ASYNC THUNK
-export const updatePasswordAsync = createAsyncThunk(
-  "auth/updatePassword",
-  async (passwordData, { rejectWithValue }) => {
+// CHANGE PASSWORD THUNK
+export const updateUserPassword = createAsyncThunk(
+  "auth/updateUserPassword",
+  async (passwords, { rejectWithValue }) => {
     try {
-      const response = await updatePassword(passwordData);
-      return response.data;
+      const res = await changePassword(passwords);
+      return res.data;
     } catch (error) {
-      console.error("Failed to fetch user profile:", error);
-      return rejectWithValue(
-        error.response.data || "Failed to fetch user profile"
-      );
+      return rejectWithValue(error.response?.data || "Failed to change password");
+    }
+  }
+);
+
+// REFRESH TOKEN (auto-used later)
+export const refreshAccessToken = createAsyncThunk(
+  "auth/refreshAccessToken",
+  async (_, { rejectWithValue }) => {
+    try {
+      await refreshToken(); // token stored in cookie
+      return true;
+    } catch (error) {
+      return rejectWithValue(error.response?.data || "Refresh token failed");
     }
   }
 );

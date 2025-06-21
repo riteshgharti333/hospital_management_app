@@ -1,7 +1,6 @@
-import { PrismaClient } from "@prisma/client";
-import { Pharmacist } from "@prisma/client";
 
-const prisma = new PrismaClient();
+import { Pharmacist } from "@prisma/client";
+import { prisma } from "../lib/prisma";
 
 export type CreatePharmacistInput = {
   fullName: string;

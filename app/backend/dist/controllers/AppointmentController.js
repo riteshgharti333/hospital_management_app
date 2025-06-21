@@ -8,10 +8,7 @@ const statusCodes_1 = require("../constants/statusCodes");
 const appointmentService_1 = require("../services/appointmentService");
 const schemas_1 = require("@hospital/schemas");
 exports.createAppointmentRecord = (0, catchAsyncError_1.catchAsyncError)(async (req, res) => {
-    const validated = schemas_1.appointmentSchema.parse({
-        ...req.body,
-        appointmentDate: new Date(req.body.appointmentDate)
-    });
+    const validated = schemas_1.appointmentSchema.parse(req.body);
     const appointment = await (0, appointmentService_1.createAppointment)(validated);
     (0, sendResponse_1.sendResponse)(res, {
         success: true,

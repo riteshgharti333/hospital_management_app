@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   MdPerson,
   MdEmail,
@@ -10,14 +10,23 @@ import {
   MdLocalHospital,
 } from "react-icons/md";
 import { motion } from "framer-motion";
-
+import { toast } from "sonner";
 import BackButton from "../../components/BackButton/BackButton";
+import { useDispatch, useSelector } from "react-redux";
+import { 
+  getUserProfile, 
+  updateUserProfile, 
+  updateUserPassword 
+} from "../../redux/asyncThunks/authThunks";
 
 const Profile = () => {
+  const dispatch = useDispatch();
+  const { profile, status, error } = useSelector((state) => state.auth);
+
+  // Initialize user data
   const [user, setUser] = useState({
-    name: "Dr. Sarah Johnson",
-    email: "sarah.johnson@medicare.com",
-    position: "Chief Medical Officer",
+    name: profile?.name || "",
+    email: profile?.email || "",
   });
 
   const [password, setPassword] = useState({
@@ -36,6 +45,21 @@ const Profile = () => {
   const [isUpdatingPassword, setIsUpdatingPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
+  // Fetch profile on mount
+  useEffect(() => {
+    dispatch(getUserProfile());
+  }, [dispatch]);
+
+  // Update local state when profile changes
+  useEffect(() => {
+    if (profile) {
+      setUser({
+        name: profile.name,
+        email: profile.email,
+      });
+    }
+  }, [profile]);
+
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setUser((prev) => ({ ...prev, [name]: value }));
@@ -50,29 +74,81 @@ const Profile = () => {
     setShowPasswords((prev) => ({ ...prev, [field]: !prev[field] }));
   };
 
-  const handleProfileUpdate = (e) => {
-    e.preventDefault();
-    setIsLoading(true);
-    // Update profile logic here
-    setTimeout(() => {
-      setIsLoading(false);
-      setIsEditing(false);
-    }, 1500);
+  const validateProfile = () => {
+    if (!user.name.trim()) {
+      toast.error("Name cannot be empty");
+      return false;
+    }
+    
+    if (!/^\S+@\S+\.\S+$/.test(user.email)) {
+      toast.error("Please enter a valid email");
+      return false;
+    }
+    
+    return true;
   };
 
-  const handlePasswordUpdate = (e) => {
+  const validatePassword = () => {
+    if (password.new.length < 8) {
+      toast.error("Password must be at least 8 characters");
+      return false;
+    }
+    
+    if (password.new !== password.confirm) {
+      toast.error("Passwords don't match");
+      return false;
+    }
+    
+    return true;
+  };
+
+  const handleProfileUpdate = async (e) => {
     e.preventDefault();
+    
+    if (!validateProfile()) return;
+    
     setIsLoading(true);
-    // Update password logic here
-    setTimeout(() => {
+    
+    try {
+      await dispatch(updateUserProfile({
+        name: user.name,
+        email: user.email,
+      })).unwrap();
+      
+      toast.success("Profile updated successfully!");
+      setIsEditing(false);
+    } catch (error) {
+      toast.error(error.message || "Failed to update profile");
+    } finally {
       setIsLoading(false);
+    }
+  };
+
+  const handlePasswordUpdate = async (e) => {
+    e.preventDefault();
+    
+    if (!validatePassword()) return;
+    
+    setIsLoading(true);
+    
+    try {
+      await dispatch(updateUserPassword({
+        oldPassword: password.current,
+        newPassword: password.new,
+      })).unwrap();
+      
+      toast.success("Password changed successfully!");
       setIsUpdatingPassword(false);
       setPassword({ current: "", new: "", confirm: "" });
-    }, 1500);
+    } catch (error) {
+      toast.error(error.message || "Failed to change password");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br  p-4 md:p-8">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-4 md:p-8">
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -82,7 +158,7 @@ const Profile = () => {
         {/* Header */}
         <div className="flex items-center justify-between mb-8">
           <div className="flex items-center space-x-1">
-           <BackButton />
+            <BackButton />
             <MdLocalHospital className="text-3xl text-blue-600" />
             <h1 className="text-2xl font-bold text-blue-800">MediCare</h1>
           </div>
@@ -96,6 +172,13 @@ const Profile = () => {
           </div>
         </div>
 
+        {/* Error Message */}
+        {error && (
+          <div className="mb-6 p-4 bg-red-100 text-red-700 rounded-lg">
+            {error}
+          </div>
+        )}
+
         {/* Profile Card */}
         <div className="bg-white rounded-2xl shadow-xl overflow-hidden mb-6">
           <div className="bg-gradient-to-r from-blue-600 to-indigo-700 p-6">
@@ -108,7 +191,7 @@ const Profile = () => {
               <div className="flex-shrink-0 mx-auto md:mx-0">
                 <div className="w-32 h-32 rounded-full bg-blue-100 flex items-center justify-center border-4 border-blue-200">
                   <span className="text-4xl text-blue-600 font-bold">
-                    {user.name.charAt(0)}
+                    {user.name.charAt(0).toUpperCase()}
                   </span>
                 </div>
               </div>
@@ -164,29 +247,6 @@ const Profile = () => {
                           id="email"
                           name="email"
                           value={user.email}
-                          onChange={handleInputChange}
-                          className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition"
-                          disabled={!isEditing}
-                        />
-                      </div>
-                    </div>
-
-                    <div>
-                      <label
-                        htmlFor="position"
-                        className="block text-sm font-medium text-gray-700 mb-1"
-                      >
-                        Position
-                      </label>
-                      <div className="relative">
-                        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                          <MdPerson className="text-gray-400" />
-                        </div>
-                        <input
-                          type="text"
-                          id="position"
-                          name="position"
-                          value={user.position}
                           onChange={handleInputChange}
                           className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition"
                           disabled={!isEditing}

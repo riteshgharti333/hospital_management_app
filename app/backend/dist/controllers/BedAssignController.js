@@ -8,10 +8,7 @@ const statusCodes_1 = require("../constants/statusCodes");
 const bedAssignService_1 = require("../services/bedAssignService");
 const schemas_1 = require("@hospital/schemas");
 exports.createBedAssignmentRecord = (0, catchAsyncError_1.catchAsyncError)(async (req, res, next) => {
-    const validated = schemas_1.bedAssignmentSchema.parse({
-        ...req.body,
-        allocateDate: new Date(req.body.allocateDate)
-    });
+    const validated = schemas_1.bedAssignmentSchema.parse(req.body);
     const assignment = await (0, bedAssignService_1.createBedAssignment)(validated);
     (0, sendResponse_1.sendResponse)(res, {
         success: true,
@@ -66,8 +63,12 @@ exports.updateBedAssignmentRecord = (0, catchAsyncError_1.catchAsyncError)(async
     const partialSchema = schemas_1.bedAssignmentSchema.partial();
     const validatedData = partialSchema.parse({
         ...req.body,
-        allocateDate: req.body.allocateDate ? new Date(req.body.allocateDate) : undefined,
-        dischargeDate: req.body.dischargeDate ? new Date(req.body.dischargeDate) : undefined
+        allocateDate: req.body.allocateDate
+            ? new Date(req.body.allocateDate)
+            : undefined,
+        dischargeDate: req.body.dischargeDate
+            ? new Date(req.body.dischargeDate)
+            : undefined,
     });
     const updatedAssignment = await (0, bedAssignService_1.updateBedAssignment)(id, validatedData);
     if (!updatedAssignment) {

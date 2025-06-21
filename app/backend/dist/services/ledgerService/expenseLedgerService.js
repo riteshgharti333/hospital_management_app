@@ -1,10 +1,9 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.deleteExpenseEntry = exports.updateExpenseEntry = exports.getTotalExpenses = exports.getExpenseSummaryByCategory = exports.getExpenseEntryById = exports.getAllExpenseEntries = exports.createExpenseEntry = void 0;
-const client_1 = require("@prisma/client");
-const prisma = new client_1.PrismaClient();
+const prisma_1 = require("../../lib/prisma");
 const createExpenseEntry = async (data) => {
-    return prisma.expenseLedger.create({ data });
+    return prisma_1.prisma.expenseLedger.create({ data });
 };
 exports.createExpenseEntry = createExpenseEntry;
 const getAllExpenseEntries = async (filters) => {
@@ -19,18 +18,18 @@ const getAllExpenseEntries = async (filters) => {
         if (filters.endDate)
             where.date.lte = filters.endDate;
     }
-    return prisma.expenseLedger.findMany({
+    return prisma_1.prisma.expenseLedger.findMany({
         where,
         orderBy: { date: 'desc' }
     });
 };
 exports.getAllExpenseEntries = getAllExpenseEntries;
 const getExpenseEntryById = async (id) => {
-    return prisma.expenseLedger.findUnique({ where: { id } });
+    return prisma_1.prisma.expenseLedger.findUnique({ where: { id } });
 };
 exports.getExpenseEntryById = getExpenseEntryById;
 const getExpenseSummaryByCategory = async () => {
-    return prisma.expenseLedger.groupBy({
+    return prisma_1.prisma.expenseLedger.groupBy({
         by: ['expenseCategory'],
         _sum: {
             amount: true
@@ -44,7 +43,7 @@ const getExpenseSummaryByCategory = async () => {
 };
 exports.getExpenseSummaryByCategory = getExpenseSummaryByCategory;
 const getTotalExpenses = async () => {
-    const result = await prisma.expenseLedger.aggregate({
+    const result = await prisma_1.prisma.expenseLedger.aggregate({
         _sum: {
             amount: true
         }
@@ -53,13 +52,13 @@ const getTotalExpenses = async () => {
 };
 exports.getTotalExpenses = getTotalExpenses;
 const updateExpenseEntry = async (id, data) => {
-    return prisma.expenseLedger.update({
+    return prisma_1.prisma.expenseLedger.update({
         where: { id },
         data,
     });
 };
 exports.updateExpenseEntry = updateExpenseEntry;
 const deleteExpenseEntry = async (id) => {
-    return prisma.expenseLedger.delete({ where: { id } });
+    return prisma_1.prisma.expenseLedger.delete({ where: { id } });
 };
 exports.deleteExpenseEntry = deleteExpenseEntry;

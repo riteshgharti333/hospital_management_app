@@ -7,6 +7,7 @@ const app_1 = __importDefault(require("./app"));
 const checkPrismaConnection_1 = require("./utils/checkPrismaConnection");
 (0, checkPrismaConnection_1.checkDB)();
 const PORT = process.env.PORT || 5000;
+console.log(process.env.DATABASE_URL);
 app_1.default.listen(PORT, () => {
     console.log(`✅ Server running on http://localhost:${PORT}`);
 });

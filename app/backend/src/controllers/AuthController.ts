@@ -5,18 +5,20 @@ import { catchAsyncError } from "../middlewares/catchAsyncError";
 import { ErrorHandler } from "../middlewares/errorHandler";
 import { sendResponse } from "../utils/sendResponse";
 import { StatusCodes } from "../constants/statusCodes";
-import { createUser, getUserByEmail } from "../services/authService";
-import { authSchema } from "@hospital/schemas";
-import { validateWithZod } from "../utils/validateWithZod";
-import { sendCookie } from "../utils/cookie";
+import {
+  createUser,
+  getUserByEmail,
+  getUserById,
+  updateUserDetails,
+  updateUserPassword,
+} from "../services/authService";
+import { createAccessToken, sendTokenCookies } from "../utils/cookie";
+import { registerSchema, loginSchema } from "@hospital/schemas";
 
-const JWT_SECRET = process.env.JWT_SECRET;
-const JWT_EXPIRES_IN = "60d";
-
-// 🔐 Register
+// REGISTER
 export const register = catchAsyncError(
   async (req: Request, res: Response, next: NextFunction) => {
-    const validated = req.body;
+    const validated = registerSchema.parse(req.body);
 
     const existingUser = await getUserByEmail(validated.email);
     if (existingUser) {
@@ -28,7 +30,7 @@ export const register = catchAsyncError(
     const hashedPassword = await bcrypt.hash(validated.password, 12);
 
     const user = await createUser({
-      name: validated.name,
+      name: validated.name ?? "",
       email: validated.email,
       password: hashedPassword,
     });
@@ -42,11 +44,10 @@ export const register = catchAsyncError(
   }
 );
 
-// 🔐 Login
-
+// LOGIN
 export const login = catchAsyncError(
   async (req: Request, res: Response, next: NextFunction) => {
-    const { email, password } =  req.body;
+    const { email, password } = loginSchema.parse(req.body);
 
     const user = await getUserByEmail(email);
     if (!user) {
@@ -62,7 +63,7 @@ export const login = catchAsyncError(
       );
     }
 
-    sendCookie(
+    sendTokenCookies(
       {
         id: user.id,
         name: user.name,
@@ -75,15 +76,14 @@ export const login = catchAsyncError(
   }
 );
 
-
+// LOGOUT
 export const logout = catchAsyncError(
-  async (req: Request, res: Response, _next: NextFunction) => {
-    // Clear the cookie by setting it to an empty string and expiring immediately
-    res.cookie("token", "", {
+  async (_req: Request, res: Response) => {
+    res.cookie("accessToken", "", {
       httpOnly: true,
-      sameSite: "lax", // or 'none' if cross-site cookies are needed with `secure: true`
+      sameSite: "lax",
       secure: process.env.NODE_ENV === "production",
-      expires: new Date(0), // expire immediately
+      expires: new Date(0),
     });
 
     sendResponse(res, {
@@ -91,5 +91,142 @@ export const logout = catchAsyncError(
       statusCode: StatusCodes.OK,
       message: "Logout successful",
     });
+  }
+);
+
+// GET MY PROFILE
+export const getMyProfile = catchAsyncError(
+  async (req: Request, res: Response, next: NextFunction) => {
+    const userId = (req.user as any)?.id;
+
+    if (!userId) {
+      return next(
+        new ErrorHandler("Unauthorized", StatusCodes.UNAUTHORIZED)
+      );
+    }
+
+    const user = await getUserById(userId);
+    if (!user) {
+      return next(new ErrorHandler("User not found", StatusCodes.NOT_FOUND));
+    }
+
+    sendResponse(res, {
+      success: true,
+      statusCode: StatusCodes.OK,
+      message: "User profile fetched successfully",
+      data: { id: user.id, name: user.name, email: user.email },
+    });
+  }
+);
+
+// UPDATE PROFILE
+export const updateProfile = catchAsyncError(
+  async (req: Request, res: Response, next: NextFunction) => {
+    const userId = (req.user as any)?.id;
+    const { name, email } = req.body;
+
+    if (!userId) {
+      return next(
+        new ErrorHandler("Unauthorized", StatusCodes.UNAUTHORIZED)
+      );
+    }
+
+    const updatedUser = await updateUserDetails(userId, { name, email });
+
+    sendResponse(res, {
+      success: true,
+      statusCode: StatusCodes.OK,
+      message: "Profile updated successfully",
+      data: {
+        id: updatedUser.id,
+        name: updatedUser.name,
+        email: updatedUser.email,
+      },
+    });
+  }
+);
+
+// CHANGE PASSWORD
+export const changePassword = catchAsyncError(
+  async (req: Request, res: Response, next: NextFunction) => {
+    const userId = (req.user as any)?.id;
+    const { oldPassword, newPassword } = req.body;
+
+    if (!userId) {
+      return next(
+        new ErrorHandler("Unauthorized", StatusCodes.UNAUTHORIZED)
+      );
+    }
+
+    const user = await getUserById(userId);
+    if (!user) {
+      return next(new ErrorHandler("User not found", StatusCodes.NOT_FOUND));
+    }
+
+    const isMatch = await bcrypt.compare(oldPassword, user.password);
+    if (!isMatch) {
+      return next(
+        new ErrorHandler("Old password is incorrect", StatusCodes.UNAUTHORIZED)
+      );
+    }
+
+    const hashedNewPassword = await bcrypt.hash(newPassword, 12);
+    await updateUserPassword(userId, hashedNewPassword);
+
+    sendResponse(res, {
+      success: true,
+      statusCode: StatusCodes.OK,
+      message: "Password updated successfully",
+    });
+  }
+);
+
+// REFRESH ACCESS TOKEN
+export const refreshAccessToken = catchAsyncError(
+  async (req: Request, res: Response, next: NextFunction) => {
+    const refreshToken = req.cookies?.refreshToken;
+
+    if (!refreshToken) {
+      return next(
+        new ErrorHandler("Refresh token missing", StatusCodes.UNAUTHORIZED)
+      );
+    }
+
+    try {
+      const decoded = jwt.verify(
+        refreshToken,
+        process.env.JWT_REFRESH_SECRET!
+      ) as {
+        id: string;
+        name: string;
+        email: string;
+      };
+
+      const newAccessToken = createAccessToken({
+        id: decoded.id,
+        name: decoded.name,
+        email: decoded.email,
+      });
+
+      res.cookie("accessToken", newAccessToken, {
+        httpOnly: true,
+        sameSite: "lax",
+        secure: process.env.NODE_ENV === "production",
+        maxAge: 60 * 60 * 1000,
+      });
+
+      sendResponse(res, {
+        success: true,
+        statusCode: StatusCodes.OK,
+        message: "Access token refreshed",
+      });
+    } catch (error) {
+      return next(
+        new ErrorHandler(
+          "Invalid or expired refresh token",
+          StatusCodes.UNAUTHORIZED
+        )
+      );
+    }
   }
 );

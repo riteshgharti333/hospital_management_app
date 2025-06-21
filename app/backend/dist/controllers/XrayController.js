@@ -8,12 +8,7 @@ const statusCodes_1 = require("../constants/statusCodes");
 const xrayService_1 = require("../services/xrayService");
 const schemas_1 = require("@hospital/schemas");
 exports.createXrayReportRecord = (0, catchAsyncError_1.catchAsyncError)(async (req, res, next) => {
-    const validated = schemas_1.xrayReportSchema.parse({
-        ...req.body,
-        billDate: new Date(req.body.billDate),
-        testDate: new Date(req.body.testDate),
-        reportDate: new Date(req.body.reportDate),
-    });
+    const validated = schemas_1.xrayReportSchema.parse(req.body);
     // Validate netBillAmount calculation
     const calculatedNet = validated.billAmount * (1 - validated.discountPercent / 100);
     if (Math.abs(calculatedNet - validated.netBillAmount) > 0.01) {

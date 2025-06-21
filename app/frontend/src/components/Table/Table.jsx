@@ -86,7 +86,7 @@ const Table = ({ data, columns, filters = {}, getRowProps, path }) => {
         "pharmacy-ledger",
         "insurance-ledger",
         "diagnostics-ledger",
-        "general-ledger",
+        "expense-ledger",
       ].includes(path)
     ) {
       navigate(`/ledger/${path}/${id}`);

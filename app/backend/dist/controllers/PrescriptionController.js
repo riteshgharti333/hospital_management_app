@@ -7,16 +7,22 @@ const sendResponse_1 = require("../utils/sendResponse");
 const statusCodes_1 = require("../constants/statusCodes");
 const prescriptionService_1 = require("../services/prescriptionService");
 const schemas_1 = require("@hospital/schemas");
+const cloudinaryUploader_1 = require("../utils/cloudinaryUploader");
 const createPrescriptionRecord = async (req, res, next) => {
     try {
-        // ✅ Validate and parse
+        let uploadedUrl;
+        // ✅ Upload file if exists
+        if (req.file) {
+            uploadedUrl = await (0, cloudinaryUploader_1.uploadToCloudinary)(req.file.buffer);
+        }
         const validated = schemas_1.prescriptionSchema.parse({
             ...req.body,
             prescriptionDate: new Date(req.body.prescriptionDate),
+            doctorId: Number(req.body.doctorId),
+            patientId: Number(req.body.patientId),
+            prescriptionDoc: uploadedUrl,
         });
-        // ✅ Create in DB
         const prescription = await (0, prescriptionService_1.createPrescription)(validated);
-        // ✅ Success response
         (0, sendResponse_1.sendResponse)(res, {
             success: true,
             statusCode: statusCodes_1.StatusCodes.CREATED,
@@ -25,9 +31,7 @@ const createPrescriptionRecord = async (req, res, next) => {
         });
     }
     catch (error) {
-        // ❌ If validation or DB fails, send error
-        console.log(error);
-        next(error); // Forward error to Express error handler middleware
+        next(error);
     }
 };
 exports.createPrescriptionRecord = createPrescriptionRecord;
@@ -68,21 +72,29 @@ exports.updatePrescriptionRecord = (0, catchAsyncError_1.catchAsyncError)(async 
     if (isNaN(id)) {
         return next(new errorHandler_1.ErrorHandler("Invalid ID", statusCodes_1.StatusCodes.BAD_REQUEST));
     }
+    const existing = await (0, prescriptionService_1.getPrescriptionById)(id);
+    if (!existing) {
+        return next(new errorHandler_1.ErrorHandler("Prescription not found", statusCodes_1.StatusCodes.NOT_FOUND));
+    }
+    let uploadedUrl;
+    // ✅ Delete old file and upload new if file exists
+    if (req.file) {
+        if (existing.prescriptionDoc) {
+            await (0, cloudinaryUploader_1.deleteFromCloudinary)(existing.prescriptionDoc);
+        }
+        uploadedUrl = await (0, cloudinaryUploader_1.uploadToCloudinary)(req.file.buffer);
+    }
     const partialSchema = schemas_1.prescriptionSchema.partial();
     const validatedData = partialSchema.parse({
         ...req.body,
         prescriptionDate: req.body.prescriptionDate
             ? new Date(req.body.prescriptionDate)
             : undefined,
+        doctorId: req.body.doctorId ? Number(req.body.doctorId) : undefined,
+        patientId: req.body.patientId ? Number(req.body.patientId) : undefined,
+        prescriptionDoc: uploadedUrl ?? req.body.prescriptionDoc ?? undefined,
     });
-    // Ensure prescriptionDoc is never null
-    if (validatedData.prescriptionDoc === null) {
-        validatedData.prescriptionDoc = undefined;
-    }
     const updatedPrescription = await (0, prescriptionService_1.updatePrescription)(id, validatedData);
-    if (!updatedPrescription) {
-        return next(new errorHandler_1.ErrorHandler("Prescription not found", statusCodes_1.StatusCodes.NOT_FOUND));
-    }
     (0, sendResponse_1.sendResponse)(res, {
         success: true,
         statusCode: statusCodes_1.StatusCodes.OK,
@@ -95,14 +107,17 @@ exports.deletePrescriptionRecord = (0, catchAsyncError_1.catchAsyncError)(async 
     if (isNaN(id)) {
         return next(new errorHandler_1.ErrorHandler("Invalid ID", statusCodes_1.StatusCodes.BAD_REQUEST));
     }
-    const deletedPrescription = await (0, prescriptionService_1.deletePrescription)(id);
-    if (!deletedPrescription) {
+    const existing = await (0, prescriptionService_1.getPrescriptionById)(id);
+    if (!existing) {
         return next(new errorHandler_1.ErrorHandler("Prescription not found", statusCodes_1.StatusCodes.NOT_FOUND));
     }
+    if (existing.prescriptionDoc) {
+        await (0, cloudinaryUploader_1.deleteFromCloudinary)(existing.prescriptionDoc);
+    }
+    const deletedPrescription = await (0, prescriptionService_1.deletePrescription)(id);
     (0, sendResponse_1.sendResponse)(res, {
         success: true,
         statusCode: statusCodes_1.StatusCodes.OK,
         message: "Prescription deleted successfully",
-        data: deletedPrescription,
     });
 });

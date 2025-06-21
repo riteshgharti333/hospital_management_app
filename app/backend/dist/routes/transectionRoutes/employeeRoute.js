@@ -5,12 +5,13 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 const express_1 = __importDefault(require("express"));
 const EmployeeController_1 = require("../../controllers/transection/EmployeeController");
+const multer_middleware_1 = require("../../middlewares/multer.middleware");
 const router = express_1.default.Router();
 router.route("/")
-    .post(EmployeeController_1.createEmployeeRecord)
+    .post(multer_middleware_1.uploadMiddleware.single("file"), EmployeeController_1.createEmployeeRecord)
     .get(EmployeeController_1.getAllEmployeeRecords);
 router.route("/:id")
     .get(EmployeeController_1.getEmployeeRecordById)
-    .patch(EmployeeController_1.updateEmployeeRecord)
+    .patch(multer_middleware_1.uploadMiddleware.single("file"), EmployeeController_1.updateEmployeeRecord)
     .delete(EmployeeController_1.deleteEmployeeRecord);
 exports.default = router;

@@ -27,6 +27,8 @@ export const useGetPatientLedgerEntryById = (id) => {
     queryKey: ["patientLedgerEntry", id],
     queryFn: async () => {
       const { data } = await getPatientLedgerEntryByIdAPI(id);
+      console.log(data)
+      console.log("hello")
       return data.data;
     },
     enabled: !!id,
