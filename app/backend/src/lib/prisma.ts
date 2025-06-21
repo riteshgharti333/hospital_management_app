@@ -1,4 +1,15 @@
-// src/lib/prisma.ts
 import { PrismaClient } from "@prisma/client";
 
-export const prisma = new PrismaClient();
+const isRender = process.env.RENDER === "true"; 
+
+export const prisma = new PrismaClient(
+  isRender
+    ? ({
+        __internal: {
+          engine: {
+            enablePreparedStatements: false,
+          },
+        },
+      } as any)
+    : {}
+);
