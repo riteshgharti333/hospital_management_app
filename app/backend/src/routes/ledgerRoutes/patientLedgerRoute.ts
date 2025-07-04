@@ -7,19 +7,20 @@ import {
   updateLedgerEntryRecord,
   deleteLedgerEntryRecord,
 } from "../../controllers/ledger/PatientLedgerController";
+import { isAuthenticated } from "../../middlewares/isAuthenticated";
+import { isAdmin } from "../../middlewares/isAdmin";
 
 const router = express.Router();
 
 router.route("/")
-  .post(createLedgerEntryRecord)
+  .post(isAuthenticated, isAdmin, createLedgerEntryRecord)
   .get(getAllLedgerEntryRecords);
 
-router.route("/balance")
-  .get(getPatientBalanceRecord);
+router.route("/balance").get(getPatientBalanceRecord);
 
 router.route("/:id")
   .get(getLedgerEntryRecordById)
-  .patch(updateLedgerEntryRecord)
-  .delete(deleteLedgerEntryRecord);
+  .patch(isAuthenticated, isAdmin, updateLedgerEntryRecord)
+  .delete(isAuthenticated, isAdmin, deleteLedgerEntryRecord);
 
 export default router;

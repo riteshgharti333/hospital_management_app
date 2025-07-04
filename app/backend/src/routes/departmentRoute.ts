@@ -6,16 +6,20 @@ import {
   updateDepartmentRecord,
   deleteDepartmentRecord,
 } from "../controllers/DepartmentController";
+import { isAuthenticated } from "../middlewares/isAuthenticated";
+import { isAdmin } from "../middlewares/isAdmin";
 
 const router = express.Router();
 
-router.route("/")
-  .post(createDepartmentRecord)
+router
+  .route("/")
+  .post(isAuthenticated, isAdmin, createDepartmentRecord)
   .get(getAllDepartmentRecords);
 
-router.route("/:id")
+router
+  .route("/:id")
   .get(getDepartmentRecordById)
-  .put(updateDepartmentRecord)
-  .delete(deleteDepartmentRecord);
+  .put(isAuthenticated, isAdmin, updateDepartmentRecord)
+  .delete(isAuthenticated, isAdmin, deleteDepartmentRecord);
 
 export default router;

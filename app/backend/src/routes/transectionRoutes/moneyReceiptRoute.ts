@@ -6,16 +6,20 @@ import {
   updateMoneyReceiptRecord,
   deleteMoneyReceiptRecord,
 } from "../../controllers/transection/MoneyReceiptController";
+import { isAuthenticated } from "../../middlewares/isAuthenticated";
+import { isAdmin } from "../../middlewares/isAdmin";
 
 const router = express.Router();
 
-router.route("/")
-  .post(createMoneyReceiptRecord)
+router
+  .route("/")
+  .post(isAuthenticated, isAdmin, createMoneyReceiptRecord)
   .get(getAllMoneyReceiptRecords);
 
-router.route("/:id")
+router
+  .route("/:id")
   .get(getMoneyReceiptRecordById)
-  .patch(updateMoneyReceiptRecord)
-  .delete(deleteMoneyReceiptRecord);
+  .patch(isAuthenticated, isAdmin, updateMoneyReceiptRecord)
+  .delete(isAuthenticated, isAdmin, deleteMoneyReceiptRecord);
 
 export default router;

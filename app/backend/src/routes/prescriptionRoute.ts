@@ -6,17 +6,31 @@ import {
   updatePrescriptionRecord,
   deletePrescriptionRecord,
 } from "../controllers/PrescriptionController";
-import { uploadMiddleware } from "../middlewares/multer.middleware"; 
+import { uploadMiddleware } from "../middlewares/multer.middleware";
+import { isAuthenticated } from "../middlewares/isAuthenticated";
+import { isAdmin } from "../middlewares/isAdmin";
 
 const router = express.Router();
 
-router.route("/")
-  .post(uploadMiddleware.single("file"), createPrescriptionRecord) 
+router
+  .route("/")
+  .post(
+    isAuthenticated,
+    isAdmin,
+    uploadMiddleware.single("file"),
+    createPrescriptionRecord
+  )
   .get(getAllPrescriptionRecords);
 
-router.route("/:id")
+router
+  .route("/:id")
   .get(getPrescriptionRecordById)
-  .patch(uploadMiddleware.single("file"), updatePrescriptionRecord) 
-  .delete(deletePrescriptionRecord);
+  .patch(
+    isAuthenticated,
+    isAdmin,
+    uploadMiddleware.single("file"),
+    updatePrescriptionRecord
+  )
+  .delete(isAuthenticated, isAdmin, deletePrescriptionRecord);
 
 export default router;

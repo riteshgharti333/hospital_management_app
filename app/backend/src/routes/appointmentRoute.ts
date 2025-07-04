@@ -1,4 +1,5 @@
 import express from "express";
+
 import {
   createAppointmentRecord,
   getAllAppointmentRecords,
@@ -6,16 +7,20 @@ import {
   updateAppointmentRecord,
   deleteAppointmentRecord,
 } from "../controllers/AppointmentController";
+import { isAuthenticated } from "../middlewares/isAuthenticated";
+import { isAdmin } from "../middlewares/isAdmin";
 
 const router = express.Router();
 
-router.route("/")
-  .post(createAppointmentRecord)
+router
+  .route("/")
+  .post(isAuthenticated, isAdmin, createAppointmentRecord)
   .get(getAllAppointmentRecords);
 
-router.route("/:id")
+router
+  .route("/:id")
   .get(getAppointmentRecordById)
-  .patch(updateAppointmentRecord)
-  .delete(deleteAppointmentRecord);
+  .patch(isAuthenticated, isAdmin, updateAppointmentRecord)
+  .delete(isAuthenticated, isAdmin, deleteAppointmentRecord);
 
-export default router; 
+export default router;

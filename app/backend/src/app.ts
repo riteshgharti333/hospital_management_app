@@ -5,7 +5,7 @@ import dotenv from "dotenv";
 import cookieParser from "cookie-parser";
 import { errorMiddleware } from "./middlewares/errorMiddleware";
 
-import authRoutes from "./routes/authRoute"
+import authRoutes from "./routes/authRoute";
 
 import departmentRoutes from "./routes/departmentRoute";
 import admissionRoutes from "./routes/admissionRoute";
@@ -21,7 +21,7 @@ import prescriptionRoutes from "./routes/prescriptionRoute";
 import ambulanceRoutes from "./routes/ambulanceRoute";
 import xrayRoutes from "./routes/xrayRoute";
 
-// ledger 
+// ledger
 import patientLedgerRoutes from "./routes/ledgerRoutes/patientLedgerRoute";
 import bankLedgerRoutes from "./routes/ledgerRoutes/bankLedgerRoute";
 import cashLedgerRoutes from "./routes/ledgerRoutes/cashLedgerRoute";
@@ -70,9 +70,7 @@ app.use(cookieParser());
 app.use(express.json());
 app.use(morgan("dev"));
 
-
 app.use("/api/v1/auth", authRoutes);
-
 
 app.use("/api/v1/admission", admissionRoutes);
 app.use("/api/v1/birth", birthRoutes);
@@ -100,7 +98,7 @@ app.use("/api/v1/ledger/pharmacy-ledger", pharmacyLedgerRoutes);
 app.use("/api/v1/ledger/supplier-ledger", supplierLedgerRoutes);
 
 // item/service
-app.use("/api/v1/brand", brandRoutes); 
+app.use("/api/v1/brand", brandRoutes);
 app.use("/api/v1/product", productRoutes);
 // app.use("/api/v1/product-entry", productEnteryRoutes);
 app.use("/api/v1/service-charges", serviceChargesRoutes);

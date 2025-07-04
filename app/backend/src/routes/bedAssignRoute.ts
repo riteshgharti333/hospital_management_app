@@ -7,18 +7,27 @@ import {
   dischargePatientFromBed,
   deleteBedAssignmentRecord,
 } from "../controllers/BedAssignController";
+import { isAuthenticated } from "../middlewares/isAuthenticated";
+import { isAdmin } from "../middlewares/isAdmin";
 
 const router = express.Router();
 
-router.route("/")
-  .post(createBedAssignmentRecord)
+router
+  .route("/")
+  .post(isAuthenticated, isAdmin, createBedAssignmentRecord)
   .get(getAllBedAssignmentRecords);
 
-router.route("/:id")
+router
+  .route("/:id")
   .get(getBedAssignmentRecordById)
-  .put(updateBedAssignmentRecord)
-  .delete(deleteBedAssignmentRecord);
+  .put(isAuthenticated, isAdmin, updateBedAssignmentRecord)
+  .delete(isAuthenticated, isAdmin, deleteBedAssignmentRecord);
 
-router.post("/:id/discharge", dischargePatientFromBed);
+router.post(
+  "/:id/discharge",
+  isAuthenticated,
+  isAdmin,
+  dischargePatientFromBed
+);
 
 export default router;

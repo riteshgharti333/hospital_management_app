@@ -1,10 +1,10 @@
 import { prisma } from "../lib/prisma";
 
-
 export type RegisterInput = {
   name: string;
   email: string;
-  password: string; 
+  password: string;
+  isAdmin?: boolean;
 };
 
 export const createUser = async (data: RegisterInput) => {
@@ -15,8 +15,6 @@ export const createUser = async (data: RegisterInput) => {
 export const getUserByEmail = async (email: string) => {
   return prisma.user.findUnique({ where: { email } });
 };
-
-
 
 // Get user by ID
 export const getUserById = async (id: string) => {
@@ -35,12 +33,12 @@ export const updateUserDetails = async (
 };
 
 // Update password
-export const updateUserPassword = async (id: string, hashedPassword: string) => {
+export const updateUserPassword = async (
+  id: string,
+  hashedPassword: string
+) => {
   return prisma.user.update({
     where: { id },
     data: { password: hashedPassword },
   });
 };
-
-
-

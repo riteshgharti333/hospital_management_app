@@ -6,16 +6,20 @@ import {
   updateBirthRecord,
   deleteBirthRecord,
 } from "../controllers/BirthController";
+import { isAuthenticated } from "../middlewares/isAuthenticated";
+import { isAdmin } from "../middlewares/isAdmin";
 
 const router = express.Router();
 
-router.route("/")
-  .post(createBirthRecord)
+router
+  .route("/")
+  .post(isAuthenticated, isAdmin, createBirthRecord)
   .get(getAllBirthRecords);
 
-router.route("/:id")
+router
+  .route("/:id")
   .get(getBirthRecordById)
-  .put(updateBirthRecord)
-  .delete(deleteBirthRecord);
+  .put(isAuthenticated, isAdmin, updateBirthRecord)
+  .delete(isAuthenticated, isAdmin, deleteBirthRecord);
 
 export default router;

@@ -2,7 +2,6 @@ import express from "express";
 import { register, login, logout, refreshAccessToken, getMyProfile, updateProfile, changePassword } from "../controllers/AuthController";
 import { authLimiter } from "../middlewares/rateLimiter";
 import { isAuthenticated } from "../middlewares/isAuthenticated";
-// import { isAuthenticated } from "../middlewares/authMiddleware";
 
 const router = express.Router();
 

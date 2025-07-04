@@ -8,22 +8,21 @@ import {
   updateSupplierLedgerRecord,
   deleteSupplierLedgerRecord,
 } from "../../controllers/ledger/SupplierLedgerController";
+import { isAuthenticated } from "../../middlewares/isAuthenticated";
+import { isAdmin } from "../../middlewares/isAdmin";
 
 const router = express.Router();
 
 router.route("/")
-  .post(createSupplierLedgerRecord)
+  .post(isAuthenticated, isAdmin, createSupplierLedgerRecord)
   .get(getAllSupplierLedgerRecords);
 
-router.route("/outstanding")
-  .get(getSupplierOutstandingBalance);
-
-router.route("/summary")
-  .get(getSupplierSummaryReport);
+router.route("/outstanding").get(getSupplierOutstandingBalance);
+router.route("/summary").get(getSupplierSummaryReport);
 
 router.route("/:id")
   .get(getSupplierLedgerRecordById)
-  .patch(updateSupplierLedgerRecord)
-  .delete(deleteSupplierLedgerRecord);
+  .patch(isAuthenticated, isAdmin, updateSupplierLedgerRecord)
+  .delete(isAuthenticated, isAdmin, deleteSupplierLedgerRecord);
 
 export default router;

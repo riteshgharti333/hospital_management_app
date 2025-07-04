@@ -6,18 +6,20 @@ import {
   updatePatientRecord,
   deletePatientRecord,
 } from "../controllers/PatientController";
+import { isAuthenticated } from "../middlewares/isAuthenticated";
+import { isAdmin } from "../middlewares/isAdmin";
 
 const router = express.Router();
 
-router.route("/")
-  .post(createPatientRecord)
+router
+  .route("/")
+  .post(isAuthenticated, isAdmin, createPatientRecord)
   .get(getAllPatientRecords);
 
-router.route("/:id")
+router
+  .route("/:id")
   .get(getPatientRecordById)
-  .put(updatePatientRecord)
-  .delete(deletePatientRecord);
-
-
+  .put(isAuthenticated, isAdmin, updatePatientRecord)
+  .delete(isAuthenticated, isAdmin, deletePatientRecord);
 
 export default router;

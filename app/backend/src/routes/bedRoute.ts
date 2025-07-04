@@ -6,16 +6,20 @@ import {
   updateBedRecord,
   deleteBedRecord,
 } from "../controllers/BedController";
+import { isAuthenticated } from "../middlewares/isAuthenticated";
+import { isAdmin } from "../middlewares/isAdmin";
 
 const router = express.Router();
 
-router.route("/")
-  .post(createBedRecord)
+router
+  .route("/")
+  .post(isAuthenticated, isAdmin, createBedRecord)
   .get(getAllBedRecords);
 
-router.route("/:id")
+router
+  .route("/:id")
   .get(getBedRecordById)
-  .put(updateBedRecord)
-  .delete(deleteBedRecord);
+  .put(isAuthenticated, isAdmin, updateBedRecord)
+  .delete(isAuthenticated, isAdmin, deleteBedRecord);
 
 export default router;

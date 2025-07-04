@@ -6,16 +6,18 @@ import {
   updateBillRecord,
   deleteBillRecord,
 } from "../../controllers/transection/BillController";
+import { isAuthenticated } from "../../middlewares/isAuthenticated";
+import { isAdmin } from "../../middlewares/isAdmin";
 
 const router = express.Router();
 
 router.route("/")
-  .post(createBillRecord)
+  .post(isAuthenticated, isAdmin, createBillRecord)
   .get(getAllBillRecords);
 
 router.route("/:id")
   .get(getBillRecordById)
-  .patch(updateBillRecord)
-  .delete(deleteBillRecord);
+  .patch(isAuthenticated, isAdmin, updateBillRecord)
+  .delete(isAuthenticated, isAdmin, deleteBillRecord);
 
 export default router;

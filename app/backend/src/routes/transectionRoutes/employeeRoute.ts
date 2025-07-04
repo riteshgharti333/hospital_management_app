@@ -6,19 +6,19 @@ import {
   updateEmployeeRecord,
   deleteEmployeeRecord,
 } from "../../controllers/transection/EmployeeController";
-
 import { uploadMiddleware } from "../../middlewares/multer.middleware";
-
+import { isAuthenticated } from "../../middlewares/isAuthenticated";
+import { isAdmin } from "../../middlewares/isAdmin";
 
 const router = express.Router();
 
 router.route("/")
-  .post(uploadMiddleware.single("file") , createEmployeeRecord)
+  .post(isAuthenticated, isAdmin, uploadMiddleware.single("file"), createEmployeeRecord)
   .get(getAllEmployeeRecords);
 
 router.route("/:id")
   .get(getEmployeeRecordById)
-  .patch( uploadMiddleware.single("file"),updateEmployeeRecord)
-  .delete(deleteEmployeeRecord);
+  .patch(isAuthenticated, isAdmin, uploadMiddleware.single("file"), updateEmployeeRecord)
+  .delete(isAuthenticated, isAdmin, deleteEmployeeRecord);
 
 export default router;

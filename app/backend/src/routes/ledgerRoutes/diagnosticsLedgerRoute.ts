@@ -1,4 +1,3 @@
-
 import express from "express";
 import {
   createDiagnosticsRecord,
@@ -8,19 +7,22 @@ import {
   updateDiagnosticsRecord,
   deleteDiagnosticsRecord,
 } from "../../controllers/ledger/DiagnosticsLedgerController";
+import { isAuthenticated } from "../../middlewares/isAuthenticated";
+import { isAdmin } from "../../middlewares/isAdmin";
 
 const router = express.Router();
 
-router.route("/")
-  .post(createDiagnosticsRecord)
+router
+  .route("/")
+  .post(isAuthenticated, isAdmin, createDiagnosticsRecord)
   .get(getAllDiagnosticsRecords);
 
-router.route("/total")
-  .get(getPatientDiagnosticsTotalRecord);
+router.route("/total").get(getPatientDiagnosticsTotalRecord);
 
-router.route("/:id")
+router
+  .route("/:id")
   .get(getDiagnosticsRecordById)
-  .patch(updateDiagnosticsRecord)
-  .delete(deleteDiagnosticsRecord);
+  .patch(isAuthenticated, isAdmin, updateDiagnosticsRecord)
+  .delete(isAuthenticated, isAdmin, deleteDiagnosticsRecord);
 
 export default router;

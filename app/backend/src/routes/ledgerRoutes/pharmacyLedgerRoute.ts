@@ -8,22 +8,21 @@ import {
   updatePharmacyLedgerRecord,
   deletePharmacyLedgerRecord,
 } from "../../controllers/ledger/PharmacyLedgerController";
+import { isAuthenticated } from "../../middlewares/isAuthenticated";
+import { isAdmin } from "../../middlewares/isAdmin";
 
 const router = express.Router();
 
 router.route("/")
-  .post(createPharmacyLedgerRecord)
+  .post(isAuthenticated, isAdmin, createPharmacyLedgerRecord)
   .get(getAllPharmacyLedgerRecords);
 
-router.route("/summary/financial")
-  .get(getPharmacyFinancialSummary);
-
-router.route("/summary/category")
-  .get(getPharmacyCategorySummary);
+router.route("/summary/financial").get(getPharmacyFinancialSummary);
+router.route("/summary/category").get(getPharmacyCategorySummary);
 
 router.route("/:id")
   .get(getPharmacyLedgerRecordById)
-  .patch(updatePharmacyLedgerRecord)
-  .delete(deletePharmacyLedgerRecord);
+  .patch(isAuthenticated, isAdmin, updatePharmacyLedgerRecord)
+  .delete(isAuthenticated, isAdmin, deletePharmacyLedgerRecord);
 
 export default router;

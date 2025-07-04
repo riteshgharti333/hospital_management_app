@@ -7,19 +7,22 @@ import {
   updateCashLedgerRecord,
   deleteCashLedgerRecord,
 } from "../../controllers/ledger/CashLedgerController";
+import { isAuthenticated } from "../../middlewares/isAuthenticated";
+import { isAdmin } from "../../middlewares/isAdmin";
 
 const router = express.Router();
 
-router.route("/")
-  .post(createCashLedgerRecord)
+router
+  .route("/")
+  .post(isAuthenticated, isAdmin, createCashLedgerRecord)
   .get(getAllCashLedgerRecords);
 
-router.route("/balance")
-  .get(getCashBalanceRecord);
+router.route("/balance").get(getCashBalanceRecord);
 
-router.route("/:id")
+router
+  .route("/:id")
   .get(getCashLedgerRecordById)
-  .patch(updateCashLedgerRecord)
-  .delete(deleteCashLedgerRecord);
+  .patch(isAuthenticated, isAdmin, updateCashLedgerRecord)
+  .delete(isAuthenticated, isAdmin, deleteCashLedgerRecord);
 
 export default router;

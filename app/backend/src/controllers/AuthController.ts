@@ -12,10 +12,11 @@ import {
   updateUserDetails,
   updateUserPassword,
 } from "../services/authService";
-import { createAccessToken, sendTokenCookies } from "../utils/cookie";
+import { createAccessToken, sendTokenCookie } from "../utils/cookie";
 import { registerSchema, loginSchema } from "@hospital/schemas";
 
 // REGISTER
+
 export const register = catchAsyncError(
   async (req: Request, res: Response, next: NextFunction) => {
     const validated = registerSchema.parse(req.body);
@@ -29,17 +30,26 @@ export const register = catchAsyncError(
 
     const hashedPassword = await bcrypt.hash(validated.password, 12);
 
+    // ✅ Set isAdmin true only if email is r@gmail.com
+    const isAdmin = validated.email === process.env.ADMIN_EMAIL;
+
     const user = await createUser({
       name: validated.name ?? "",
       email: validated.email,
       password: hashedPassword,
+      isAdmin,
     });
 
     sendResponse(res, {
       success: true,
       statusCode: StatusCodes.CREATED,
       message: "User registered successfully",
-      data: { id: user.id, name: user.name, email: user.email },
+      data: {
+        id: user.id,
+        name: user.name,
+        email: user.email,
+        isAdmin: user.isAdmin,
+      },
     });
   }
 );
@@ -63,7 +73,7 @@ export const login = catchAsyncError(
       );
     }
 
-    sendTokenCookies(
+    sendTokenCookie(
       {
         id: user.id,
         name: user.name,
@@ -77,22 +87,20 @@ export const login = catchAsyncError(
 );
 
 // LOGOUT
-export const logout = catchAsyncError(
-  async (_req: Request, res: Response) => {
-    res.cookie("accessToken", "", {
-      httpOnly: true,
-      sameSite: "lax",
-      secure: process.env.NODE_ENV === "production",
-      expires: new Date(0),
-    });
+export const logout = catchAsyncError(async (_req: Request, res: Response) => {
+  res.cookie("accessToken", "", {
+    httpOnly: true,
+    sameSite: "lax",
+    secure: process.env.NODE_ENV === "production",
+    expires: new Date(0),
+  });
 
-    sendResponse(res, {
-      success: true,
-      statusCode: StatusCodes.OK,
-      message: "Logout successful",
-    });
-  }
-);
+  sendResponse(res, {
+    success: true,
+    statusCode: StatusCodes.OK,
+    message: "Logout successfully",
+  });
+});
 
 // GET MY PROFILE
 export const getMyProfile = catchAsyncError(
@@ -100,9 +108,7 @@ export const getMyProfile = catchAsyncError(
     const userId = (req.user as any)?.id;
 
     if (!userId) {
-      return next(
-        new ErrorHandler("Unauthorized", StatusCodes.UNAUTHORIZED)
-      );
+      return next(new ErrorHandler("Unauthorized", StatusCodes.UNAUTHORIZED));
     }
 
     const user = await getUserById(userId);
@@ -114,7 +120,7 @@ export const getMyProfile = catchAsyncError(
       success: true,
       statusCode: StatusCodes.OK,
       message: "User profile fetched successfully",
-      data: { id: user.id, name: user.name, email: user.email },
+      data: user,
     });
   }
 );
@@ -126,9 +132,7 @@ export const updateProfile = catchAsyncError(
     const { name, email } = req.body;
 
     if (!userId) {
-      return next(
-        new ErrorHandler("Unauthorized", StatusCodes.UNAUTHORIZED)
-      );
+      return next(new ErrorHandler("Unauthorized", StatusCodes.UNAUTHORIZED));
     }
 
     const updatedUser = await updateUserDetails(userId, { name, email });
@@ -153,9 +157,7 @@ export const changePassword = catchAsyncError(
     const { oldPassword, newPassword } = req.body;
 
     if (!userId) {
-      return next(
-        new ErrorHandler("Unauthorized", StatusCodes.UNAUTHORIZED)
-      );
+      return next(new ErrorHandler("Unauthorized", StatusCodes.UNAUTHORIZED));
     }
 
     const user = await getUserById(userId);
@@ -211,7 +213,7 @@ export const refreshAccessToken = catchAsyncError(
       res.cookie("accessToken", newAccessToken, {
         httpOnly: true,
         sameSite: "lax",
-        secure: process.env.NODE_ENV === "production",
+        secure: process.env.NODE_ENV === "development",
         maxAge: 60 * 60 * 1000,
       });
 

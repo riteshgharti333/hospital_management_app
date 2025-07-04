@@ -6,16 +6,20 @@ import {
   updateServiceChargeRecord,
   deleteServiceChargeRecord,
 } from "../../controllers/items/ServiceChargesController";
+import { isAuthenticated } from "../../middlewares/isAuthenticated";
+import { isAdmin } from "../../middlewares/isAdmin";
 
 const router = express.Router();
 
-router.route("/")
-  .post(createServiceChargeRecord)
+router
+  .route("/")
+  .post(isAuthenticated, isAdmin, createServiceChargeRecord)
   .get(getAllServiceChargeRecords);
 
-router.route("/:id")
+router
+  .route("/:id")
   .get(getServiceChargeRecordById)
-  .patch(updateServiceChargeRecord)
-  .delete(deleteServiceChargeRecord);
+  .patch(isAuthenticated, isAdmin, updateServiceChargeRecord)
+  .delete(isAuthenticated, isAdmin, deleteServiceChargeRecord);
 
 export default router;

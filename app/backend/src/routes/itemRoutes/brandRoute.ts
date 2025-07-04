@@ -6,20 +6,21 @@ import {
   updateBrandRecord,
   deleteBrandRecord,
 } from "../../controllers/items/BrandController";
-import { upload } from "../../middlewares/multer";
 import { uploadMiddleware } from "../../middlewares/multer.middleware";
+import { isAuthenticated } from "../../middlewares/isAuthenticated";
+import { isAdmin } from "../../middlewares/isAdmin";
 
 const router = express.Router();
 
 router
   .route("/")
-  .post(uploadMiddleware.single("file"), createBrandRecord)
+  .post(isAuthenticated, isAdmin, uploadMiddleware.single("file"), createBrandRecord)
   .get(getAllBrandRecords);
 
 router
   .route("/:id")
   .get(getBrandRecordById)
-  .patch(uploadMiddleware.single("file"), updateBrandRecord)
-  .delete(deleteBrandRecord);
+  .patch(isAuthenticated, isAdmin, uploadMiddleware.single("file"), updateBrandRecord)
+  .delete(isAuthenticated, isAdmin, deleteBrandRecord);
 
 export default router;

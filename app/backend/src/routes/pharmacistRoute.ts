@@ -6,16 +6,20 @@ import {
   updatePharmacistRecord,
   deletePharmacistRecord,
 } from "../controllers/PharmacistController";
+import { isAuthenticated } from "../middlewares/isAuthenticated";
+import { isAdmin } from "../middlewares/isAdmin";
 
 const router = express.Router();
 
-router.route("/")
-  .post(createPharmacistRecord)
+router
+  .route("/")
+  .post(isAuthenticated, isAdmin, createPharmacistRecord)
   .get(getAllPharmacistRecords);
 
-router.route("/:id")
+router
+  .route("/:id")
   .get(getPharmacistRecordById)
-  .patch(updatePharmacistRecord)
-  .delete(deletePharmacistRecord);
+  .patch(isAuthenticated, isAdmin, updatePharmacistRecord)
+  .delete(isAuthenticated, isAdmin, deletePharmacistRecord);
 
 export default router;
