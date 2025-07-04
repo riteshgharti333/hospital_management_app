@@ -21,7 +21,6 @@ exports.register = (0, catchAsyncError_1.catchAsyncError)(async (req, res, next)
         return next(new errorHandler_1.ErrorHandler("Email already in use", statusCodes_1.StatusCodes.CONFLICT));
     }
     const hashedPassword = await bcrypt_1.default.hash(validated.password, 12);
-    // ✅ Set isAdmin true only if email is r@gmail.com
     const isAdmin = validated.email === process.env.ADMIN_EMAIL;
     const user = await (0, authService_1.createUser)({
         name: validated.name ?? "",

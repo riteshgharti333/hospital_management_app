@@ -8,20 +8,49 @@ export type RegisterInput = {
 };
 
 export const createUser = async (data: RegisterInput) => {
-  return prisma.user.create({ data });
+  return prisma.user.create({
+    data,
+    select: {
+      id: true,
+      name: true,
+      email: true,
+      isAdmin: true,
+      createdAt: true,
+      updatedAt: true,
+    },
+  });
 };
 
-// Get user by email (for login or checking duplicates)
 export const getUserByEmail = async (email: string) => {
-  return prisma.user.findUnique({ where: { email } });
+  return prisma.user.findUnique({
+    where: { email },
+    select: {
+      id: true,
+      name: true,
+      email: true,
+      password: true,
+      isAdmin: true,
+      createdAt: true,
+      updatedAt: true,
+    },
+  });
 };
 
-// Get user by ID
 export const getUserById = async (id: string) => {
-  return prisma.user.findUnique({ where: { id } });
+  return prisma.user.findUnique({
+    where: { id },
+    select: {
+      id: true,
+      name: true,
+      email: true,
+      password: true,
+      isAdmin: true,
+      createdAt: true,
+      updatedAt: true,
+    },
+  });
 };
 
-// Update user (name and email)
 export const updateUserDetails = async (
   id: string,
   data: { name?: string; email?: string }
@@ -29,10 +58,17 @@ export const updateUserDetails = async (
   return prisma.user.update({
     where: { id },
     data,
+    select: {
+      id: true,
+      name: true,
+      email: true,
+      isAdmin: true,
+      createdAt: true,
+      updatedAt: true,
+    },
   });
 };
 
-// Update password
 export const updateUserPassword = async (
   id: string,
   hashedPassword: string
@@ -40,5 +76,13 @@ export const updateUserPassword = async (
   return prisma.user.update({
     where: { id },
     data: { password: hashedPassword },
+    select: {
+      id: true,
+      name: true,
+      email: true,
+      isAdmin: true,
+      createdAt: true,
+      updatedAt: true,
+    },
   });
 };

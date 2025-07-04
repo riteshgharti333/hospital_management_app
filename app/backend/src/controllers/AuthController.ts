@@ -30,7 +30,6 @@ export const register = catchAsyncError(
 
     const hashedPassword = await bcrypt.hash(validated.password, 12);
 
-    // ✅ Set isAdmin true only if email is r@gmail.com
     const isAdmin = validated.email === process.env.ADMIN_EMAIL;
 
     const user = await createUser({
