@@ -77,6 +77,7 @@ export const login = catchAsyncError(
         id: user.id,
         name: user.name,
         email: user.email,
+        isAdmin: user.isAdmin, // ✅ required for type safety
       },
       res,
       "Login successful",
@@ -182,52 +183,52 @@ export const changePassword = catchAsyncError(
   }
 );
 
-// REFRESH ACCESS TOKEN
-export const refreshAccessToken = catchAsyncError(
-  async (req: Request, res: Response, next: NextFunction) => {
-    const refreshToken = req.cookies?.refreshToken;
+// // REFRESH ACCESS TOKEN
+// export const refreshAccessToken = catchAsyncError(
+//   async (req: Request, res: Response, next: NextFunction) => {
+//     const refreshToken = req.cookies?.refreshToken;
 
-    if (!refreshToken) {
-      return next(
-        new ErrorHandler("Refresh token missing", StatusCodes.UNAUTHORIZED)
-      );
-    }
+//     if (!refreshToken) {
+//       return next(
+//         new ErrorHandler("Refresh token missing", StatusCodes.UNAUTHORIZED)
+//       );
+//     }
 
-    try {
-      const decoded = jwt.verify(
-        refreshToken,
-        process.env.JWT_REFRESH_SECRET!
-      ) as {
-        id: string;
-        name: string;
-        email: string;
-      };
+//     try {
+//       const decoded = jwt.verify(
+//         refreshToken,
+//         process.env.JWT_REFRESH_SECRET!
+//       ) as {
+//         id: string;
+//         name: string;
+//         email: string;
+//       };
 
-      const newAccessToken = createAccessToken({
-        id: decoded.id,
-        name: decoded.name,
-        email: decoded.email,
-      });
+//       const newAccessToken = createAccessToken({
+//         id: decoded.id,
+//         name: decoded.name,
+//         email: decoded.email,
+//       });
 
-      res.cookie("accessToken", newAccessToken, {
-        httpOnly: true,
-        sameSite: "lax",
-        secure: process.env.NODE_ENV === "development",
-        maxAge: 60 * 60 * 1000,
-      });
+//       res.cookie("accessToken", newAccessToken, {
+//         httpOnly: true,
+//         sameSite: "lax",
+//         secure: process.env.NODE_ENV === "development",
+//         maxAge: 60 * 60 * 1000,
+//       });
 
-      sendResponse(res, {
-        success: true,
-        statusCode: StatusCodes.OK,
-        message: "Access token refreshed",
-      });
-    } catch (error) {
-      return next(
-        new ErrorHandler(
-          "Invalid or expired refresh token",
-          StatusCodes.UNAUTHORIZED
-        )
-      );
-    }
-  }
-);
+//       sendResponse(res, {
+//         success: true,
+//         statusCode: StatusCodes.OK,
+//         message: "Access token refreshed",
+//       });
+//     } catch (error) {
+//       return next(
+//         new ErrorHandler(
+//           "Invalid or expired refresh token",
+//           StatusCodes.UNAUTHORIZED
+//         )
+//       );
+//     }
+//   }
+// );

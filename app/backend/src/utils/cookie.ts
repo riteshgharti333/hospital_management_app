@@ -1,12 +1,17 @@
 import { Response } from "express";
 import jwt from "jsonwebtoken";
 
-export const createAccessToken = (payload: object) => {
+export const createAccessToken = (payload: {
+  id: string;
+  name: string;
+  email: string;
+  isAdmin: boolean;
+}) => {
   return jwt.sign(payload, process.env.JWT_SECRET!, { expiresIn: "90d" });
 };
 
 export const sendTokenCookie = (
-  payload: { id: string; name: string; email: string },
+  payload: { id: string; name: string; email: string; isAdmin: boolean },
   res: Response,
   message: string,
   statusCode: number

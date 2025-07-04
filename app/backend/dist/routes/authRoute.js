@@ -11,7 +11,6 @@ const router = express_1.default.Router();
 router.post("/register", AuthController_1.register);
 router.post("/login", rateLimiter_1.authLimiter, AuthController_1.login);
 router.post("/logout", AuthController_1.logout);
-router.post("/refresh-token", AuthController_1.refreshAccessToken);
 router.get("/profile", isAuthenticated_1.isAuthenticated, AuthController_1.getMyProfile);
 router.put("/update-profile", isAuthenticated_1.isAuthenticated, AuthController_1.updateProfile);
 router.put("/change-password", isAuthenticated_1.isAuthenticated, AuthController_1.changePassword);

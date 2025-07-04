@@ -3,9 +3,8 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.refreshAccessToken = exports.changePassword = exports.updateProfile = exports.getMyProfile = exports.logout = exports.login = exports.register = void 0;
+exports.changePassword = exports.updateProfile = exports.getMyProfile = exports.logout = exports.login = exports.register = void 0;
 const bcrypt_1 = __importDefault(require("bcrypt"));
-const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
 const catchAsyncError_1 = require("../middlewares/catchAsyncError");
 const errorHandler_1 = require("../middlewares/errorHandler");
 const sendResponse_1 = require("../utils/sendResponse");
@@ -55,6 +54,7 @@ exports.login = (0, catchAsyncError_1.catchAsyncError)(async (req, res, next) =>
         id: user.id,
         name: user.name,
         email: user.email,
+        isAdmin: user.isAdmin, // ✅ required for type safety
     }, res, "Login successful", statusCodes_1.StatusCodes.OK);
 });
 // LOGOUT
@@ -130,32 +130,47 @@ exports.changePassword = (0, catchAsyncError_1.catchAsyncError)(async (req, res,
         message: "Password updated successfully",
     });
 });
-// REFRESH ACCESS TOKEN
-exports.refreshAccessToken = (0, catchAsyncError_1.catchAsyncError)(async (req, res, next) => {
-    const refreshToken = req.cookies?.refreshToken;
-    if (!refreshToken) {
-        return next(new errorHandler_1.ErrorHandler("Refresh token missing", statusCodes_1.StatusCodes.UNAUTHORIZED));
-    }
-    try {
-        const decoded = jsonwebtoken_1.default.verify(refreshToken, process.env.JWT_REFRESH_SECRET);
-        const newAccessToken = (0, cookie_1.createAccessToken)({
-            id: decoded.id,
-            name: decoded.name,
-            email: decoded.email,
-        });
-        res.cookie("accessToken", newAccessToken, {
-            httpOnly: true,
-            sameSite: "lax",
-            secure: process.env.NODE_ENV === "development",
-            maxAge: 60 * 60 * 1000,
-        });
-        (0, sendResponse_1.sendResponse)(res, {
-            success: true,
-            statusCode: statusCodes_1.StatusCodes.OK,
-            message: "Access token refreshed",
-        });
-    }
-    catch (error) {
-        return next(new errorHandler_1.ErrorHandler("Invalid or expired refresh token", statusCodes_1.StatusCodes.UNAUTHORIZED));
-    }
-});
+// // REFRESH ACCESS TOKEN
+// export const refreshAccessToken = catchAsyncError(
+//   async (req: Request, res: Response, next: NextFunction) => {
+//     const refreshToken = req.cookies?.refreshToken;
+//     if (!refreshToken) {
+//       return next(
+//         new ErrorHandler("Refresh token missing", StatusCodes.UNAUTHORIZED)
+//       );
+//     }
+//     try {
+//       const decoded = jwt.verify(
+//         refreshToken,
+//         process.env.JWT_REFRESH_SECRET!
+//       ) as {
+//         id: string;
+//         name: string;
+//         email: string;
+//       };
+//       const newAccessToken = createAccessToken({
+//         id: decoded.id,
+//         name: decoded.name,
+//         email: decoded.email,
+//       });
+//       res.cookie("accessToken", newAccessToken, {
+//         httpOnly: true,
+//         sameSite: "lax",
+//         secure: process.env.NODE_ENV === "development",
+//         maxAge: 60 * 60 * 1000,
+//       });
+//       sendResponse(res, {
+//         success: true,
+//         statusCode: StatusCodes.OK,
+//         message: "Access token refreshed",
+//       });
+//     } catch (error) {
+//       return next(
+//         new ErrorHandler(
+//           "Invalid or expired refresh token",
+//           StatusCodes.UNAUTHORIZED
+//         )
+//       );
+//     }
+//   }
+// );
