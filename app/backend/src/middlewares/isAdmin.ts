@@ -1,5 +1,5 @@
 import { Request, Response, NextFunction } from "express";
-import "express";
+// import "express";
 import { ErrorHandler } from "./errorHandler";
 import { StatusCodes } from "../constants/statusCodes";
 
