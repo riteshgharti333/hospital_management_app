@@ -211,7 +211,7 @@ const Sidebar = React.memo(() => {
             <>
               <Link to="/profile" className="flex items-center">
                 <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-bold">
-                  DR
+                   {profile?.name?.charAt(0) || 'U'}
                 </div>
                 <div className="ml-3">
                   <div className="text-sm font-medium text-gray-800">
