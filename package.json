@@ -1,7 +1,10 @@
 {
   "name": "hospital-management-monorepo",
   "private": true,
-  "workspaces": ["apps/*", "packages/*"],
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
   "scripts": {
     "build": "turbo run build",
     "dev": "turbo run dev"
@@ -10,6 +13,7 @@
     "zod": "^3.25.32"
   },
   "devDependencies": {
+    "@types/node": "^24.0.10",
     "turbo": "^1.10.0"
   }
 }
