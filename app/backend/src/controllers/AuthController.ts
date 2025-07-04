@@ -95,7 +95,7 @@ export const logout = catchAsyncError(async (_req: Request, res: Response) => {
     expires: new Date(0),
   });
 
-  sendResponse(res, {
+sendResponse(res, {
     success: true,
     statusCode: StatusCodes.OK,
     message: "Logout successfully",
