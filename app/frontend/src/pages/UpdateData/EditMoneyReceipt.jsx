@@ -76,7 +76,7 @@ const EditMoneyReceipt = () => {
         setEditMode(false);
       }
     } catch (error) {
-      toast.error(error?.response?.data?.message || "Failed to update money receipt.");
+      console.log(error)
     }
   };
 
@@ -97,7 +97,7 @@ const EditMoneyReceipt = () => {
         navigate("/money-receipts");
       }
     } catch (error) {
-      toast.error(error?.response?.data?.message || "Failed to delete money receipt.");
+      console.log(error)
     } finally {
       setShowDeleteModal(false);
     }

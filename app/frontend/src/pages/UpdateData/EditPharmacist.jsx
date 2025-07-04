@@ -121,7 +121,7 @@ const EditPharmacist = () => {
         setEditMode(false);
       }
     } catch (error) {
-      toast.error(error?.response?.data?.message || "Failed to update pharmacist record");
+      console.log(error)
     }
   };
 
@@ -138,7 +138,7 @@ const EditPharmacist = () => {
         navigate("/pharmacists");
       }
     } catch (error) {
-      toast.error(error?.response?.data?.message || "Failed to delete pharmacist record");
+      console.log(error)
     } finally {
       setShowDeleteModal(false);
     }

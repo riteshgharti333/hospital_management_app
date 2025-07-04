@@ -18,8 +18,11 @@ export const registerUser = (userData) => {
 
 // LOGOUT USER
 export const logoutUser = () => {
-  return axios.post(`${baseUrl}/auth/logout`, { withCredentials: true });
+  return axios.post(`${baseUrl}/auth/logout`, null, {
+    withCredentials: true, 
+  });
 };
+
 
 // GET PROFILE
 export const getProfile = () => {

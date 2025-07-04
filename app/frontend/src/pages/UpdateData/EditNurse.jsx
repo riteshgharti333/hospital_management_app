@@ -129,7 +129,7 @@ const EditNurse = () => {
         setEditMode(false);
       }
     } catch (error) {
-      toast.error(error?.response?.data?.message || "Failed to update nurse record");
+      console.log(error)
     }
   };
 
@@ -146,7 +146,7 @@ const EditNurse = () => {
         navigate("/nurses");
       }
     } catch (error) {
-      toast.error(error?.response?.data?.message || "Failed to delete nurse record");
+      console.log(error)
     } finally {
       setShowDeleteModal(false);
     }

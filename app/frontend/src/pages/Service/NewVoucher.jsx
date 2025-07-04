@@ -18,14 +18,11 @@ import { voucherSchema } from "@hospital/schemas";
 import { useCreateVoucher } from "../../feature/transectionHooks/useVoucher";
 import { useNavigate } from "react-router-dom";
 
-
 const NewVoucher = () => {
   const navigate = useNavigate();
   // Static data
   const voucherTypes = ["Payment", "Receipt", "Journal"];
-  const paymentModes = [
-    "Cash", "Cheque", "Bank Transfer", "Card", "Online"
-  ];
+  const paymentModes = ["Cash", "Cheque", "Bank Transfer", "Card", "Online"];
   const vendors = ["Vendor A", "Vendor B", "Vendor C", "Vendor D"];
   // NEW: Status options
   const statusOptions = ["Pending", "Approved", "Rejected", "Paid"];
@@ -47,7 +44,7 @@ const NewVoucher = () => {
       paymentMode: "Cash",
       referenceNo: "",
       description: "",
-      status: "Pending", 
+      status: "Pending",
     },
   });
 
@@ -57,11 +54,11 @@ const NewVoucher = () => {
     try {
       const response = await mutateAsync(data);
       if (response?.data?.success) {
-         toast.success("Voucher created successfully!");
-         navigate(`/voucher/${response?.data?.data?.id}`);
+        toast.success("Voucher created successfully!");
+        navigate(`/voucher/${response?.data?.data?.id}`);
       }
     } catch (error) {
-       toast.error(error?.response?.data?.message || "Failed to create voucher.");
+      console.log(error);
     }
   };
 
@@ -241,7 +238,7 @@ const NewVoucher = () => {
                 <input
                   type="number"
                   step="0.01"
-                  {...register("amount", { valueAsNumber: true })}  
+                  {...register("amount", { valueAsNumber: true })}
                   placeholder="Enter amount"
                   className={`block w-full px-4 py-2 border rounded-lg focus:ring-blue-500 focus:border-blue-500 pl-10 ${
                     errors.amount ? "border-red-500" : "border-gray-300"
@@ -344,8 +341,8 @@ const NewVoucher = () => {
               )}
             </div>
 
-             {/* NEW FIELD: Description */}
-             <div className="space-y-1 md:col-span-2">
+            {/* NEW FIELD: Description */}
+            <div className="space-y-1 md:col-span-2">
               <label className="block text-sm font-medium text-gray-700">
                 Description
               </label>
@@ -363,7 +360,6 @@ const NewVoucher = () => {
                 </p>
               )}
             </div>
-
           </div>
         </div>
 

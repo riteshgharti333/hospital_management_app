@@ -110,7 +110,7 @@ const EditAppointment = () => {
         setEditMode(false);
       }
     } catch (error) {
-      toast.error(error?.response?.data?.message || "Failed to update appointment");
+      console.log(error)
     }
   };
 
@@ -127,7 +127,7 @@ const EditAppointment = () => {
         navigate("/appointments");
       }
     } catch (error) {
-      toast.error(error?.response?.data?.message || "Failed to delete appointment");
+      console.log(error)
     } finally {
       setShowDeleteModal(false);
     }

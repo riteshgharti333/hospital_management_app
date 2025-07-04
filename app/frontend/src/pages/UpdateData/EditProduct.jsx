@@ -1,5 +1,13 @@
 import React, { useState, useEffect } from "react";
-import { FaBoxes, FaTag, FaImage, FaEdit, FaTimes, FaSave, FaTrash } from "react-icons/fa";
+import {
+  FaBoxes,
+  FaTag,
+  FaImage,
+  FaEdit,
+  FaTimes,
+  FaSave,
+  FaTrash,
+} from "react-icons/fa";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useNavigate, useParams } from "react-router-dom";
@@ -141,8 +149,10 @@ const EditProduct = () => {
   const [fileName, setFileName] = useState("");
 
   const { data: productData, isLoading } = useGetProductById(id);
-  const { mutateAsync: updateProduct, isPending: isUpdating } = useUpdateProduct();
-  const { mutateAsync: deleteProduct, isPending: isDeleting } = useDeleteProduct();
+  const { mutateAsync: updateProduct, isPending: isUpdating } =
+    useUpdateProduct();
+  const { mutateAsync: deleteProduct, isPending: isDeleting } =
+    useDeleteProduct();
 
   const {
     register,
@@ -210,7 +220,7 @@ const EditProduct = () => {
         setEditMode(false);
       }
     } catch (error) {
-      toast.error(error?.response?.data?.message || "Failed to update product");
+      console.log(error);
     }
   };
 
@@ -233,7 +243,7 @@ const EditProduct = () => {
         navigate("/products");
       }
     } catch (error) {
-      toast.error(error?.response?.data?.message || "Failed to delete product");
+      console.log(error)
     } finally {
       setShowDeleteModal(false);
     }
@@ -314,7 +324,9 @@ const EditProduct = () => {
                       <select
                         id={field.name}
                         {...register(field.name)}
-                        disabled={!editMode || (field.dynamicOptions && !parentCategory)}
+                        disabled={
+                          !editMode || (field.dynamicOptions && !parentCategory)
+                        }
                         className={`block w-full px-4 py-2 border rounded-lg focus:ring-blue-500 focus:border-blue-500 bg-white ${
                           error ? "border-red-500" : "border-gray-300"
                         } ${getDisabledStyles(!editMode)}`}
@@ -345,7 +357,9 @@ const EditProduct = () => {
                           htmlFor={field.name}
                           className={`flex flex-col items-center justify-center w-full h-32 border-2 border-dashed rounded-lg cursor-pointer bg-gray-50 hover:bg-gray-100 ${
                             error ? "border-red-500" : "border-gray-300"
-                          } ${!editMode ? "cursor-not-allowed opacity-70" : ""}`}
+                          } ${
+                            !editMode ? "cursor-not-allowed opacity-70" : ""
+                          }`}
                         >
                           <div className="flex flex-col items-center justify-center pt-5 pb-6">
                             <FaImage className="w-8 h-8 mb-3 text-gray-400" />
@@ -356,7 +370,9 @@ const EditProduct = () => {
                               {editMode && "or drag and drop"}
                             </p>
                             <p className="text-xs text-gray-500">
-                              {editMode ? "PNG, JPG, SVG (MAX. 5MB)" : productData?.categoryLogo || "No image"}
+                              {editMode
+                                ? "PNG, JPG, SVG (MAX. 5MB)"
+                                : productData?.categoryLogo || "No image"}
                             </p>
                           </div>
                           {editMode && (
@@ -369,20 +385,23 @@ const EditProduct = () => {
                             />
                           )}
                         </label>
-                        {(previewImage || productData?.categoryLogo) && !error && (
-                          <div className="mt-2">
-                            <p className="text-sm font-medium text-gray-700 mb-1">
-                              Image Preview:
-                            </p>
-                            <div className="w-32 h-32 border border-gray-200 rounded-lg overflow-hidden p-1">
-                              <img
-                                src={previewImage || productData?.categoryLogo}
-                                alt="Product preview"
-                                className="w-full h-full object-contain"
-                              />
+                        {(previewImage || productData?.categoryLogo) &&
+                          !error && (
+                            <div className="mt-2">
+                              <p className="text-sm font-medium text-gray-700 mb-1">
+                                Image Preview:
+                              </p>
+                              <div className="w-32 h-32 border border-gray-200 rounded-lg overflow-hidden p-1">
+                                <img
+                                  src={
+                                    previewImage || productData?.categoryLogo
+                                  }
+                                  alt="Product preview"
+                                  className="w-full h-full object-contain"
+                                />
+                              </div>
                             </div>
-                          </div>
-                        )}
+                          )}
                       </div>
                     ) : (
                       <input

@@ -165,7 +165,7 @@ const EditBill = () => {
         setEditMode(false);
       }
     } catch (error) {
-      toast.error(error?.response?.data?.message || "Failed to update bill.");
+      console.log(error)
     }
   };
 
@@ -189,7 +189,7 @@ const EditBill = () => {
         navigate("/bills");
       }
     } catch (error) {
-      toast.error(error?.response?.data?.message || "Failed to delete bill.");
+      console.log(error)
     } finally {
       setShowDeleteModal(false);
     }

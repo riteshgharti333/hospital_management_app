@@ -123,8 +123,10 @@ const EditVoucher = () => {
   const [showDeleteModal, setShowDeleteModal] = useState(false);
 
   const { data: voucherData, isLoading } = useGetVoucherById(id);
-  const { mutateAsync: updateVoucher, isPending: isUpdating } = useUpdateVoucher();
-  const { mutateAsync: deleteVoucher, isPending: isDeleting } = useDeleteVoucher();
+  const { mutateAsync: updateVoucher, isPending: isUpdating } =
+    useUpdateVoucher();
+  const { mutateAsync: deleteVoucher, isPending: isDeleting } =
+    useDeleteVoucher();
 
   const {
     register,
@@ -143,8 +145,8 @@ const EditVoucher = () => {
       // Format dates for input[type=date] and reset the form
       const formattedData = {
         ...voucherData,
-        voucherDate: voucherData.voucherDate?.split('T')[0] || '',
-        paymentDate: voucherData.paymentDate?.split('T')[0] || '',
+        voucherDate: voucherData.voucherDate?.split("T")[0] || "",
+        paymentDate: voucherData.paymentDate?.split("T")[0] || "",
       };
       reset(formattedData);
     }
@@ -159,9 +161,7 @@ const EditVoucher = () => {
         setEditMode(false);
       }
     } catch (error) {
-      toast.error(
-        error?.response?.data?.message || "Failed to update voucher"
-      );
+      console.log(error);
     }
   };
 
@@ -170,8 +170,8 @@ const EditVoucher = () => {
     if (voucherData) {
       const formattedData = {
         ...voucherData,
-        voucherDate: voucherData.voucherDate?.split('T')[0] || '',
-        paymentDate: voucherData.paymentDate?.split('T')[0] || '',
+        voucherDate: voucherData.voucherDate?.split("T")[0] || "",
+        paymentDate: voucherData.paymentDate?.split("T")[0] || "",
       };
       reset(formattedData);
     }
@@ -186,9 +186,7 @@ const EditVoucher = () => {
         navigate("/payment-vouchers"); // Or your vouchers list route
       }
     } catch (error) {
-      toast.error(
-        error?.response?.data?.message || "Failed to delete voucher"
-      );
+      console.log(error);
     } finally {
       setShowDeleteModal(false);
     }
@@ -243,10 +241,17 @@ const EditVoucher = () => {
                 const error = errors[field.name];
 
                 return (
-                  <div key={fieldIndex} className={`space-y-1 ${field.className || ''}`}>
+                  <div
+                    key={fieldIndex}
+                    className={`space-y-1 ${field.className || ""}`}
+                  >
                     <label className="block text-sm font-medium text-gray-700">
                       {field.label}
-                      <span className="text-red-500 ml-1">{field.name !== 'referenceNo' && field.name !== 'description' && '*'}</span>
+                      <span className="text-red-500 ml-1">
+                        {field.name !== "referenceNo" &&
+                          field.name !== "description" &&
+                          "*"}
+                      </span>
                     </label>
 
                     {field.type === "select" ? (
@@ -258,9 +263,13 @@ const EditVoucher = () => {
                             error ? "border-red-500" : "border-gray-300"
                           } ${getDisabledStyles(!editMode)}`}
                         >
-                          <option value="" disabled hidden>{field.placeholder}</option>
+                          <option value="" disabled hidden>
+                            {field.placeholder}
+                          </option>
                           {field.options.map((option, i) => (
-                            <option key={i} value={option}>{option}</option>
+                            <option key={i} value={option}>
+                              {option}
+                            </option>
                           ))}
                         </select>
                         <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">

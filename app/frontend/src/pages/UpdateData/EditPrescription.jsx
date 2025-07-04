@@ -109,9 +109,7 @@ const EditPrescription = () => {
         setEditMode(false);
       }
     } catch (error) {
-      toast.error(
-        error?.response?.data?.message || "Failed to update prescription"
-      );
+      console.log(error);
     }
   };
 
@@ -128,9 +126,7 @@ const EditPrescription = () => {
         navigate("/prescriptions");
       }
     } catch (error) {
-      toast.error(
-        error?.response?.data?.message || "Failed to delete prescription"
-      );
+      console.log(error);
     } finally {
       setShowDeleteModal(false);
     }

@@ -126,7 +126,7 @@ const EditDepartment = () => {
         setEditMode(false);
       }
     } catch (error) {
-      toast.error(error?.response?.data?.message || "Failed to update department");
+      console.log(error)
     }
   };
 
@@ -143,7 +143,7 @@ const EditDepartment = () => {
         navigate("/departments");
       }
     } catch (error) {
-      toast.error(error?.response?.data?.message || "Failed to delete department");
+      console.log(error)
     } finally {
       setShowDeleteModal(false);
     }

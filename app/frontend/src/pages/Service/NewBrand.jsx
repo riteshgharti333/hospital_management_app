@@ -138,8 +138,7 @@ const NewBrand = () => {
         navigate(`/brand/${response.data.data.id}`);
       }
     } catch (error) {
-      toast.error(error?.response?.data?.message || "Failed to create brand");
-      console.error("Submission error:", error);
+      console.log(error)
     } finally {
       setIsSubmitting(false);
     }

@@ -21,16 +21,24 @@ exports.register = (0, catchAsyncError_1.catchAsyncError)(async (req, res, next)
         return next(new errorHandler_1.ErrorHandler("Email already in use", statusCodes_1.StatusCodes.CONFLICT));
     }
     const hashedPassword = await bcrypt_1.default.hash(validated.password, 12);
+    // ✅ Set isAdmin true only if email is r@gmail.com
+    const isAdmin = validated.email === process.env.ADMIN_EMAIL;
     const user = await (0, authService_1.createUser)({
         name: validated.name ?? "",
         email: validated.email,
         password: hashedPassword,
+        isAdmin,
     });
     (0, sendResponse_1.sendResponse)(res, {
         success: true,
         statusCode: statusCodes_1.StatusCodes.CREATED,
         message: "User registered successfully",
-        data: { id: user.id, name: user.name, email: user.email },
+        data: {
+            id: user.id,
+            name: user.name,
+            email: user.email,
+            isAdmin: user.isAdmin,
+        },
     });
 });
 // LOGIN
@@ -44,7 +52,7 @@ exports.login = (0, catchAsyncError_1.catchAsyncError)(async (req, res, next) =>
     if (!isPasswordValid) {
         return next(new errorHandler_1.ErrorHandler("Invalid Email or Password", statusCodes_1.StatusCodes.UNAUTHORIZED));
     }
-    (0, cookie_1.sendTokenCookies)({
+    (0, cookie_1.sendTokenCookie)({
         id: user.id,
         name: user.name,
         email: user.email,
@@ -61,7 +69,7 @@ exports.logout = (0, catchAsyncError_1.catchAsyncError)(async (_req, res) => {
     (0, sendResponse_1.sendResponse)(res, {
         success: true,
         statusCode: statusCodes_1.StatusCodes.OK,
-        message: "Logout successful",
+        message: "Logout successfully",
     });
 });
 // GET MY PROFILE
@@ -78,7 +86,7 @@ exports.getMyProfile = (0, catchAsyncError_1.catchAsyncError)(async (req, res, n
         success: true,
         statusCode: statusCodes_1.StatusCodes.OK,
         message: "User profile fetched successfully",
-        data: { id: user.id, name: user.name, email: user.email },
+        data: user,
     });
 });
 // UPDATE PROFILE
@@ -139,7 +147,7 @@ exports.refreshAccessToken = (0, catchAsyncError_1.catchAsyncError)(async (req, 
         res.cookie("accessToken", newAccessToken, {
             httpOnly: true,
             sameSite: "lax",
-            secure: process.env.NODE_ENV === "production",
+            secure: process.env.NODE_ENV === "development",
             maxAge: 60 * 60 * 1000,
         });
         (0, sendResponse_1.sendResponse)(res, {

@@ -7,7 +7,6 @@ const express_1 = __importDefault(require("express"));
 const AuthController_1 = require("../controllers/AuthController");
 const rateLimiter_1 = require("../middlewares/rateLimiter");
 const isAuthenticated_1 = require("../middlewares/isAuthenticated");
-// import { isAuthenticated } from "../middlewares/authMiddleware";
 const router = express_1.default.Router();
 router.post("/register", AuthController_1.register);
 router.post("/login", rateLimiter_1.authLimiter, AuthController_1.login);

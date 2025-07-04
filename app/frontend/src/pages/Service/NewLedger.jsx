@@ -672,7 +672,6 @@ const BaseLedgerForm = ({ ledgerType, schema, formConfig }) => {
     }
   } catch (error) {
     console.error("Error:", error);
-    toast.error(error.response?.data?.message || "Submission failed");
   }
 };
   const handleCancel = () => {

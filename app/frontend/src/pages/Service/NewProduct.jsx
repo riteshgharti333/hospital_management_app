@@ -203,7 +203,7 @@ const onSubmit = async (data) => {
       navigate(`/product/${response.data.data.id}`);
     }
   } catch (error) {
-    toast.error(error.response?.data?.message || "Failed to create product");
+    console.log(error)
   }
 };
 

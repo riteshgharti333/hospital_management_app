@@ -110,9 +110,7 @@ const EditXray = () => {
         setEditMode(false);
       }
     } catch (error) {
-      toast.error(
-        error?.response?.data?.message || "Failed to update X-ray report"
-      );
+      console.log(error);
     }
   };
 
@@ -136,9 +134,7 @@ const EditXray = () => {
         navigate("/xray/xray-commision-report"); // Navigate to the list page
       }
     } catch (error) {
-      toast.error(
-        error?.response?.data?.message || "Failed to delete X-ray report"
-      );
+      console.log(error);
     } finally {
       setShowDeleteModal(false);
     }

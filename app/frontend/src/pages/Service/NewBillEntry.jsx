@@ -149,7 +149,7 @@ const NewBillEntry = () => {
         navigate(`/bill/${response?.data?.data?.id}`);
       }
     } catch (error) {
-      toast.error("Failed to create bill. Please check all required fields.");
+      console.log(error)
     }
   };
 

@@ -87,19 +87,15 @@ import Profile from "./pages/Auth/Profile";
 import { Toaster } from "sonner";
 import PrivateRoute from "./components/PrivateRoute/PrivateRoute";
 
-
-
 function App() {
   return (
     <div className="app">
-       
       <BrowserRouter>
         <Toaster position="top-center" richColors />
         <Routes>
           <Route path="/login" element={<Login />} />
 
-         <Route element={<PrivateRoute />}>
-           <Route element={<Layout />}>
+          <Route element={<Layout />}>
             <Route path="/" element={<Navigate to="/dashboard" replace />} />
             <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/profile" element={<Profile />} />
@@ -193,10 +189,7 @@ function App() {
               path="/ledger/pharmacy-ledger"
               element={<PharmacyLedger />}
             />
-            <Route
-              path="ledger/lab-ledger"
-              element={<DiagnosticsLedger />}
-            />
+            <Route path="ledger/lab-ledger" element={<DiagnosticsLedger />} />
             <Route path="/ledger/cash-ledger" element={<CashLedger />} />
             <Route path="/ledger/bank-ledger" element={<BankLedger />} />
             <Route
@@ -261,10 +254,8 @@ function App() {
             <Route path="/view-money-receipts" element={<ViewReceiptTable />} />
             <Route path="/discharge-lists" element={<DischargeTable />} />
           </Route>
-         </Route>
         </Routes>
       </BrowserRouter>
-
     </div>
   );
 }

@@ -1,5 +1,5 @@
-import React, { useCallback, useState } from "react";
-import { Link, useLocation , useNavigate} from "react-router-dom";
+import React, { useCallback, useEffect, useState } from "react";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { sidebar2Data, sidebar3Data, sidebarData } from "../../assets/data";
 import {
   FiLogOut,
@@ -10,9 +10,11 @@ import {
 } from "react-icons/fi";
 import { MdLocalHospital } from "react-icons/md";
 
-
 import { useDispatch, useSelector } from "react-redux";
-import { logoutAsyncUser } from "../../redux/asyncThunks/authThunks";
+import {
+  getUserProfile,
+  logoutAsyncUser,
+} from "../../redux/asyncThunks/authThunks";
 import { toast } from "sonner";
 
 const Sidebar = React.memo(() => {
@@ -20,24 +22,29 @@ const Sidebar = React.memo(() => {
   const [expandedItems, setExpandedItems] = useState({});
   const location = useLocation();
 
-    const navigate = useNavigate();
-  
-    const dispatch = useDispatch();
-  
-    const handleLogout = async () => {
-      try {
-        const res = await dispatch(logoutAsyncUser()).unwrap();
-  
-        if (res?.message) {
-          localStorage.removeItem("user");
-          toast.success(res.message);
-          navigate("/login");
-        }
-      } catch (error) {
-        console.error("Logout failed:", error);
-        toast.error(error?.message || "Logout failed");
+  const navigate = useNavigate();
+  const dispatch = useDispatch();
+
+  const { profile, user } = useSelector((state) => state.auth);
+
+  useEffect(() => {
+    dispatch(getUserProfile());
+  }, [dispatch]);
+
+  const handleLogout = async () => {
+    try {
+      const res = await dispatch(logoutAsyncUser()).unwrap();
+
+      if (res?.message) {
+        localStorage.removeItem("user");
+        toast.success(res.message);
+        navigate("/login");
       }
-    };
+    } catch (error) {
+      console.error("Logout failed:", error);
+      toast.error(error?.message || "Logout failed");
+    }
+  };
 
   const toggleExpand = (key) => {
     setExpandedItems((prev) => ({
@@ -194,36 +201,43 @@ const Sidebar = React.memo(() => {
       )}
 
       {/* User Profile */}
-      <div
-        className={`p-3 border-t border-gray-200 flex ${
-          collapsed ? "justify-center" : "justify-between items-center"
-        }`}
-      >
-        {!collapsed ? (
-          <>
-            <Link to="/profile" className="flex items-center">
+      {user && (
+        <div
+          className={`p-3 border-t border-gray-200 flex ${
+            collapsed ? "justify-center" : "justify-between items-center"
+          }`}
+        >
+          {!collapsed ? (
+            <>
+              <Link to="/profile" className="flex items-center">
+                <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-bold">
+                  DR
+                </div>
+                <div className="ml-3">
+                  <div className="text-sm font-medium text-gray-800">
+                    {profile?.name}
+                  </div>
+                  <div className="text-xs text-gray-500">
+                    {profile?.isAdmin ? "Administrator" : "User"}
+                  </div>
+                </div>
+              </Link>
+              <span
+                onClick={handleLogout}
+                className="text-gray-500 cursor-pointer hover:text-gray-700"
+              >
+                <FiLogOut />
+              </span>
+            </>
+          ) : (
+            <Link to="/profile">
               <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-bold">
                 DR
               </div>
-              <div className="ml-3">
-                <div className="text-sm font-medium text-gray-800">
-                  Dr. Smith
-                </div>
-                <div className="text-xs text-gray-500">Administrator</div>
-              </div>
             </Link>
-            <span onClick={handleLogout} className="text-gray-500 cursor-pointer hover:text-gray-700">
-              <FiLogOut />
-            </span>
-          </>
-        ) : (
-          <Link to="/profile">
-            <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-bold">
-              DR
-            </div>
-          </Link>
-        )}
-      </div>
+          )}
+        </div>
+      )}
     </div>
   );
 });

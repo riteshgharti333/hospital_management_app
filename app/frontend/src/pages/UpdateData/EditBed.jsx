@@ -105,9 +105,7 @@ const EditBed = () => {
         setEditMode(false);
       }
     } catch (error) {
-      toast.error(
-        error?.response?.data?.message || "Failed to update bed record"
-      );
+      console.log(error)
     }
   };
 
@@ -124,9 +122,7 @@ const EditBed = () => {
         navigate("/bed-master");
       }
     } catch (error) {
-      toast.error(
-        error?.response?.data?.message || "Failed to delete bed record"
-      );
+     console.log(error)
     } finally {
       setShowDeleteModal(false);
     }

@@ -100,7 +100,7 @@ const EditEmployee = () => {
         setEditMode(false);
       }
     } catch (error) {
-      toast.error(error?.response?.data?.message || "Failed to update employee.");
+      console.log(error)
     }
   };
 
@@ -125,7 +125,7 @@ const EditEmployee = () => {
         navigate("/employees");
       }
     } catch (error) {
-      toast.error(error?.response?.data?.message || "Failed to delete employee.");
+      console.log(error)
     } finally {
       setShowDeleteModal(false);
     }

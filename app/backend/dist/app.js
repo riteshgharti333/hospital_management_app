@@ -23,7 +23,7 @@ const pharmacistRoute_1 = __importDefault(require("./routes/pharmacistRoute"));
 const prescriptionRoute_1 = __importDefault(require("./routes/prescriptionRoute"));
 const ambulanceRoute_1 = __importDefault(require("./routes/ambulanceRoute"));
 const xrayRoute_1 = __importDefault(require("./routes/xrayRoute"));
-// ledger 
+// ledger
 const patientLedgerRoute_1 = __importDefault(require("./routes/ledgerRoutes/patientLedgerRoute"));
 const bankLedgerRoute_1 = __importDefault(require("./routes/ledgerRoutes/bankLedgerRoute"));
 const cashLedgerRoute_1 = __importDefault(require("./routes/ledgerRoutes/cashLedgerRoute"));

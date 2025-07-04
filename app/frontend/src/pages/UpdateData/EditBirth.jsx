@@ -169,7 +169,7 @@ const EditBirth = () => {
         setEditMode(false);
       }
     } catch (error) {
-      toast.error(error?.response?.data?.message || "Failed to update birth record");
+      console.log(error)
     }
   };
 
@@ -186,7 +186,7 @@ const EditBirth = () => {
         navigate("/birth-entries");
       }
     } catch (error) {
-      toast.error(error?.response?.data?.message || "Failed to delete birth record");
+      console.log(error)
     } finally {
       setShowDeleteModal(false);
     }

@@ -129,7 +129,7 @@ const EditBrand = () => {
         setEditMode(false);
       }
     } catch (error) {
-      toast.error(error?.response?.data?.message || "Failed to update brand");
+      console.log(error)
     }
   };
 
@@ -149,7 +149,7 @@ const EditBrand = () => {
         navigate("/company-creation");
       }
     } catch (error) {
-      toast.error(error?.response?.data?.message || "Failed to delete brand");
+      console.log(error)
     } finally {
       setShowDeleteModal(false);
     }

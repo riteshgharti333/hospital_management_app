@@ -164,7 +164,7 @@ const EditBedAssign = () => {
         setEditMode(false);
       }
     } catch (error) {
-      toast.error(error?.response?.data?.message || "Failed to update bed assignment");
+      console.log(error)
     }
   };
 
@@ -180,7 +180,7 @@ const EditBedAssign = () => {
         navigate("/bed-assign-management");
       }
     } catch (error) {
-      toast.error(error?.response?.data?.message || "Failed to delete bed assignment");
+      console.log(error)
     } finally {
       setShowDeleteModal(false);
     }

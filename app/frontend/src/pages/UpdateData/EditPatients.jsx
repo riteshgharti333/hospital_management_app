@@ -153,7 +153,7 @@ const EditPatients = () => {
         setEditMode(false);
       }
     } catch (error) {
-      toast.error(error?.response?.data?.message || "Failed to update patient");
+      console.log(error)
     }
   };
 
@@ -170,7 +170,7 @@ const EditPatients = () => {
         navigate("/patients-entries");
       }
     } catch (error) {
-      toast.error(error?.response?.data?.message || "Failed to delete patient");
+      console.log(error)
     } finally {
       setShowDeleteModal(false);
     }

@@ -529,7 +529,7 @@ const EditLedger = () => {
 
   // --- Dynamically select the correct configuration ---
   const currentLedger = ledgerMappings[cleanLedgerType];
-    console.log(currentLedger)
+  console.log(currentLedger);
 
   const formConfig = allFormConfigs[cleanLedgerType];
 
@@ -545,7 +545,6 @@ const EditLedger = () => {
     currentLedger.updateHook();
   const { mutateAsync: deleteLedgerEntry, isPending: isDeleting } =
     currentLedger.deleteHook();
-
 
   const {
     register,
@@ -580,10 +579,7 @@ const EditLedger = () => {
         setEditMode(false);
       }
     } catch (error) {
-      toast.error(
-        error?.response?.data?.message ||
-          `Failed to update ${currentLedger.title}`
-      );
+      console.log(error);
     }
   };
 
@@ -600,10 +596,7 @@ const EditLedger = () => {
         navigate(currentLedger.navPath);
       }
     } catch (error) {
-      toast.error(
-        error?.response?.data?.message ||
-          `Failed to delete ${currentLedger.title}`
-      );
+      console.log(error);
     } finally {
       setShowDeleteModal(false);
     }

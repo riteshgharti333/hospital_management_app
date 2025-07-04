@@ -123,7 +123,6 @@ const NewPrescription = () => {
         }
       }
     } catch (error) {
-      toast.error("Failed to create prescription");
       console.error("Submission error:", error);
     } finally {
       setIsSubmitting(false);

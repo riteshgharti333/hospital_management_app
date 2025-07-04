@@ -16,7 +16,10 @@ import { BsChatDots, BsPeople } from "react-icons/bs";
 import { Link, useNavigate } from "react-router-dom";
 
 import { useDispatch, useSelector } from "react-redux";
-import { logoutAsyncUser } from "../../redux/asyncThunks/authThunks";
+import {
+  getUserProfile,
+  logoutAsyncUser,
+} from "../../redux/asyncThunks/authThunks";
 import { toast } from "sonner";
 
 const Navbar = () => {
@@ -28,7 +31,15 @@ const Navbar = () => {
   const [unreadNotifications, setUnreadNotifications] = useState(5);
   const navigate = useNavigate();
 
+  const { profile, user } = useSelector((state) => state.auth);
+
   const dispatch = useDispatch();
+
+  useEffect(() => {
+    if (user) {
+      dispatch(getUserProfile());
+    }
+  }, [dispatch, user]);
 
   const handleLogout = async () => {
     try {
@@ -105,54 +116,55 @@ const Navbar = () => {
 
           {/* Right section - Icons and Profile */}
           <div className="flex items-center space-x-4">
-            {/* Profile dropdown */}
-            <div className="relative ml-2 ">
-              <button
-                onClick={() => setShowProfileMenu(!showProfileMenu)}
-                className="flex items-center cursor-pointer space-x-2 focus:outline-none"
-              >
-                <div className="h-8 w-8 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-medium">
-                  DR
-                </div>
-                <span className="hidden md:inline-block text-sm font-medium text-gray-700">
-                  Dr. Smith
-                </span>
-              </button>
-
-              {showProfileMenu && (
-                <div
-                  ref={cardRef}
-                  className="origin-top-right absolute right-0 mt-2 w-48 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 z-10"
+            {user ? (
+              /* Profile dropdown when user is logged in */
+              <div className="relative ml-2 ">
+                <button
+                  onClick={() => setShowProfileMenu(!showProfileMenu)}
+                  className="flex items-center cursor-pointer space-x-2 focus:outline-none"
                 >
-                  <div className="py-1">
-                    <Link
-                      to={"/profile"}
-                      className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                    >
-                      <FiUser className="inline mr-2" /> Your Profile
-                    </Link>
-                    {/* <a
-                      href="#"
-                      className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                    >
-                      <FiSettings className="inline mr-2" /> Settings
-                    </a> */}
-                    {/* <a
-                      href="#"
-                      className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                    >
-                      <FiHelpCircle className="inline mr-2" /> Help
-                    </a> */}
-                    <span
-                      onClick={handleLogout}
-                      className="block px-4 cursor-pointer py-2 text-sm text-gray-700 hover:bg-gray-100 border-t border-gray-100"
-                    >
-                      <FiLogOut className="inline mr-2" /> Sign out
-                    </span>
+                  <div className="h-8 w-8 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-medium">
+                    {profile?.name?.charAt(0) || 'U'}
                   </div>
-                </div>
-              )}
-            </div>
+                  <span className="hidden md:inline-block text-sm font-medium text-gray-700">
+                    {profile?.name || 'User'}
+                  </span>
+                </button>
+
+                {showProfileMenu && (
+                  <div
+                    ref={cardRef}
+                    className="origin-top-right absolute right-0 mt-2 w-48 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 z-10"
+                  >
+                    <div className="py-1">
+                      <Link
+                        to={"/profile"}
+                        className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                      >
+                        <FiUser className="inline mr-2" /> Your Profile
+                      </Link>
+                      <span
+                        onClick={handleLogout}
+                        className="block px-4 cursor-pointer py-2 text-sm text-gray-700 hover:bg-gray-100 border-t border-gray-100"
+                      >
+                        <FiLogOut className="inline mr-2" /> Sign out
+                      </span>
+                    </div>
+                  </div>
+                )}
+              </div>
+            ) : (
+              /* Login button when user is not logged in */
+              <div className="relative ml-2">
+                <button
+                  onClick={() => navigate('/login')}
+                  className="flex items-center space-x-2 cursor-pointer focus:outline-none bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-full text-sm font-medium transition-colors"
+                >
+                  <FiUser className="h-4 w-4" />
+                  <span>Login</span>
+                </button>
+              </div>
+            )}
           </div>
         </div>
       </div>
