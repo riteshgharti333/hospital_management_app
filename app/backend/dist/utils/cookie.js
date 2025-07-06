@@ -13,8 +13,8 @@ const sendTokenCookie = (payload, res, message, statusCode) => {
     const accessToken = (0, exports.createAccessToken)(payload);
     res.cookie("accessToken", accessToken, {
         httpOnly: true,
-        sameSite: "lax",
         secure: process.env.NODE_ENV === "production",
+        sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
         maxAge: 90 * 24 * 60 * 60 * 1000,
     });
     res.status(statusCode).json({

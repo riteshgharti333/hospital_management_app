@@ -20,8 +20,8 @@ export const sendTokenCookie = (
 
   res.cookie("accessToken", accessToken, {
     httpOnly: true,
-    sameSite: "lax",
     secure: process.env.NODE_ENV === "production",
+    sameSite: process.env.NODE_ENV === "production" ? "none" : "lax", 
     maxAge: 90 * 24 * 60 * 60 * 1000,
   });
 
