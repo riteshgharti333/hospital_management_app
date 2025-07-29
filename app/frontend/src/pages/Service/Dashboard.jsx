@@ -21,7 +21,7 @@ const Dashboard = () => {
             </h1>
           </div>
           <div className="text-sm text-gray-600">
-            Last updated:{" "}
+            Date:{" "}
             {new Date().toLocaleDateString("en-US", {
               weekday: "short",
               year: "numeric",

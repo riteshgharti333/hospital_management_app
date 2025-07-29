@@ -12,8 +12,10 @@ import {
   getBedsByWard,
   updateBed,
   deleteBed,
+  searchBed,
 } from "../services/bedService";
 import { bedSchema } from "@hospital/schemas";
+import { validateSearchQuery } from "../utils/queryValidation";
 
 export const createBedRecord = catchAsyncError(
   async (req: Request, res: Response, next: NextFunction) => {
@@ -134,6 +136,24 @@ export const deleteBedRecord = catchAsyncError(
       statusCode: StatusCodes.OK,
       message: "Bed deleted successfully",
       data: deletedBed,
+    });
+  }
+);
+
+export const searchBedResults = catchAsyncError(
+  async (req: Request, res: Response, next: NextFunction) => {
+    const { query } = req.query;
+
+    const searchTerm = validateSearchQuery(query, next);
+    if (!searchTerm) return;
+
+    const beds = await searchBed(searchTerm);
+
+    sendResponse(res, {
+      success: true,
+      statusCode: StatusCodes.OK,
+      message: "Search results fetched successfully",
+      data: beds,
     });
   }
 );

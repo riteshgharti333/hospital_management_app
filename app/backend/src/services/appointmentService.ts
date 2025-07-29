@@ -1,4 +1,6 @@
 import { prisma } from "../lib/prisma";
+import { applyCommonFields } from "../utils/applyCommonFields";
+import { createSearchService } from "../utils/searchCache";
 
 export type AppointmentInput = {
   appointmentDate: Date;
@@ -34,3 +36,11 @@ export const updateAppointment = async (
 export const deleteAppointment = async (id: number) => {
   return prisma.appointment.delete({ where: { id } });
 };
+
+const commonSearchFields = ["doctorName", "department"];
+
+export const searchAppointment = createSearchService(prisma, {
+  tableName: "Appointment",
+  cacheKeyPrefix: "appointment",
+  ...applyCommonFields(commonSearchFields),
+});

@@ -10,9 +10,11 @@ import {
   getAppointmentById,
   updateAppointment,
   deleteAppointment,
+  searchAppointment,
 } from "../services/appointmentService";
 
-import {appointmentSchema} from "@hospital/schemas"
+import { appointmentSchema } from "@hospital/schemas";
+import { validateSearchQuery } from "../utils/queryValidation";
 
 export const createAppointmentRecord = catchAsyncError(
   async (req: Request, res: Response) => {
@@ -49,7 +51,9 @@ export const getAppointmentRecordById = catchAsyncError(
 
     const appointment = await getAppointmentById(id);
     if (!appointment) {
-      return next(new ErrorHandler("Appointment not found", StatusCodes.NOT_FOUND));
+      return next(
+        new ErrorHandler("Appointment not found", StatusCodes.NOT_FOUND)
+      );
     }
 
     sendResponse(res, {
@@ -71,12 +75,16 @@ export const updateAppointmentRecord = catchAsyncError(
     const partialSchema = appointmentSchema.partial();
     const validatedData = partialSchema.parse({
       ...req.body,
-      appointmentDate: req.body.appointmentDate ? new Date(req.body.appointmentDate) : undefined
+      appointmentDate: req.body.appointmentDate
+        ? new Date(req.body.appointmentDate)
+        : undefined,
     });
 
     const updatedAppointment = await updateAppointment(id, validatedData);
     if (!updatedAppointment) {
-      return next(new ErrorHandler("Appointment not found", StatusCodes.NOT_FOUND));
+      return next(
+        new ErrorHandler("Appointment not found", StatusCodes.NOT_FOUND)
+      );
     }
 
     sendResponse(res, {
@@ -97,7 +105,9 @@ export const deleteAppointmentRecord = catchAsyncError(
 
     const deletedAppointment = await deleteAppointment(id);
     if (!deletedAppointment) {
-      return next(new ErrorHandler("Appointment not found", StatusCodes.NOT_FOUND));
+      return next(
+        new ErrorHandler("Appointment not found", StatusCodes.NOT_FOUND)
+      );
     }
 
     sendResponse(res, {
@@ -105,6 +115,24 @@ export const deleteAppointmentRecord = catchAsyncError(
       statusCode: StatusCodes.OK,
       message: "Appointment deleted successfully",
       data: deletedAppointment,
+    });
+  }
+);
+
+export const searchAppointmentResults = catchAsyncError(
+  async (req: Request, res: Response, next: NextFunction) => {
+    const { query } = req.query;
+
+    const searchTerm = validateSearchQuery(query, next);
+    if (!searchTerm) return;
+
+    const appointments = await searchAppointment(searchTerm);
+
+    sendResponse(res, {
+      success: true,
+      statusCode: StatusCodes.OK,
+      message: "Search results fetched successfully",
+      data: appointments,
     });
   }
 );

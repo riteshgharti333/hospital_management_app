@@ -6,6 +6,7 @@ import {
   updateBedAssignmentRecord,
   dischargePatientFromBed,
   deleteBedAssignmentRecord,
+  searchBedAssignmentResults,
 } from "../controllers/BedAssignController";
 import { isAuthenticated } from "../middlewares/isAuthenticated";
 import { isAdmin } from "../middlewares/isAdmin";
@@ -16,6 +17,8 @@ router
   .route("/")
   .post(isAuthenticated, isAdmin, createBedAssignmentRecord)
   .get(getAllBedAssignmentRecords);
+
+router.get("/search", searchBedAssignmentResults);
 
 router
   .route("/:id")

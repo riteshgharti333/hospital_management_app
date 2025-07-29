@@ -14,9 +14,11 @@ import {
   updateBedAssignment,
   dischargePatient,
   deleteBedAssignment,
+  searchBedAssignment,
 } from "../services/bedAssignService";
 
 import { bedAssignmentSchema } from "@hospital/schemas";
+import { validateSearchQuery } from "../utils/queryValidation";
 
 export const createBedAssignmentRecord = catchAsyncError(
   async (req: Request, res: Response, next: NextFunction) => {
@@ -156,6 +158,24 @@ export const deleteBedAssignmentRecord = catchAsyncError(
       statusCode: StatusCodes.OK,
       message: "Bed assignment deleted successfully",
       data: deletedAssignment,
+    });
+  }
+);
+
+export const searchBedAssignmentResults = catchAsyncError(
+  async (req: Request, res: Response, next: NextFunction) => {
+    const { query } = req.query;
+
+    const searchTerm = validateSearchQuery(query, next);
+    if (!searchTerm) return;
+
+    const assignments = await searchBedAssignment(searchTerm);
+
+    sendResponse(res, {
+      success: true,
+      statusCode: StatusCodes.OK,
+      message: "Search results fetched successfully",
+      data: assignments,
     });
   }
 );

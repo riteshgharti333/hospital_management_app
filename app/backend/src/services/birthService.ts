@@ -1,4 +1,6 @@
 import { prisma } from "../lib/prisma";
+import { applyCommonFields } from "../utils/applyCommonFields";
+import { createSearchService } from "../utils/searchCache";
 
 export type BirthInput = {
   birthTime: string;
@@ -35,3 +37,11 @@ export const updateBirth = async (id: number, data: Partial<BirthInput>) => {
 export const deleteBirth = async (id: number) => {
   return prisma.birth.delete({ where: { id } });
 };
+
+const commonSearchFields = ["fathersName", "mothersName"];
+
+export const searchBirth = createSearchService(prisma, {
+  tableName: "Birth",
+  cacheKeyPrefix: "birth",
+  ...applyCommonFields(commonSearchFields),
+});

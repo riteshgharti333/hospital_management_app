@@ -12,8 +12,10 @@ import {
   getPharmacistsByDepartment,
   updatePharmacist,
   deletePharmacist,
+  searchPharmacist,
 } from "../services/pharmacistService";
 import { pharmacistSchema } from "@hospital/schemas";
+import { validateSearchQuery } from "../utils/queryValidation";
 // import {medicineSchema} from "@hospital/schemas"
 
 export const createPharmacistRecord = catchAsyncError(
@@ -21,7 +23,9 @@ export const createPharmacistRecord = catchAsyncError(
     const validated = pharmacistSchema.parse(req.body);
 
     // Check if registration number already exists
-    const existingPharmacist = await getPharmacistByRegistration(validated.registrationNo);
+    const existingPharmacist = await getPharmacistByRegistration(
+      validated.registrationNo
+    );
     if (existingPharmacist) {
       return next(
         new ErrorHandler(
@@ -44,11 +48,11 @@ export const createPharmacistRecord = catchAsyncError(
 export const getAllPharmacistRecords = catchAsyncError(
   async (req: Request, res: Response) => {
     const department = req.query.department as string | undefined;
-    
-    const pharmacists = department 
+
+    const pharmacists = department
       ? await getPharmacistsByDepartment(department)
       : await getAllPharmacists();
-      
+
     sendResponse(res, {
       success: true,
       statusCode: StatusCodes.OK,
@@ -69,7 +73,9 @@ export const getPharmacistRecordById = catchAsyncError(
 
     const pharmacist = await getPharmacistById(id);
     if (!pharmacist) {
-      return next(new ErrorHandler("Pharmacist not found", StatusCodes.NOT_FOUND));
+      return next(
+        new ErrorHandler("Pharmacist not found", StatusCodes.NOT_FOUND)
+      );
     }
 
     sendResponse(res, {
@@ -93,7 +99,9 @@ export const updatePharmacistRecord = catchAsyncError(
 
     // Check if updating registration number to an existing one
     if (validatedData.registrationNo) {
-      const existingPharmacist = await getPharmacistByRegistration(validatedData.registrationNo);
+      const existingPharmacist = await getPharmacistByRegistration(
+        validatedData.registrationNo
+      );
       if (existingPharmacist && existingPharmacist.id !== id) {
         return next(
           new ErrorHandler(
@@ -106,7 +114,9 @@ export const updatePharmacistRecord = catchAsyncError(
 
     const updatedPharmacist = await updatePharmacist(id, validatedData);
     if (!updatedPharmacist) {
-      return next(new ErrorHandler("Pharmacist not found", StatusCodes.NOT_FOUND));
+      return next(
+        new ErrorHandler("Pharmacist not found", StatusCodes.NOT_FOUND)
+      );
     }
 
     sendResponse(res, {
@@ -127,7 +137,9 @@ export const deletePharmacistRecord = catchAsyncError(
 
     const deletedPharmacist = await deletePharmacist(id);
     if (!deletedPharmacist) {
-      return next(new ErrorHandler("Pharmacist not found", StatusCodes.NOT_FOUND));
+      return next(
+        new ErrorHandler("Pharmacist not found", StatusCodes.NOT_FOUND)
+      );
     }
 
     sendResponse(res, {
@@ -135,6 +147,24 @@ export const deletePharmacistRecord = catchAsyncError(
       statusCode: StatusCodes.OK,
       message: "Pharmacist deleted successfully",
       data: deletedPharmacist,
+    });
+  }
+);
+
+export const searchPharmacistResults = catchAsyncError(
+  async (req: Request, res: Response, next: NextFunction) => {
+    const { query } = req.query;
+
+    const searchTerm = validateSearchQuery(query, next);
+    if (!searchTerm) return;
+
+    const pharmacists = await searchPharmacist(searchTerm);
+
+    sendResponse(res, {
+      success: true,
+      statusCode: StatusCodes.OK,
+      message: "Search results fetched successfully",
+      data: pharmacists,
     });
   }
 );

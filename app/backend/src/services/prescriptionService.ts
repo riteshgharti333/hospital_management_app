@@ -1,4 +1,6 @@
 import { prisma } from "../lib/prisma";
+import { applyCommonFields } from "../utils/applyCommonFields";
+import { createSearchService } from "../utils/searchCache";
 
 export type MedicineInput = {
   medicineName: string;
@@ -14,7 +16,9 @@ export type PrescriptionInput = {
   medicines: MedicineInput[];
 };
 
-export type UpdatePrescriptionInput = Partial<Omit<PrescriptionInput, 'medicines'>> & {
+export type UpdatePrescriptionInput = Partial<
+  Omit<PrescriptionInput, "medicines">
+> & {
   medicines?: MedicineInput[];
 };
 
@@ -121,3 +125,21 @@ export const deletePrescription = async (id: number) => {
     where: { id },
   });
 };
+
+
+// export const searchPrescription = createSearchService(prisma, {
+//   tableName: "prescription",
+//   cacheKeyPrefix: "prescription",
+
+//   exactFields: [],
+//   prefixFields: [],
+//   similarFields: ["patient.fullName"],
+
+//   relations: {
+//     patient: ["fullName"],
+//   },
+
+//   include: {
+//     patient: true,
+//   },
+// });

@@ -5,6 +5,7 @@ import {
   getAmbulanceRecordById,
   updateAmbulanceRecord,
   deleteAmbulanceRecord,
+  searchAmbulanceResults,
 } from "../controllers/AmbulanceController";
 import { isAuthenticated } from "../middlewares/isAuthenticated";
 import { isAdmin } from "../middlewares/isAdmin";
@@ -15,6 +16,8 @@ router
   .route("/")
   .post(isAuthenticated, isAdmin, createAmbulanceRecord)
   .get(getAllAmbulanceRecords);
+
+router.get("/search", searchAmbulanceResults);
 
 router
   .route("/:id")

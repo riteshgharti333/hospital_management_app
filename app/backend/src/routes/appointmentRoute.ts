@@ -6,6 +6,7 @@ import {
   getAppointmentRecordById,
   updateAppointmentRecord,
   deleteAppointmentRecord,
+  searchAppointmentResults,
 } from "../controllers/AppointmentController";
 import { isAuthenticated } from "../middlewares/isAuthenticated";
 import { isAdmin } from "../middlewares/isAdmin";
@@ -16,6 +17,8 @@ router
   .route("/")
   .post(isAuthenticated, isAdmin, createAppointmentRecord)
   .get(getAllAppointmentRecords);
+
+router.get("/search", searchAppointmentResults);
 
 router
   .route("/:id")

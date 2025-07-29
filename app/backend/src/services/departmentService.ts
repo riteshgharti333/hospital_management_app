@@ -1,4 +1,6 @@
 import { prisma } from "../lib/prisma";
+import { applyCommonFields } from "../utils/applyCommonFields";
+import { createSearchService } from "../utils/searchCache";
 
 export type DepartmentInput = {
   name: string;
@@ -39,3 +41,11 @@ export const updateDepartment = async (
 export const deleteDepartment = async (id: number) => {
   return prisma.department.delete({ where: { id } });
 };
+
+const commonSearchFields = ["name", "head"];
+
+export const searchDepartment = createSearchService(prisma, {
+  tableName: "Department",
+  cacheKeyPrefix: "department",
+  ...applyCommonFields(commonSearchFields),
+});

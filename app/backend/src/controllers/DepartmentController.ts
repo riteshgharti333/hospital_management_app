@@ -10,21 +10,26 @@ import {
   getDepartmentById,
   getDepartmentByName,
   updateDepartment,
-  deleteDepartment
+  deleteDepartment,
+  searchDepartment,
 } from "../services/departmentService";
 
 import { departmentSchema } from "@hospital/schemas";
-
+import { validateSearchQuery } from "../utils/queryValidation";
 
 export const createDepartmentRecord = catchAsyncError(
   async (req: Request, res: Response, next: NextFunction) => {
     const validated = departmentSchema.parse(req.body);
 
-    
     // Check if department name already exists
     const existingDept = await getDepartmentByName(validated.name);
     if (existingDept) {
-      return next(new ErrorHandler("Department with this name already exists", StatusCodes.CONFLICT));
+      return next(
+        new ErrorHandler(
+          "Department with this name already exists",
+          StatusCodes.CONFLICT
+        )
+      );
     }
 
     const department = await createDepartment(validated);
@@ -56,7 +61,9 @@ export const getDepartmentRecordById = catchAsyncError(
 
     const department = await getDepartmentById(id);
     if (!department) {
-      return next(new ErrorHandler("Department not found", StatusCodes.NOT_FOUND));
+      return next(
+        new ErrorHandler("Department not found", StatusCodes.NOT_FOUND)
+      );
     }
 
     sendResponse(res, {
@@ -82,13 +89,20 @@ export const updateDepartmentRecord = catchAsyncError(
     if (validatedData.name) {
       const existingDept = await getDepartmentByName(validatedData.name);
       if (existingDept && existingDept.id !== id) {
-        return next(new ErrorHandler("Another department with this name already exists", StatusCodes.CONFLICT));
+        return next(
+          new ErrorHandler(
+            "Another department with this name already exists",
+            StatusCodes.CONFLICT
+          )
+        );
       }
     }
 
     const updatedDepartment = await updateDepartment(id, validatedData);
     if (!updatedDepartment) {
-      return next(new ErrorHandler("Department not found", StatusCodes.NOT_FOUND));
+      return next(
+        new ErrorHandler("Department not found", StatusCodes.NOT_FOUND)
+      );
     }
 
     sendResponse(res, {
@@ -109,7 +123,9 @@ export const deleteDepartmentRecord = catchAsyncError(
 
     const deletedDepartment = await deleteDepartment(id);
     if (!deletedDepartment) {
-      return next(new ErrorHandler("Department not found", StatusCodes.NOT_FOUND));
+      return next(
+        new ErrorHandler("Department not found", StatusCodes.NOT_FOUND)
+      );
     }
 
     sendResponse(res, {
@@ -117,6 +133,24 @@ export const deleteDepartmentRecord = catchAsyncError(
       statusCode: StatusCodes.OK,
       message: "Department deleted successfully",
       data: deletedDepartment,
+    });
+  }
+);
+
+export const searchDepartmentResults = catchAsyncError(
+  async (req: Request, res: Response, next: NextFunction) => {
+    const { query } = req.query;
+
+    const searchTerm = validateSearchQuery(query, next);
+    if (!searchTerm) return;
+
+    const departments = await searchDepartment(searchTerm);
+
+    sendResponse(res, {
+      success: true,
+      statusCode: StatusCodes.OK,
+      message: "Search results fetched successfully",
+      data: departments,
     });
   }
 );

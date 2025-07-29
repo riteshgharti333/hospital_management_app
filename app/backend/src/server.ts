@@ -1,11 +1,16 @@
 import app from "./app";
 import { checkDB } from "./utils/checkPrismaConnection";
 
-checkDB();
-
 const PORT = process.env.PORT || 5000;
-console.log(process.env.DATABASE_URL)
 
-app.listen(PORT, () => {
-  console.log(`✅ Server running on http://localhost:${PORT}`);
-});
+(async () => {
+  try {
+    await checkDB();
+    app.listen(PORT, () => {
+      console.log(`✅ Server running on http://localhost:${PORT}`);
+    });
+  } catch (err) {
+    console.error("❌ Failed to start server:", err);
+    process.exit(1); 
+  }
+})();

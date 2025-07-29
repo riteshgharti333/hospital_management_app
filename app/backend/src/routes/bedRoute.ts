@@ -5,6 +5,7 @@ import {
   getBedRecordById,
   updateBedRecord,
   deleteBedRecord,
+  searchBedResults,
 } from "../controllers/BedController";
 import { isAuthenticated } from "../middlewares/isAuthenticated";
 import { isAdmin } from "../middlewares/isAdmin";
@@ -15,6 +16,8 @@ router
   .route("/")
   .post(isAuthenticated, isAdmin, createBedRecord)
   .get(getAllBedRecords);
+
+router.get("/search", searchBedResults);
 
 router
   .route("/:id")

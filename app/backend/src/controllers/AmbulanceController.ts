@@ -11,15 +11,19 @@ import {
   getAmbulanceByRegistration,
   updateAmbulance,
   deleteAmbulance,
+  searchAmbulance,
 } from "../services/ambulanceService";
-import {ambulanceSchema} from "@hospital/schemas"
+import { ambulanceSchema } from "@hospital/schemas";
+import { validateSearchQuery } from "../utils/queryValidation";
 
 export const createAmbulanceRecord = catchAsyncError(
   async (req: Request, res: Response, next: NextFunction) => {
     const validated = ambulanceSchema.parse(req.body);
 
     // Check if registration number already exists
-    const existingAmbulance = await getAmbulanceByRegistration(validated.registrationNo);
+    const existingAmbulance = await getAmbulanceByRegistration(
+      validated.registrationNo
+    );
     if (existingAmbulance) {
       return next(
         new ErrorHandler(
@@ -43,7 +47,7 @@ export const getAllAmbulanceRecords = catchAsyncError(
   async (req: Request, res: Response) => {
     const status = req.query.status as string | undefined;
     const ambulances = await getAllAmbulances(status);
-    
+
     sendResponse(res, {
       success: true,
       statusCode: StatusCodes.OK,
@@ -64,7 +68,9 @@ export const getAmbulanceRecordById = catchAsyncError(
 
     const ambulance = await getAmbulanceById(id);
     if (!ambulance) {
-      return next(new ErrorHandler("Ambulance not found", StatusCodes.NOT_FOUND));
+      return next(
+        new ErrorHandler("Ambulance not found", StatusCodes.NOT_FOUND)
+      );
     }
 
     sendResponse(res, {
@@ -88,7 +94,9 @@ export const updateAmbulanceRecord = catchAsyncError(
 
     // Check if updating registration number to an existing one
     if (validatedData.registrationNo) {
-      const existingAmbulance = await getAmbulanceByRegistration(validatedData.registrationNo);
+      const existingAmbulance = await getAmbulanceByRegistration(
+        validatedData.registrationNo
+      );
       if (existingAmbulance && existingAmbulance.id !== id) {
         return next(
           new ErrorHandler(
@@ -101,7 +109,9 @@ export const updateAmbulanceRecord = catchAsyncError(
 
     const updatedAmbulance = await updateAmbulance(id, validatedData);
     if (!updatedAmbulance) {
-      return next(new ErrorHandler("Ambulance not found", StatusCodes.NOT_FOUND));
+      return next(
+        new ErrorHandler("Ambulance not found", StatusCodes.NOT_FOUND)
+      );
     }
 
     sendResponse(res, {
@@ -122,7 +132,9 @@ export const deleteAmbulanceRecord = catchAsyncError(
 
     const deletedAmbulance = await deleteAmbulance(id);
     if (!deletedAmbulance) {
-      return next(new ErrorHandler("Ambulance not found", StatusCodes.NOT_FOUND));
+      return next(
+        new ErrorHandler("Ambulance not found", StatusCodes.NOT_FOUND)
+      );
     }
 
     sendResponse(res, {
@@ -130,6 +142,24 @@ export const deleteAmbulanceRecord = catchAsyncError(
       statusCode: StatusCodes.OK,
       message: "Ambulance deleted successfully",
       data: deletedAmbulance,
+    });
+  }
+);
+
+export const searchAmbulanceResults = catchAsyncError(
+  async (req: Request, res: Response, next: NextFunction) => {
+    const { query } = req.query;
+
+    const searchTerm = validateSearchQuery(query, next);
+    if (!searchTerm) return;
+
+    const ambulances = await searchAmbulance(searchTerm);
+
+    sendResponse(res, {
+      success: true,
+      statusCode: StatusCodes.OK,
+      message: "Search results fetched successfully",
+      data: ambulances,
     });
   }
 );

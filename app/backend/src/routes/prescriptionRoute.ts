@@ -5,6 +5,7 @@ import {
   getPrescriptionRecordById,
   updatePrescriptionRecord,
   deletePrescriptionRecord,
+  searchPrescriptionsResults,
 } from "../controllers/PrescriptionController";
 import { uploadMiddleware } from "../middlewares/multer.middleware";
 import { isAuthenticated } from "../middlewares/isAuthenticated";
@@ -21,6 +22,8 @@ router
     createPrescriptionRecord
   )
   .get(getAllPrescriptionRecords);
+
+router.get("/search", searchPrescriptionsResults);
 
 router
   .route("/:id")

@@ -1,4 +1,6 @@
 import { prisma } from "../lib/prisma";
+import { applyCommonFields } from "../utils/applyCommonFields";
+import { createSearchService } from "../utils/searchCache";
 
 export type AmbulanceInput = {
   modelName: string;
@@ -25,9 +27,7 @@ export const getAmbulanceById = async (id: number) => {
   return prisma.ambulance.findUnique({ where: { id } });
 };
 
-export const getAmbulanceByRegistration = async (
-  registrationNo: string
-) => {
+export const getAmbulanceByRegistration = async (registrationNo: string) => {
   return prisma.ambulance.findUnique({ where: { registrationNo } });
 };
 
@@ -41,3 +41,11 @@ export const updateAmbulance = async (
 export const deleteAmbulance = async (id: number) => {
   return prisma.ambulance.delete({ where: { id } });
 };
+
+const commonSearchFields = ["modelName", "brand", "registrationNo"];
+
+export const searchAmbulance = createSearchService(prisma, {
+  tableName: "Ambulance",
+  cacheKeyPrefix: "ambulance",
+  ...applyCommonFields(commonSearchFields),
+});

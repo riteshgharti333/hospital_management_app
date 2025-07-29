@@ -1,4 +1,6 @@
 import { prisma } from "../lib/prisma";
+import { applyCommonFields } from "../utils/applyCommonFields";
+import { createSearchService } from "../utils/searchCache";
 
 export type BedAssignmentInput = {
   wardNumber: string;
@@ -67,3 +69,11 @@ export const dischargePatient = async (id: number, dischargeDate: Date) => {
 export const deleteBedAssignment = async (id: number) => {
   return prisma.bedAssignment.delete({ where: { id } });
 };
+
+const commonSearchFields = ["wardNumber", "bedNumber"];
+
+export const searchBedAssignment = createSearchService(prisma, {
+  tableName: "BedAssignment",
+  cacheKeyPrefix: "bedAssignment",
+  ...applyCommonFields(commonSearchFields),
+});

@@ -1,6 +1,7 @@
-
 import { Pharmacist } from "@prisma/client";
 import { prisma } from "../lib/prisma";
+import { createSearchService } from "../utils/searchCache";
+import { applyCommonFields } from "../utils/applyCommonFields";
 
 export type CreatePharmacistInput = {
   fullName: string;
@@ -13,12 +14,14 @@ export type CreatePharmacistInput = {
 
 export type UpdatePharmacistInput = Partial<CreatePharmacistInput>;
 
-export const createPharmacist = async (data: CreatePharmacistInput): Promise<Pharmacist> => {
+export const createPharmacist = async (
+  data: CreatePharmacistInput
+): Promise<Pharmacist> => {
   // Check for duplicate registration number
   const existing = await prisma.pharmacist.findUnique({
-    where: { registrationNo: data.registrationNo }
+    where: { registrationNo: data.registrationNo },
   });
-  
+
   if (existing) {
     throw new Error("Pharmacist with this registration number already exists");
   }
@@ -26,33 +29,39 @@ export const createPharmacist = async (data: CreatePharmacistInput): Promise<Pha
   return prisma.pharmacist.create({
     data: {
       ...data,
-      status: data.status ?? "Active" // Default status
-    }
+      status: data.status ?? "Active", // Default status
+    },
   });
 };
 
 export const getAllPharmacists = async (): Promise<Pharmacist[]> => {
   return prisma.pharmacist.findMany({
-    orderBy: { createdAt: "desc" }
+    orderBy: { createdAt: "desc" },
   });
 };
 
-export const getPharmacistById = async (id: number): Promise<Pharmacist | null> => {
+export const getPharmacistById = async (
+  id: number
+): Promise<Pharmacist | null> => {
   return prisma.pharmacist.findUnique({
-    where: { id }
+    where: { id },
   });
 };
 
-export const getPharmacistByRegistration = async (registrationNo: string): Promise<Pharmacist | null> => {
+export const getPharmacistByRegistration = async (
+  registrationNo: string
+): Promise<Pharmacist | null> => {
   return prisma.pharmacist.findUnique({
-    where: { registrationNo }
+    where: { registrationNo },
   });
 };
 
-export const getPharmacistsByDepartment = async (department: string): Promise<Pharmacist[]> => {
+export const getPharmacistsByDepartment = async (
+  department: string
+): Promise<Pharmacist[]> => {
   return prisma.pharmacist.findMany({
     where: { department },
-    orderBy: { fullName: "asc" }
+    orderBy: { fullName: "asc" },
   });
 };
 
@@ -65,23 +74,33 @@ export const updatePharmacist = async (
     const existing = await prisma.pharmacist.findFirst({
       where: {
         registrationNo: data.registrationNo,
-        NOT: { id }
-      }
+        NOT: { id },
+      },
     });
-    
+
     if (existing) {
-      throw new Error("Another pharmacist with this registration number already exists");
+      throw new Error(
+        "Another pharmacist with this registration number already exists"
+      );
     }
   }
 
   return prisma.pharmacist.update({
     where: { id },
-    data
+    data,
   });
 };
 
 export const deletePharmacist = async (id: number): Promise<Pharmacist> => {
   return prisma.pharmacist.delete({
-    where: { id }
+    where: { id },
   });
 };
+
+const commonSearchFields = ["fullName", "mobileNumber", "registrationNo"];
+
+export const searchPharmacist = createSearchService(prisma, {
+  tableName: "Pharmacist",
+  cacheKeyPrefix: "pharmacist",
+  ...applyCommonFields(commonSearchFields),
+});

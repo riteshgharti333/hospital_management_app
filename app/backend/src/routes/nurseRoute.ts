@@ -5,6 +5,7 @@ import {
   getNurseRecordById,
   updateNurseRecord,
   deleteNurseRecord,
+  searchNurseResults,
 } from "../controllers/NurseController";
 import { isAuthenticated } from "../middlewares/isAuthenticated";
 import { isAdmin } from "../middlewares/isAdmin";
@@ -15,6 +16,8 @@ router
   .route("/")
   .post(isAuthenticated, isAdmin, createNurseRecord)
   .get(getAllNurseRecords);
+
+router.get("/search", searchNurseResults);
 
 router
   .route("/:id")

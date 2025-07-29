@@ -1,4 +1,6 @@
 import { prisma } from "../lib/prisma";
+import { applyCommonFields } from "../utils/applyCommonFields";
+import { createSearchService } from "../utils/searchCache";
 
 export type NurseInput = {
   fullName: string;
@@ -26,10 +28,7 @@ export const getNurseByRegistration = async (registrationNo: string) => {
   return prisma.nurse.findUnique({ where: { registrationNo } });
 };
 
-export const updateNurse = async (
-  id: number,
-  data: Partial<NurseInput>
-) => {
+export const updateNurse = async (id: number, data: Partial<NurseInput>) => {
   return prisma.nurse.update({
     where: { id },
     data,
@@ -39,3 +38,11 @@ export const updateNurse = async (
 export const deleteNurse = async (id: number) => {
   return prisma.nurse.delete({ where: { id } });
 };
+
+const commonSearchFields = ["fullName", "mobileNumber", "registrationNo"];
+
+export const searchNurse = createSearchService(prisma, {
+  tableName: "Nurse",
+  cacheKeyPrefix: "nurse",
+  ...applyCommonFields(commonSearchFields),
+});

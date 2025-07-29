@@ -5,6 +5,7 @@ import {
   getPatientRecordById,
   updatePatientRecord,
   deletePatientRecord,
+  searchPatientResults,
 } from "../controllers/PatientController";
 import { isAuthenticated } from "../middlewares/isAuthenticated";
 import { isAdmin } from "../middlewares/isAdmin";
@@ -15,6 +16,8 @@ router
   .route("/")
   .post(isAuthenticated, isAdmin, createPatientRecord)
   .get(getAllPatientRecords);
+
+router.get("/search", searchPatientResults);
 
 router
   .route("/:id")

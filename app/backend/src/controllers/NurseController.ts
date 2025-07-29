@@ -11,16 +11,19 @@ import {
   getNurseByRegistration,
   updateNurse,
   deleteNurse,
+  searchNurse,
 } from "../services/nurseService";
 import { nurseSchema } from "@hospital/schemas";
-
+import { validateSearchQuery } from "../utils/queryValidation";
 
 export const createNurseRecord = catchAsyncError(
   async (req: Request, res: Response, next: NextFunction) => {
     const validated = nurseSchema.parse(req.body);
 
     // Check if registration number already exists
-    const existingNurse = await getNurseByRegistration(validated.registrationNo);
+    const existingNurse = await getNurseByRegistration(
+      validated.registrationNo
+    );
     if (existingNurse) {
       return next(
         new ErrorHandler(
@@ -85,7 +88,9 @@ export const updateNurseRecord = catchAsyncError(
 
     // Check if updating registration number to an existing one
     if (validatedData.registrationNo) {
-      const existingNurse = await getNurseByRegistration(validatedData.registrationNo);
+      const existingNurse = await getNurseByRegistration(
+        validatedData.registrationNo
+      );
       if (existingNurse && existingNurse.id !== id) {
         return next(
           new ErrorHandler(
@@ -127,6 +132,24 @@ export const deleteNurseRecord = catchAsyncError(
       statusCode: StatusCodes.OK,
       message: "Nurse deleted successfully",
       data: deletedNurse,
+    });
+  }
+);
+
+export const searchNurseResults = catchAsyncError(
+  async (req: Request, res: Response, next: NextFunction) => {
+    const { query } = req.query;
+
+    const searchTerm = validateSearchQuery(query, next);
+    if (!searchTerm) return;
+
+    const nurses = await searchNurse(searchTerm);
+
+    sendResponse(res, {
+      success: true,
+      statusCode: StatusCodes.OK,
+      message: "Search results fetched successfully",
+      data: nurses,
     });
   }
 );

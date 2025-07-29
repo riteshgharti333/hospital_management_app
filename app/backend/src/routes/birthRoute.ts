@@ -5,6 +5,7 @@ import {
   getBirthRecordById,
   updateBirthRecord,
   deleteBirthRecord,
+  searchBirthResults,
 } from "../controllers/BirthController";
 import { isAuthenticated } from "../middlewares/isAuthenticated";
 import { isAdmin } from "../middlewares/isAdmin";
@@ -15,6 +16,8 @@ router
   .route("/")
   .post(isAuthenticated, isAdmin, createBirthRecord)
   .get(getAllBirthRecords);
+
+router.get("/search", searchBirthResults);
 
 router
   .route("/:id")

@@ -11,16 +11,18 @@ import {
   getDoctorsByDepartment,
   updateDoctor,
   deleteDoctor,
+  searchDoctor,
 } from "../services/doctorService";
 import { doctorSchema } from "@hospital/schemas";
-
 
 export const createDoctorRecord = catchAsyncError(
   async (req: Request, res: Response, next: NextFunction) => {
     const validated = doctorSchema.parse(req.body);
 
     // Check if registration number already exists
-    const existingDoctor = await getDoctorByRegistration(validated.registrationNo);
+    const existingDoctor = await getDoctorByRegistration(
+      validated.registrationNo
+    );
     if (existingDoctor) {
       return next(
         new ErrorHandler(
@@ -43,11 +45,11 @@ export const createDoctorRecord = catchAsyncError(
 export const getAllDoctorRecords = catchAsyncError(
   async (req: Request, res: Response) => {
     const department = req.query.department as string | undefined;
-    
-    const doctors = department 
+
+    const doctors = department
       ? await getDoctorsByDepartment(department)
       : await getAllDoctors();
-      
+
     sendResponse(res, {
       success: true,
       statusCode: StatusCodes.OK,
@@ -92,7 +94,9 @@ export const updateDoctorRecord = catchAsyncError(
 
     // Check if updating registration number to an existing one
     if (validatedData.registrationNo) {
-      const existingDoctor = await getDoctorByRegistration(validatedData.registrationNo);
+      const existingDoctor = await getDoctorByRegistration(
+        validatedData.registrationNo
+      );
       if (existingDoctor && existingDoctor.id !== id) {
         return next(
           new ErrorHandler(
@@ -118,6 +122,7 @@ export const updateDoctorRecord = catchAsyncError(
 );
 
 import { PrismaClientKnownRequestError } from "@prisma/client/runtime/library";
+import { validateSearchQuery } from "../utils/queryValidation";
 
 export const deleteDoctorRecord = catchAsyncError(
   async (req: Request, res: Response, next: NextFunction) => {
@@ -162,5 +167,23 @@ export const deleteDoctorRecord = catchAsyncError(
         )
       );
     }
+  }
+);
+
+export const searchDoctorResults = catchAsyncError(
+  async (req: Request, res: Response, next: NextFunction) => {
+    const { query } = req.query;
+
+    const searchTerm = validateSearchQuery(query, next);
+    if (!searchTerm) return;
+
+    const doctors = await searchDoctor(searchTerm);
+
+    sendResponse(res, {
+      success: true,
+      statusCode: StatusCodes.OK,
+      message: "Search results fetched successfully",
+      data: doctors,
+    });
   }
 );

@@ -13,7 +13,12 @@ import {
 } from "../services/prescriptionService";
 
 import { prescriptionSchema } from "@hospital/schemas";
-import { uploadToCloudinary, deleteFromCloudinary } from "../utils/cloudinaryUploader";
+import {
+  uploadToCloudinary,
+  deleteFromCloudinary,
+} from "../utils/cloudinaryUploader";
+import { validateSearchQuery } from "../utils/queryValidation";
+import { searchPrescriptions } from "../utils/prescriptionSearchCache";
 
 export const createPrescriptionRecord = async (
   req: Request,
@@ -164,6 +169,23 @@ export const deletePrescriptionRecord = catchAsyncError(
       success: true,
       statusCode: StatusCodes.OK,
       message: "Prescription deleted successfully",
+    });
+  }
+);
+
+export const searchPrescriptionsResults = catchAsyncError(
+  async (req: Request, res: Response, next: NextFunction) => {
+    const { query } = req.query;
+
+    const searchTerm = validateSearchQuery(query, next);
+    if (!searchTerm) return;
+
+    const prescriptions = await searchPrescriptions(searchTerm);
+
+    res.status(200).json({
+      success: true,
+      message: "Prescriptions fetched successfully",
+      data: prescriptions,
     });
   }
 );

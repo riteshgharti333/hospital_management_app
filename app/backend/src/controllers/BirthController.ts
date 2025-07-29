@@ -11,25 +11,26 @@ import {
   getBirthById,
   updateBirth,
   deleteBirth,
+  searchBirth,
 } from "../services/birthService";
 import { birthSchema } from "@hospital/schemas";
-
+import { validateSearchQuery } from "../utils/queryValidation";
 
 export const createBirthRecord = catchAsyncError(
   async (req: Request, res: Response, next: NextFunction) => {
-     try {
-       const validated = birthSchema.parse(req.body);
-    const birth = await createBirth(validated);
+    try {
+      const validated = birthSchema.parse(req.body);
+      const birth = await createBirth(validated);
 
-    sendResponse(res, {
-      success: true,
-      statusCode: StatusCodes.CREATED,
-      message: "Birth record created successfully",
-      data: birth,
-    });
-     } catch (error) {
-      console.log(error)
-     }
+      sendResponse(res, {
+        success: true,
+        statusCode: StatusCodes.CREATED,
+        message: "Birth record created successfully",
+        data: birth,
+      });
+    } catch (error) {
+      console.log(error);
+    }
   }
 );
 
@@ -51,7 +52,9 @@ export const getBirthRecordById = catchAsyncError(
 
     const birth = await getBirthById(id);
     if (!birth)
-      return next(new ErrorHandler("Birth record not found", StatusCodes.NOT_FOUND));
+      return next(
+        new ErrorHandler("Birth record not found", StatusCodes.NOT_FOUND)
+      );
 
     sendResponse(res, {
       success: true,
@@ -73,7 +76,9 @@ export const updateBirthRecord = catchAsyncError(
 
     const updatedBirth = await updateBirth(id, validatedData);
     if (!updatedBirth)
-      return next(new ErrorHandler("Birth record not found", StatusCodes.NOT_FOUND));
+      return next(
+        new ErrorHandler("Birth record not found", StatusCodes.NOT_FOUND)
+      );
 
     sendResponse(res, {
       success: true,
@@ -92,13 +97,33 @@ export const deleteBirthRecord = catchAsyncError(
 
     const deletedBirth = await deleteBirth(id);
     if (!deletedBirth)
-      return next(new ErrorHandler("Birth record not found", StatusCodes.NOT_FOUND));
+      return next(
+        new ErrorHandler("Birth record not found", StatusCodes.NOT_FOUND)
+      );
 
     sendResponse(res, {
       success: true,
       statusCode: StatusCodes.OK,
       message: "Birth record deleted successfully",
       data: deletedBirth,
+    });
+  }
+);
+
+export const searchBirthResults = catchAsyncError(
+  async (req: Request, res: Response, next: NextFunction) => {
+    const { query } = req.query;
+
+    const searchTerm = validateSearchQuery(query, next);
+    if (!searchTerm) return;
+
+    const admissions = await searchBirth(searchTerm);
+
+    sendResponse(res, {
+      success: true,
+      statusCode: StatusCodes.OK,
+      message: "Search results fetched successfully",
+      data: admissions,
     });
   }
 );

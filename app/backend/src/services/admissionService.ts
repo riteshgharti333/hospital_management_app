@@ -1,4 +1,6 @@
 import { prisma } from "../lib/prisma";
+import { applyCommonFields } from "../utils/applyCommonFields";
+import { createSearchService } from "../utils/searchCache";
 
 export type AdmissionInput = {
   admissionDate: Date;
@@ -30,7 +32,7 @@ export const createAdmission = async (data: AdmissionInput) => {
 };
 
 export const getAllAdmissions = async () => {
-  return prisma.admission.findMany({ orderBy: { createdAt: 'desc' } });
+  return prisma.admission.findMany({ orderBy: { createdAt: "desc" } });
 };
 
 export const getAdmissionById = async (id: number) => {
@@ -50,3 +52,11 @@ export const updateAdmission = async (
 export const deleteAdmission = async (id: number) => {
   return prisma.admission.delete({ where: { id } });
 };
+
+const commonSearchFields = ["patientName", "gsRsRegNo", "aadhaarNo"];
+
+export const searchAdmissions = createSearchService(prisma, {
+  tableName: "Admission",
+  cacheKeyPrefix: "admission",
+  ...applyCommonFields(commonSearchFields),
+});

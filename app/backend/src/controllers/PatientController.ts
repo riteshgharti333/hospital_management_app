@@ -10,14 +10,16 @@ import {
   getPatientById,
   updatePatient,
   deletePatient,
+  searchPatient,
 } from "../services/patientService";
 import { patientSchema } from "@hospital/schemas";
+import { validateSearchQuery } from "../utils/queryValidation";
 
 export const createPatientRecord = catchAsyncError(
   async (req: Request, res: Response, next: NextFunction) => {
     const validated = patientSchema.parse(req.body);
     const patient = await createPatient(validated);
-    
+
     sendResponse(res, {
       success: true,
       statusCode: StatusCodes.CREATED,
@@ -99,6 +101,26 @@ export const deletePatientRecord = catchAsyncError(
       statusCode: StatusCodes.OK,
       message: "Patient deleted successfully",
       data: deletedPatient,
+    });
+  }
+);
+
+///
+
+export const searchPatientResults = catchAsyncError(
+  async (req: Request, res: Response, next: NextFunction) => {
+    const { query } = req.query;
+
+    const searchTerm = validateSearchQuery(query, next);
+    if (!searchTerm) return;
+
+    const admissions = await searchPatient(searchTerm);
+
+    sendResponse(res, {
+      success: true,
+      statusCode: StatusCodes.OK,
+      message: "Search results fetched successfully",
+      data: admissions,
     });
   }
 );
