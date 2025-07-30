@@ -28,71 +28,91 @@ export const createAdmission = catchAsyncError(
 );
 
 // GET ALL
+
 export const getAllAdmissions = catchAsyncError(async (req: Request, res: Response) => {
-  // 1. Input Validation
+  // 1. Input Validation with schema validation (consider using Zod/Joi)
+  const DEFAULT_LIMIT = 50;
+  const MAX_LIMIT = 100;
+  const MAX_RESULTS = 1000;
+  
   const page = Math.max(parseInt(req.query.page as string) || 1, 1);
   const limit = Math.min(
-    Math.max(parseInt(req.query.limit as string) || 50, 10),
-    100
+    Math.max(parseInt(req.query.limit as string) || DEFAULT_LIMIT, 10),
+    MAX_LIMIT
   );
+  
+  // 2. Early exit for invalid pagination
   const skip = (page - 1) * limit;
-
-  // 2. Performance Configuration
-  const MAX_RESULTS = 1000;
-  const effectiveLimit = Math.min(limit, MAX_RESULTS - skip);
-
-  if (effectiveLimit <= 0) {
+  if (skip >= MAX_RESULTS) {
     return sendResponse(res, {
       success: true,
       statusCode: StatusCodes.OK,
       message: "No more records available",
-      data: {
-        metadata: {
-          total: 0,
-          page,
-          pageSize: 0,
-          totalPages: 0,
-          nextPageToken: null
-        },
-        admissions: []
-      }
+      data: emptyPaginationResponse(page)
     });
   }
 
-  // 3. Full Data Fetch (all fields)
+  // 3. Parallel execution with optimized queries
   const [admissions, total] = await Promise.all([
     prisma.admission.findMany({
       skip,
-      take: effectiveLimit,
-      orderBy: { createdAt: 'desc' }
-      // No select/where - returns all fields
+      take: Math.min(limit, MAX_RESULTS - skip),
+      orderBy: { createdAt: 'desc' },
+      // Consider adding cursor-based pagination for better performance on large datasets
+      select: { 
+        id: true,
+        // Explicitly list only needed fields for better performance
+        // Add other fields you actually need
+      }
     }),
-    prisma.admission.count()
+    prisma.admission.count({
+      where: {
+        // Add any relevant filters to match your findMany if needed
+      }
+    })
   ]);
 
-  // 4. Google-style Pagination
-  const remaining = Math.max(0, MAX_RESULTS - (skip + admissions.length));
-  const nextPageToken = remaining > 0 && admissions.length === limit
-    ? Buffer.from(`page=${page + 1}&limit=${limit}`).toString('base64')
-    : null;
-
-  // 5. Full Response with All Fields
+  // 4. Calculate pagination metadata
+  const cappedTotal = Math.min(total, MAX_RESULTS);
+  const hasMore = skip + admissions.length < cappedTotal;
+  
+  // 5. Response
   sendResponse(res, {
     success: true,
     statusCode: StatusCodes.OK,
     message: "Admissions fetched successfully",
     data: {
       metadata: {
-        total: Math.min(total, MAX_RESULTS),
+        total: cappedTotal,
         page,
         pageSize: admissions.length,
-        totalPages: Math.ceil(Math.min(total, MAX_RESULTS) / limit),
-        nextPageToken
+        totalPages: Math.ceil(cappedTotal / limit),
+        nextPageToken: hasMore 
+          ? generateNextPageToken(page + 1, limit)
+          : null
       },
-      admissions // Contains all admission fields
+      admissions
     }
   });
 });
+
+// Helper functions for better readability and reusability
+function emptyPaginationResponse(page: number) {
+  return {
+    metadata: {
+      total: 0,
+      page,
+      pageSize: 0,
+      totalPages: 0,
+      nextPageToken: null
+    },
+    admissions: []
+  };
+}
+
+function generateNextPageToken(page: number, limit: number) {
+  return Buffer.from(`page=${page}&limit=${limit}`).toString('base64');
+}
 
 // GET SINGLE BY ID
 export const getAdmissionById = catchAsyncError(
