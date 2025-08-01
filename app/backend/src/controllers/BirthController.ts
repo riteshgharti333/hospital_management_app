@@ -1,17 +1,15 @@
 import { Request, Response, NextFunction } from "express";
-import { PrismaClient } from "@prisma/client";
-import { z } from "zod";
 import { catchAsyncError } from "../middlewares/catchAsyncError";
 import { ErrorHandler } from "../middlewares/errorHandler";
 import { sendResponse } from "../utils/sendResponse";
 import { StatusCodes } from "../constants/statusCodes";
 import {
   createBirth,
-  getAllBirths,
   getBirthById,
   updateBirth,
   deleteBirth,
   searchBirth,
+  getPaginatedBirths,
 } from "../services/birthService";
 import { birthSchema } from "@hospital/schemas";
 import { validateSearchQuery } from "../utils/queryValidation";
@@ -34,15 +32,27 @@ export const createBirthRecord = catchAsyncError(
   }
 );
 
-export const getAllBirthRecords = catchAsyncError(async (_req, res) => {
-  const births = await getAllBirths();
-  sendResponse(res, {
-    success: true,
-    statusCode: StatusCodes.OK,
-    message: "All birth records fetched",
-    data: births,
-  });
-});
+export const getPaginatedBirthRecords = catchAsyncError(
+  async (req: Request, res: Response) => {
+    const { cursor, limit } = req.query;
+
+    const { data: births, nextCursor } = await getPaginatedBirths(
+      cursor?.toString(),
+      limit ? Number(limit) : undefined
+    );
+
+    sendResponse(res, {
+      success: true,
+      statusCode: StatusCodes.OK,
+      message: "Birth records fetched",
+      data: births,
+      pagination: {
+        nextCursor: nextCursor ?? undefined,
+        limit: limit ? Number(limit) : 100,
+      },
+    });
+  }
+);
 
 export const getBirthRecordById = catchAsyncError(
   async (req: Request, res: Response, next: NextFunction) => {

@@ -1,5 +1,6 @@
 import { prisma } from "../lib/prisma";
 import { applyCommonFields } from "../utils/applyCommonFields";
+import { cursorPaginate } from "../utils/pagination";
 import { createSearchService } from "../utils/searchCache";
 
 export type AdmissionInput = {
@@ -31,8 +32,20 @@ export const createAdmission = async (data: AdmissionInput) => {
   return prisma.admission.create({ data });
 };
 
-export const getAllAdmissions = async () => {
-  return prisma.admission.findMany({ orderBy: { createdAt: "desc" } });
+export const getAllAdmissionsService = async (
+  cursor?: string,
+  limit?: number
+) => {
+  return cursorPaginate(
+    prisma,
+    {
+      model: "admission",
+      cursorField: "id",
+      limit: limit || 100,
+      cacheExpiry: 600,
+    },
+    cursor
+  );
 };
 
 export const getAdmissionById = async (id: number) => {

@@ -1,11 +1,11 @@
 import express from "express";
 import {
   createBirthRecord,
-  getAllBirthRecords,
   getBirthRecordById,
   updateBirthRecord,
   deleteBirthRecord,
   searchBirthResults,
+  getPaginatedBirthRecords,
 } from "../controllers/BirthController";
 import { isAuthenticated } from "../middlewares/isAuthenticated";
 import { isAdmin } from "../middlewares/isAdmin";
@@ -15,7 +15,7 @@ const router = express.Router();
 router
   .route("/")
   .post(isAuthenticated, isAdmin, createBirthRecord)
-  .get(getAllBirthRecords);
+  .get(getPaginatedBirthRecords);
 
 router.get("/search", searchBirthResults);
 

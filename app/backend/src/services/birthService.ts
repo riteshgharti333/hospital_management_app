@@ -1,5 +1,6 @@
 import { prisma } from "../lib/prisma";
 import { applyCommonFields } from "../utils/applyCommonFields";
+import { cursorPaginate } from "../utils/pagination";
 import { createSearchService } from "../utils/searchCache";
 
 export type BirthInput = {
@@ -19,8 +20,16 @@ export const createBirth = async (data: BirthInput) => {
   return prisma.birth.create({ data });
 };
 
-export const getAllBirths = async () => {
-  return prisma.birth.findMany({ orderBy: { createdAt: "desc" } });
+export const getPaginatedBirths = async (cursor?: string, limit?: number) => {
+  return cursorPaginate(
+    prisma,
+    {
+      model: "birth",
+      cursorField: "id", 
+      limit: limit || 100,
+    },
+    cursor
+  );
 };
 
 export const getBirthById = async (id: number) => {
