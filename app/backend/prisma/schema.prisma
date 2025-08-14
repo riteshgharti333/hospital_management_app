@@ -49,6 +49,14 @@ isDelivery              Boolean   @default(false)
 
 createdAt               DateTime  @default(now())
 updatedAt               DateTime  @updatedAt
+
+  // Composite index for common filter combinations
+  @@index([admissionDate, bloodGroup, patientSex])
+  @@index([bloodGroup, patientSex])
+  @@index([admissionDate])
+  
+  // For date-only queries
+  @@index([admissionDate, patientSex]) 
 }
 
 ////////////////////

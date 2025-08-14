@@ -1,8 +1,7 @@
-// utils/pagination.ts
+
 import { PrismaClient } from "@prisma/client";
 import { upstashGet, upstashSet } from "./upstashRedisRest";
 
-// In-memory cache layer
 const memoryCache = new Map<
   string,
   {
@@ -19,7 +18,7 @@ type PaginationOptions<T extends keyof PrismaClient> = {
   cursorField?: string;
   limit?: number;
   cacheExpiry?: number;
-  select?: Record<string, boolean>; // Add field selection
+  select?: Record<string, boolean>; 
 };
 
 export async function cursorPaginate<T extends keyof PrismaClient, R = any>(
