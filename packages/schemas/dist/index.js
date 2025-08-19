@@ -456,3 +456,71 @@ export const supplierLedgerSchema = z.object({
     attachBill: z.string().url().nullable().optional(),
     remarks: z.string().optional(),
 });
+////////// filter
+// 🔹 Admission Filters
+export const admissionFilterSchema = z.object({
+    patientSex: z.enum(["Male", "Female", "Other"]).optional(),
+    bloodGroup: z
+        .enum(["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"])
+        .optional(),
+    fromDate: z.coerce.date().optional(),
+    toDate: z.coerce.date().optional(),
+    limit: z.coerce.number().default(50),
+    cursor: z.coerce.number().optional(),
+});
+// 🔹 Patient Filters
+export const patientFilterSchema = z.object({
+    gender: z.enum(["Male", "Female", "Other"]).optional(),
+    bloodGroup: z
+        .enum(["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"])
+        .optional(),
+    status: z.enum(["Active", "Inactive"]).optional(),
+    fromAge: z.coerce.number().min(0).optional(),
+    toAge: z.coerce.number().min(0).optional(),
+    limit: z.coerce.number().default(50),
+    cursor: z.coerce.number().optional(),
+});
+// 🔹 Doctor Filters
+export const doctorFilterSchema = z.object({
+    department: z.string().optional(),
+    specialization: z.string().optional(),
+    status: z.enum(["Active", "Inactive"]).optional(),
+    limit: z.coerce.number().default(50),
+    cursor: z.coerce.number().optional(),
+});
+// 🔹 Nurse Filters
+export const nurseFilterSchema = z.object({
+    department: z.string().optional(),
+    shift: z.string().optional(),
+    status: z.enum(["Active", "Inactive"]).optional(),
+    limit: z.coerce.number().default(50),
+    cursor: z.coerce.number().optional(),
+});
+// 🔹 Employee Filters
+export const employeeFilterSchema = z.object({
+    gender: z.enum(["Male", "Female", "Other"]).optional(),
+    maritalStatus: z.enum(["Married", "Unmarried"]).optional(),
+    department: z.string().optional(),
+    status: z.enum(["Active", "Inactive"]).optional(),
+    limit: z.coerce.number().default(50),
+    cursor: z.coerce.number().optional(),
+});
+// 🔹 Bill Filters
+export const billFilterSchema = z.object({
+    billType: z.enum(["IPD", "OPD", "Pharmacy", "Lab"]).optional(),
+    status: z.enum(["Pending", "Paid", "Cancelled"]).optional(),
+    fromDate: z.coerce.date().optional(),
+    toDate: z.coerce.date().optional(),
+    limit: z.coerce.number().default(50),
+    cursor: z.coerce.number().optional(),
+});
+// 🔹 Appointment Filters
+export const appointmentFilterSchema = z.object({
+    department: z.string().optional(),
+    doctorName: z.string().optional(),
+    fromDate: z.coerce.date().optional(),
+    toDate: z.coerce.date().optional(),
+    status: z.enum(["Scheduled", "Completed", "Cancelled"]).optional(),
+    limit: z.coerce.number().default(50),
+    cursor: z.coerce.number().optional(),
+});

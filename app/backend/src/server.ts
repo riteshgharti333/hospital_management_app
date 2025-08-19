@@ -12,7 +12,7 @@ async function warmCaches() {
     // services.births.getAll(),
     // services.patients.getAll()
     // Add other services...
-  ]);
+  ]); 
 
   console.timeEnd("🔄 Cache warming"); 
 }

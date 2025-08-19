@@ -41,18 +41,18 @@ const ledgerTitles = [
     title: "Doctor Ledger",
     link: "ledger/doctor-ledger",
   },
-  {
-    title: "Supplier Ledger",
-    link: "ledger/supplier-ledger",
-  },
-  {
-    title: "Pharmacy Ledger",
-    link: "ledger/pharmacy-ledger",
-  },
-  {
-    title: "Lab/Diagnostics Ledger",
-    link: "ledger/diagnostics-ledger",
-  },
+  // {
+  //   title: "Supplier Ledger",
+  //   link: "ledger/supplier-ledger",
+  // },
+  // {
+  //   title: "Pharmacy Ledger",
+  //   link: "ledger/pharmacy-ledger",
+  // },
+  // {
+  //   title: "Lab/Diagnostics Ledger",
+  //   link: "ledger/diagnostics-ledger",
+  // },
   {
     title: "Cash Ledger",
     link: "ledger/cash-ledger",
@@ -61,14 +61,14 @@ const ledgerTitles = [
     title: "Bank Ledger",
     link: "ledger/bank-ledger",
   },
-  {
-    title: "Insurance / TPA Ledger",
-    link: "ledger/insurance-tpa-ledger",
-  },
-  {
-    title: "General Expense Ledger",
-    link: "ledger/expense-ledger",
-  },
+  // {
+  //   title: "Insurance / TPA Ledger",
+  //   link: "ledger/insurance-tpa-ledger",
+  // },
+  // {
+  //   title: "General Expense Ledger",
+  //   link: "ledger/expense-ledger",
+  // },
 ];
 
 export const sidebarData = [
