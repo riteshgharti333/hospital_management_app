@@ -30,7 +30,7 @@ export async function cursorPaginate<T extends keyof PrismaClient, R = any>(
   const {
     model,
     cursorField = "id",
-    limit = 100,
+    limit = 50,
     cacheExpiry = 3600,
     select,
   } = options;

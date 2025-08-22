@@ -5,16 +5,18 @@ import {
   getAllAdmissionAPI,
   getAdmissionByIdAPI,
   updateAdmissionAPI,
+  searchAdmissionAPI,
+  filterAdmissionsAPI,
 } from "../api/admissionApi";
 import { toast } from "sonner";
 import { getErrorMessage } from "../../utils/errorUtils";
 
-export const useGetAdmissions = () => {
+export const useGetAdmissions = (cursor, limit = 50) => {
   return useQuery({
-    queryKey: ["admission"],
+    queryKey: ["admission", cursor, limit],
     queryFn: async () => {
-      const { data } = await getAllAdmissionAPI();
-      return data?.data || [];
+      const { data } = await getAllAdmissionAPI(cursor, limit);
+      return data || { data: [], pagination: {} };
     },
     retry: 1,
     onError: (error) => toast.error(getErrorMessage(error)),
@@ -71,6 +73,34 @@ export const useDeleteAdmission = () => {
       );
       queryClient.invalidateQueries({ queryKey: ["admission"] });
     },
+    onError: (error) => toast.error(getErrorMessage(error)),
+  });
+};
+
+export const useSearchAdmissions = (searchTerm) => {
+  return useQuery({
+    queryKey: ["admission-search", searchTerm],
+    queryFn: async () => {
+      if (!searchTerm) return [];
+      const { data } = await searchAdmissionAPI(searchTerm);
+      return data?.data || [];
+    },
+    enabled: !!searchTerm,
+    retry: 1,
+    onError: (error) => toast.error(getErrorMessage(error)),
+  });
+};
+
+
+export const useFilterAdmissions = (filters) => {
+  return useQuery({
+    queryKey: ["admission-filter", filters],
+    queryFn: async () => {
+      const { data } = await filterAdmissionsAPI(filters);
+      return data || { data: [], pagination: {} };
+    },
+    enabled: !!filters, // only run if filters exist
+    retry: 1,
     onError: (error) => toast.error(getErrorMessage(error)),
   });
 };

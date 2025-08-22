@@ -8,10 +8,7 @@ async function warmCaches() {
   console.time("🔄 Cache warming");
 
   await Promise.all([
-    services.admissions.getAll(),
-    // services.births.getAll(),
-    // services.patients.getAll()
-    // Add other services...
+    
   ]); 
 
   console.timeEnd("🔄 Cache warming"); 

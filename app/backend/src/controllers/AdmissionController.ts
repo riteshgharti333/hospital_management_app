@@ -52,7 +52,7 @@ export const getAllAdmissions = catchAsyncError(
       data: admission,
       pagination: {
         nextCursor: nextCursor !== null ? String(nextCursor) : undefined,
-        limit: limit ? Number(limit) : 100,
+        limit: limit ? Number(limit) : 50,
       },
     });
   }
@@ -137,9 +137,8 @@ export const deleteAdmission = catchAsyncError(
 export const searchAdmissionsResults = catchAsyncError(
   async (req: Request, res: Response, next: NextFunction) => {
     const { query } = req.query;
-
     const searchTerm = validateSearchQuery(query, next);
-    if (!searchTerm) return;
+    if (!searchTerm) return; 
 
     const admissions = await searchAdmissions(searchTerm);
 

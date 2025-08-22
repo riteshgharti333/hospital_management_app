@@ -62,7 +62,6 @@ export const getUserProfile = createAsyncThunk(
   async (_, { rejectWithValue }) => {
     try {
       const res = await getProfile();
-      console.log(res)
       return res.data;
     } catch (error) {
       return rejectWithValue(error.response?.data || "Failed to fetch profile");

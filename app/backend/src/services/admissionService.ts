@@ -9,7 +9,7 @@ export type AdmissionInput = {
   admissionTime: string;
   dischargeDate?: Date;
   gsRsRegNo: string;
-  wardNo: string;
+  wardNo: string; 
   bedNo: string;
   bloodGroup: string;
   aadhaarNo: string;
@@ -42,12 +42,13 @@ export const getAllAdmissionsService = async (
     {
       model: "admission",
       cursorField: "id",
-      limit: limit || 100,
+      limit: limit || 50,
       cacheExpiry: 600,
     },
-    cursor
+    cursor ? Number(cursor) : undefined   
   );
 };
+
 
 export const getAdmissionById = async (id: number) => {
   return prisma.admission.findUnique({ where: { id } });
@@ -68,18 +69,17 @@ export const deleteAdmission = async (id: number) => {
 };
 
 const commonSearchFields = ["patientName", "gsRsRegNo", "aadhaarNo"];
-
+ 
 export const searchAdmissions = createSearchService(prisma, {
-  tableName: "Admission",
-  cacheKeyPrefix: "admission",
+  tableName: "Admission",   cacheKeyPrefix: "admission",
   ...applyCommonFields(commonSearchFields),
 });
 
-
 ///
 
-
-export const filterAdmissionsService = async (filters: AdmissionFilterInput) => {
+export const filterAdmissionsService = async (
+  filters: AdmissionFilterInput
+) => {
   const { fromDate, toDate, patientSex, bloodGroup, cursor, limit } = filters;
 
   const where: any = {};

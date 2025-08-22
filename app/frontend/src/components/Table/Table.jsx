@@ -1,8 +1,8 @@
+import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   useReactTable,
   getCoreRowModel,
-  getSortedRowModel,
   getPaginationRowModel,
   flexRender,
 } from "@tanstack/react-table";
@@ -11,271 +11,326 @@ import {
   FiChevronRight,
   FiChevronsLeft,
   FiChevronsRight,
-  FiArrowUp,
-  FiArrowDown,
+  FiFilter,
   FiSearch,
+  FiX,
 } from "react-icons/fi";
-import { useMemo } from "react";
+import Loader from "../Loader/Loader";
 
-const Table = ({ data, columns, filters = {}, getRowProps, path }) => {
+const Table = ({
+  data,
+  columns,
+  loading,
+  path,
+  searchConfig,
+  filtersConfig = [],
+  pagination,
+  onNextPage,
+  onPrevPage,
+  onApplyFilters,
+  onClearFilters,
+  activeFilters = {},
+}) => {
   const navigate = useNavigate();
+  const [showFilter, setShowFilter] = useState(false);
+  const [localFilters, setLocalFilters] = useState(activeFilters);
 
-  const filteredData = useMemo(() => {
-    const safeData = Array.isArray(data) ? data : [];
-    const { doctor, fromDate, toDate } = filters;
-
-    return safeData.filter((row) => {
-      const testDate = new Date(row.testDate);
-      const from = fromDate ? new Date(fromDate) : null;
-      const to = toDate ? new Date(toDate) : null;
-
-      const matchDoctor =
-        !doctor || doctor === "All" || row.referredDoctor === doctor;
-      const matchFrom = from ? testDate >= from : true;
-      const matchTo = to ? testDate <= to : true;
-
-      return matchDoctor && matchFrom && matchTo;
-    });
-  }, [data, filters]);
-
-  // Initialize react-table
   const table = useReactTable({
-    data: filteredData,
+    data: data || [],
     columns,
     getCoreRowModel: getCoreRowModel(),
-    getSortedRowModel: getSortedRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
-    initialState: { pagination: { pageSize: 7 } },
+    initialState: {
+      pagination: {
+        pageSize: 10,
+      },
+    },
   });
 
   const handleRowClick = (id) => {
-    if (
-      path &&
-      [
-        "admission",
-        "birth",
-        "patient",
-        "department",
-        "bed",
-        "bed-assign",
-        "appointment",
-        "nurse",
-        "doctor",
-        "pharmacist",
-        "prescription",
-        "ambulance",
-        "xray",
-        "brand",
-        "product",
-        "sub-product",
-        "bill",
-        "money-receipt",
-        "voucher",
-        "employee",
-      ].includes(path)
-    ) {
-      navigate(`/${path}/${id}`);
-    } else if (
-      path &&
-      [
-        "bank-ledger",
-        "patient-ledger",
-        "cash-ledger",
-        "doctor-ledger",
-        "supplier-ledger",
-        "pharmacy-ledger",
-        "insurance-ledger",
-        "diagnostics-ledger",
-        "expense-ledger",
-      ].includes(path)
-    ) {
-      navigate(`/ledger/${path}/${id}`);
-    }
+    if (path) navigate(`/${path}/${id}`);
   };
+
+  const handleFilterChange = (key, value) => {
+    setLocalFilters((prev) => ({ ...prev, [key]: value }));
+  };
+
+  const handleApplyFilters = () => {
+    onApplyFilters?.(localFilters);
+    setShowFilter(false);
+  };
+
+  const handleClearAllFilters = () => {
+    setLocalFilters({});
+    onClearFilters?.();
+    setShowFilter(false);
+  };
+
+  const hasActiveFilters = Object.keys(activeFilters).length > 0;
 
   return (
     <div className="mt-5 max-w-[1050px] m-auto flex flex-col rounded-xl border border-gray-200 bg-white shadow-sm">
-      {/* Table Header with Search */}
-      <div className="flex flex-col sm:flex-row items-center justify-between p-4 border-b border-gray-200">
-        <div className="relative w-full sm:w-64 mb-4 sm:mb-0">
-          <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-            <FiSearch className="text-gray-400" />
-          </div>
+      {/* Header with Search and Filters */}
+      <div className="flex flex-col sm:flex-row items-center justify-between p-4 border-b border-gray-200 bg-white gap-3">
+        {/* Search Input */}
+        <div className="relative w-full sm:w-64">
+          <FiSearch className="absolute left-3 top-2.5 text-gray-400" />
           <input
             type="text"
-            placeholder="Search records..."
-            className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
+            placeholder={searchConfig?.placeholder || "Search records..."}
+            value={searchConfig?.searchTerm || ""}
+            onChange={(e) => searchConfig?.onSearchChange?.(e.target.value)}
+            className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
           />
         </div>
 
-        <div className="flex space-x-2">
-          <select className="text-sm border border-gray-300 rounded-lg px-3 py-2 focus:ring-blue-500 focus:border-blue-500">
-            <option>All Status</option>
-            <option>Active</option>
-            <option>Discharged</option>
-          </select>
-          <select className="text-sm border border-gray-300 rounded-lg px-3 py-2 focus:ring-blue-500 focus:border-blue-500">
-            <option>All Wards</option>
-            <option>General</option>
-            <option>ICU</option>
-          </select>
-        </div>
-      </div>
-
-      {/* Table */}
-      <div className="overflow-x-auto">
-        <table className="w-full">
-          <thead className="bg-gray-50 text-gray-500">
-            {table.getHeaderGroups().map((headerGroup) => (
-              <tr key={headerGroup.id}>
-                {headerGroup.headers.map((header) => (
-                  <th
-                    key={header.id}
-                    colSpan={header.colSpan}
-                    className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider"
-                    style={{
-                      cursor: header.column.getCanSort()
-                        ? "pointer"
-                        : "default",
+        {/* Filter Section */}
+        <div className="flex items-center gap-2">
+          {/* Active Filters Badges */}
+          {hasActiveFilters && (
+            <div className="flex flex-wrap gap-1">
+              {Object.entries(activeFilters).map(([key, value]) => (
+                <span
+                  key={key}
+                  className="inline-flex items-center px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded-full"
+                >
+                  {key}: {value}
+                  <button
+                    onClick={() => {
+                      const newFilters = { ...activeFilters };
+                      delete newFilters[key];
+                      onApplyFilters?.(newFilters);
                     }}
-                    onClick={header.column.getToggleSortingHandler()}
+                    className="ml-1 text-blue-600 hover:text-blue-800"
                   >
-                    <div className="flex items-center">
-                      {flexRender(
-                        header.column.columnDef.header,
-                        header.getContext()
-                      )}
-                      {{
-                        asc: <FiArrowUp className="ml-1" size={14} />,
-                        desc: <FiArrowDown className="ml-1" size={14} />,
-                      }[header.column.getIsSorted()] ?? null}
-                    </div>
-                  </th>
-                ))}
-              </tr>
-            ))}
-          </thead>
+                    <FiX size={12} />
+                  </button>
+                </span>
+              ))}
+            </div>
+          )}
 
-          <tbody className="bg-white divide-y divide-gray-200">
-            {table.getRowModel().rows.length > 0 ? (
-              table.getRowModel().rows.map((row) => (
-                <tr
-                  key={row.id}
-                  onClick={() => handleRowClick(row.original.id)}
-                  {...(getRowProps ? getRowProps(row) : {})}
-                  className={`hover:bg-blue-50 cursor-pointer transition-colors duration-150 ${
-                    getRowProps ? getRowProps(row)?.className || "" : ""
-                  }`}
-                >
-                  {row.getVisibleCells().map((cell) => (
-                    <td
-                      key={cell.id}
-                      className="px-6 text-sm py-4 whitespace-nowrap"
-                    >
-                      {flexRender(
-                        cell.column.columnDef.cell,
-                        cell.getContext()
-                      )}
-                    </td>
-                  ))}
-                </tr>
-              ))
-            ) : (
-              <tr className="h-[70vh]">
-                <td
-                  colSpan={columns.length}
-                  className="px-6 py-12 text-center text-gray-500"
-                >
-                  <div className="flex flex-col items-center justify-center">
-                    <svg
-                      className="w-12 h-12 text-gray-400 mb-4"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                      xmlns="http://www.w3.org/2000/svg"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-                      />
-                    </svg>
-                    <p className="text-lg font-medium">No records found</p>
-                    <p className="text-sm mt-1">
-                      Try adjusting your search or filter to find what you're
-                      looking for.
-                    </p>
-                    <p className="text-sm mt-1 text-gray-500">
-                      Also, please check your internet connection.
-                    </p>
+          {/* Filter Button */}
+          {filtersConfig.length > 0 && (
+            <div className="relative">
+              <button
+                onClick={() => setShowFilter(!showFilter)}
+                className={`flex items-center gap-2 px-4 py-2 text-sm font-medium border border-gray-300 rounded-lg shadow-sm hover:bg-gray-50 focus:ring-2 focus:ring-blue-500 ${
+                  hasActiveFilters
+                    ? "text-blue-600 bg-blue-50 border-blue-200"
+                    : "text-gray-700 bg-white"
+                }`}
+              >
+                <FiFilter /> Filter
+                {hasActiveFilters && (
+                  <span className="bg-blue-600 text-white text-xs rounded-full h-4 w-4 flex items-center justify-center">
+                    {Object.keys(activeFilters).length}
+                  </span>
+                )}
+              </button>
+
+              {/* Filter Popup */}
+              {showFilter && (
+                <div className="absolute right-0 mt-2 w-80 bg-white border border-gray-200 rounded-lg shadow-lg p-4 z-50">
+                  <div className="flex justify-between items-center mb-3">
+                    <h3 className="text-sm font-semibold text-gray-700">
+                      Filter Options
+                    </h3>
+                    {hasActiveFilters && (
+                      <button
+                        onClick={handleClearAllFilters}
+                        className="text-xs text-red-600 hover:text-red-800"
+                      >
+                        Clear All
+                      </button>
+                    )}
                   </div>
-                </td>
-              </tr>
-            )}
-          </tbody>
-        </table>
+
+                  {filtersConfig.map((filter) => (
+                    <div key={filter.key} className="mb-3">
+                      <label className="block text-xs text-gray-500 mb-1">
+                        {filter.label}
+                      </label>
+
+                      {filter.type === "select" ? (
+                        <select
+                          className="w-full border border-gray-300 rounded-lg p-2 text-sm focus:ring-2 focus:ring-blue-500"
+                          value={localFilters[filter.key] || ""}
+                          onChange={(e) =>
+                            handleFilterChange(filter.key, e.target.value)
+                          }
+                        >
+                          <option value="">All</option>
+                          {filter.options?.map((opt) => (
+                            <option key={opt} value={opt}>
+                              {opt}
+                            </option>
+                          ))}
+                        </select>
+                      ) : filter.type === "date" ? (
+                        <input
+                          type="date"
+                          className="w-full border border-gray-300 rounded-lg p-2 text-sm focus:ring-2 focus:ring-blue-500"
+                          value={localFilters[filter.key] || ""}
+                          onChange={(e) =>
+                            handleFilterChange(filter.key, e.target.value)
+                          }
+                        />
+                      ) : (
+                        <input
+                          type="text"
+                          placeholder={filter.placeholder || ""}
+                          className="w-full border border-gray-300 rounded-lg p-2 text-sm focus:ring-2 focus:ring-blue-500"
+                          value={localFilters[filter.key] || ""}
+                          onChange={(e) =>
+                            handleFilterChange(filter.key, e.target.value)
+                          }
+                        />
+                      )}
+                    </div>
+                  ))}
+
+                  {/* Actions */}
+                  <div className="flex justify-end gap-2">
+                    <button
+                      onClick={() => setShowFilter(false)}
+                      className="px-3 py-1.5 text-sm text-gray-600 hover:text-gray-800"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      onClick={handleApplyFilters}
+                      className="px-4 py-1.5 text-sm text-white bg-blue-600 rounded-lg hover:bg-blue-700"
+                    >
+                      Apply
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
       </div>
 
-      {/* Pagination - Only show if there are records */}
-      {table.getRowModel().rows.length > 0 && (
-        <div className="px-6 py-3 flex items-center justify-between border-t border-gray-200 bg-gray-50">
-          <div className="hidden sm:block">
-            <p className="text-sm text-gray-700">
-              Showing{" "}
-              <span className="font-medium">
-                {table.getState().pagination.pageIndex *
-                  table.getState().pagination.pageSize +
-                  1}
-              </span>{" "}
-              to{" "}
-              <span className="font-medium">
-                {Math.min(
-                  (table.getState().pagination.pageIndex + 1) *
-                    table.getState().pagination.pageSize,
-                  filteredData.length
+      {loading ? (
+        <Loader />
+      ) : (
+        <>
+          {/* Table */}
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead className="bg-gray-50 text-gray-500">
+                {table.getHeaderGroups().map((headerGroup) => (
+                  <tr key={headerGroup.id}>
+                    {headerGroup.headers.map((header) => (
+                      <th
+                        key={header.id}
+                        className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider"
+                      >
+                        {flexRender(
+                          header.column.columnDef.header,
+                          header.getContext()
+                        )}
+                      </th>
+                    ))}
+                  </tr>
+                ))}
+              </thead>
+              <tbody className="bg-white divide-y divide-gray-200">
+                {table.getRowModel().rows.length > 0 ? (
+                  table.getRowModel().rows.map((row) => (
+                    <tr
+                      key={row.id}
+                      onClick={() => handleRowClick(row.original.id)}
+                      className="hover:bg-blue-50 cursor-pointer transition-colors duration-150"
+                    >
+                      {row.getVisibleCells().map((cell) => (
+                        <td
+                          key={cell.id}
+                          className="px-6 py-4 text-sm whitespace-nowrap"
+                        >
+                          {flexRender(
+                            cell.column.columnDef.cell,
+                            cell.getContext()
+                          )}
+                        </td>
+                      ))}
+                    </tr>
+                  ))
+                ) : (
+                  <tr className="h-[50vh]">
+                    <td
+                      colSpan={columns.length}
+                      className="px-6 py-12 text-center text-gray-500"
+                    >
+                      No records found
+                    </td>
+                  </tr>
                 )}
-              </span>{" "}
-              of <span className="font-medium">{filteredData.length}</span>{" "}
-              results
-            </p>
+              </tbody>
+            </table>
           </div>
 
-          <div className="flex items-center space-x-2">
-            <button
-              onClick={() => table.setPageIndex(0)}
-              disabled={!table.getCanPreviousPage()}
-              className="p-2 rounded-lg border border-gray-300 bg-white hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              <FiChevronsLeft size={16} />
-            </button>
-            <button
-              onClick={() => table.previousPage()}
-              disabled={!table.getCanPreviousPage()}
-              className="p-2 rounded-lg border border-gray-300 bg-white hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              <FiChevronLeft size={16} />
-            </button>
-            <span className="text-sm text-gray-700 px-2">
-              Page {table.getState().pagination.pageIndex + 1} of{" "}
-              {table.getPageCount()}
-            </span>
-            <button
-              onClick={() => table.nextPage()}
-              disabled={!table.getCanNextPage()}
-              className="p-2 rounded-lg border border-gray-300 bg-white hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              <FiChevronRight size={16} />
-            </button>
-            <button
-              onClick={() => table.setPageIndex(table.getPageCount() - 1)}
-              disabled={!table.getCanNextPage()}
-              className="p-2 rounded-lg border border-gray-300 bg-white hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              <FiChevronsRight size={16} />
-            </button>
-          </div>
-        </div>
+          {/* Pagination - Only show for non-search mode */}
+          {pagination && pagination.mode !== "search" && data.length > 0 && (
+            <div className="px-6 py-3 flex items-center justify-between border-t border-gray-200 bg-gray-50">
+              <div className="hidden sm:block">
+                <p className="text-sm text-gray-700">
+                  Showing <span className="font-medium">1</span> to{" "}
+                  <span className="font-medium">{data.length}</span> of{" "}
+                  <span className="font-medium">{pagination.total || 'many'}</span> results
+                </p>
+              </div>
+
+              <div className="flex items-center space-x-2">
+                <button
+                  onClick={onPrevPage}
+                  disabled={!pagination.hasPrevious}
+                  className="p-2 rounded-lg border border-gray-300 bg-white hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  <FiChevronsLeft size={16} />
+                </button>
+                <button
+                  onClick={onPrevPage}
+                  disabled={!pagination.hasPrevious}
+                  className="p-2 rounded-lg border border-gray-300 bg-white hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  <FiChevronLeft size={16} />
+                </button>
+                <span className="text-sm text-gray-700 px-2">
+                  Page {pagination.currentPage + 1}
+                </span>
+                <button
+                  onClick={onNextPage}
+                  disabled={!pagination.hasNext}
+                  className="p-2 rounded-lg border border-gray-300 bg-white hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  <FiChevronRight size={16} />
+                </button>
+                <button
+                  onClick={onNextPage}
+                  disabled={!pagination.hasNext}
+                  className="p-2 rounded-lg border border-gray-300 bg-white hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  <FiChevronsRight size={16} />
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* Mode Indicator */}
+          {(pagination?.mode === "search" || pagination?.mode === "filter") && data.length > 0 && (
+            <div className="px-6 py-3 border-t border-gray-200 bg-blue-50">
+              <p className="text-sm text-blue-700">
+                {pagination.mode === "search" ? "Search" : "Filter"} results:{" "}
+                <span className="font-medium">{data.length}</span> records found
+                {searchConfig?.searchTerm && (
+                  <span> for "<span className="font-medium">{searchConfig.searchTerm}</span>"</span>
+                )}
+              </p>
+            </div>
+          )}
+        </>
       )}
     </div>
   );
