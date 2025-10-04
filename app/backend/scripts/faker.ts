@@ -5,8 +5,8 @@ const prisma = new PrismaClient();
 
 async function generateFakeAdmissions(count: number) {
   const batchSize = 1000;
+
   for (let i = 0; i < count; i += batchSize) {
-    // Explicitly type admissionsBatch
     const admissionsBatch: Prisma.AdmissionCreateManyInput[] = [];
 
     for (let j = 0; j < batchSize && i + j < count; j++) {
@@ -16,8 +16,8 @@ async function generateFakeAdmissions(count: number) {
           .recent({ days: 1 })
           .toTimeString()
           .slice(0, 8),
-        dischargeDate: undefined, // Optional, can be left out or set to null if you want
-        gsRsRegNo: `REG${100000 + i + j}`,
+        dischargeDate: undefined,
+        gsRsRegNo: `GSFAKE${i + j}`, // required by Prisma
         wardNo: ((j % 10) + 1).toString(),
         bedNo: faker.string.numeric(2),
         bloodGroup: faker.helpers.arrayElement([
@@ -31,7 +31,7 @@ async function generateFakeAdmissions(count: number) {
           "O-",
         ]),
         aadhaarNo: faker.string.numeric(12),
-        urnNo: faker.string.uuid(),
+        urnNo: faker.string.uuid(), // optional, can be skipped
         patientName: faker.person.fullName(),
         patientAge: faker.number.int({ min: 1, max: 100 }),
         patientSex: j % 2 === 0 ? "Male" : "Female",

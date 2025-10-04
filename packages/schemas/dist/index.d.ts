@@ -42,12 +42,10 @@ export declare const admissionSchema: z.ZodObject<{
     admissionDate: z.ZodDate;
     admissionTime: z.ZodString;
     dischargeDate: z.ZodEffects<z.ZodOptional<z.ZodDate>, Date | undefined, unknown>;
-    gsRsRegNo: z.ZodString;
     wardNo: z.ZodString;
     bedNo: z.ZodString;
     bloodGroup: z.ZodString;
-    aadhaarNo: z.ZodString;
-    urnNo: z.ZodOptional<z.ZodString>;
+    aadhaarNo: z.ZodEffects<z.ZodOptional<z.ZodString>, string | undefined, string | undefined>;
     patientName: z.ZodString;
     patientAge: z.ZodNumber;
     patientSex: z.ZodString;
@@ -60,15 +58,13 @@ export declare const admissionSchema: z.ZodObject<{
     literacy: z.ZodString;
     occupation: z.ZodString;
     doctorName: z.ZodString;
-    isDelivery: z.ZodDefault<z.ZodBoolean>;
+    isDelivery: z.ZodEffects<z.ZodDefault<z.ZodBoolean>, boolean, unknown>;
 }, "strip", z.ZodTypeAny, {
     bloodGroup: string;
     admissionDate: Date;
     admissionTime: string;
-    gsRsRegNo: string;
     wardNo: string;
     bedNo: string;
-    aadhaarNo: string;
     patientName: string;
     patientAge: number;
     patientSex: string;
@@ -83,15 +79,13 @@ export declare const admissionSchema: z.ZodObject<{
     doctorName: string;
     isDelivery: boolean;
     dischargeDate?: Date | undefined;
-    urnNo?: string | undefined;
+    aadhaarNo?: string | undefined;
 }, {
     bloodGroup: string;
     admissionDate: Date;
     admissionTime: string;
-    gsRsRegNo: string;
     wardNo: string;
     bedNo: string;
-    aadhaarNo: string;
     patientName: string;
     patientAge: number;
     patientSex: string;
@@ -105,8 +99,8 @@ export declare const admissionSchema: z.ZodObject<{
     occupation: string;
     doctorName: string;
     dischargeDate?: unknown;
-    urnNo?: string | undefined;
-    isDelivery?: boolean | undefined;
+    aadhaarNo?: string | undefined;
+    isDelivery?: unknown;
 }>;
 export declare const ambulanceSchema: z.ZodObject<{
     modelName: z.ZodString;
@@ -1038,7 +1032,7 @@ export declare const supplierLedgerSchema: z.ZodObject<{
 }>;
 export declare const admissionFilterSchema: z.ZodObject<{
     patientSex: z.ZodOptional<z.ZodEnum<["Male", "Female", "Other"]>>;
-    bloodGroup: z.ZodOptional<z.ZodEnum<["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"]>>;
+    bloodGroup: z.ZodEffects<z.ZodOptional<z.ZodEnum<["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"]>>, string | undefined, "A+" | "A-" | "B+" | "B-" | "AB+" | "AB-" | "O+" | "O-" | undefined>;
     fromDate: z.ZodOptional<z.ZodDate>;
     toDate: z.ZodOptional<z.ZodDate>;
     limit: z.ZodDefault<z.ZodNumber>;
@@ -1047,7 +1041,7 @@ export declare const admissionFilterSchema: z.ZodObject<{
     limit: number;
     fromDate?: Date | undefined;
     toDate?: Date | undefined;
-    bloodGroup?: "A+" | "A-" | "B+" | "B-" | "AB+" | "AB-" | "O+" | "O-" | undefined;
+    bloodGroup?: string | undefined;
     cursor?: number | undefined;
     patientSex?: "Other" | "Male" | "Female" | undefined;
 }, {

@@ -3,11 +3,19 @@ import { Link } from "react-router-dom";
 import { FaPlus } from "react-icons/fa6";
 import Table from "../../components/Table/Table";
 import Loader from "../../components/Loader/Loader";
-import { 
-  useGetAdmissions, 
-  useSearchAdmissions, 
-  useFilterAdmissions 
+import {
+  useGetAdmissions,
+  useSearchAdmissions,
+  useFilterAdmissions,
 } from "../../feature/hooks/useAdmisson";
+
+const filterLabels = {
+  patientSex: "Patient Sex",
+  bloodGroup: "Blood Group",
+  fromDate: "From Date",
+  toDate: "To Date",
+};
+
 
 const AdmissionEntriesTable = () => {
   const [currentCursor, setCurrentCursor] = useState(null);
@@ -17,16 +25,19 @@ const AdmissionEntriesTable = () => {
   const [mode, setMode] = useState("normal"); // 'normal', 'search', 'filter'
 
   // Normal admissions data with pagination
-  const { data: admissionsData, isLoading: admissionsLoading } = 
+  const { data: admissionsData, isLoading: admissionsLoading } =
     useGetAdmissions(currentCursor, 50);
 
   // Search admissions data
-  const { data: searchData, isLoading: searchLoading } = 
+  const { data: searchData, isLoading: searchLoading } =
     useSearchAdmissions(searchTerm);
 
   // Filter admissions data
-  const { data: filterData, isLoading: filterLoading } = 
-    useFilterAdmissions({ ...filters, cursor: currentCursor, limit: 50 });
+  const { data: filterData, isLoading: filterLoading } = useFilterAdmissions({
+    ...filters,
+    cursor: currentCursor,
+    limit: 50,
+  });
 
   // Determine which data to use based on mode
   const getCurrentData = () => {
@@ -64,7 +75,10 @@ const AdmissionEntriesTable = () => {
         cell: (info) => `${info.getValue()} yrs`,
       },
       { accessorKey: "patientSex", header: "Sex" },
+      { accessorKey: "bloodGroup", header: "Blood" },
       { accessorKey: "gsRsRegNo", header: "Registration No." },
+      { accessorKey: "phoneNo", header: "Phone No." },
+
       { accessorKey: "wardNo", header: "Ward" },
       { accessorKey: "bedNo", header: "Bed" },
       { accessorKey: "doctorName", header: "Doctor" },
@@ -97,14 +111,13 @@ const AdmissionEntriesTable = () => {
               });
         },
       },
-      { accessorKey: "bloodGroup", header: "Blood" },
     ],
     []
   );
 
   const handleNextPage = () => {
     if (data?.pagination?.nextCursor) {
-      setCursorHistory(prev => [...prev, currentCursor]);
+      setCursorHistory((prev) => [...prev, currentCursor]);
       setCurrentCursor(data.pagination.nextCursor);
     }
   };
@@ -112,7 +125,7 @@ const AdmissionEntriesTable = () => {
   const handlePrevPage = () => {
     if (cursorHistory.length > 0) {
       const previousCursor = cursorHistory[cursorHistory.length - 1];
-      setCursorHistory(prev => prev.slice(0, -1));
+      setCursorHistory((prev) => prev.slice(0, -1));
       setCurrentCursor(previousCursor);
     }
   };
@@ -151,39 +164,34 @@ const AdmissionEntriesTable = () => {
         path="admission"
         loading={isLoading}
         searchConfig={{
-          placeholder: "Search by Name, Reg. No or Aadhaar...",
+          placeholder: "Search by Name, Reg. No or Phone no...",
           searchTerm: searchTerm,
           onSearchChange: setSearchTerm,
         }}
         filtersConfig={[
-          { 
-            key: "patientSex", 
-            label: "Gender", 
-            type: "select", 
-            options: ["Male", "Female", "Other"] 
+          {
+            key: "patientSex",
+            label: "Gender",
+            type: "select",
+            options: ["Male", "Female", "Other"],
           },
-          { 
-            key: "bloodGroup", 
-            label: "Blood Group", 
-            type: "select", 
-            options: ["A+", "A-", "B+", "B-", "O+", "O-", "AB+", "AB-"] 
+          {
+            key: "bloodGroup",
+            label: "Blood Group",
+            type: "select",
+            options: ["A+", "A-", "B+", "B-", "O+", "O-", "AB+", "AB-"],
           },
-          { 
-            key: "fromDate", 
-            label: "From Date", 
-            type: "date" 
+          {
+            key: "fromDate",
+            label: "From Date",
+            type: "date",
           },
-          { 
-            key: "toDate", 
-            label: "To Date", 
-            type: "date" 
+          {
+            key: "toDate",
+            label: "To Date",
+            type: "date",
           },
-          { 
-            key: "wardNo", 
-            label: "Ward Number", 
-            type: "text",
-            placeholder: "Enter ward number"
-          },
+        
         ]}
         pagination={{
           hasPrevious: cursorHistory.length > 0 && mode !== "search",
@@ -197,6 +205,7 @@ const AdmissionEntriesTable = () => {
         onApplyFilters={handleApplyFilters}
         onClearFilters={handleClearFilters}
         activeFilters={filters}
+         filterLabels={filterLabels}
       />
     </div>
   );

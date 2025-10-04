@@ -1,5 +1,6 @@
 import { prisma } from "../lib/prisma";
 import { applyCommonFields } from "../utils/applyCommonFields";
+import { filterPaginate } from "../utils/filterPaginate";
 import { cursorPaginate } from "../utils/pagination";
 import { createSearchService } from "../utils/searchCache";
 import { AdmissionFilterInput } from "@hospital/schemas";
@@ -9,11 +10,11 @@ export type AdmissionInput = {
   admissionTime: string;
   dischargeDate?: Date;
   gsRsRegNo: string;
-  wardNo: string; 
+  wardNo: string;
   bedNo: string;
   bloodGroup: string;
-  aadhaarNo: string;
-  urnNo?: string;
+  aadhaarNo?: string;
+  urnNo: string;
   patientName: string;
   patientAge: number;
   patientSex: string;
@@ -45,10 +46,9 @@ export const getAllAdmissionsService = async (
       limit: limit || 50,
       cacheExpiry: 600,
     },
-    cursor ? Number(cursor) : undefined   
+    cursor ? Number(cursor) : undefined
   );
 };
-
 
 export const getAdmissionById = async (id: number) => {
   return prisma.admission.findUnique({ where: { id } });
@@ -68,38 +68,42 @@ export const deleteAdmission = async (id: number) => {
   return prisma.admission.delete({ where: { id } });
 };
 
-const commonSearchFields = ["patientName", "gsRsRegNo", "aadhaarNo"];
- 
+const commonSearchFields = ["patientName", "gsRsRegNo", "phoneNo"];
+
 export const searchAdmissions = createSearchService(prisma, {
-  tableName: "Admission",   cacheKeyPrefix: "admission",
+  tableName: "Admission",
+  cacheKeyPrefix: "admission",
   ...applyCommonFields(commonSearchFields),
 });
 
-///
+/// Filter
 
-export const filterAdmissionsService = async (
-  filters: AdmissionFilterInput
-) => {
+export const filterAdmissionsService = async (filters: {
+  fromDate?: Date;
+  toDate?: Date;
+  patientSex?: string;
+  bloodGroup?: string;
+  cursor?: string | number;
+  limit?: number;
+}) => {
   const { fromDate, toDate, patientSex, bloodGroup, cursor, limit } = filters;
 
-  const where: any = {};
-  if (fromDate || toDate) {
-    where.admissionDate = {};
-    if (fromDate) where.admissionDate.gte = new Date(fromDate);
-    if (toDate) where.admissionDate.lte = new Date(toDate);
-  }
-  if (patientSex) where.patientSex = patientSex;
-  if (bloodGroup) where.bloodGroup = bloodGroup;
+  // Build filter object
+  const filterObj: Record<string, any> = {};
 
-  return cursorPaginate(
-    prisma,
-    {
-      model: "admission",
-      cursorField: "id",
-      limit: limit || 50,
-      cacheExpiry: 60,
-    },
-    cursor,
-    where // ✅ pass only for this filter
-  );
+  if (patientSex) filterObj.patientSex = { equals: patientSex, mode: "insensitive" };
+  if (bloodGroup) filterObj.bloodGroup = bloodGroup;
+  if (fromDate || toDate)
+    filterObj.admissionDate = {
+      gte: fromDate ? new Date(fromDate) : undefined,
+      lte: toDate ? new Date(toDate) : undefined,
+    };
+
+  // Call filterPaginate
+  return filterPaginate(prisma, {
+    model: "admission",
+    cursorField: "id",
+    limit: limit || 50,
+    filters: filterObj,
+  }, cursor);
 };

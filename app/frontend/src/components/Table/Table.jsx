@@ -30,6 +30,7 @@ const Table = ({
   onApplyFilters,
   onClearFilters,
   activeFilters = {},
+  filterLabels = {},
 }) => {
   const navigate = useNavigate();
   const [showFilter, setShowFilter] = useState(false);
@@ -80,7 +81,7 @@ const Table = ({
             placeholder={searchConfig?.placeholder || "Search records..."}
             value={searchConfig?.searchTerm || ""}
             onChange={(e) => searchConfig?.onSearchChange?.(e.target.value)}
-            className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
+            className="block w-full pl-10 pr-3 py-2 border border-gray-300 outline-none rounded-lg focus:ring-1 focus:ring-blue-500 focus:border-blue-500 text-[12px]"
           />
         </div>
 
@@ -94,7 +95,10 @@ const Table = ({
                   key={key}
                   className="inline-flex items-center px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded-full"
                 >
-                  {key}: {value}
+                  {filterLabels[key] || key}:{" "}
+                  {(key === "fromDate" || key === "toDate") && value
+                    ? new Date(value).toLocaleDateString("en-GB")
+                    : value}
                   <button
                     onClick={() => {
                       const newFilters = { ...activeFilters };
@@ -278,7 +282,10 @@ const Table = ({
                 <p className="text-sm text-gray-700">
                   Showing <span className="font-medium">1</span> to{" "}
                   <span className="font-medium">{data.length}</span> of{" "}
-                  <span className="font-medium">{pagination.total || 'many'}</span> results
+                  <span className="font-medium">
+                    {pagination.total || "many"}
+                  </span>{" "}
+                  results
                 </p>
               </div>
 
@@ -319,17 +326,26 @@ const Table = ({
           )}
 
           {/* Mode Indicator */}
-          {(pagination?.mode === "search" || pagination?.mode === "filter") && data.length > 0 && (
-            <div className="px-6 py-3 border-t border-gray-200 bg-blue-50">
-              <p className="text-sm text-blue-700">
-                {pagination.mode === "search" ? "Search" : "Filter"} results:{" "}
-                <span className="font-medium">{data.length}</span> records found
-                {searchConfig?.searchTerm && (
-                  <span> for "<span className="font-medium">{searchConfig.searchTerm}</span>"</span>
-                )}
-              </p>
-            </div>
-          )}
+          {(pagination?.mode === "search" || pagination?.mode === "filter") &&
+            data.length > 0 && (
+              <div className="px-6 py-3 border-t border-gray-200 bg-blue-50">
+                <p className="text-sm text-blue-700">
+                  {pagination.mode === "search" ? "Search" : "Filter"} results:{" "}
+                  <span className="font-medium">{data.length}</span> records
+                  found
+                  {searchConfig?.searchTerm && (
+                    <span>
+                      {" "}
+                      for "
+                      <span className="font-medium">
+                        {searchConfig.searchTerm}
+                      </span>
+                      "
+                    </span>
+                  )}
+                </p>
+              </div>
+            )}
         </>
       )}
     </div>

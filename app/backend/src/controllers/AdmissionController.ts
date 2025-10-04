@@ -16,18 +16,44 @@ import { admissionFilterSchema, admissionSchema } from "@hospital/schemas";
 import { validateSearchQuery } from "../utils/queryValidation";
 
 // CREATE
+
 export const createAdmission = catchAsyncError(
   async (req: Request, res: Response, next: NextFunction) => {
-    const validated = admissionSchema.parse(req.body);
+    try {
+      const validated = admissionSchema.parse(req.body);
 
-    const admission = await prisma.admission.create({ data: validated });
+      // Generate numbers BEFORE creating admission
+      const year = new Date().getFullYear();
+      const month = (new Date().getMonth() + 1).toString().padStart(2, "0");
 
-    sendResponse(res, {
-      success: true,
-      statusCode: StatusCodes.CREATED,
-      message: "Admission created successfully",
-      data: admission,
-    });
+      // Get the next available ID
+      const lastAdmission = await prisma.admission.findFirst({
+        orderBy: { id: "desc" },
+      });
+
+      const nextId = (lastAdmission?.id || 0) + 1;
+
+      const gsRsRegNo = `GS${year}/${nextId.toString().padStart(4, "0")}`;
+      const urnNo = `URN${year}${month}${nextId.toString().padStart(3, "0")}`;
+
+      // Create admission with all data at once
+      const admission = await prisma.admission.create({
+        data: {
+          ...validated,
+          gsRsRegNo,
+          urnNo,
+        },
+      });
+
+      sendResponse(res, {
+        success: true,
+        statusCode: StatusCodes.CREATED,
+        message: "Admission created successfully",
+        data: admission,
+      });
+    } catch (error) {
+      next(error);
+    }
   }
 );
 
@@ -138,7 +164,7 @@ export const searchAdmissionsResults = catchAsyncError(
   async (req: Request, res: Response, next: NextFunction) => {
     const { query } = req.query;
     const searchTerm = validateSearchQuery(query, next);
-    if (!searchTerm) return; 
+    if (!searchTerm) return;
 
     const admissions = await searchAdmissions(searchTerm);
 
@@ -154,10 +180,13 @@ export const searchAdmissionsResults = catchAsyncError(
 ///////////
 
 export const filterAdmissions = catchAsyncError(async (req, res) => {
+  // Validate query params
   const validated = admissionFilterSchema.parse(req.query);
 
+  // Get filtered results
   const { data, nextCursor } = await filterAdmissionsService(validated);
 
+  // Send response
   sendResponse(res, {
     success: true,
     statusCode: StatusCodes.OK,

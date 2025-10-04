@@ -92,11 +92,15 @@ export const createSearchService = (
     }
 
     const limitClause = config.maxResults ? `LIMIT ${config.maxResults}` : "";
+
     const query = `
-      ${queryParts.join(" UNION ALL ")}
-      ORDER BY priority ASC, "${config.sortField || "createdAt"}" DESC
-      ${limitClause}
-    `;
+  SELECT DISTINCT ON ("id") *
+  FROM (
+    ${queryParts.join(" UNION ALL ")}
+  ) AS combined
+  ORDER BY "id", priority ASC, "${config.sortField || "createdAt"}" DESC
+  ${config.maxResults ? `LIMIT ${config.maxResults}` : ""}
+`;
 
     // 4. Execute query
     let results: any[] = [];

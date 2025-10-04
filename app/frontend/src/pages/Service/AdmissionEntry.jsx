@@ -46,13 +46,7 @@ const formFields = [
         name: "dischargeDate",
         placeholder: "Select discharge date",
       },
-      {
-        label: "GS / RS Reg No",
-        type: "text",
-        name: "gsRsRegNo",
-        placeholder: "Enter GS/RS registration number",
-        icon: <FaIdCard className="text-gray-400" />,
-      },
+
       {
         label: "Ward No",
         type: "select",
@@ -86,13 +80,7 @@ const formFields = [
         placeholder: "Enter Aadhaar number",
         icon: <FaIdCard className="text-gray-400" />,
       },
-      {
-        label: "URN No",
-        type: "text",
-        name: "urnNo",
-        placeholder: "Enter URN number",
-        icon: <FaIdCard className="text-gray-400" />,
-      },
+
       {
         label: "Patient Name",
         type: "text",
@@ -204,12 +192,7 @@ const formFields = [
 const AdmissionEntry = () => {
   const navigate = useNavigate();
 
-  const optionalFields = [
-    "dischargeDate",
-    "urnNo",
-    "bodyWeightKg",
-    "bodyHeightCm",
-  ];
+  const optionalFields = ["dischargeDate", "bodyWeightKg", "bodyHeightCm"];
 
   const {
     register,
@@ -222,12 +205,10 @@ const AdmissionEntry = () => {
       admissionDate: "",
       admissionTime: "",
       dischargeDate: "",
-      gsRsRegNo: "",
       wardNo: "",
       bedNo: "",
       bloodGroup: "",
       aadhaarNo: "",
-      urnNo: "",
       patientName: "",
       patientAge: 0,
       patientSex: "",

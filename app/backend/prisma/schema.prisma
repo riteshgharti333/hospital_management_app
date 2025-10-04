@@ -21,43 +21,39 @@ model User {
 
 
 /////////////////
-
 model Admission {
-id                       Int      @id @default(autoincrement())
-admissionDate           DateTime
-admissionTime           String   
-dischargeDate           DateTime? 
-gsRsRegNo               String
-wardNo                  String
-bedNo                   String
-bloodGroup              String
-aadhaarNo               String   
-urnNo                   String?  
-patientName             String
-patientAge              Int
-patientSex              String
-guardianType            String
-guardianName            String
-phoneNo                 String
-patientAddress          String
-bodyWeightKg            Float
-bodyHeightCm            Float
-literacy                String
-occupation              String
-doctorName              String
-isDelivery              Boolean   @default(false) 
+  id              Int      @id @default(autoincrement())
+  admissionDate   DateTime
+  admissionTime   String
+  dischargeDate   DateTime?
+  gsRsRegNo       String  @unique
+  wardNo          String
+  bedNo           String
+  bloodGroup      String
+  aadhaarNo       String? 
+  urnNo           String  @unique
+  patientName     String
+  patientAge      Int
+  patientSex      String
+  guardianType    String
+  guardianName    String
+  phoneNo         String
+  patientAddress  String
+  bodyWeightKg    Float
+  bodyHeightCm    Float
+  literacy        String
+  occupation      String
+  doctorName      String
+  isDelivery      Boolean  @default(false)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
 
-createdAt               DateTime  @default(now())
-updatedAt               DateTime  @updatedAt
-
-  // Composite index for common filter combinations
   @@index([admissionDate, bloodGroup, patientSex])
   @@index([bloodGroup, patientSex])
   @@index([admissionDate])
-  
-  // For date-only queries
-  @@index([admissionDate, patientSex]) 
+  @@index([admissionDate, patientSex])
 }
+
 
 ////////////////////
 
