@@ -37,7 +37,7 @@ const BirthEntriesTable = () => {
         cell: (info) => info.getValue(),
       },
       {
-        accessorKey: "babyWeight",
+        accessorKey: "babyWeightKg",
         header: "Weight",
         cell: (info) => `${info.getValue()} kg`,
       },

@@ -9,7 +9,6 @@ import {
   getAllBeds,
   getBedById,
   getBedByNumber,
-  getBedsByWard,
   updateBed,
   deleteBed,
   searchBed,
@@ -41,22 +40,30 @@ export const createBedRecord = catchAsyncError(
   }
 );
 
-export const getAllBedRecords = catchAsyncError(
+export const getAllBedRecords =  catchAsyncError(
   async (req: Request, res: Response) => {
-    // Optional ward filter
-    const wardNumber = req.query.ward as string | undefined;
+    const { cursor, limit } = req.query as {
+      cursor?: string;
+      limit?: string;
+    };
 
-    const beds = wardNumber
-      ? await getBedsByWard(wardNumber)
-      : await getAllBeds();
+    const { data: bed, nextCursor } = await getAllBeds(
+      cursor,
+      limit ? Number(limit) : undefined
+    );
+
+      console.log("Bed data:", bed);
+
 
     sendResponse(res, {
       success: true,
       statusCode: StatusCodes.OK,
-      message: wardNumber
-        ? `Beds in ward ${wardNumber} fetched`
-        : "All beds fetched",
-      data: beds,
+      message: "Bed records fetched",
+      data: bed,
+      pagination: {
+        nextCursor: nextCursor !== null ? String(nextCursor) : undefined,
+        limit: limit ? Number(limit) : 50,
+      },
     });
   }
 );

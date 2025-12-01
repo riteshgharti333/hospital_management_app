@@ -6,12 +6,12 @@ import { sendResponse } from "../utils/sendResponse";
 import { StatusCodes } from "../constants/statusCodes";
 import {
   createDepartment,
-  getAllDepartments,
   getDepartmentById,
   getDepartmentByName,
   updateDepartment,
   deleteDepartment,
   searchDepartment,
+  getAllDepartmentService,
 } from "../services/departmentService";
 
 import { departmentSchema } from "@hospital/schemas";
@@ -42,15 +42,30 @@ export const createDepartmentRecord = catchAsyncError(
   }
 );
 
-export const getAllDepartmentRecords = catchAsyncError(async (_req, res) => {
-  const departments = await getAllDepartments();
-  sendResponse(res, {
-    success: true,
-    statusCode: StatusCodes.OK,
-    message: "All departments fetched",
-    data: departments,
-  });
-});
+export const getAllDepartmentRecords = catchAsyncError(
+  async (req: Request, res: Response) => {
+    const { cursor, limit } = req.query as {
+      cursor?: string;
+      limit?: string;
+    };
+
+    const { data: department, nextCursor } = await getAllDepartmentService(
+      cursor,
+      limit ? Number(limit) : undefined
+    );
+
+    sendResponse(res, {
+      success: true,
+      statusCode: StatusCodes.OK,
+      message: "Department records fetched",
+      data: department,
+      pagination: {
+        nextCursor: nextCursor !== null ? String(nextCursor) : undefined,
+        limit: limit ? Number(limit) : 50,
+      },
+    });
+  }
+);
 
 export const getDepartmentRecordById = catchAsyncError(
   async (req: Request, res: Response, next: NextFunction) => {

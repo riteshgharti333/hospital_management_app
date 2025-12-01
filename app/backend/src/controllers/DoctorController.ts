@@ -8,7 +8,6 @@ import {
   getAllDoctors,
   getDoctorById,
   getDoctorByRegistration,
-  getDoctorsByDepartment,
   updateDoctor,
   deleteDoctor,
   searchDoctor,
@@ -31,10 +30,10 @@ export const createDoctorRecord = catchAsyncError(
         )
       );
     }
-
+ 
     const doctor = await createDoctor(validated);
     sendResponse(res, {
-      success: true,
+      success: true, 
       statusCode: StatusCodes.CREATED,
       message: "Doctor created successfully",
       data: doctor,
@@ -44,19 +43,25 @@ export const createDoctorRecord = catchAsyncError(
 
 export const getAllDoctorRecords = catchAsyncError(
   async (req: Request, res: Response) => {
-    const department = req.query.department as string | undefined;
+    const { cursor, limit } = req.query as {
+      cursor?: string;
+      limit?: string;
+    };
 
-    const doctors = department
-      ? await getDoctorsByDepartment(department)
-      : await getAllDoctors();
+    const { data: doctor, nextCursor } = await getAllDoctors(
+      cursor,
+      limit ? Number(limit) : undefined
+    );
 
     sendResponse(res, {
       success: true,
       statusCode: StatusCodes.OK,
-      message: department
-        ? `Doctors in ${department} department fetched`
-        : "All doctors fetched",
-      data: doctors,
+      message: "Doctor records fetched",
+      data: doctor,
+      pagination: {
+        nextCursor: nextCursor !== null ? String(nextCursor) : undefined,
+        limit: limit ? Number(limit) : 50,
+      },
     });
   }
 );

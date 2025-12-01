@@ -177,13 +177,13 @@ export const searchAdmissionsResults = catchAsyncError(
   }
 );
 
-///////////
+/////////// 
 
 export const filterAdmissions = catchAsyncError(async (req, res) => {
   // Validate query params
   const validated = admissionFilterSchema.parse(req.query);
 
-  // Get filtered results
+  // Get filtered results   
   const { data, nextCursor } = await filterAdmissionsService(validated);
 
   // Send response

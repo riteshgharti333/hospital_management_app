@@ -1,5 +1,6 @@
 import { prisma } from "../lib/prisma";
 import { applyCommonFields } from "../utils/applyCommonFields";
+import { cursorPaginate } from "../utils/pagination";
 import { createSearchService } from "../utils/searchCache";
 
 export type AppointmentInput = {
@@ -13,10 +14,20 @@ export const createAppointment = async (data: AppointmentInput) => {
   return prisma.appointment.create({ data });
 };
 
-export const getAllAppointments = async () => {
-  return prisma.appointment.findMany({
-    orderBy: { appointmentDate: "asc" },
-  });
+export const getAllAppointments = async (
+  cursor?: string,
+  limit?: number
+) => {
+  return cursorPaginate(
+    prisma,
+    {
+      model: "appointment",
+      cursorField: "id",
+      limit: limit || 50,
+      cacheExpiry: 600,
+    },
+    cursor ? Number(cursor) : undefined
+  );
 };
 
 export const getAppointmentById = async (id: number) => {

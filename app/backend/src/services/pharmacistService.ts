@@ -25,7 +25,7 @@ export const createPharmacist = async (
   if (existing) {
     throw new Error("Pharmacist with this registration number already exists");
   }
-
+ 
   return prisma.pharmacist.create({
     data: {
       ...data,
@@ -37,13 +37,13 @@ export const createPharmacist = async (
 export const getAllPharmacists = async (): Promise<Pharmacist[]> => {
   return prisma.pharmacist.findMany({
     orderBy: { createdAt: "desc" },
-  });
+  }); 
 };
 
 export const getPharmacistById = async (
   id: number
 ): Promise<Pharmacist | null> => {
-  return prisma.pharmacist.findUnique({
+  return prisma.pharmacist.findUnique({ 
     where: { id },
   });
 };
@@ -84,7 +84,7 @@ export const updatePharmacist = async (
       );
     }
   }
-
+ 
   return prisma.pharmacist.update({
     where: { id },
     data,

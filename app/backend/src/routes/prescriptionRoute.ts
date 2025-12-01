@@ -17,7 +17,7 @@ router
   .route("/")
   .post(
     isAuthenticated,
-    isAdmin,
+    isAdmin, 
     uploadMiddleware.single("file"),
     createPrescriptionRecord
   )

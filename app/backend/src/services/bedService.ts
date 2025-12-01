@@ -1,5 +1,6 @@
 import { prisma } from "../lib/prisma";
 import { applyCommonFields } from "../utils/applyCommonFields";
+import { cursorPaginate } from "../utils/pagination";
 import { createSearchService } from "../utils/searchCache";
 
 export type BedInput = {
@@ -13,8 +14,21 @@ export const createBed = async (data: BedInput) => {
   return prisma.bed.create({ data });
 };
 
-export const getAllBeds = async () => {
-  return prisma.bed.findMany({ orderBy: { createdAt: "desc" } });
+export const getAllBeds =
+async (
+  cursor?: string,
+  limit?: number
+) => {
+  return cursorPaginate(
+    prisma,
+    {
+      model: "bed",
+      cursorField: "id",
+      limit: limit || 50,
+      cacheExpiry: 600,
+    },
+    cursor ? Number(cursor) : undefined
+  );
 };
 
 export const getBedById = async (id: number) => {

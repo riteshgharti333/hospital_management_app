@@ -20,15 +20,20 @@ export const createBirth = async (data: BirthInput) => {
   return prisma.birth.create({ data });
 };
 
-export const getPaginatedBirths = async (cursor?: string, limit?: number) => {
+
+export const getAllBirthService = async (
+  cursor?: string,
+  limit?: number
+) => {
   return cursorPaginate(
     prisma,
     {
       model: "birth",
-      cursorField: "id", 
-      limit: limit || 100,
+      cursorField: "id",
+      limit: limit || 50,
+      cacheExpiry: 600,
     },
-    cursor
+    cursor ? Number(cursor) : undefined
   );
 };
 
@@ -41,16 +46,17 @@ export const updateBirth = async (id: number, data: Partial<BirthInput>) => {
     where: { id },
     data,
   });
-};
+};  
 
 export const deleteBirth = async (id: number) => {
   return prisma.birth.delete({ where: { id } });
 };
-
-const commonSearchFields = ["fathersName", "mothersName"];
-
-export const searchBirth = createSearchService(prisma, {
+   
+const commonSearchFields = ["fathersName", "mothersName", "mobileNumber"];    
+ 
+export const searchBirth  = createSearchService(prisma, {
   tableName: "Birth",
-  cacheKeyPrefix: "birth",
-  ...applyCommonFields(commonSearchFields),
+  cacheKeyPrefix: "birth", 
+  ...applyCommonFields(commonSearchFields),   
 });
+                

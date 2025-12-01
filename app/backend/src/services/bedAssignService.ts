@@ -1,5 +1,6 @@
 import { prisma } from "../lib/prisma";
 import { applyCommonFields } from "../utils/applyCommonFields";
+import { cursorPaginate } from "../utils/pagination";
 import { createSearchService } from "../utils/searchCache";
 
 export type BedAssignmentInput = {
@@ -17,10 +18,21 @@ export const createBedAssignment = async (data: BedAssignmentInput) => {
   return prisma.bedAssignment.create({ data });
 };
 
-export const getAllBedAssignments = async () => {
-  return prisma.bedAssignment.findMany({ orderBy: { allocateDate: "desc" } });
+export const getAllBedAssignments = async (
+  cursor?: string,
+  limit?: number
+) => {
+  return cursorPaginate(
+    prisma,
+    {
+      model: "bedAssignment",
+      cursorField: "id",
+      limit: limit || 50,
+      cacheExpiry: 600,
+    },
+    cursor ? Number(cursor) : undefined
+  );
 };
-
 export const getBedAssignmentById = async (id: number) => {
   return prisma.bedAssignment.findUnique({ where: { id } });
 };
@@ -70,7 +82,7 @@ export const deleteBedAssignment = async (id: number) => {
   return prisma.bedAssignment.delete({ where: { id } });
 };
 
-const commonSearchFields = ["wardNumber", "bedNumber"];
+const commonSearchFields = ["wardNumber", "bedNumber", "patientName"];
 
 export const searchBedAssignment = createSearchService(prisma, {
   tableName: "BedAssignment",

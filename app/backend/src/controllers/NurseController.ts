@@ -44,16 +44,30 @@ export const createNurseRecord = catchAsyncError(
 );
 
 export const getAllNurseRecords = catchAsyncError(
-  async (_req: Request, res: Response) => {
-    const nurses = await getAllNurses();
+  async (req: Request, res: Response) => {
+    const { cursor, limit } = req.query as {
+      cursor?: string;
+      limit?: string;
+    };
+
+    const { data: nurse, nextCursor } = await getAllNurses(
+      cursor,
+      limit ? Number(limit) : undefined
+    );
+
     sendResponse(res, {
       success: true,
       statusCode: StatusCodes.OK,
-      message: "All nurses fetched successfully",
-      data: nurses,
+      message: "Nurse records fetched",
+      data: nurse,
+      pagination: {
+        nextCursor: nextCursor !== null ? String(nextCursor) : undefined,
+        limit: limit ? Number(limit) : 50,
+      },
     });
   }
 );
+
 
 export const getNurseRecordById = catchAsyncError(
   async (req: Request, res: Response, next: NextFunction) => {

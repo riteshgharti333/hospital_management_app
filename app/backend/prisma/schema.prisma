@@ -67,12 +67,19 @@ model Birth {
   fathersName      String
   mothersName      String
   mobileNumber     String
-  deliveryType     String
+  deliveryType     String 
   placeOfBirth     String
   attendantsName   String
   createdAt        DateTime @default(now())
   updatedAt        DateTime @updatedAt
+
+  @@index([birthDate])
+  @@index([mobileNumber])
+  @@index([fathersName])
+  @@index([mothersName])
+  @@index([babySex])
 }
+
 
 /////////////////
 
@@ -88,10 +95,11 @@ model Patient {
   medicalHistory String
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
-   prescriptions  Prescription[]
+  prescriptions  Prescription[]
 }
 
 //////////////////
+
 
 model Department {
   id             Int      @id @default(autoincrement())
@@ -104,7 +112,14 @@ model Department {
   status         String   @default("Active")
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
+
+  // 🔍 Indexes
+  @@index([status])
+  @@index([head])
+  @@index([name])
+  @@index([updatedAt])
 }
+
 
 //////////////////
 
@@ -113,11 +128,19 @@ model Bed {
   id          Int      @id @default(autoincrement())
   bedNumber   String   @unique
   wardNumber  String
-  status      String   @default("Available") 
+  status      String   @default("Available")
   description String?
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
+
+  // 🔍 Indexes for fast search/filtering
+  @@index([wardNumber])
+  @@index([status])
+  @@index([updatedAt])
+  @@index([bedNumber])
+
 }
+
 
 //////////////////
 
@@ -137,9 +160,12 @@ model BedAssignment {
   @@index([wardNumber])
   @@index([bedNumber])
   @@index([patientName])
+  @@index([status])
+  @@index([updatedAt])
 }
 
 /////////////////
+
 
 model Appointment {
   id              Int      @id @default(autoincrement())
@@ -149,7 +175,13 @@ model Appointment {
   appointmentTime String
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
+
+  // 🔍 Indexes for fast lookups
+  @@index([appointmentDate])
+  @@index([doctorName])
+  @@index([department])
 }
+
 
 
 ////////////////
@@ -165,7 +197,17 @@ model Nurse {
   status         String   @default("Active")
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
+
+  // 🔍 Indexes for better performance
+  @@index([fullName])
+  @@index([mobileNumber])
+  @@index([registrationNo])
+  @@index([status])
+  @@index([shift])
+  @@index([createdAt])
+
 }
+
 
 ///////////
 
@@ -182,8 +224,18 @@ model Doctor {
   status         String   @default("Active")
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
-   prescriptions  Prescription[]
+
+  prescriptions  Prescription[]
+
+  // 🔍 Indexes for high-performance queries
+  @@index([fullName])
+  @@index([mobileNumber])
+  @@index([registrationNo])
+  @@index([department])
+  @@index([status])
+  @@index([createdAt])
 }
+
 
 /////////////
 
@@ -198,6 +250,14 @@ model Pharmacist {
   status         String   @default("Active")
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
+
+  // 🔍 Indexes for fast searching and filtering
+  @@index([fullName])
+  @@index([mobileNumber])
+  @@index([registrationNo])
+  @@index([department])
+  @@index([status])
+  @@index([createdAt])
 }
 
 /////////////////
@@ -212,6 +272,7 @@ model Prescription {
   status           String        @default("Active")
   createdAt        DateTime      @default(now())
   updatedAt        DateTime      @updatedAt
+  
   medicines        Medicine[]
   doctor           Doctor        @relation(fields: [doctorId], references: [id])
   patient          Patient       @relation(fields: [patientId], references: [id])

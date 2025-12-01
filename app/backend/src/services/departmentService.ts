@@ -1,5 +1,6 @@
 import { prisma } from "../lib/prisma";
 import { applyCommonFields } from "../utils/applyCommonFields";
+import { cursorPaginate } from "../utils/pagination";
 import { createSearchService } from "../utils/searchCache";
 
 export type DepartmentInput = {
@@ -16,8 +17,21 @@ export const createDepartment = async (data: DepartmentInput) => {
   return prisma.department.create({ data });
 };
 
-export const getAllDepartments = async () => {
-  return prisma.department.findMany({ orderBy: { createdAt: "desc" } });
+
+export const getAllDepartmentService = async (
+  cursor?: string,
+  limit?: number
+) => {
+  return cursorPaginate(
+    prisma,
+    {
+      model: "department",
+      cursorField: "id",
+      limit: limit || 50,
+      cacheExpiry: 600,
+    },
+    cursor ? Number(cursor) : undefined
+  );
 };
 
 export const getDepartmentById = async (id: number) => {

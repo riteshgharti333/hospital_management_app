@@ -1,5 +1,6 @@
 import { prisma } from "../lib/prisma";
 import { applyCommonFields } from "../utils/applyCommonFields";
+import { cursorPaginate } from "../utils/pagination";
 import { createSearchService } from "../utils/searchCache";
 
 export type MedicineInput = {
@@ -39,15 +40,20 @@ export const createPrescription = async (data: PrescriptionInput) => {
   });
 };
 
-export const getAllPrescriptions = async () => {
-  return prisma.prescription.findMany({
-    orderBy: { prescriptionDate: "desc" },
-    include: {
-      medicines: true,
-      doctor: true,
-      patient: true,
+export const getAllPrescriptions = async (
+  cursor?: string,
+  limit?: number
+) => {
+  return cursorPaginate(
+    prisma,
+    {
+      model: "prescription", 
+    cursorField: "id",
+      limit: limit || 50,         
+      cacheExpiry: 600, 
     },
-  });
+    cursor ? Number(cursor) : undefined
+  );
 };
 
 export const getPrescriptionById = async (id: number) => {
@@ -127,19 +133,20 @@ export const deletePrescription = async (id: number) => {
 };
 
 
-// export const searchPrescription = createSearchService(prisma, {
-//   tableName: "prescription",
-//   cacheKeyPrefix: "prescription",
 
-//   exactFields: [],
-//   prefixFields: [],
-//   similarFields: ["patient.fullName"],
+const commonSearchFields = [
+  "doctor.fullName",
+  "patient.fullName"
+];
 
-//   relations: {
-//     patient: ["fullName"],
-//   },
 
-//   include: {
-//     patient: true,
-//   },
-// });
+
+export const searchPrescription = createSearchService(prisma, {
+  tableName: "Prescription",
+  cacheKeyPrefix: "prescription",
+  include: {
+    doctor: true,
+    patient: true,
+  },
+  ...applyCommonFields(commonSearchFields),
+})

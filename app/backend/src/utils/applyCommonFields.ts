@@ -4,3 +4,4 @@ export const applyCommonFields = (fields: string[]) => ({
   prefixFields: fields,
   similarFields: fields,
 });
+        

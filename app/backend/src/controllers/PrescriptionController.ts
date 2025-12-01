@@ -56,21 +56,25 @@ export const createPrescriptionRecord = async (
 
 export const getAllPrescriptionRecords = catchAsyncError(
   async (req: Request, res: Response) => {
-    const patientId = req.query.patientId
-      ? Number(req.query.patientId)
-      : undefined;
+    const { cursor, limit } = req.query as {
+      cursor?: string;
+      limit?: string;
+    };
 
-    const prescriptions = patientId
-      ? await getPrescriptionsByPatient(patientId)
-      : await getAllPrescriptions();
+    const { data: prescription, nextCursor } = await getAllPrescriptions(
+      cursor,
+      limit ? Number(limit) : undefined
+    );
 
     sendResponse(res, {
       success: true,
       statusCode: StatusCodes.OK,
-      message: patientId
-        ? `Prescriptions for patient ${patientId} fetched`
-        : "All prescriptions fetched",
-      data: prescriptions,
+      message: "Prescription records fetched",
+      data: prescription,
+      pagination: {
+        nextCursor: nextCursor !== null ? String(nextCursor) : undefined,
+        limit: limit ? Number(limit) : 50,
+      },
     });
   }
 );

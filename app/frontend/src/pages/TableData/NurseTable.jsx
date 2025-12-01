@@ -9,6 +9,8 @@ import Loader from "../../components/Loader/Loader";
 const NurseTable = () => {
   const { data, error, isLoading, isError } = useGetNurses();
 
+  console.log(data)
+
   const columns = useMemo(
     () => [
       {

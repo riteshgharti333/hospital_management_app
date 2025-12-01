@@ -3,7 +3,7 @@ import { applyCommonFields } from "../utils/applyCommonFields";
 import { filterPaginate } from "../utils/filterPaginate";
 import { cursorPaginate } from "../utils/pagination";
 import { createSearchService } from "../utils/searchCache";
-import { AdmissionFilterInput } from "@hospital/schemas";
+
 
 export type AdmissionInput = {
   admissionDate: Date;
@@ -69,7 +69,7 @@ export const deleteAdmission = async (id: number) => {
 };
 
 const commonSearchFields = ["patientName", "gsRsRegNo", "phoneNo"];
-
+ 
 export const searchAdmissions = createSearchService(prisma, {
   tableName: "Admission",
   cacheKeyPrefix: "admission",
@@ -102,8 +102,8 @@ export const filterAdmissionsService = async (filters: {
   // Call filterPaginate
   return filterPaginate(prisma, {
     model: "admission",
-    cursorField: "id",
+    cursorField: "id",      
     limit: limit || 50,
     filters: filterObj,
   }, cursor);
-};
+};     

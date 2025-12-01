@@ -34,26 +34,27 @@ export const createBedAssignmentRecord = catchAsyncError(
   }
 );
 
-export const getAllBedAssignmentRecords = catchAsyncError(
+export const getAllBedAssignmentRecords =   catchAsyncError(
   async (req: Request, res: Response) => {
-    const { ward, bed, status } = req.query;
+    const { cursor, limit } = req.query as {
+      cursor?: string;
+      limit?: string;
+    };
 
-    let assignments;
-    if (ward) {
-      assignments = await getAssignmentsByWard(ward as string);
-    } else if (bed) {
-      assignments = await getAssignmentsByBed(bed as string);
-    } else if (status === "Active") {
-      assignments = await getActiveAssignments();
-    } else {
-      assignments = await getAllBedAssignments();
-    }
+    const { data: bedAssignments, nextCursor } = await getAllBedAssignments(
+      cursor,
+      limit ? Number(limit) : undefined
+    );
 
     sendResponse(res, {
       success: true,
       statusCode: StatusCodes.OK,
-      message: "Bed assignments fetched successfully",
-      data: assignments,
+      message: "Bed assign records fetched",
+      data: bedAssignments,
+      pagination: {
+        nextCursor: nextCursor !== null ? String(nextCursor) : undefined,
+        limit: limit ? Number(limit) : 50,
+      },
     });
   }
 );

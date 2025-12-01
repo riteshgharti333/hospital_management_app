@@ -1,5 +1,6 @@
 import { prisma } from "../lib/prisma";
 import { applyCommonFields } from "../utils/applyCommonFields";
+import { cursorPaginate } from "../utils/pagination";
 import { createSearchService } from "../utils/searchCache";
 
 export type NurseInput = {
@@ -16,8 +17,20 @@ export const createNurse = async (data: NurseInput) => {
   return prisma.nurse.create({ data });
 };
 
-export const getAllNurses = async () => {
-  return prisma.nurse.findMany({ orderBy: { createdAt: "desc" } });
+export const getAllNurses = async (
+  cursor?: string,
+  limit?: number
+) => {
+  return cursorPaginate(
+    prisma,
+    {
+      model: "nurse",
+      cursorField: "id",
+      limit: limit || 50,
+      cacheExpiry: 600,
+    },
+    cursor ? Number(cursor) : undefined
+  );
 };
 
 export const getNurseById = async (id: number) => {

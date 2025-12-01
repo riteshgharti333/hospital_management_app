@@ -9,7 +9,7 @@ import {
   updateBirth,
   deleteBirth,
   searchBirth,
-  getPaginatedBirths,
+  getAllBirthService,
 } from "../services/birthService";
 import { birthSchema } from "@hospital/schemas";
 import { validateSearchQuery } from "../utils/queryValidation";
@@ -19,7 +19,7 @@ export const createBirthRecord = catchAsyncError(
     try {
       const validated = birthSchema.parse(req.body);
       const birth = await createBirth(validated);
-
+ 
       sendResponse(res, {
         success: true,
         statusCode: StatusCodes.CREATED,
@@ -32,12 +32,16 @@ export const createBirthRecord = catchAsyncError(
   }
 );
 
-export const getPaginatedBirthRecords = catchAsyncError(
-  async (req: Request, res: Response) => {
-    const { cursor, limit } = req.query;
 
-    const { data: births, nextCursor } = await getPaginatedBirths(
-      cursor?.toString(),
+export const getAllBirth = catchAsyncError(
+  async (req: Request, res: Response) => {
+    const { cursor, limit } = req.query as {
+      cursor?: string;
+      limit?: string;
+    };
+
+    const { data: birth, nextCursor } = await getAllBirthService(
+      cursor,
       limit ? Number(limit) : undefined
     );
 
@@ -45,10 +49,10 @@ export const getPaginatedBirthRecords = catchAsyncError(
       success: true,
       statusCode: StatusCodes.OK,
       message: "Birth records fetched",
-      data: births,
+      data: birth,
       pagination: {
-        nextCursor: nextCursor ?? undefined,
-        limit: limit ? Number(limit) : 100,
+        nextCursor: nextCursor !== null ? String(nextCursor) : undefined,
+        limit: limit ? Number(limit) : 50,
       },
     });
   }
@@ -127,13 +131,13 @@ export const searchBirthResults = catchAsyncError(
     const searchTerm = validateSearchQuery(query, next);
     if (!searchTerm) return;
 
-    const admissions = await searchBirth(searchTerm);
+    const birth = await searchBirth(searchTerm);
 
     sendResponse(res, {
       success: true,
       statusCode: StatusCodes.OK,
       message: "Search results fetched successfully",
-      data: admissions,
+      data: birth,
     });
   }
 );

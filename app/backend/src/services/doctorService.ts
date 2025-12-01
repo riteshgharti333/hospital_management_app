@@ -1,5 +1,6 @@
 import { prisma } from "../lib/prisma";
 import { applyCommonFields } from "../utils/applyCommonFields";
+import { cursorPaginate } from "../utils/pagination";
 import { createSearchService } from "../utils/searchCache";
 
 export type DoctorInput = {
@@ -17,8 +18,20 @@ export const createDoctor = async (data: DoctorInput) => {
   return prisma.doctor.create({ data });
 };
 
-export const getAllDoctors = async () => {
-  return prisma.doctor.findMany({ orderBy: { createdAt: "desc" } });
+export const getAllDoctors = async (
+  cursor?: string,
+  limit?: number
+) => {
+  return cursorPaginate(
+    prisma,
+    {
+      model: "doctor",
+      cursorField: "id",
+      limit: limit || 50,
+      cacheExpiry: 600,
+    },
+    cursor ? Number(cursor) : undefined
+  );
 };
 
 export const getDoctorById = async (id: number) => {

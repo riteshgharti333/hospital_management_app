@@ -31,13 +31,26 @@ export const createAppointmentRecord = catchAsyncError(
 );
 
 export const getAllAppointmentRecords = catchAsyncError(
-  async (_req: Request, res: Response) => {
-    const appointments = await getAllAppointments();
+  async (req: Request, res: Response) => {
+    const { cursor, limit } = req.query as {
+      cursor?: string;
+      limit?: string;
+    };
+
+    const { data: appointment, nextCursor } = await getAllAppointments(
+      cursor,
+      limit ? Number(limit) : undefined
+    );
+
     sendResponse(res, {
       success: true,
       statusCode: StatusCodes.OK,
-      message: "Appointments fetched successfully",
-      data: appointments,
+      message: "Appointment records fetched",
+      data: appointment,
+      pagination: {
+        nextCursor: nextCursor !== null ? String(nextCursor) : undefined,
+        limit: limit ? Number(limit) : 50,
+      },
     });
   }
 );
