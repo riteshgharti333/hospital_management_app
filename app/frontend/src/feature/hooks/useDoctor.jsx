@@ -5,18 +5,33 @@ import {
   getAllDoctorsAPI,
   getDoctorByIdAPI,
   updateDoctorAPI,
+  filterDoctorAPI,
 } from "../api/doctorApi";
 import { toast } from "sonner";
 import { getErrorMessage } from "../../utils/errorUtils";
 
-// FETCH ALL DOCTORS
-export const useGetDoctors = () => {
+// Normal doctors
+export const useGetDoctors = (cursor = null, limit = 50) => {
   return useQuery({
-    queryKey: ["doctor"],
+    queryKey: ["doctor", cursor, limit],
     queryFn: async () => {
-      const { data } = await getAllDoctorsAPI();
-      return data?.data || [];
+      const { data } = await getAllDoctorsAPI(cursor, limit);
+      return data || { data: [], pagination: {} };
     },
+    retry: 1,
+    onError: (error) => toast.error(getErrorMessage(error)),
+  });
+};
+
+// Filter doctors
+export const useFilterDoctors = (filters) => {
+  return useQuery({
+    queryKey: ["doctor-filter", filters],
+    queryFn: async () => {
+      const { data } = await filterDoctorAPI(filters);
+      return data || { data: [], pagination: {} };
+    },
+    enabled: !!filters,
     retry: 1,
     onError: (error) => toast.error(getErrorMessage(error)),
   });

@@ -2,22 +2,35 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   createPatientRecordAPI,
   deletePatientRecordAPI,
-  getAllPatientRecordsAPI,
+  filterPatientAPI,
+  getAllPatientsAPI,
   getPatientRecordByIdAPI,
   updatePatientRecordAPI,
 } from "../api/patientApi";
 import { toast } from "sonner";
 import { getErrorMessage } from "../../utils/errorUtils";
 
-// Fetch all patient records
-export const useGetPatients = () => {
+export const useGetPatients = (cursor = null, limit = 50) => {
   return useQuery({
-    queryKey: ["patient"],
+    queryKey: ["patient", cursor, limit],
     queryFn: async () => {
-      const { data } = await getAllPatientRecordsAPI();
-     
-      return data?.data || [];
+      const { data } = await getAllPatientsAPI(cursor, limit);
+      return data || { data: [], pagination: {} }; // normalized like admissions
     },
+    retry: 1,
+    onError: (error) => toast.error(getErrorMessage(error)),
+  });
+};
+
+// 🔹 Filter Patient List
+export const useFilterPatients = (filters) => {
+  return useQuery({
+    queryKey: ["patient-filter", filters],
+    queryFn: async () => {
+      const { data } = await filterPatientAPI(filters);
+      return data || { data: [], pagination: {} }; // same structure
+    },
+    enabled: !!filters,
     retry: 1,
     onError: (error) => toast.error(getErrorMessage(error)),
   });

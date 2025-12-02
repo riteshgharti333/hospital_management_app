@@ -2,6 +2,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   createBirthRecordAPI,
   deleteBirthRecordAPI,
+  filterBirthAPI,
   getAllBirthRecordsAPI,
   getBirthRecordByIdAPI,
   updateBirthRecordAPI,
@@ -10,12 +11,14 @@ import { toast } from "sonner";
 import { getErrorMessage } from "../../utils/errorUtils";
 
 // ✅ Fetch all birth records
-export const useGetBirthRecords = () => {
+export const useGetBirthRecords = (cursor, limit = 50) => {
   return useQuery({
-    queryKey: ["birth"],
+    queryKey: ["birth", cursor, limit],
     queryFn: async () => {
-      const { data } = await getAllBirthRecordsAPI();
-      return data?.data || [];
+      const { data } = await getAllBirthRecordsAPI(cursor, limit);
+
+      // Normalize output to match Table requirement
+      return data || { data: [], pagination: {} };
     },
     retry: 1,
     onError: (error) => toast.error(getErrorMessage(error)),
@@ -70,6 +73,19 @@ export const useDeleteBirthRecord = () => {
       toast.success(response?.message || "Birth record deleted successfully");
       queryClient.invalidateQueries({ queryKey: ["birth"] });
     },
+    onError: (error) => toast.error(getErrorMessage(error)),
+  });
+};
+
+export const useFilterBirth = (filters) => {
+  return useQuery({
+    queryKey: ["birth-filter", filters],
+    queryFn: async () => {
+      const { data } = await filterBirthAPI(filters);
+      return data || { data: [], pagination: {} };
+    },
+    enabled: !!filters,
+    retry: 1,
     onError: (error) => toast.error(getErrorMessage(error)),
   });
 };

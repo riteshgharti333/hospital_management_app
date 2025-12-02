@@ -6,6 +6,7 @@ import {
   updateDepartmentRecord,
   deleteDepartmentRecord,
   searchDepartmentResults,
+  filterDepartments,
 } from "../controllers/DepartmentController";
 import { isAuthenticated } from "../middlewares/isAuthenticated";
 import { isAdmin } from "../middlewares/isAdmin";
@@ -18,6 +19,9 @@ router
   .get(getAllDepartmentRecords);
 
 router.get("/search", searchDepartmentResults);
+
+router.get("/filter", filterDepartments);
+
 
 router
   .route("/:id")

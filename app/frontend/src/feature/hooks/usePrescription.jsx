@@ -5,17 +5,33 @@ import {
   getAllPrescriptionsAPI,
   getPrescriptionByIdAPI,
   updatePrescriptionAPI,
+  filterPrescriptionAPI,
 } from "../api/prescriptionApi";
 import { toast } from "sonner";
 import { getErrorMessage } from "../../utils/errorUtils";
 
-export const useGetPrescriptions = () => {
+// Normal prescriptions list
+export const useGetPrescriptions = (cursor = null, limit = 50) => {
   return useQuery({
-    queryKey: ["prescription"],
+    queryKey: ["prescription", cursor, limit],
     queryFn: async () => {
-      const { data } = await getAllPrescriptionsAPI();
-      return data?.data || [];
+      const { data } = await getAllPrescriptionsAPI(cursor, limit);
+      return data || { data: [], pagination: {} };
     },
+    retry: 1,
+    onError: (error) => toast.error(getErrorMessage(error)),
+  });
+};
+
+// Filtered prescriptions list
+export const useFilterPrescriptions = (filters) => {
+  return useQuery({
+    queryKey: ["prescription-filter", filters],
+    queryFn: async () => {
+      const { data } = await filterPrescriptionAPI(filters);
+      return data || { data: [], pagination: {} };
+    },
+    enabled: !!filters,
     retry: 1,
     onError: (error) => toast.error(getErrorMessage(error)),
   });

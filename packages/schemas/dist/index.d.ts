@@ -60,11 +60,11 @@ export declare const admissionSchema: z.ZodObject<{
     doctorName: z.ZodString;
     isDelivery: z.ZodEffects<z.ZodDefault<z.ZodBoolean>, boolean, unknown>;
 }, "strip", z.ZodTypeAny, {
-    bloodGroup: string;
     admissionDate: Date;
     admissionTime: string;
     wardNo: string;
     bedNo: string;
+    bloodGroup: string;
     patientName: string;
     patientAge: number;
     patientSex: string;
@@ -81,11 +81,11 @@ export declare const admissionSchema: z.ZodObject<{
     dischargeDate?: Date | undefined;
     aadhaarNo?: string | undefined;
 }, {
-    bloodGroup: string;
     admissionDate: Date;
     admissionTime: string;
     wardNo: string;
     bedNo: string;
+    bloodGroup: string;
     patientName: string;
     patientAge: number;
     patientSex: string;
@@ -211,9 +211,9 @@ export declare const departmentSchema: z.ZodObject<{
     description: z.ZodString;
     status: z.ZodDefault<z.ZodOptional<z.ZodString>>;
 }, "strip", z.ZodTypeAny, {
-    status: string;
     name: string;
     email: string;
+    status: string;
     description: string;
     head: string;
     contactNumber: string;
@@ -396,7 +396,7 @@ export declare const xrayReportSchema: z.ZodObject<{
     doctorEarning: z.ZodNumber;
 }, "strip", z.ZodTypeAny, {
     patientName: string;
-    patientSex: "Other" | "Male" | "Female";
+    patientSex: "Male" | "Female" | "Other";
     department: string;
     age: number;
     billDate: Date;
@@ -413,7 +413,7 @@ export declare const xrayReportSchema: z.ZodObject<{
     patientAddress?: string | undefined;
 }, {
     patientName: string;
-    patientSex: "Other" | "Male" | "Female";
+    patientSex: "Male" | "Female" | "Other";
     department: string;
     age: number;
     billDate: Date;
@@ -488,7 +488,7 @@ export declare const billSchema: z.ZodObject<{
     bedNo: string;
     doctorName: string;
     address: string;
-    gender: "Other" | "Male" | "Female";
+    gender: "Male" | "Female" | "Other";
     billDate: Date;
     billType: string;
     mobile: string;
@@ -508,7 +508,7 @@ export declare const billSchema: z.ZodObject<{
     bedNo: string;
     doctorName: string;
     address: string;
-    gender: "Other" | "Male" | "Female";
+    gender: "Male" | "Female" | "Other";
     billDate: Date;
     billType: string;
     mobile: string;
@@ -541,28 +541,28 @@ export declare const employeeSchema: z.ZodObject<{
 }, "strip", z.ZodTypeAny, {
     department: string;
     fathersName: string;
-    gender: "Other" | "Male" | "Female";
+    gender: "Male" | "Female" | "Other";
     dateOfBirth: Date;
     employeeName: string;
     dateOfRegistration: Date;
     contactNo: string;
     maritalStatus: "Married" | "Unmarried";
-    bloodGroup?: "A+" | "A-" | "B+" | "B-" | "AB+" | "AB-" | "O+" | "O-" | undefined;
     email?: string | undefined;
+    bloodGroup?: "A+" | "A-" | "B+" | "B-" | "AB+" | "AB-" | "O+" | "O-" | undefined;
     aadharNo?: string | undefined;
     voterId?: string | undefined;
     photoUrl?: string | undefined;
 }, {
     department: string;
     fathersName: string;
-    gender: "Other" | "Male" | "Female";
+    gender: "Male" | "Female" | "Other";
     dateOfBirth: string;
     employeeName: string;
     dateOfRegistration: string;
     contactNo: string;
     maritalStatus: "Married" | "Unmarried";
-    bloodGroup?: "A+" | "A-" | "B+" | "B-" | "AB+" | "AB-" | "O+" | "O-" | undefined;
     email?: string | undefined;
+    bloodGroup?: "A+" | "A-" | "B+" | "B-" | "AB+" | "AB-" | "O+" | "O-" | undefined;
     aadharNo?: string | undefined;
     voterId?: string | undefined;
     photoUrl?: string | undefined;
@@ -1039,138 +1039,149 @@ export declare const admissionFilterSchema: z.ZodObject<{
     cursor: z.ZodOptional<z.ZodNumber>;
 }, "strip", z.ZodTypeAny, {
     limit: number;
-    fromDate?: Date | undefined;
-    toDate?: Date | undefined;
     bloodGroup?: string | undefined;
-    cursor?: number | undefined;
-    patientSex?: "Other" | "Male" | "Female" | undefined;
-}, {
+    patientSex?: "Male" | "Female" | "Other" | undefined;
     fromDate?: Date | undefined;
     toDate?: Date | undefined;
-    bloodGroup?: "A+" | "A-" | "B+" | "B-" | "AB+" | "AB-" | "O+" | "O-" | undefined;
     cursor?: number | undefined;
+}, {
+    bloodGroup?: "A+" | "A-" | "B+" | "B-" | "AB+" | "AB-" | "O+" | "O-" | undefined;
+    patientSex?: "Male" | "Female" | "Other" | undefined;
+    fromDate?: Date | undefined;
+    toDate?: Date | undefined;
     limit?: number | undefined;
-    patientSex?: "Other" | "Male" | "Female" | undefined;
+    cursor?: number | undefined;
 }>;
 export type AdmissionFilterInput = z.infer<typeof admissionFilterSchema>;
+export declare const birthFilterSchema: z.ZodObject<{
+    babySex: z.ZodOptional<z.ZodEnum<["Male", "Female", "Other"]>>;
+    deliveryType: z.ZodOptional<z.ZodEnum<["Normal", "Cesarean", "Forceps", "Vacuum"]>>;
+    fromDate: z.ZodOptional<z.ZodDate>;
+    toDate: z.ZodOptional<z.ZodDate>;
+    limit: z.ZodDefault<z.ZodNumber>;
+    cursor: z.ZodOptional<z.ZodNumber>;
+}, "strip", z.ZodTypeAny, {
+    limit: number;
+    babySex?: "Male" | "Female" | "Other" | undefined;
+    deliveryType?: "Normal" | "Cesarean" | "Forceps" | "Vacuum" | undefined;
+    fromDate?: Date | undefined;
+    toDate?: Date | undefined;
+    cursor?: number | undefined;
+}, {
+    babySex?: "Male" | "Female" | "Other" | undefined;
+    deliveryType?: "Normal" | "Cesarean" | "Forceps" | "Vacuum" | undefined;
+    fromDate?: Date | undefined;
+    toDate?: Date | undefined;
+    limit?: number | undefined;
+    cursor?: number | undefined;
+}>;
+export type BirthFilterInput = z.infer<typeof birthFilterSchema>;
 export declare const patientFilterSchema: z.ZodObject<{
     gender: z.ZodOptional<z.ZodEnum<["Male", "Female", "Other"]>>;
-    bloodGroup: z.ZodOptional<z.ZodEnum<["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"]>>;
-    status: z.ZodOptional<z.ZodEnum<["Active", "Inactive"]>>;
-    fromAge: z.ZodOptional<z.ZodNumber>;
-    toAge: z.ZodOptional<z.ZodNumber>;
+    fromDate: z.ZodOptional<z.ZodDate>;
+    toDate: z.ZodOptional<z.ZodDate>;
     limit: z.ZodDefault<z.ZodNumber>;
     cursor: z.ZodOptional<z.ZodNumber>;
 }, "strip", z.ZodTypeAny, {
     limit: number;
-    bloodGroup?: "A+" | "A-" | "B+" | "B-" | "AB+" | "AB-" | "O+" | "O-" | undefined;
+    gender?: "Male" | "Female" | "Other" | undefined;
+    fromDate?: Date | undefined;
+    toDate?: Date | undefined;
     cursor?: number | undefined;
-    status?: "Active" | "Inactive" | undefined;
-    gender?: "Other" | "Male" | "Female" | undefined;
-    fromAge?: number | undefined;
-    toAge?: number | undefined;
 }, {
-    bloodGroup?: "A+" | "A-" | "B+" | "B-" | "AB+" | "AB-" | "O+" | "O-" | undefined;
-    cursor?: number | undefined;
+    gender?: "Male" | "Female" | "Other" | undefined;
+    fromDate?: Date | undefined;
+    toDate?: Date | undefined;
     limit?: number | undefined;
-    status?: "Active" | "Inactive" | undefined;
-    gender?: "Other" | "Male" | "Female" | undefined;
-    fromAge?: number | undefined;
-    toAge?: number | undefined;
+    cursor?: number | undefined;
 }>;
 export type PatientFilterInput = z.infer<typeof patientFilterSchema>;
-export declare const doctorFilterSchema: z.ZodObject<{
-    department: z.ZodOptional<z.ZodString>;
-    specialization: z.ZodOptional<z.ZodString>;
+export declare const departmentFilterSchema: z.ZodObject<{
     status: z.ZodOptional<z.ZodEnum<["Active", "Inactive"]>>;
-    limit: z.ZodDefault<z.ZodNumber>;
-    cursor: z.ZodOptional<z.ZodNumber>;
-}, "strip", z.ZodTypeAny, {
-    limit: number;
-    cursor?: number | undefined;
-    status?: "Active" | "Inactive" | undefined;
-    department?: string | undefined;
-    specialization?: string | undefined;
-}, {
-    cursor?: number | undefined;
-    limit?: number | undefined;
-    status?: "Active" | "Inactive" | undefined;
-    department?: string | undefined;
-    specialization?: string | undefined;
-}>;
-export type DoctorFilterInput = z.infer<typeof doctorFilterSchema>;
-export declare const nurseFilterSchema: z.ZodObject<{
-    department: z.ZodOptional<z.ZodString>;
-    shift: z.ZodOptional<z.ZodString>;
-    status: z.ZodOptional<z.ZodEnum<["Active", "Inactive"]>>;
-    limit: z.ZodDefault<z.ZodNumber>;
-    cursor: z.ZodOptional<z.ZodNumber>;
-}, "strip", z.ZodTypeAny, {
-    limit: number;
-    cursor?: number | undefined;
-    shift?: string | undefined;
-    status?: "Active" | "Inactive" | undefined;
-    department?: string | undefined;
-}, {
-    cursor?: number | undefined;
-    limit?: number | undefined;
-    shift?: string | undefined;
-    status?: "Active" | "Inactive" | undefined;
-    department?: string | undefined;
-}>;
-export type NurseFilterInput = z.infer<typeof nurseFilterSchema>;
-export declare const employeeFilterSchema: z.ZodObject<{
-    gender: z.ZodOptional<z.ZodEnum<["Male", "Female", "Other"]>>;
-    maritalStatus: z.ZodOptional<z.ZodEnum<["Married", "Unmarried"]>>;
-    department: z.ZodOptional<z.ZodString>;
-    status: z.ZodOptional<z.ZodEnum<["Active", "Inactive"]>>;
-    limit: z.ZodDefault<z.ZodNumber>;
-    cursor: z.ZodOptional<z.ZodNumber>;
-}, "strip", z.ZodTypeAny, {
-    limit: number;
-    cursor?: number | undefined;
-    status?: "Active" | "Inactive" | undefined;
-    department?: string | undefined;
-    gender?: "Other" | "Male" | "Female" | undefined;
-    maritalStatus?: "Married" | "Unmarried" | undefined;
-}, {
-    cursor?: number | undefined;
-    limit?: number | undefined;
-    status?: "Active" | "Inactive" | undefined;
-    department?: string | undefined;
-    gender?: "Other" | "Male" | "Female" | undefined;
-    maritalStatus?: "Married" | "Unmarried" | undefined;
-}>;
-export type EmployeeFilterInput = z.infer<typeof employeeFilterSchema>;
-export declare const billFilterSchema: z.ZodObject<{
-    billType: z.ZodOptional<z.ZodEnum<["IPD", "OPD", "Pharmacy", "Lab"]>>;
-    status: z.ZodOptional<z.ZodEnum<["Pending", "Paid", "Cancelled"]>>;
     fromDate: z.ZodOptional<z.ZodDate>;
     toDate: z.ZodOptional<z.ZodDate>;
     limit: z.ZodDefault<z.ZodNumber>;
     cursor: z.ZodOptional<z.ZodNumber>;
 }, "strip", z.ZodTypeAny, {
     limit: number;
+    status?: "Active" | "Inactive" | undefined;
     fromDate?: Date | undefined;
     toDate?: Date | undefined;
     cursor?: number | undefined;
-    status?: "Pending" | "Cancelled" | "Paid" | undefined;
-    billType?: "IPD" | "OPD" | "Pharmacy" | "Lab" | undefined;
 }, {
+    status?: "Active" | "Inactive" | undefined;
     fromDate?: Date | undefined;
     toDate?: Date | undefined;
-    cursor?: number | undefined;
     limit?: number | undefined;
-    status?: "Pending" | "Cancelled" | "Paid" | undefined;
-    billType?: "IPD" | "OPD" | "Pharmacy" | "Lab" | undefined;
+    cursor?: number | undefined;
 }>;
-export type BillFilterInput = z.infer<typeof billFilterSchema>;
+export type DepartmentFilterInput = z.infer<typeof departmentFilterSchema>;
 export declare const appointmentFilterSchema: z.ZodObject<{
     department: z.ZodOptional<z.ZodString>;
-    doctorName: z.ZodOptional<z.ZodString>;
     fromDate: z.ZodOptional<z.ZodDate>;
     toDate: z.ZodOptional<z.ZodDate>;
-    status: z.ZodOptional<z.ZodEnum<["Scheduled", "Completed", "Cancelled"]>>;
+    limit: z.ZodDefault<z.ZodNumber>;
+    cursor: z.ZodOptional<z.ZodNumber>;
+}, "strip", z.ZodTypeAny, {
+    limit: number;
+    department?: string | undefined;
+    fromDate?: Date | undefined;
+    toDate?: Date | undefined;
+    cursor?: number | undefined;
+}, {
+    department?: string | undefined;
+    fromDate?: Date | undefined;
+    toDate?: Date | undefined;
+    limit?: number | undefined;
+    cursor?: number | undefined;
+}>;
+export type AppointmentFilterInput = z.infer<typeof appointmentFilterSchema>;
+export declare const nurseFilterSchema: z.ZodObject<{
+    shift: z.ZodOptional<z.ZodEnum<["Day", "Night", "Rotating"]>>;
+    status: z.ZodOptional<z.ZodEnum<["Active", "Inactive", "On Leave"]>>;
+    fromDate: z.ZodOptional<z.ZodDate>;
+    toDate: z.ZodOptional<z.ZodDate>;
+    limit: z.ZodDefault<z.ZodNumber>;
+    cursor: z.ZodOptional<z.ZodNumber>;
+}, "strip", z.ZodTypeAny, {
+    limit: number;
+    shift?: "Day" | "Night" | "Rotating" | undefined;
+    status?: "Active" | "Inactive" | "On Leave" | undefined;
+    fromDate?: Date | undefined;
+    toDate?: Date | undefined;
+    cursor?: number | undefined;
+}, {
+    shift?: "Day" | "Night" | "Rotating" | undefined;
+    status?: "Active" | "Inactive" | "On Leave" | undefined;
+    fromDate?: Date | undefined;
+    toDate?: Date | undefined;
+    limit?: number | undefined;
+    cursor?: number | undefined;
+}>;
+export type NurseFilterInput = z.infer<typeof nurseFilterSchema>;
+export declare const doctorFilterSchema: z.ZodObject<{
+    status: z.ZodOptional<z.ZodEnum<["Active", "Inactive", "On Leave"]>>;
+    fromDate: z.ZodOptional<z.ZodDate>;
+    toDate: z.ZodOptional<z.ZodDate>;
+    limit: z.ZodDefault<z.ZodNumber>;
+    cursor: z.ZodOptional<z.ZodNumber>;
+}, "strip", z.ZodTypeAny, {
+    limit: number;
+    status?: "Active" | "Inactive" | "On Leave" | undefined;
+    fromDate?: Date | undefined;
+    toDate?: Date | undefined;
+    cursor?: number | undefined;
+}, {
+    status?: "Active" | "Inactive" | "On Leave" | undefined;
+    fromDate?: Date | undefined;
+    toDate?: Date | undefined;
+    limit?: number | undefined;
+    cursor?: number | undefined;
+}>;
+export type DoctorFilterInput = z.infer<typeof doctorFilterSchema>;
+export declare const prescriptionFilterSchema: z.ZodObject<{
+    fromDate: z.ZodOptional<z.ZodDate>;
+    toDate: z.ZodOptional<z.ZodDate>;
     limit: z.ZodDefault<z.ZodNumber>;
     cursor: z.ZodOptional<z.ZodNumber>;
 }, "strip", z.ZodTypeAny, {
@@ -1178,16 +1189,10 @@ export declare const appointmentFilterSchema: z.ZodObject<{
     fromDate?: Date | undefined;
     toDate?: Date | undefined;
     cursor?: number | undefined;
-    status?: "Cancelled" | "Scheduled" | "Completed" | undefined;
-    doctorName?: string | undefined;
-    department?: string | undefined;
 }, {
     fromDate?: Date | undefined;
     toDate?: Date | undefined;
-    cursor?: number | undefined;
     limit?: number | undefined;
-    status?: "Cancelled" | "Scheduled" | "Completed" | undefined;
-    doctorName?: string | undefined;
-    department?: string | undefined;
+    cursor?: number | undefined;
 }>;
-export type AppointmentFilterInput = z.infer<typeof appointmentFilterSchema>;
+export type PrescriptionFilterInput = z.infer<typeof prescriptionFilterSchema>;

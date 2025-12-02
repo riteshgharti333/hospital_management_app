@@ -5,18 +5,34 @@ import {
   getAllNursesAPI,
   getNurseByIdAPI,
   updateNurseAPI,
+  filterNurseAPI,
 } from "../api/nurseApi";
 import { toast } from "sonner";
 import { getErrorMessage } from "../../utils/errorUtils";
 
-// FETCH ALL NURSES
-export const useGetNurses = () => {
+// Normal nurses list
+
+export const useGetNurses = (cursor = null, limit = 50) => {
   return useQuery({
-    queryKey: ["nurse"],
+    queryKey: ["nurse", cursor, limit],
     queryFn: async () => {
-      const { data } = await getAllNursesAPI();
-      return data?.data || [];
+      const { data } = await getAllNursesAPI(cursor, limit);
+      return data || { data: [], pagination: {} };
     },
+    retry: 1,
+    onError: (error) => toast.error(getErrorMessage(error)),
+  });
+};
+
+// Filtered nurses list
+export const useFilterNurses = (filters) => {
+  return useQuery({
+    queryKey: ["nurse-filter", filters],
+    queryFn: async () => {
+      const { data } = await filterNurseAPI(filters);
+      return data || { data: [], pagination: {} };
+    },
+    enabled: !!filters,
     retry: 1,
     onError: (error) => toast.error(getErrorMessage(error)),
   });

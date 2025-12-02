@@ -2,6 +2,7 @@ import { prisma } from "../lib/prisma";
 import { applyCommonFields } from "../utils/applyCommonFields";
 import { cursorPaginate } from "../utils/pagination";
 import { createSearchService } from "../utils/searchCache";
+import { filterPaginate } from "../utils/filterPaginate";
 
 export type NurseInput = {
   fullName: string;
@@ -59,3 +60,40 @@ export const searchNurse = createSearchService(prisma, {
   cacheKeyPrefix: "nurse",
   ...applyCommonFields(commonSearchFields),
 });
+
+
+export const filterNursesService = async (filters: {
+  fromDate?: Date;
+  toDate?: Date;
+  shift?: string;
+  status?: string;
+  cursor?: string | number;
+  limit?: number;
+}) => {
+  const { fromDate, toDate, shift, status, cursor, limit } = filters;
+
+  const filterObj: Record<string, any> = {};
+
+  if (shift)
+    filterObj.shift = { equals: shift, mode: "insensitive" };
+
+  if (status)
+    filterObj.status = { equals: status, mode: "insensitive" };
+
+  if (fromDate || toDate)
+    filterObj.createdAt = {
+      gte: fromDate ? new Date(fromDate) : undefined,
+      lte: toDate ? new Date(toDate) : undefined,
+    };
+
+  return filterPaginate(
+    prisma,
+    {
+      model: "nurse",
+      cursorField: "id",
+      limit: limit || 50,
+      filters: filterObj,
+    },
+    cursor
+  );
+};

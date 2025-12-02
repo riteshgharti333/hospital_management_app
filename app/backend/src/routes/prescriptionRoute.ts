@@ -6,6 +6,7 @@ import {
   updatePrescriptionRecord,
   deletePrescriptionRecord,
   searchPrescriptionsResults,
+  filterPrescriptions,
 } from "../controllers/PrescriptionController";
 import { uploadMiddleware } from "../middlewares/multer.middleware";
 import { isAuthenticated } from "../middlewares/isAuthenticated";
@@ -17,13 +18,15 @@ router
   .route("/")
   .post(
     isAuthenticated,
-    isAdmin, 
+    isAdmin,
     uploadMiddleware.single("file"),
     createPrescriptionRecord
   )
   .get(getAllPrescriptionRecords);
 
 router.get("/search", searchPrescriptionsResults);
+
+router.get("/filter", filterPrescriptions);
 
 router
   .route("/:id")

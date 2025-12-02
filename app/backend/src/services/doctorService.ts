@@ -1,6 +1,7 @@
 import { prisma } from "../lib/prisma";
 import { applyCommonFields } from "../utils/applyCommonFields";
 import { cursorPaginate } from "../utils/pagination";
+import { filterPaginate } from "../utils/filterPaginate";
 import { createSearchService } from "../utils/searchCache";
 
 export type DoctorInput = {
@@ -64,3 +65,36 @@ export const searchDoctor = createSearchService(prisma, {
   cacheKeyPrefix: "doctor",
   ...applyCommonFields(commonSearchFields),
 });
+
+
+export const filterDoctorsService = async (filters: {
+  fromDate?: Date;
+  toDate?: Date;
+  status?: string;
+  cursor?: string | number;
+  limit?: number;
+}) => {
+  const { fromDate, toDate, status, cursor, limit } = filters;
+
+  const filterObj: Record<string, any> = {};
+
+  if (status)
+    filterObj.status = { equals: status, mode: "insensitive" };
+
+  if (fromDate || toDate)
+    filterObj.createdAt = {
+      gte: fromDate ? new Date(fromDate) : undefined,
+      lte: toDate ? new Date(toDate) : undefined,
+    };
+
+  return filterPaginate(
+    prisma,
+    {
+      model: "doctor",
+      cursorField: "id",
+      limit: limit || 50,
+      filters: filterObj,
+    },
+    cursor
+  );
+};

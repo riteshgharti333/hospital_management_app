@@ -1,11 +1,17 @@
-
 import axiosInstance from "../../utils/axiosInstance";
 
 export const createDepartmentAPI = (data) =>
   axiosInstance.post("/department/", data);
 
-export const getAllDepartmentsAPI = () =>
-  axiosInstance.get("/department/");
+export const filterDepartmentAPI = (filters) =>
+  axiosInstance.get("/department/filter", {
+    params: filters,
+  });
+
+export const getAllDepartmentsAPI = (cursor, limit) =>
+  axiosInstance.get("/department", {
+    params: { cursor, limit },
+  });
 
 export const getDepartmentByIdAPI = (id) =>
   axiosInstance.get(`/department/${id}`);

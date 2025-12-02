@@ -12,8 +12,9 @@ import {
   updateNurse,
   deleteNurse,
   searchNurse,
+  filterNursesService
 } from "../services/nurseService";
-import { nurseSchema } from "@hospital/schemas";
+import { nurseSchema,nurseFilterSchema } from "@hospital/schemas";
 import { validateSearchQuery } from "../utils/queryValidation";
 
 export const createNurseRecord = catchAsyncError(
@@ -167,3 +168,21 @@ export const searchNurseResults = catchAsyncError(
     });
   }
 );
+
+
+export const filterNurses = catchAsyncError(async (req, res) => {
+  const validated = nurseFilterSchema.parse(req.query);
+
+  const { data, nextCursor } = await filterNursesService(validated);
+
+  sendResponse(res, {
+    success: true,
+    statusCode: StatusCodes.OK,
+    message: "Filtered nurses fetched",
+    data,
+    pagination: {
+      nextCursor: nextCursor !== null ? String(nextCursor) : undefined,
+      limit: validated.limit || 50,
+    },
+  });
+});

@@ -11,9 +11,10 @@ import {
   updateAppointment,
   deleteAppointment,
   searchAppointment,
+  filterAppointmentsService,
 } from "../services/appointmentService";
 
-import { appointmentSchema } from "@hospital/schemas";
+import { appointmentSchema, appointmentFilterSchema } from "@hospital/schemas";
 import { validateSearchQuery } from "../utils/queryValidation";
 
 export const createAppointmentRecord = catchAsyncError(
@@ -149,3 +150,20 @@ export const searchAppointmentResults = catchAsyncError(
     });
   }
 );
+
+export const filterAppointments = catchAsyncError(async (req, res) => {
+  const validated = appointmentFilterSchema.parse(req.query);
+
+  const { data, nextCursor } = await filterAppointmentsService(validated);
+
+  sendResponse(res, {
+    success: true,
+    statusCode: StatusCodes.OK,
+    message: "Filtered appointments fetched",
+    data,
+    pagination: {
+      nextCursor: nextCursor !== null ? String(nextCursor) : undefined,
+      limit: validated.limit || 50,
+    },
+  });
+});

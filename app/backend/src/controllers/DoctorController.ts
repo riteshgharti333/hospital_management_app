@@ -11,8 +11,9 @@ import {
   updateDoctor,
   deleteDoctor,
   searchDoctor,
+  filterDoctorsService
 } from "../services/doctorService";
-import { doctorSchema } from "@hospital/schemas";
+import { doctorSchema,doctorFilterSchema } from "@hospital/schemas";
 
 export const createDoctorRecord = catchAsyncError(
   async (req: Request, res: Response, next: NextFunction) => {
@@ -192,3 +193,21 @@ export const searchDoctorResults = catchAsyncError(
     });
   }
 );
+
+
+export const filterDoctors = catchAsyncError(async (req, res) => {
+  const validated = doctorFilterSchema.parse(req.query);
+
+  const { data, nextCursor } = await filterDoctorsService(validated);
+
+  sendResponse(res, {
+    success: true,
+    statusCode: StatusCodes.OK,
+    message: "Filtered doctors fetched",
+    data,
+    pagination: {
+      nextCursor: nextCursor !== null ? String(nextCursor) : undefined,
+      limit: validated.limit || 50,
+    },
+  });
+});

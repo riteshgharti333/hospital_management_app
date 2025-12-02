@@ -1,6 +1,7 @@
 import { prisma } from "../lib/prisma";
 import { applyCommonFields } from "../utils/applyCommonFields";
 import { cursorPaginate } from "../utils/pagination";
+import { filterPaginate } from "../utils/filterPaginate";
 import { createSearchService } from "../utils/searchCache";
 
 export type AppointmentInput = {
@@ -55,3 +56,39 @@ export const searchAppointment = createSearchService(prisma, {
   cacheKeyPrefix: "appointment",
   ...applyCommonFields(commonSearchFields),
 });
+
+
+export const filterAppointmentsService = async (filters: {
+  fromDate?: Date;
+  toDate?: Date;
+  department?: string;
+  cursor?: string | number;
+  limit?: number;
+}) => {
+  const { fromDate, toDate, department, cursor, limit } = filters;
+
+  const filterObj: Record<string, any> = {};
+
+  if (department)
+    filterObj.department = {
+      equals: department,
+      mode: "insensitive",
+    };
+
+  if (fromDate || toDate)
+    filterObj.appointmentDate = {
+      gte: fromDate ? new Date(fromDate) : undefined,
+      lte: toDate ? new Date(toDate) : undefined,
+    };
+
+  return filterPaginate(
+    prisma,
+    {
+      model: "appointment",
+      cursorField: "id",
+      limit: limit || 50,
+      filters: filterObj,
+    },
+    cursor
+  );
+};

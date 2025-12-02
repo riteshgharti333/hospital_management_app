@@ -5,18 +5,33 @@ import {
   createDepartmentAPI,
   updateDepartmentAPI,
   deleteDepartmentAPI,
+  filterDepartmentAPI,
 } from "../api/departmentApi";
 import { toast } from "sonner";
 import { getErrorMessage } from "../../utils/errorUtils";
 
-// FETCH ALL DEPARTMENTS
-export const useGetDepartments = () => {
+// Normal list with pagination
+export const useGetDepartments = (cursor = null, limit = 50) => {
   return useQuery({
-    queryKey: ["departments"],
+    queryKey: ["department", cursor, limit],
     queryFn: async () => {
-      const { data } = await getAllDepartmentsAPI();
-      return data?.data || [];
+      const { data } = await getAllDepartmentsAPI(cursor, limit);
+      return data || { data: [], pagination: {} };
     },
+    retry: 1,
+    onError: (error) => toast.error(getErrorMessage(error)),
+  });
+};
+
+// Filtered list
+export const useFilterDepartments = (filters) => {
+  return useQuery({
+    queryKey: ["department-filter", filters],
+    queryFn: async () => {
+      const { data } = await filterDepartmentAPI(filters);
+      return data || { data: [], pagination: {} };
+    },
+    enabled: !!filters,
     retry: 1,
     onError: (error) => toast.error(getErrorMessage(error)),
   });

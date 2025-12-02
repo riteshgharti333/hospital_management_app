@@ -1,6 +1,7 @@
 import { prisma } from "../lib/prisma";
 import { applyCommonFields } from "../utils/applyCommonFields";
 import { cursorPaginate } from "../utils/pagination";
+import { filterPaginate } from "../utils/filterPaginate";
 import { createSearchService } from "../utils/searchCache";
 
 export type MedicineInput = {
@@ -40,17 +41,15 @@ export const createPrescription = async (data: PrescriptionInput) => {
   });
 };
 
-export const getAllPrescriptions = async (
-  cursor?: string,
-  limit?: number
-) => {
+export const getAllPrescriptions = async (cursor?: string, limit?: number) => {
   return cursorPaginate(
     prisma,
     {
-      model: "prescription", 
-    cursorField: "id",
-      limit: limit || 50,         
-      cacheExpiry: 600, 
+      model: "prescription",
+      cursorField: "id",
+      limit: limit || 50,
+      cacheExpiry: 600,
+    
     },
     cursor ? Number(cursor) : undefined
   );
@@ -132,14 +131,7 @@ export const deletePrescription = async (id: number) => {
   });
 };
 
-
-
-const commonSearchFields = [
-  "doctor.fullName",
-  "patient.fullName"
-];
-
-
+const commonSearchFields = ["doctor.fullName", "patient.fullName"];
 
 export const searchPrescription = createSearchService(prisma, {
   tableName: "Prescription",
@@ -149,4 +141,32 @@ export const searchPrescription = createSearchService(prisma, {
     patient: true,
   },
   ...applyCommonFields(commonSearchFields),
-})
+});
+
+export const filterPrescriptionsService = async (filters: {
+  fromDate?: Date;
+  toDate?: Date;
+  cursor?: string | number;
+  limit?: number;
+}) => {
+  const { fromDate, toDate, cursor, limit } = filters;
+
+  const filterObj: Record<string, any> = {};
+
+  if (fromDate || toDate)
+    filterObj.prescriptionDate = {
+      gte: fromDate ? new Date(fromDate) : undefined,
+      lte: toDate ? new Date(toDate) : undefined,
+    };
+
+  return filterPaginate(
+    prisma,
+    {
+      model: "prescription",
+      cursorField: "id",
+      limit: limit || 50,
+      filters: filterObj,
+    },
+    cursor
+  );
+};

@@ -1,16 +1,22 @@
 import axiosInstance from "../../utils/axiosInstance";
 
-export const createNurseAPI = (data) =>
-  axiosInstance.post("/nurse", data);
+export const createNurseAPI = (data) => axiosInstance.post("/nurse", data);
 
-export const getAllNursesAPI = () =>
-  axiosInstance.get("/nurse");
+// Normal paginated list
+export const getAllNursesAPI = (cursor, limit) =>
+  axiosInstance.get("/nurse", {
+    params: { cursor, limit },
+  });
 
-export const getNurseByIdAPI = (id) =>
-  axiosInstance.get(`/nurse/${id}`);
+// Filter list
+export const filterNurseAPI = (filters) =>
+  axiosInstance.get("/nurse/filter", {
+    params: filters,
+  });
+
+export const getNurseByIdAPI = (id) => axiosInstance.get(`/nurse/${id}`);
 
 export const updateNurseAPI = (id, data) =>
   axiosInstance.patch(`/nurse/${id}`, data);
 
-export const deleteNurseAPI = (id) =>
-  axiosInstance.delete(`/nurse/${id}`);
+export const deleteNurseAPI = (id) => axiosInstance.delete(`/nurse/${id}`);

@@ -3,8 +3,17 @@ import axiosInstance from "../../utils/axiosInstance";
 export const createAppointmentAPI = (data) =>
   axiosInstance.post("/appointment", data);
 
-export const getAllAppointmentsAPI = () =>
-  axiosInstance.get("/appointment");
+// Normal list
+export const getAllAppointmentsAPI = (cursor, limit) =>
+  axiosInstance.get("/appointment", {
+    params: { cursor, limit },
+  });
+
+// Filtered list
+export const filterAppointmentAPI = (filters) =>
+  axiosInstance.get("/appointment/filter", {
+    params: filters,
+  });
 
 export const getAppointmentByIdAPI = (id) =>
   axiosInstance.get(`/appointment/${id}`);

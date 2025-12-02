@@ -26,5 +26,5 @@ export const searchAdmissionAPI = (searchTerm) =>
 
   export const filterAdmissionsAPI = (filters) =>
   axiosInstance.get("/admission/filter", {
-    params: filters, // { fromDate, toDate, patientSex, bloodGroup, cursor, limit }
+    params: filters, 
   });

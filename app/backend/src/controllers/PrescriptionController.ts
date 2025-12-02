@@ -10,9 +10,13 @@ import {
   getPrescriptionsByPatient,
   updatePrescription,
   deletePrescription,
+  filterPrescriptionsService,
 } from "../services/prescriptionService";
 
-import { prescriptionSchema } from "@hospital/schemas";
+import {
+  prescriptionSchema,
+  prescriptionFilterSchema,
+} from "@hospital/schemas";
 import {
   uploadToCloudinary,
   deleteFromCloudinary,
@@ -193,3 +197,20 @@ export const searchPrescriptionsResults = catchAsyncError(
     });
   }
 );
+
+export const filterPrescriptions = catchAsyncError(async (req, res) => {
+  const validated = prescriptionFilterSchema.parse(req.query);
+
+  const { data, nextCursor } = await filterPrescriptionsService(validated);
+
+  sendResponse(res, {
+    success: true,
+    statusCode: StatusCodes.OK,
+    message: "Filtered prescriptions fetched",
+    data,
+    pagination: {
+      nextCursor: nextCursor !== null ? String(nextCursor) : undefined,
+      limit: validated.limit || 50,
+    },
+  });
+});

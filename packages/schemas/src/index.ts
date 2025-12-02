@@ -546,76 +546,111 @@ export const admissionFilterSchema = z.object({
  
 export type AdmissionFilterInput = z.infer<typeof admissionFilterSchema>;
 
+/////////////// Birth Filter
+
+export const birthFilterSchema = z.object({
+  babySex: z.enum(["Male", "Female", "Other"]).optional(),
+
+  deliveryType: z
+    .enum(["Normal", "Cesarean", "Forceps", "Vacuum"])
+    .optional(),
+
+  fromDate: z.coerce.date().optional(),
+  toDate: z.coerce.date().optional(),
+
+  limit: z.coerce.number().default(50),
+  cursor: z.coerce.number().optional(),
+});
+
+export type BirthFilterInput = z.infer<typeof birthFilterSchema>;
+
+///////
+
+
 // 🔹 Patient Filters
 export const patientFilterSchema = z.object({
   gender: z.enum(["Male", "Female", "Other"]).optional(),
-  bloodGroup: z
-    .enum(["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"])
-    .optional(),
-  status: z.enum(["Active", "Inactive"]).optional(),
-  fromAge: z.coerce.number().min(0).optional(),
-  toAge: z.coerce.number().min(0).optional(),
+
+  fromDate: z.coerce.date().optional(),
+  toDate: z.coerce.date().optional(),
+
   limit: z.coerce.number().default(50),
   cursor: z.coerce.number().optional(),
 });
 
 export type PatientFilterInput = z.infer<typeof patientFilterSchema>;
 
-// 🔹 Doctor Filters
-export const doctorFilterSchema = z.object({
-  department: z.string().optional(),
-  specialization: z.string().optional(),
+ 
+//////////// Department
+
+export const departmentFilterSchema = z.object({
   status: z.enum(["Active", "Inactive"]).optional(),
+
+  fromDate: z.coerce.date().optional(),
+  toDate: z.coerce.date().optional(),
+
   limit: z.coerce.number().default(50),
   cursor: z.coerce.number().optional(),
 });
 
-export type DoctorFilterInput = z.infer<typeof doctorFilterSchema>;
+export type DepartmentFilterInput = z.infer<typeof departmentFilterSchema>;
 
-// 🔹 Nurse Filters
+
+// App
+
+export const appointmentFilterSchema = z.object({
+  department: z.string().optional(), // dynamic department name (not enum)
+
+  fromDate: z.coerce.date().optional(),
+  toDate: z.coerce.date().optional(),
+
+  limit: z.coerce.number().default(50),
+  cursor: z.coerce.number().optional(),
+});
+
+export type AppointmentFilterInput = z.infer<typeof appointmentFilterSchema>;
+
+// Nurse
+
 export const nurseFilterSchema = z.object({
-  department: z.string().optional(),
-  shift: z.string().optional(),
-  status: z.enum(["Active", "Inactive"]).optional(),
+  shift: z.enum(["Day", "Night", "Rotating"]).optional(),
+
+  status: z.enum(["Active", "Inactive", "On Leave"]).optional(),
+
+  fromDate: z.coerce.date().optional(),
+  toDate: z.coerce.date().optional(),
+
   limit: z.coerce.number().default(50),
   cursor: z.coerce.number().optional(),
 });
 
 export type NurseFilterInput = z.infer<typeof nurseFilterSchema>;
 
-// 🔹 Employee Filters
-export const employeeFilterSchema = z.object({
-  gender: z.enum(["Male", "Female", "Other"]).optional(),
-  maritalStatus: z.enum(["Married", "Unmarried"]).optional(),
-  department: z.string().optional(),
-  status: z.enum(["Active", "Inactive"]).optional(),
-  limit: z.coerce.number().default(50),
-  cursor: z.coerce.number().optional(),
-});
 
-export type EmployeeFilterInput = z.infer<typeof employeeFilterSchema>;
+/// Doc Filter
 
-// 🔹 Bill Filters
-export const billFilterSchema = z.object({
-  billType: z.enum(["IPD", "OPD", "Pharmacy", "Lab"]).optional(),
-  status: z.enum(["Pending", "Paid", "Cancelled"]).optional(),
+export const doctorFilterSchema = z.object({
+  status: z.enum(["Active", "Inactive", "On Leave"]).optional(),
+
   fromDate: z.coerce.date().optional(),
   toDate: z.coerce.date().optional(),
+
   limit: z.coerce.number().default(50),
   cursor: z.coerce.number().optional(),
 });
 
-export type BillFilterInput = z.infer<typeof billFilterSchema>;
+export type DoctorFilterInput = z.infer<typeof doctorFilterSchema>;
 
-// 🔹 Appointment Filters
-export const appointmentFilterSchema = z.object({
-  department: z.string().optional(),
-  doctorName: z.string().optional(),
+
+// pre
+
+
+export const prescriptionFilterSchema = z.object({
   fromDate: z.coerce.date().optional(),
   toDate: z.coerce.date().optional(),
-  status: z.enum(["Scheduled", "Completed", "Cancelled"]).optional(),
+
   limit: z.coerce.number().default(50),
   cursor: z.coerce.number().optional(),
 });
 
-export type AppointmentFilterInput = z.infer<typeof appointmentFilterSchema>;
+export type PrescriptionFilterInput = z.infer<typeof prescriptionFilterSchema>;

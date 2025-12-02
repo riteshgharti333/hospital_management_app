@@ -11,8 +11,9 @@ import {
   updatePatient,
   deletePatient,
   searchPatient,
+  filterPatientsService,
 } from "../services/patientService";
-import { patientSchema } from "@hospital/schemas";
+import { patientFilterSchema, patientSchema } from "@hospital/schemas";
 import { validateSearchQuery } from "../utils/queryValidation";
 
 export const createPatientRecord = catchAsyncError(
@@ -124,3 +125,23 @@ export const searchPatientResults = catchAsyncError(
     });
   }
 );
+
+export const filterPatients = catchAsyncError(async (req, res) => {
+  // Validate query
+  const validated = patientFilterSchema.parse(req.query);
+
+  // Call service
+  const { data, nextCursor } = await filterPatientsService(validated);
+
+  // Response
+  sendResponse(res, {
+    success: true,
+    statusCode: StatusCodes.OK,
+    message: "Filtered patients fetched",
+    data,
+    pagination: {
+      nextCursor: nextCursor !== null ? String(nextCursor) : undefined,
+      limit: validated.limit || 50,
+    },
+  });
+});

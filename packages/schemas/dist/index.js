@@ -41,7 +41,8 @@ export const admissionSchema = z.object({
     patientSex: z.string().min(1, "Patient sex is required"),
     guardianType: z.string().min(1, "Guardian type is required"),
     guardianName: z.string().min(1, "Guardian name is required").trim(),
-    phoneNo: z.string()
+    phoneNo: z
+        .string()
         .min(10, "Phone number must be at least 10 digits")
         .regex(/^\d+$/, "Phone number must contain only digits"),
     patientAddress: z.string().min(1, "Address is required").trim(),
@@ -50,7 +51,7 @@ export const admissionSchema = z.object({
     literacy: z.string().min(1, "Literacy status is required"),
     occupation: z.string().min(1, "Occupation is required"),
     doctorName: z.string().min(1, "Doctor name is required").trim(),
-    isDelivery: z.preprocess((val) => val === 'true' || val === true || val === 1, z.boolean().default(false)),
+    isDelivery: z.preprocess((val) => val === "true" || val === true || val === 1, z.boolean().default(false)),
 });
 ///////////////
 export const ambulanceSchema = z.object({
@@ -470,59 +471,63 @@ export const admissionFilterSchema = z.object({
     limit: z.coerce.number().default(50),
     cursor: z.coerce.number().optional(),
 });
+/////////////// Birth Filter
+export const birthFilterSchema = z.object({
+    babySex: z.enum(["Male", "Female", "Other"]).optional(),
+    deliveryType: z
+        .enum(["Normal", "Cesarean", "Forceps", "Vacuum"])
+        .optional(),
+    fromDate: z.coerce.date().optional(),
+    toDate: z.coerce.date().optional(),
+    limit: z.coerce.number().default(50),
+    cursor: z.coerce.number().optional(),
+});
+///////
 // 🔹 Patient Filters
 export const patientFilterSchema = z.object({
     gender: z.enum(["Male", "Female", "Other"]).optional(),
-    bloodGroup: z
-        .enum(["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"])
-        .optional(),
-    status: z.enum(["Active", "Inactive"]).optional(),
-    fromAge: z.coerce.number().min(0).optional(),
-    toAge: z.coerce.number().min(0).optional(),
-    limit: z.coerce.number().default(50),
-    cursor: z.coerce.number().optional(),
-});
-// 🔹 Doctor Filters
-export const doctorFilterSchema = z.object({
-    department: z.string().optional(),
-    specialization: z.string().optional(),
-    status: z.enum(["Active", "Inactive"]).optional(),
-    limit: z.coerce.number().default(50),
-    cursor: z.coerce.number().optional(),
-});
-// 🔹 Nurse Filters
-export const nurseFilterSchema = z.object({
-    department: z.string().optional(),
-    shift: z.string().optional(),
-    status: z.enum(["Active", "Inactive"]).optional(),
-    limit: z.coerce.number().default(50),
-    cursor: z.coerce.number().optional(),
-});
-// 🔹 Employee Filters
-export const employeeFilterSchema = z.object({
-    gender: z.enum(["Male", "Female", "Other"]).optional(),
-    maritalStatus: z.enum(["Married", "Unmarried"]).optional(),
-    department: z.string().optional(),
-    status: z.enum(["Active", "Inactive"]).optional(),
-    limit: z.coerce.number().default(50),
-    cursor: z.coerce.number().optional(),
-});
-// 🔹 Bill Filters
-export const billFilterSchema = z.object({
-    billType: z.enum(["IPD", "OPD", "Pharmacy", "Lab"]).optional(),
-    status: z.enum(["Pending", "Paid", "Cancelled"]).optional(),
     fromDate: z.coerce.date().optional(),
     toDate: z.coerce.date().optional(),
     limit: z.coerce.number().default(50),
     cursor: z.coerce.number().optional(),
 });
-// 🔹 Appointment Filters
+//////////// Department
+export const departmentFilterSchema = z.object({
+    status: z.enum(["Active", "Inactive"]).optional(),
+    fromDate: z.coerce.date().optional(),
+    toDate: z.coerce.date().optional(),
+    limit: z.coerce.number().default(50),
+    cursor: z.coerce.number().optional(),
+});
+// App
 export const appointmentFilterSchema = z.object({
-    department: z.string().optional(),
-    doctorName: z.string().optional(),
+    department: z.string().optional(), // dynamic department name (not enum)
     fromDate: z.coerce.date().optional(),
     toDate: z.coerce.date().optional(),
-    status: z.enum(["Scheduled", "Completed", "Cancelled"]).optional(),
+    limit: z.coerce.number().default(50),
+    cursor: z.coerce.number().optional(),
+});
+// Nurse
+export const nurseFilterSchema = z.object({
+    shift: z.enum(["Day", "Night", "Rotating"]).optional(),
+    status: z.enum(["Active", "Inactive", "On Leave"]).optional(),
+    fromDate: z.coerce.date().optional(),
+    toDate: z.coerce.date().optional(),
+    limit: z.coerce.number().default(50),
+    cursor: z.coerce.number().optional(),
+});
+/// Doc Filter
+export const doctorFilterSchema = z.object({
+    status: z.enum(["Active", "Inactive", "On Leave"]).optional(),
+    fromDate: z.coerce.date().optional(),
+    toDate: z.coerce.date().optional(),
+    limit: z.coerce.number().default(50),
+    cursor: z.coerce.number().optional(),
+});
+// pre
+export const prescriptionFilterSchema = z.object({
+    fromDate: z.coerce.date().optional(),
+    toDate: z.coerce.date().optional(),
     limit: z.coerce.number().default(50),
     cursor: z.coerce.number().optional(),
 });

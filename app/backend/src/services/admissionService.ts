@@ -80,7 +80,7 @@ export const searchAdmissions = createSearchService(prisma, {
 
 export const filterAdmissionsService = async (filters: {
   fromDate?: Date;
-  toDate?: Date;
+  toDate?: Date;  
   patientSex?: string;
   bloodGroup?: string;
   cursor?: string | number;

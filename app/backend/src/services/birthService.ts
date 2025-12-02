@@ -1,5 +1,6 @@
 import { prisma } from "../lib/prisma";
 import { applyCommonFields } from "../utils/applyCommonFields";
+import { filterPaginate } from "../utils/filterPaginate";
 import { cursorPaginate } from "../utils/pagination";
 import { createSearchService } from "../utils/searchCache";
 
@@ -52,6 +53,7 @@ export const deleteBirth = async (id: number) => {
   return prisma.birth.delete({ where: { id } });
 };
    
+
 const commonSearchFields = ["fathersName", "mothersName", "mobileNumber"];    
  
 export const searchBirth  = createSearchService(prisma, {
@@ -60,3 +62,42 @@ export const searchBirth  = createSearchService(prisma, {
   ...applyCommonFields(commonSearchFields),   
 });
                 
+
+export const filterBirthsService = async (filters: {
+  fromDate?: Date;
+  toDate?: Date;
+  babySex?: string;
+  deliveryType?: string;
+  cursor?: string | number;
+  limit?: number;
+}) => {
+  const { fromDate, toDate, babySex, deliveryType, cursor, limit } = filters;
+
+  // Build filter object
+  const filterObj: Record<string, any> = {};
+
+  if (babySex)
+    filterObj.babySex = { equals: babySex, mode: "insensitive" };
+
+  if (deliveryType)
+    filterObj.deliveryType = { equals: deliveryType, mode: "insensitive" };
+
+  if (fromDate || toDate)
+    filterObj.birthDate = {
+      gte: fromDate ? new Date(fromDate) : undefined,
+      lte: toDate ? new Date(toDate) : undefined,
+    };
+
+  // Call filterPaginate
+  return filterPaginate(
+    prisma,
+    {
+      model: "birth",
+      cursorField: "id",
+      limit: limit || 50,
+      filters: filterObj,
+    },
+    cursor
+  );
+};
+

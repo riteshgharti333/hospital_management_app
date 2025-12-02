@@ -10,8 +10,9 @@ import {
   deleteBirth,
   searchBirth,
   getAllBirthService,
+  filterBirthsService,
 } from "../services/birthService";
-import { birthSchema } from "@hospital/schemas";
+import { birthFilterSchema, birthSchema } from "@hospital/schemas";
 import { validateSearchQuery } from "../utils/queryValidation";
 
 export const createBirthRecord = catchAsyncError(
@@ -19,7 +20,7 @@ export const createBirthRecord = catchAsyncError(
     try {
       const validated = birthSchema.parse(req.body);
       const birth = await createBirth(validated);
- 
+
       sendResponse(res, {
         success: true,
         statusCode: StatusCodes.CREATED,
@@ -31,7 +32,6 @@ export const createBirthRecord = catchAsyncError(
     }
   }
 );
-
 
 export const getAllBirth = catchAsyncError(
   async (req: Request, res: Response) => {
@@ -141,3 +141,23 @@ export const searchBirthResults = catchAsyncError(
     });
   }
 );
+
+export const filterBirths = catchAsyncError(async (req, res) => {
+  // Validate query params
+  const validated = birthFilterSchema.parse(req.query);
+
+  // Get filtered results
+  const { data, nextCursor } = await filterBirthsService(validated);
+
+  // Send response
+  sendResponse(res, {
+    success: true,
+    statusCode: StatusCodes.OK,
+    message: "Filtered births fetched",
+    data,
+    pagination: {
+      nextCursor: nextCursor !== null ? String(nextCursor) : undefined,
+      limit: validated.limit || 50,
+    },
+  });
+});

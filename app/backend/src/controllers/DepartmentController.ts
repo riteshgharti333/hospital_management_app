@@ -12,9 +12,10 @@ import {
   deleteDepartment,
   searchDepartment,
   getAllDepartmentService,
+  filterDepartmentsService,
 } from "../services/departmentService";
 
-import { departmentSchema } from "@hospital/schemas";
+import { departmentFilterSchema, departmentSchema } from "@hospital/schemas";
 import { validateSearchQuery } from "../utils/queryValidation";
 
 export const createDepartmentRecord = catchAsyncError(
@@ -169,3 +170,21 @@ export const searchDepartmentResults = catchAsyncError(
     });
   }
 );
+
+
+export const filterDepartments = catchAsyncError(async (req, res) => {
+  const validated = departmentFilterSchema.parse(req.query);
+
+  const { data, nextCursor } = await filterDepartmentsService(validated);
+
+  sendResponse(res, {
+    success: true,
+    statusCode: StatusCodes.OK,
+    message: "Filtered departments fetched",
+    data,
+    pagination: {
+      nextCursor: nextCursor !== null ? String(nextCursor) : undefined,
+      limit: validated.limit || 50,
+    },
+  });
+});

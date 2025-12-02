@@ -227,7 +227,7 @@ model Doctor {
 
   prescriptions  Prescription[]
 
-  // 🔍 Indexes for high-performance queries
+  // 🔍 Indexes f1or high-performance queries
   @@index([fullName])
   @@index([mobileNumber])
   @@index([registrationNo])

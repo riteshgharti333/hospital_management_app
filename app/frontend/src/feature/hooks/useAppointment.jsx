@@ -2,21 +2,38 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   createAppointmentAPI,
   deleteAppointmentAPI,
-  getAllAppointmentsAPI,
   getAppointmentByIdAPI,
   updateAppointmentAPI,
+   getAllAppointmentsAPI,
+  filterAppointmentAPI,
 } from "../api/appointmentApi";
 import { toast } from "sonner";
 import { getErrorMessage } from "../../utils/errorUtils";
 
-// FETCH ALL APPOINTMENTS
-export const useGetAppointments = () => {
+
+
+// Normal appointment list
+export const useGetAppointments = (cursor = null, limit = 50) => {
   return useQuery({
-    queryKey: ["appointment"],
+    queryKey: ["appointment", cursor, limit],
     queryFn: async () => {
-      const { data } = await getAllAppointmentsAPI();
-      return data?.data || [];
+      const { data } = await getAllAppointmentsAPI(cursor, limit);
+      return data || { data: [], pagination: {} };
     },
+    retry: 1,
+    onError: (error) => toast.error(getErrorMessage(error)),
+  });
+};
+
+// Filter appointment list
+export const useFilterAppointments = (filters) => {
+  return useQuery({
+    queryKey: ["appointment-filter", filters],
+    queryFn: async () => {
+      const { data } = await filterAppointmentAPI(filters);
+      return data || { data: [], pagination: {} };
+    },
+    enabled: !!filters,
     retry: 1,
     onError: (error) => toast.error(getErrorMessage(error)),
   });

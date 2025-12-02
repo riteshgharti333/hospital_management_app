@@ -6,6 +6,7 @@ import {
   deleteBirthRecord,
   searchBirthResults,
   getAllBirth,
+  filterBirths,
 } from "../controllers/BirthController";
 import { isAuthenticated } from "../middlewares/isAuthenticated";
 import { isAdmin } from "../middlewares/isAdmin";
@@ -18,6 +19,8 @@ router
   .get(getAllBirth);
 
 router.get("/search", searchBirthResults);
+
+router.get("/filter", filterBirths);
 
 router
   .route("/:id")
