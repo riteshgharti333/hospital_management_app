@@ -6,6 +6,7 @@ import {
   getPrescriptionByIdAPI,
   updatePrescriptionAPI,
   filterPrescriptionAPI,
+  searchPrescriptionAPI,
 } from "../api/prescriptionApi";
 import { toast } from "sonner";
 import { getErrorMessage } from "../../utils/errorUtils";
@@ -83,5 +84,19 @@ export const useDeletePrescription = () => {
       queryClient.invalidateQueries({ queryKey: ["prescription"] });
     },
     onError: (error) => toast.error(getErrorMessage(error)),
+  });
+};
+
+export const useSearchPrescriptions = (searchTerm) => {
+  return useQuery({
+    queryKey: ["prescription-search", searchTerm],
+    queryFn: async () => {
+      if (!searchTerm) return [];
+      const { data } = await searchPrescriptionAPI(searchTerm);
+      return data?.data || [];
+    },
+    enabled: !!searchTerm,
+    retry: 1,
+    onError: (err) => toast.error(getErrorMessage(err)),
   });
 };

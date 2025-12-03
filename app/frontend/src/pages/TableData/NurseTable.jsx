@@ -5,6 +5,7 @@ import Table from "../../components/Table/Table";
 import {
   useGetNurses,
   useFilterNurses,
+  useSearchNurses,
 } from "../../feature/hooks/useNurse";
 
 const filterLabels = {
@@ -17,36 +18,49 @@ const filterLabels = {
 const NurseTable = () => {
   const [currentCursor, setCurrentCursor] = useState(null);
   const [cursorHistory, setCursorHistory] = useState([]);
+  const [searchTerm, setSearchTerm] = useState("");
   const [filters, setFilters] = useState({});
-  const [mode, setMode] = useState("normal");
+  const [mode, setMode] = useState("normal"); // normal | search | filter
 
-  // Normal nurse data
+  // Normal dataset
   const { data: nurseData, isLoading: loadingNurses } =
     useGetNurses(currentCursor, 50);
 
-  // Filter nurse data
+  // Search dataset
+  const { data: searchData, isLoading: loadingSearch } =
+    useSearchNurses(searchTerm);
+
+  // Filter dataset
   const { data: filterData, isLoading: loadingFilter } =
     useFilterNurses({ ...filters, cursor: currentCursor, limit: 50 });
 
+  // Select dataset based on mode
   const getCurrentData = () => {
-    if (mode === "filter") {
-      return filterData || { data: [], pagination: {} };
+    switch (mode) {
+      case "search":
+        return { data: searchData || [], pagination: null };
+      case "filter":
+        return filterData || { data: [], pagination: {} };
+      default:
+        return nurseData || { data: [], pagination: {} };
     }
-    return nurseData || { data: [], pagination: {} };
   };
 
   const data = getCurrentData();
-  const isLoading = loadingNurses || loadingFilter;
+  const isLoading = loadingNurses || loadingSearch || loadingFilter;
 
+  // Mode switching logic
   useEffect(() => {
-    if (Object.keys(filters).length > 0) {
-      setMode("filter");
+    if (searchTerm) {
+      setMode("search");
       setCurrentCursor(null);
       setCursorHistory([]);
+    } else if (Object.keys(filters).length > 0) {
+      setMode("filter");
     } else {
       setMode("normal");
     }
-  }, [filters]);
+  }, [searchTerm, filters]);
 
   const columns = useMemo(
     () => [
@@ -104,7 +118,7 @@ const NurseTable = () => {
   );
 
   const handleNextPage = () => {
-    if (data?.pagination?.nextCursor) {
+    if (data?.pagination?.nextCursor && mode !== "search") {
       setCursorHistory((prev) => [...prev, currentCursor]);
       setCurrentCursor(data.pagination.nextCursor);
     }
@@ -126,6 +140,7 @@ const NurseTable = () => {
 
   const handleClearFilters = () => {
     setFilters({});
+    setSearchTerm("");
     setMode("normal");
     setCurrentCursor(null);
     setCursorHistory([]);
@@ -145,7 +160,11 @@ const NurseTable = () => {
         columns={columns}
         path="nurse"
         loading={isLoading}
-        searchConfig={null}
+        searchConfig={{
+          placeholder: "Search by Name, Mobile or Registration No...",
+          searchTerm,
+          onSearchChange: setSearchTerm,
+        }}
         filtersConfig={[
           {
             key: "shift",
@@ -163,8 +182,8 @@ const NurseTable = () => {
           { key: "toDate", label: "To Date", type: "date" },
         ]}
         pagination={{
-          hasPrevious: cursorHistory.length > 0,
-          hasNext: !!data?.pagination?.nextCursor,
+          hasPrevious: cursorHistory.length > 0 && mode !== "search",
+          hasNext: !!data?.pagination?.nextCursor && mode !== "search",
           currentPage: cursorHistory.length,
           total: data?.pagination?.total,
           mode,

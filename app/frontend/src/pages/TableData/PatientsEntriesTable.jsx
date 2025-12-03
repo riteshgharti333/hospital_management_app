@@ -2,7 +2,11 @@ import { useMemo, useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { FaPlus } from "react-icons/fa6";
 import Table from "../../components/Table/Table";
-import { useGetPatients, useFilterPatients } from "../../feature/hooks/usePatient";
+import {
+  useGetPatients,
+  useFilterPatients,
+  useSearchPatients,
+} from "../../feature/hooks/usePatient";
 
 const filterLabels = {
   gender: "Gender",
@@ -13,20 +17,27 @@ const filterLabels = {
 const PatientsEntriesTable = () => {
   const [currentCursor, setCurrentCursor] = useState(null);
   const [cursorHistory, setCursorHistory] = useState([]);
+  const [searchTerm, setSearchTerm] = useState("");
   const [filters, setFilters] = useState({});
-  const [mode, setMode] = useState("normal");
+  const [mode, setMode] = useState("normal"); // normal | search | filter
 
-  // Normal data
+  // Normal dataset
   const { data: patientData, isLoading: loadingPatients } =
     useGetPatients(currentCursor, 50);
 
-  // Filter data
+  // Search dataset
+  const { data: searchData, isLoading: loadingSearch } =
+    useSearchPatients(searchTerm);
+
+  // Filter dataset
   const { data: filterData, isLoading: loadingFilter } =
     useFilterPatients({ ...filters, cursor: currentCursor, limit: 50 });
 
-  // Decide which dataset to show
+  // Select active dataset
   const getCurrentData = () => {
     switch (mode) {
+      case "search":
+        return { data: searchData || [], pagination: null };
       case "filter":
         return filterData || { data: [], pagination: {} };
       default:
@@ -35,18 +46,20 @@ const PatientsEntriesTable = () => {
   };
 
   const data = getCurrentData();
-  const isLoading = loadingPatients || loadingFilter;
+  const isLoading = loadingPatients || loadingSearch || loadingFilter;
 
-  // Mode management
+  // Mode switching
   useEffect(() => {
-    if (Object.keys(filters).length > 0) {
-      setMode("filter");
+    if (searchTerm) {
+      setMode("search");
       setCurrentCursor(null);
       setCursorHistory([]);
+    } else if (Object.keys(filters).length > 0) {
+      setMode("filter");
     } else {
       setMode("normal");
     }
-  }, [filters]);
+  }, [searchTerm, filters]);
 
   const columns = useMemo(
     () => [
@@ -67,7 +80,7 @@ const PatientsEntriesTable = () => {
   );
 
   const handleNextPage = () => {
-    if (data?.pagination?.nextCursor) {
+    if (data?.pagination?.nextCursor && mode !== "search") {
       setCursorHistory((prev) => [...prev, currentCursor]);
       setCurrentCursor(data.pagination.nextCursor);
     }
@@ -89,6 +102,7 @@ const PatientsEntriesTable = () => {
 
   const handleClearFilters = () => {
     setFilters({});
+    setSearchTerm("");
     setMode("normal");
     setCurrentCursor(null);
     setCursorHistory([]);
@@ -110,7 +124,11 @@ const PatientsEntriesTable = () => {
         columns={columns}
         path="patient"
         loading={isLoading}
-        searchConfig={null} // search later
+        searchConfig={{
+          placeholder: "Search by Name, Mobile or Aadhaar...",
+          searchTerm,
+          onSearchChange: setSearchTerm,
+        }}
         filtersConfig={[
           {
             key: "gender",
@@ -122,8 +140,8 @@ const PatientsEntriesTable = () => {
           { key: "toDate", label: "To Date", type: "date" },
         ]}
         pagination={{
-          hasPrevious: cursorHistory.length > 0,
-          hasNext: !!data?.pagination?.nextCursor,
+          hasPrevious: cursorHistory.length > 0 && mode !== "search",
+          hasNext: !!data?.pagination?.nextCursor && mode !== "search",
           currentPage: cursorHistory.length,
           total: data?.pagination?.total,
           mode,

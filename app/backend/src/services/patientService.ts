@@ -55,12 +55,12 @@ export const searchPatient = createSearchService(prisma, {
 
 export const filterPatientsService = async (filters: {
   fromDate?: Date;
-  toDate?: Date;
+  toDate?: Date; 
   gender?: string;
   cursor?: string | number;
   limit?: number;
 }) => {
-  const { fromDate, toDate, gender, cursor, limit } = filters;
+  const { fromDate, toDate, gender, cursor, limit } = filters; 
 
   const filterObj: Record<string, any> = {};
 
@@ -77,7 +77,7 @@ export const filterPatientsService = async (filters: {
     prisma,
     {
       model: "patient",
-      cursorField: "id",
+      cursorField: "id", 
       limit: limit || 50,
       filters: filterObj,
     },

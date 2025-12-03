@@ -22,3 +22,8 @@ export const updatePrescriptionAPI = (id, data) =>
 
 export const deletePrescriptionAPI = (id) =>
   axiosInstance.delete(`/prescription/${id}`);
+
+export const searchPrescriptionAPI = (searchTerm) =>
+  axiosInstance.get(`/prescription/search`, {
+    params: { query: searchTerm },
+  });

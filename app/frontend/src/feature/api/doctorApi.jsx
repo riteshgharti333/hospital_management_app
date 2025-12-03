@@ -20,3 +20,8 @@ export const updateDoctorAPI = (id, data) =>
   axiosInstance.patch(`/doctor/${id}`, data);
 
 export const deleteDoctorAPI = (id) => axiosInstance.delete(`/doctor/${id}`);
+
+export const searchDoctorAPI = (searchTerm) =>
+  axiosInstance.get(`/doctor/search`, {
+    params: { query: searchTerm },
+  });

@@ -23,3 +23,9 @@ export const updateAppointmentAPI = (id, data) =>
 
 export const deleteAppointmentAPI = (id) =>
   axiosInstance.delete(`/appointment/${id}`);
+
+export const searchAppointmentAPI = (searchTerm) =>
+  axiosInstance.get(`/appointment/search`, {
+    params: { query: searchTerm },
+  });
+

@@ -63,15 +63,15 @@ export const searchDepartment = createSearchService(prisma, {
   tableName: "Department",
   cacheKeyPrefix: "department",
   ...applyCommonFields(commonSearchFields),
-});
+}); 
 
 
 export const filterDepartmentsService = async (filters: {
   fromDate?: Date;
   toDate?: Date;
-  status?: string;
+  status?: string;     
   cursor?: string | number;
-  limit?: number;
+  limit?: number; 
 }) => {
   const { fromDate, toDate, status, cursor, limit } = filters;
 

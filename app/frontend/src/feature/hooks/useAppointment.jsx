@@ -4,13 +4,12 @@ import {
   deleteAppointmentAPI,
   getAppointmentByIdAPI,
   updateAppointmentAPI,
-   getAllAppointmentsAPI,
+  getAllAppointmentsAPI,
   filterAppointmentAPI,
+  searchAppointmentAPI,
 } from "../api/appointmentApi";
 import { toast } from "sonner";
 import { getErrorMessage } from "../../utils/errorUtils";
-
-
 
 // Normal appointment list
 export const useGetAppointments = (cursor = null, limit = 50) => {
@@ -89,5 +88,19 @@ export const useDeleteAppointment = () => {
       queryClient.invalidateQueries({ queryKey: ["appointment"] });
     },
     onError: (error) => toast.error(getErrorMessage(error)),
+  });
+};
+
+export const useSearchAppointments = (searchTerm) => {
+  return useQuery({
+    queryKey: ["appointment-search", searchTerm],
+    queryFn: async () => {
+      if (!searchTerm) return [];
+      const { data } = await searchAppointmentAPI(searchTerm);
+      return data?.data || [];
+    },
+    enabled: !!searchTerm,
+    retry: 1,
+    onError: (err) => toast.error(getErrorMessage(err)),
   });
 };

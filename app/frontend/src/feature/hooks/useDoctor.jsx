@@ -6,6 +6,7 @@ import {
   getDoctorByIdAPI,
   updateDoctorAPI,
   filterDoctorAPI,
+  searchDoctorAPI,
 } from "../api/doctorApi";
 import { toast } from "sonner";
 import { getErrorMessage } from "../../utils/errorUtils";
@@ -87,5 +88,19 @@ export const useDeleteDoctor = () => {
       queryClient.invalidateQueries({ queryKey: ["doctor"] });
     },
     onError: (error) => toast.error(getErrorMessage(error)),
+  });
+};
+
+export const useSearchDoctors = (searchTerm) => {
+  return useQuery({
+    queryKey: ["doctor-search", searchTerm],
+    queryFn: async () => {
+      if (!searchTerm) return [];
+      const { data } = await searchDoctorAPI(searchTerm);
+      return data?.data || [];
+    },
+    enabled: !!searchTerm,
+    retry: 1,
+    onError: (err) => toast.error(getErrorMessage(err)),
   });
 };

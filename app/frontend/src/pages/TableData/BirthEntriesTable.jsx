@@ -2,7 +2,11 @@ import { useMemo, useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { FaPlus } from "react-icons/fa6";
 import Table from "../../components/Table/Table";
-import { useGetBirthRecords, useFilterBirth } from "../../feature/hooks/useBirth";
+import {
+  useGetBirthRecords,
+  useFilterBirth,
+  useSearchBirth,
+} from "../../feature/hooks/useBirth";
 
 const filterLabels = {
   babySex: "Baby Sex",
@@ -18,22 +22,26 @@ const BirthEntriesTable = () => {
   const [filters, setFilters] = useState({});
   const [mode, setMode] = useState("normal"); // normal | search | filter
 
-  // Normal data
-  
+  // Normal dataset
   const { data: birthData, isLoading: loadingBirth } =
     useGetBirthRecords(currentCursor, 50);
 
+  // Search dataset
+  const { data: searchData, isLoading: loadingSearch } =
+    useSearchBirth(searchTerm);
 
-  // Filter data
+  // Filter dataset
   const { data: filterData, isLoading: loadingFilter } = useFilterBirth({
     ...filters,
     cursor: currentCursor,
     limit: 50,
   });
 
-  // Determine active dataset
+  // dataset selection
   const getCurrentData = () => {
     switch (mode) {
+      case "search":
+        return { data: searchData || [], pagination: null };
       case "filter":
         return filterData || { data: [], pagination: {} };
       default:
@@ -42,18 +50,20 @@ const BirthEntriesTable = () => {
   };
 
   const data = getCurrentData();
-  const isLoading = loadingBirth || loadingFilter;
+  const isLoading = loadingBirth || loadingFilter || loadingSearch;
 
-  // Mode logic
+  // Mode Switching
   useEffect(() => {
-    if (Object.keys(filters).length > 0) {
-      setMode("filter");
+    if (searchTerm) {
+      setMode("search");
       setCurrentCursor(null);
       setCursorHistory([]);
+    } else if (Object.keys(filters).length > 0) {
+      setMode("filter");
     } else {
       setMode("normal");
     }
-  }, [filters]);
+  }, [searchTerm, filters]);
 
   const columns = useMemo(
     () => [
@@ -87,7 +97,7 @@ const BirthEntriesTable = () => {
   );
 
   const handleNextPage = () => {
-    if (data?.pagination?.nextCursor) {
+    if (data?.pagination?.nextCursor && mode !== "search") {
       setCursorHistory((prev) => [...prev, currentCursor]);
       setCurrentCursor(data.pagination.nextCursor);
     }
@@ -109,6 +119,7 @@ const BirthEntriesTable = () => {
 
   const handleClearFilters = () => {
     setFilters({});
+    setSearchTerm("");
     setMode("normal");
     setCurrentCursor(null);
     setCursorHistory([]);
@@ -128,7 +139,11 @@ const BirthEntriesTable = () => {
         columns={columns}
         path="birth"
         loading={isLoading}
-        searchConfig={null} // Birth does NOT have search
+        searchConfig={{
+          placeholder: "Search by Father, Mother or Mobile No...",
+          searchTerm,
+          onSearchChange: setSearchTerm,
+        }}
         filtersConfig={[
           {
             key: "babySex",
@@ -137,7 +152,7 @@ const BirthEntriesTable = () => {
             options: ["Male", "Female", "Other"],
           },
           {
-            key: "deliveryType",
+            key: "deliveryType", 
             label: "Delivery Type",
             type: "select",
             options: ["Normal", "Cesarean", "Forceps", "Vacuum"],
@@ -146,11 +161,11 @@ const BirthEntriesTable = () => {
           { key: "toDate", label: "To Date", type: "date" },
         ]}
         pagination={{
-          hasPrevious: cursorHistory.length > 0,
-          hasNext: !!data?.pagination?.nextCursor,
+          hasPrevious: cursorHistory.length > 0 && mode !== "search",
+          hasNext: !!data?.pagination?.nextCursor && mode !== "search",
           currentPage: cursorHistory.length,
           total: data?.pagination?.total,
-          mode: mode,
+          mode,
         }}
         onNextPage={handleNextPage}
         onPrevPage={handlePrevPage}

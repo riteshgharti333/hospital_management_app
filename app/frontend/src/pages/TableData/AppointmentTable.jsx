@@ -5,6 +5,7 @@ import Table from "../../components/Table/Table";
 import {
   useGetAppointments,
   useFilterAppointments,
+  useSearchAppointments,
 } from "../../feature/hooks/useAppointment";
 
 const filterLabels = {
@@ -16,36 +17,49 @@ const filterLabels = {
 const AppointmentTable = () => {
   const [currentCursor, setCurrentCursor] = useState(null);
   const [cursorHistory, setCursorHistory] = useState([]);
+  const [searchTerm, setSearchTerm] = useState("");
   const [filters, setFilters] = useState({});
-  const [mode, setMode] = useState("normal");
+  const [mode, setMode] = useState("normal"); // normal | search | filter
 
-  // Normal data
+  // Normal dataset
   const { data: appointmentData, isLoading: loadingAppointments } =
     useGetAppointments(currentCursor, 50);
 
-  // Filter data
+  // Search dataset
+  const { data: searchData, isLoading: loadingSearch } =
+    useSearchAppointments(searchTerm);
+
+  // Filter dataset
   const { data: filterData, isLoading: loadingFilter } =
     useFilterAppointments({ ...filters, cursor: currentCursor, limit: 50 });
 
+  // Select dataset based on mode
   const getCurrentData = () => {
-    if (mode === "filter") {
-      return filterData || { data: [], pagination: {} };
+    switch (mode) {
+      case "search":
+        return { data: searchData || [], pagination: null };
+      case "filter":
+        return filterData || { data: [], pagination: {} };
+      default:
+        return appointmentData || { data: [], pagination: {} };
     }
-    return appointmentData || { data: [], pagination: {} };
   };
 
   const data = getCurrentData();
-  const isLoading = loadingAppointments || loadingFilter;
+  const isLoading = loadingAppointments || loadingSearch || loadingFilter;
 
+  // Mode switching logic
   useEffect(() => {
-    if (Object.keys(filters).length > 0) {
-      setMode("filter");
+    if (searchTerm) {
+      setMode("search");
       setCurrentCursor(null);
       setCursorHistory([]);
+    } else if (Object.keys(filters).length > 0) {
+      setMode("filter");
     } else {
       setMode("normal");
     }
-  }, [filters]);
+  }, [searchTerm, filters]);
 
   const columns = useMemo(
     () => [
@@ -71,7 +85,7 @@ const AppointmentTable = () => {
   );
 
   const handleNextPage = () => {
-    if (data?.pagination?.nextCursor) {
+    if (data?.pagination?.nextCursor && mode !== "search") {
       setCursorHistory((prev) => [...prev, currentCursor]);
       setCurrentCursor(data.pagination.nextCursor);
     }
@@ -93,6 +107,7 @@ const AppointmentTable = () => {
 
   const handleClearFilters = () => {
     setFilters({});
+    setSearchTerm("");
     setMode("normal");
     setCurrentCursor(null);
     setCursorHistory([]);
@@ -112,20 +127,30 @@ const AppointmentTable = () => {
         columns={columns}
         path="appointment"
         loading={isLoading}
-        searchConfig={null} // you will add search later
+        searchConfig={{
+          placeholder: "Search by Doctor or Department...",
+          searchTerm,
+          onSearchChange: setSearchTerm,
+        }}
         filtersConfig={[
           {
             key: "department",
             label: "Department",
             type: "select",
-            options: ["Cardiology", "Neurology", "Pediatrics", "Orthopedics"],
+            options: [
+              "Cardiology",
+              "Neurology",
+              "Pediatrics",
+              "Orthopedics",
+              "Dermatology",
+            ],
           },
           { key: "fromDate", label: "From Date", type: "date" },
           { key: "toDate", label: "To Date", type: "date" },
         ]}
         pagination={{
-          hasPrevious: cursorHistory.length > 0,
-          hasNext: !!data?.pagination?.nextCursor,
+          hasPrevious: cursorHistory.length > 0 && mode !== "search",
+          hasNext: !!data?.pagination?.nextCursor && mode !== "search",
           currentPage: cursorHistory.length,
           total: data?.pagination?.total,
           mode,

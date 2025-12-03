@@ -18,3 +18,8 @@ export const filterBirthAPI = (filters) =>
   axiosInstance.get("/birth/filter", {
     params: filters,
   });
+
+export const searchBirthAPI = (searchTerm) =>
+  axiosInstance.get(`/birth/search`, {
+    params: { query: searchTerm },
+  });

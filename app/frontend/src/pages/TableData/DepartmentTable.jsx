@@ -2,7 +2,11 @@ import { useMemo, useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { FaPlus } from "react-icons/fa6";
 import Table from "../../components/Table/Table";
-import { useGetDepartments, useFilterDepartments } from "../../feature/hooks/useDepartments";
+import {
+  useGetDepartments,
+  useFilterDepartments,
+  useSearchDepartments,
+} from "../../feature/hooks/useDepartments";
 
 const filterLabels = {
   status: "Status",
@@ -13,38 +17,49 @@ const filterLabels = {
 const DepartmentTable = () => {
   const [currentCursor, setCurrentCursor] = useState(null);
   const [cursorHistory, setCursorHistory] = useState([]);
+  const [searchTerm, setSearchTerm] = useState("");
   const [filters, setFilters] = useState({});
-  const [mode, setMode] = useState("normal");
+  const [mode, setMode] = useState("normal"); // normal | search | filter
 
-  // Normal data
+  // Normal dataset
   const { data: departmentData, isLoading: loadingDepartments } =
     useGetDepartments(currentCursor, 50);
 
-  // Filter data
+  // Search dataset
+  const { data: searchData, isLoading: loadingSearch } =
+    useSearchDepartments(searchTerm);
+
+  // Filter dataset
   const { data: filterData, isLoading: loadingFilter } =
     useFilterDepartments({ ...filters, cursor: currentCursor, limit: 50 });
 
-  // Decide which data to show
+  // Active dataset
   const getCurrentData = () => {
-    if (mode === "filter") {
-      return filterData || { data: [], pagination: {} };
+    switch (mode) {
+      case "search":
+        return { data: searchData || [], pagination: null };
+      case "filter":
+        return filterData || { data: [], pagination: {} };
+      default:
+        return departmentData || { data: [], pagination: {} };
     }
-    return departmentData || { data: [], pagination: {} };
   };
 
   const data = getCurrentData();
-  const isLoading = loadingDepartments || loadingFilter;
+  const isLoading = loadingDepartments || loadingSearch || loadingFilter;
 
   // Mode switching
   useEffect(() => {
-    if (Object.keys(filters).length > 0) {
-      setMode("filter");
+    if (searchTerm) {
+      setMode("search");
       setCurrentCursor(null);
       setCursorHistory([]);
+    } else if (Object.keys(filters).length > 0) {
+      setMode("filter");
     } else {
       setMode("normal");
     }
-  }, [filters]);
+  }, [searchTerm, filters]);
 
   const columns = useMemo(
     () => [
@@ -73,7 +88,7 @@ const DepartmentTable = () => {
   );
 
   const handleNextPage = () => {
-    if (data?.pagination?.nextCursor) {
+    if (data?.pagination?.nextCursor && mode !== "search") {
       setCursorHistory((prev) => [...prev, currentCursor]);
       setCurrentCursor(data.pagination.nextCursor);
     }
@@ -95,6 +110,7 @@ const DepartmentTable = () => {
 
   const handleClearFilters = () => {
     setFilters({});
+    setSearchTerm("");
     setMode("normal");
     setCurrentCursor(null);
     setCursorHistory([]);
@@ -116,7 +132,11 @@ const DepartmentTable = () => {
         columns={columns}
         path="department"
         loading={isLoading}
-        searchConfig={null} // later if needed
+        searchConfig={{
+          placeholder: "Search by Name or Head...",
+          searchTerm,
+          onSearchChange: setSearchTerm,
+        }}
         filtersConfig={[
           {
             key: "status",
@@ -128,8 +148,8 @@ const DepartmentTable = () => {
           { key: "toDate", label: "To Date", type: "date" },
         ]}
         pagination={{
-          hasPrevious: cursorHistory.length > 0,
-          hasNext: !!data?.pagination?.nextCursor,
+          hasPrevious: cursorHistory.length > 0 && mode !== "search",
+          hasNext: !!data?.pagination?.nextCursor && mode !== "search",
           currentPage: cursorHistory.length,
           total: data?.pagination?.total,
           mode,
@@ -143,6 +163,6 @@ const DepartmentTable = () => {
       />
     </div>
   );
-};
+}; 
 
 export default DepartmentTable;

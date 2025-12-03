@@ -21,11 +21,7 @@ export const createBirth = async (data: BirthInput) => {
   return prisma.birth.create({ data });
 };
 
-
-export const getAllBirthService = async (
-  cursor?: string,
-  limit?: number
-) => {
+export const getAllBirthService = async (cursor?: string, limit?: number) => {
   return cursorPaginate(
     prisma,
     {
@@ -47,21 +43,19 @@ export const updateBirth = async (id: number, data: Partial<BirthInput>) => {
     where: { id },
     data,
   });
-};  
+};
 
 export const deleteBirth = async (id: number) => {
   return prisma.birth.delete({ where: { id } });
 };
-   
 
-const commonSearchFields = ["fathersName", "mothersName", "mobileNumber"];    
- 
-export const searchBirth  = createSearchService(prisma, {
+const commonSearchFields = ["fathersName", "mothersName", "mobileNumber"];
+
+export const searchBirth = createSearchService(prisma, {
   tableName: "Birth",
-  cacheKeyPrefix: "birth", 
-  ...applyCommonFields(commonSearchFields),   
+  cacheKeyPrefix: "birth",
+  ...applyCommonFields(commonSearchFields),
 });
-                
 
 export const filterBirthsService = async (filters: {
   fromDate?: Date;
@@ -76,8 +70,7 @@ export const filterBirthsService = async (filters: {
   // Build filter object
   const filterObj: Record<string, any> = {};
 
-  if (babySex)
-    filterObj.babySex = { equals: babySex, mode: "insensitive" };
+  if (babySex) filterObj.babySex = { equals: babySex, mode: "insensitive" };
 
   if (deliveryType)
     filterObj.deliveryType = { equals: deliveryType, mode: "insensitive" };
@@ -100,4 +93,3 @@ export const filterBirthsService = async (filters: {
     cursor
   );
 };
-

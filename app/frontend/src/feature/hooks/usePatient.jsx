@@ -5,6 +5,7 @@ import {
   filterPatientAPI,
   getAllPatientsAPI,
   getPatientRecordByIdAPI,
+  searchPatientAPI,
   updatePatientRecordAPI,
 } from "../api/patientApi";
 import { toast } from "sonner";
@@ -85,6 +86,20 @@ export const useDeletePatient = () => {
       toast.success(response?.message || "Patient record deleted successfully");
       queryClient.invalidateQueries({ queryKey: ["patient"] });
     },
+    onError: (error) => toast.error(getErrorMessage(error)),
+  });
+};
+
+export const useSearchPatients = (searchTerm) => {
+  return useQuery({
+    queryKey: ["patient-search", searchTerm],
+    queryFn: async () => {
+      if (!searchTerm) return [];
+      const { data } = await searchPatientAPI(searchTerm);
+      return data?.data || [];
+    },
+    enabled: !!searchTerm,
+    retry: 1,
     onError: (error) => toast.error(getErrorMessage(error)),
   });
 };

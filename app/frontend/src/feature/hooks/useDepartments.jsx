@@ -6,6 +6,7 @@ import {
   updateDepartmentAPI,
   deleteDepartmentAPI,
   filterDepartmentAPI,
+  searchDepartmentAPI,
 } from "../api/departmentApi";
 import { toast } from "sonner";
 import { getErrorMessage } from "../../utils/errorUtils";
@@ -87,5 +88,19 @@ export const useDeleteDepartment = () => {
       queryClient.invalidateQueries({ queryKey: ["departments"] });
     },
     onError: (error) => toast.error(getErrorMessage(error)),
+  });
+};
+
+export const useSearchDepartments = (searchTerm) => {
+  return useQuery({
+    queryKey: ["department-search", searchTerm],
+    queryFn: async () => {
+      if (!searchTerm) return [];
+      const { data } = await searchDepartmentAPI(searchTerm);
+      return data?.data || [];
+    },
+    enabled: !!searchTerm,
+    retry: 1,
+    onError: (err) => toast.error(getErrorMessage(err)),
   });
 };

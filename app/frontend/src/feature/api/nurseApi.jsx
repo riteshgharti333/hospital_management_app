@@ -20,3 +20,8 @@ export const updateNurseAPI = (id, data) =>
   axiosInstance.patch(`/nurse/${id}`, data);
 
 export const deleteNurseAPI = (id) => axiosInstance.delete(`/nurse/${id}`);
+
+export const searchNurseAPI = (searchTerm) =>
+  axiosInstance.get(`/nurse/search`, {
+    params: { query: searchTerm },
+  });

@@ -91,7 +91,6 @@ export const useSearchAdmissions = (searchTerm) => {
   });
 };
 
-
 export const useFilterAdmissions = (filters) => {
   return useQuery({
     queryKey: ["admission-filter", filters],

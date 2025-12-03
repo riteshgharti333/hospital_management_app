@@ -5,6 +5,7 @@ import Table from "../../components/Table/Table";
 import {
   useGetPrescriptions,
   useFilterPrescriptions,
+  useSearchPrescriptions,
 } from "../../feature/hooks/usePrescription";
 
 const filterLabels = {
@@ -15,40 +16,50 @@ const filterLabels = {
 const PrescriptionTable = () => {
   const [currentCursor, setCurrentCursor] = useState(null);
   const [cursorHistory, setCursorHistory] = useState([]);
+  const [searchTerm, setSearchTerm] = useState("");
   const [filters, setFilters] = useState({});
-  const [mode, setMode] = useState("normal");
+  const [mode, setMode] = useState("normal"); // normal | search | filter
 
- 
-
-  // Normal data
+  // Normal dataset
   const { data: prescriptionData, isLoading: loadingPrescriptions } =
     useGetPrescriptions(currentCursor, 50);
 
-    console.log("prescriptionData:", prescriptionData);
+  // Search dataset
+  const { data: searchData, isLoading: loadingSearch } =
+    useSearchPrescriptions(searchTerm);
 
-  // Filter data
+  // Filter dataset
   const { data: filterData, isLoading: loadingFilter } =
     useFilterPrescriptions({ ...filters, cursor: currentCursor, limit: 50 });
 
+  // dataset selection
   const getCurrentData = () => {
-    if (mode === "filter") {
-      return filterData || { data: [], pagination: {} };
+    switch (mode) {
+      case "search":
+        return { data: searchData || [], pagination: null };
+      case "filter":
+        return filterData || { data: [], pagination: {} };
+      default:
+        return prescriptionData || { data: [], pagination: {} };
     }
-    return prescriptionData || { data: [], pagination: {} };
   };
 
   const data = getCurrentData();
-  const isLoading = loadingPrescriptions || loadingFilter;
+  const isLoading =
+    loadingPrescriptions || loadingSearch || loadingFilter;
 
+  // Mode switching
   useEffect(() => {
-    if (Object.keys(filters).length > 0) {
-      setMode("filter");
+    if (searchTerm) {
+      setMode("search");
       setCurrentCursor(null);
       setCursorHistory([]);
+    } else if (Object.keys(filters).length > 0) {
+      setMode("filter");
     } else {
       setMode("normal");
     }
-  }, [filters]);
+  }, [searchTerm, filters]);
 
   const columns = useMemo(
     () => [
@@ -73,7 +84,7 @@ const PrescriptionTable = () => {
   );
 
   const handleNextPage = () => {
-    if (data?.pagination?.nextCursor) {
+    if (data?.pagination?.nextCursor && mode !== "search") {
       setCursorHistory((prev) => [...prev, currentCursor]);
       setCurrentCursor(data.pagination.nextCursor);
     }
@@ -95,13 +106,14 @@ const PrescriptionTable = () => {
 
   const handleClearFilters = () => {
     setFilters({});
+    setSearchTerm("");
     setMode("normal");
     setCurrentCursor(null);
     setCursorHistory([]);
   };
 
   return (
-    <div className="">
+    <div>
       <div className="flex justify-between items-center">
         <h2 className="text-2xl font-bold text-gray-800">Prescriptions</h2>
         <Link className="btn-primary" to={"/new-prescription"}>
@@ -114,14 +126,18 @@ const PrescriptionTable = () => {
         columns={columns}
         path="prescription"
         loading={isLoading}
-        searchConfig={null}
+        searchConfig={{
+          placeholder: "Search by Doctor or Patient Name...",
+          searchTerm,
+          onSearchChange: setSearchTerm,
+        }}
         filtersConfig={[
           { key: "fromDate", label: "From Date", type: "date" },
           { key: "toDate", label: "To Date", type: "date" },
         ]}
         pagination={{
-          hasPrevious: cursorHistory.length > 0,
-          hasNext: !!data?.pagination?.nextCursor,
+          hasPrevious: cursorHistory.length > 0 && mode !== "search",
+          hasNext: !!data?.pagination?.nextCursor && mode !== "search",
           currentPage: cursorHistory.length,
           total: data?.pagination?.total,
           mode,

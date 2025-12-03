@@ -21,3 +21,8 @@ export const updatePatientRecordAPI = (id, data) =>
 
 export const deletePatientRecordAPI = (id) =>
   axiosInstance.delete(`/patient/${id}`);
+
+export const searchPatientAPI = (searchTerm) =>
+  axiosInstance.get(`/patient/search`, {
+    params: { query: searchTerm },
+  });

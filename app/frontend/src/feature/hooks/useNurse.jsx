@@ -6,6 +6,7 @@ import {
   getNurseByIdAPI,
   updateNurseAPI,
   filterNurseAPI,
+  searchNurseAPI,
 } from "../api/nurseApi";
 import { toast } from "sonner";
 import { getErrorMessage } from "../../utils/errorUtils";
@@ -88,5 +89,19 @@ export const useDeleteNurse = () => {
       queryClient.invalidateQueries({ queryKey: ["nurse"] });
     },
     onError: (error) => toast.error(getErrorMessage(error)),
+  });
+};
+
+export const useSearchNurses = (searchTerm) => {
+  return useQuery({
+    queryKey: ["nurse-search", searchTerm],
+    queryFn: async () => {
+      if (!searchTerm) return [];
+      const { data } = await searchNurseAPI(searchTerm);
+      return data?.data || [];
+    },
+    enabled: !!searchTerm,
+    retry: 1,
+    onError: (err) => toast.error(getErrorMessage(err)),
   });
 };

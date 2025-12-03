@@ -24,3 +24,8 @@ export const updateDepartmentAPI = (id, data) =>
 
 export const deleteDepartmentAPI = (id) =>
   axiosInstance.delete(`/department/${id}`);
+
+export const searchDepartmentAPI = (searchTerm) =>
+  axiosInstance.get(`/department/search`, {
+    params: { query: searchTerm },
+  });

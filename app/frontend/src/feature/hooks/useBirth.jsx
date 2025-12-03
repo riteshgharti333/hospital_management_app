@@ -5,6 +5,7 @@ import {
   filterBirthAPI,
   getAllBirthRecordsAPI,
   getBirthRecordByIdAPI,
+  searchBirthAPI,
   updateBirthRecordAPI,
 } from "../api/birthApi";
 import { toast } from "sonner";
@@ -85,6 +86,20 @@ export const useFilterBirth = (filters) => {
       return data || { data: [], pagination: {} };
     },
     enabled: !!filters,
+    retry: 1,
+    onError: (error) => toast.error(getErrorMessage(error)),
+  });
+};
+
+export const useSearchBirth = (searchTerm) => {
+  return useQuery({
+    queryKey: ["birth-search", searchTerm],
+    queryFn: async () => {
+      if (!searchTerm) return [];
+      const { data } = await searchBirthAPI(searchTerm);
+      return data?.data || [];
+    },
+    enabled: !!searchTerm,
     retry: 1,
     onError: (error) => toast.error(getErrorMessage(error)),
   });
