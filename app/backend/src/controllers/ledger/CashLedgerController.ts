@@ -6,20 +6,23 @@ import { sendResponse } from "../../utils/sendResponse";
 import { StatusCodes } from "../../constants/statusCodes";
 import {
   createCashLedgerEntry,
-  getAllCashLedgerEntries,
   getCashLedgerEntryById,
   getCashBalance,
   updateCashLedgerEntry,
   deleteCashLedgerEntry,
+  searchCashLedger,
+  filterCashLedgerService,
+  getAllCashLedgerService,
 } from "../../services/ledgerService/cashLedgerService";
 
-import { cashLedgerSchema } from "@hospital/schemas";
+import { cashLedgerFilterSchema, cashLedgerSchema } from "@hospital/schemas";
+import { validateSearchQuery } from "../../utils/queryValidation";
 
 export const createCashLedgerRecord = catchAsyncError(
   async (req: Request, res: Response, next: NextFunction) => {
     const validated = cashLedgerSchema.parse({
       ...req.body,
-      date: new Date(req.body.date)
+      date: new Date(req.body.date),
     });
 
     const entry = await createCashLedgerEntry(validated);
@@ -34,21 +37,29 @@ export const createCashLedgerRecord = catchAsyncError(
 
 export const getAllCashLedgerRecords = catchAsyncError(
   async (req: Request, res: Response) => {
-    const filters = {
-      startDate: req.query.startDate ? new Date(req.query.startDate as string) : undefined,
-      endDate: req.query.endDate ? new Date(req.query.endDate as string) : undefined,
-      amountType: req.query.amountType as string | undefined
+    const { cursor, limit } = req.query as {
+      cursor?: string;
+      limit?: string;
     };
 
-    const entries = await getAllCashLedgerEntries(filters);
+    const { data: records, nextCursor } = await getAllCashLedgerService(
+      cursor,
+      limit ? Number(limit) : undefined
+    );
+
     sendResponse(res, {
       success: true,
       statusCode: StatusCodes.OK,
-      message: "Cash ledger entries fetched successfully",
-      data: entries,
+      message: "Cash ledger records fetched",
+      data: records,
+      pagination: {
+        nextCursor: nextCursor !== null ? String(nextCursor) : undefined,
+        limit: limit ? Number(limit) : 50,
+      },
     });
   }
 );
+
 
 export const getCashLedgerRecordById = catchAsyncError(
   async (req: Request, res: Response, next: NextFunction) => {
@@ -59,7 +70,9 @@ export const getCashLedgerRecordById = catchAsyncError(
 
     const entry = await getCashLedgerEntryById(id);
     if (!entry) {
-      return next(new ErrorHandler("Cash ledger entry not found", StatusCodes.NOT_FOUND));
+      return next(
+        new ErrorHandler("Cash ledger entry not found", StatusCodes.NOT_FOUND)
+      );
     }
 
     sendResponse(res, {
@@ -93,12 +106,14 @@ export const updateCashLedgerRecord = catchAsyncError(
     const partialSchema = cashLedgerSchema.partial();
     const validatedData = partialSchema.parse({
       ...req.body,
-      date: req.body.date ? new Date(req.body.date) : undefined
+      date: req.body.date ? new Date(req.body.date) : undefined,
     });
 
     const updatedEntry = await updateCashLedgerEntry(id, validatedData);
     if (!updatedEntry) {
-      return next(new ErrorHandler("Cash ledger entry not found", StatusCodes.NOT_FOUND));
+      return next(
+        new ErrorHandler("Cash ledger entry not found", StatusCodes.NOT_FOUND)
+      );
     }
 
     sendResponse(res, {
@@ -119,7 +134,9 @@ export const deleteCashLedgerRecord = catchAsyncError(
 
     const deletedEntry = await deleteCashLedgerEntry(id);
     if (!deletedEntry) {
-      return next(new ErrorHandler("Cash ledger entry not found", StatusCodes.NOT_FOUND));
+      return next(
+        new ErrorHandler("Cash ledger entry not found", StatusCodes.NOT_FOUND)
+      );
     }
 
     sendResponse(res, {
@@ -130,3 +147,39 @@ export const deleteCashLedgerRecord = catchAsyncError(
     });
   }
 );
+
+export const searchCashLedgerResults = catchAsyncError(
+  async (req: Request, res: Response, next: NextFunction) => {
+    const { query } = req.query;
+
+    const searchTerm = validateSearchQuery(query, next);
+    if (!searchTerm) return;
+
+    const results = await searchCashLedger(searchTerm);
+
+    sendResponse(res, {
+      success: true,
+      statusCode: StatusCodes.OK,
+      message: "Cash ledger search results fetched",
+      data: results,
+    });
+  }
+);
+
+
+export const filterCashLedger = catchAsyncError(async (req, res) => {
+  const validated = cashLedgerFilterSchema.parse(req.query);
+
+  const { data, nextCursor } = await filterCashLedgerService(validated);
+
+  sendResponse(res, {
+    success: true,
+    statusCode: StatusCodes.OK,
+    message: "Filtered cash ledger fetched",
+    data,
+    pagination: {
+      nextCursor: nextCursor !== null ? String(nextCursor) : undefined,
+      limit: validated.limit,
+    },
+  });
+});

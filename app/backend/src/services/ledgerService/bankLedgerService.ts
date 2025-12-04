@@ -1,4 +1,8 @@
 import { prisma } from "../../lib/prisma";
+import { applyCommonFields } from "../../utils/applyCommonFields";
+import { filterPaginate } from "../../utils/filterPaginate";
+import { cursorPaginate } from "../../utils/pagination";
+import { createSearchService } from "../../utils/searchCache";
 
 export const createBankLedgerEntry = async (data: {
   bankName: string;
@@ -12,32 +16,20 @@ export const createBankLedgerEntry = async (data: {
   return prisma.bankLedger.create({ data });
 };
 
-export const getAllBankLedgerEntries = async (filters: {
-  bankName?: string;
-  startDate?: Date;
-  endDate?: Date;
-  amountType?: string;
-}) => {
-  const where: any = {};
-
-  if (filters.bankName) {
-    where.bankName = filters.bankName;
-  }
-
-  if (filters.startDate || filters.endDate) {
-    where.date = {};
-    if (filters.startDate) where.date.gte = filters.startDate;
-    if (filters.endDate) where.date.lte = filters.endDate;
-  }
-
-  if (filters.amountType) {
-    where.amountType = filters.amountType;
-  }
-
-  return prisma.bankLedger.findMany({
-    where,
-    orderBy: { date: "desc" },
-  });
+export const getAllBankLedgerService = async (
+  cursor?: string,
+  limit?: number
+) => {
+  return cursorPaginate(
+    prisma,
+    {
+      model: "bankLedger",
+      cursorField: "id",
+      limit: limit || 50,
+      cacheExpiry: 600,
+    },
+    cursor ? Number(cursor) : undefined
+  );
 };
 
 export const getBankLedgerEntryById = async (id: number) => {
@@ -51,7 +43,7 @@ export const getBankBalance = async (bankName: string) => {
   });
 
   return entries.reduce((balance, entry) => {
-    const amount = entry.amount.toNumber(); 
+    const amount = entry.amount.toNumber();
     return entry.amountType === "Credit" ? balance + amount : balance - amount;
   }, 0);
 };
@@ -76,4 +68,45 @@ export const updateBankLedgerEntry = async (
 
 export const deleteBankLedgerEntry = async (id: number) => {
   return prisma.bankLedger.delete({ where: { id } });
+};
+
+const commonSearchFields = ["bankName"];
+
+export const searchBankLedger = createSearchService(prisma, {
+  tableName: "BankLedger",
+  cacheKeyPrefix: "bank-ledger",
+  ...applyCommonFields(commonSearchFields),
+});
+
+export const filterBankLedgerService = async (filters: {
+  amountType?: string;
+  fromDate?: Date;
+  toDate?: Date;
+  cursor?: string | number;
+  limit?: number;
+}) => {
+  const { amountType, fromDate, toDate, cursor, limit } = filters;
+
+  const filterObj: any = {};
+
+  if (amountType)
+    filterObj.amountType = { equals: amountType, mode: "insensitive" };
+
+  if (fromDate || toDate) {
+    filterObj.date = {
+      gte: fromDate ? new Date(fromDate) : undefined,
+      lte: toDate ? new Date(toDate) : undefined,
+    };
+  }
+
+  return filterPaginate(
+    prisma,
+    {
+      model: "bankLedger",
+      cursorField: "id",
+      limit: limit || 50,
+      filters: filterObj,
+    },
+    cursor
+  );
 };

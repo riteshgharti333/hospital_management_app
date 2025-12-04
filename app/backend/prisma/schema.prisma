@@ -581,14 +581,12 @@ model Bill {
   billType       String
   mobile         String
   admissionNo    String
+  patientName    String
   admissionDate  DateTime
-  dateOfBirth    DateTime
-  gender         String
+  patientAge     Int
+  patientSex     String
   dischargeDate  DateTime?
   address        String
-  doctorName     String
-  wardNo         String
-  bedNo          String
   status         String       @default("Pending")
   createdAt      DateTime     @default(now())
   updatedAt      DateTime     @updatedAt

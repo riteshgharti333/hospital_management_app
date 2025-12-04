@@ -6,6 +6,8 @@ import {
   getCashBalanceRecord,
   updateCashLedgerRecord,
   deleteCashLedgerRecord,
+  searchCashLedgerResults,
+  filterCashLedger,
 } from "../../controllers/ledger/CashLedgerController";
 import { isAuthenticated } from "../../middlewares/isAuthenticated";
 import { isAdmin } from "../../middlewares/isAdmin";
@@ -18,6 +20,10 @@ router
   .get(getAllCashLedgerRecords);
 
 router.route("/balance").get(getCashBalanceRecord);
+
+router.get("/search", searchCashLedgerResults);
+
+router.get("/filter", filterCashLedger);
 
 router
   .route("/:id")

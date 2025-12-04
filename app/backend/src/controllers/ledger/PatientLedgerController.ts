@@ -6,20 +6,26 @@ import { sendResponse } from "../../utils/sendResponse";
 import { StatusCodes } from "../../constants/statusCodes";
 import {
   createLedgerEntry,
-  getAllLedgerEntries,
   getLedgerEntryById,
   getPatientBalance,
   updateLedgerEntry,
   deleteLedgerEntry,
+  searchPatientLedger,
+  filterPatientLedgerService,
+  getAllPatientLedgerService,
 } from "../../services/ledgerService/patientLedgerService";
 
-import { patientLedgerSchema } from "@hospital/schemas";
+import {
+  patientLedgerFilterSchema,
+  patientLedgerSchema,
+} from "@hospital/schemas";
+import { validateSearchQuery } from "../../utils/queryValidation";
 
 export const createLedgerEntryRecord = catchAsyncError(
   async (req: Request, res: Response, next: NextFunction) => {
     const validated = patientLedgerSchema.parse({
       ...req.body,
-      date: new Date(req.body.date)
+      date: new Date(req.body.date),
     });
 
     const entry = await createLedgerEntry(validated);
@@ -32,21 +38,27 @@ export const createLedgerEntryRecord = catchAsyncError(
   }
 );
 
-export const getAllLedgerEntryRecords = catchAsyncError(
+export const getAllPatientLedgerEntryRecords = catchAsyncError(
   async (req: Request, res: Response) => {
-    const filters = {
-      patientName: req.query.patientName as string | undefined,
-      startDate: req.query.startDate ? new Date(req.query.startDate as string) : undefined,
-      endDate: req.query.endDate ? new Date(req.query.endDate as string) : undefined,
-      amountType: req.query.amountType as string | undefined
+    const { cursor, limit } = req.query as {
+      cursor?: string;
+      limit?: string;
     };
 
-    const entries = await getAllLedgerEntries(filters);
+    const { data: records, nextCursor } = await getAllPatientLedgerService(
+      cursor,
+      limit ? Number(limit) : undefined
+    );
+
     sendResponse(res, {
       success: true,
       statusCode: StatusCodes.OK,
-      message: "Ledger entries fetched successfully",
-      data: entries,
+      message: "Patient ledger records fetched",
+      data: records,
+      pagination: {
+        nextCursor: nextCursor !== null ? String(nextCursor) : undefined,
+        limit: limit ? Number(limit) : 50,
+      },
     });
   }
 );
@@ -60,7 +72,9 @@ export const getLedgerEntryRecordById = catchAsyncError(
 
     const entry = await getLedgerEntryById(id);
     if (!entry) {
-      return next(new ErrorHandler("Ledger entry not found", StatusCodes.NOT_FOUND));
+      return next(
+        new ErrorHandler("Ledger entry not found", StatusCodes.NOT_FOUND)
+      );
     }
 
     sendResponse(res, {
@@ -76,7 +90,9 @@ export const getPatientBalanceRecord = catchAsyncError(
   async (req: Request, res: Response, next: NextFunction) => {
     const patientName = req.query.patientName as string;
     if (!patientName) {
-      return next(new ErrorHandler("Patient name is required", StatusCodes.BAD_REQUEST));
+      return next(
+        new ErrorHandler("Patient name is required", StatusCodes.BAD_REQUEST)
+      );
     }
 
     const balance = await getPatientBalance(patientName);
@@ -99,12 +115,14 @@ export const updateLedgerEntryRecord = catchAsyncError(
     const partialSchema = patientLedgerSchema.partial();
     const validatedData = partialSchema.parse({
       ...req.body,
-      date: req.body.date ? new Date(req.body.date) : undefined
+      date: req.body.date ? new Date(req.body.date) : undefined,
     });
 
     const updatedEntry = await updateLedgerEntry(id, validatedData);
     if (!updatedEntry) {
-      return next(new ErrorHandler("Ledger entry not found", StatusCodes.NOT_FOUND));
+      return next(
+        new ErrorHandler("Ledger entry not found", StatusCodes.NOT_FOUND)
+      );
     }
 
     sendResponse(res, {
@@ -125,7 +143,9 @@ export const deleteLedgerEntryRecord = catchAsyncError(
 
     const deletedEntry = await deleteLedgerEntry(id);
     if (!deletedEntry) {
-      return next(new ErrorHandler("Ledger entry not found", StatusCodes.NOT_FOUND));
+      return next(
+        new ErrorHandler("Ledger entry not found", StatusCodes.NOT_FOUND)
+      );
     }
 
     sendResponse(res, {
@@ -136,3 +156,37 @@ export const deleteLedgerEntryRecord = catchAsyncError(
     });
   }
 );
+
+export const searchPatientLedgerResults = catchAsyncError(
+  async (req: Request, res: Response, next: NextFunction) => {
+    const { query } = req.query;
+    const searchTerm = validateSearchQuery(query, next);
+    if (!searchTerm) return;
+
+    const results = await searchPatientLedger(searchTerm);
+
+    sendResponse(res, {
+      success: true,
+      statusCode: StatusCodes.OK,
+      message: "Search results fetched successfully",
+      data: results,
+    });
+  }
+);
+
+export const filterPatientLedger = catchAsyncError(async (req, res) => {
+  const validated = patientLedgerFilterSchema.parse(req.query);
+
+  const { data, nextCursor } = await filterPatientLedgerService(validated);
+
+  sendResponse(res, {
+    success: true,
+    statusCode: StatusCodes.OK,
+    message: "Filtered patient ledger fetched",
+    data,
+    pagination: {
+      nextCursor: nextCursor !== null ? String(nextCursor) : undefined,
+      limit: validated.limit,
+    },
+  });
+});

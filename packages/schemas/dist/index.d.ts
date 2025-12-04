@@ -452,15 +452,13 @@ export declare const billSchema: z.ZodObject<{
     billDate: z.ZodDate;
     billType: z.ZodString;
     mobile: z.ZodString;
+    patientName: z.ZodString;
     admissionNo: z.ZodString;
     admissionDate: z.ZodEffects<z.ZodEffects<z.ZodString, string, string>, Date, string>;
-    dateOfBirth: z.ZodEffects<z.ZodEffects<z.ZodString, string, string>, Date, string>;
-    gender: z.ZodEnum<["Male", "Female", "Other"]>;
+    patientAge: z.ZodNumber;
+    pateintSex: z.ZodEnum<["Male", "Female", "Other"]>;
     dischargeDate: z.ZodEffects<z.ZodOptional<z.ZodDate>, Date | undefined, unknown>;
     address: z.ZodString;
-    doctorName: z.ZodString;
-    wardNo: z.ZodString;
-    bedNo: z.ZodString;
     status: z.ZodDefault<z.ZodOptional<z.ZodString>>;
     billItems: z.ZodArray<z.ZodObject<{
         company: z.ZodString;
@@ -484,16 +482,14 @@ export declare const billSchema: z.ZodObject<{
 }, "strip", z.ZodTypeAny, {
     status: string;
     admissionDate: Date;
-    wardNo: string;
-    bedNo: string;
-    doctorName: string;
+    patientName: string;
+    patientAge: number;
     address: string;
-    gender: "Male" | "Female" | "Other";
     billDate: Date;
     billType: string;
     mobile: string;
     admissionNo: string;
-    dateOfBirth: Date;
+    pateintSex: "Male" | "Female" | "Other";
     billItems: {
         company: string;
         itemOrService: string;
@@ -504,16 +500,14 @@ export declare const billSchema: z.ZodObject<{
     dischargeDate?: Date | undefined;
 }, {
     admissionDate: string;
-    wardNo: string;
-    bedNo: string;
-    doctorName: string;
+    patientName: string;
+    patientAge: number;
     address: string;
-    gender: "Male" | "Female" | "Other";
     billDate: Date;
     billType: string;
     mobile: string;
     admissionNo: string;
-    dateOfBirth: string;
+    pateintSex: "Male" | "Female" | "Other";
     billItems: {
         company: string;
         itemOrService: string;
@@ -542,10 +536,10 @@ export declare const employeeSchema: z.ZodObject<{
     department: string;
     fathersName: string;
     gender: "Male" | "Female" | "Other";
-    dateOfBirth: Date;
     employeeName: string;
     dateOfRegistration: Date;
     contactNo: string;
+    dateOfBirth: Date;
     maritalStatus: "Married" | "Unmarried";
     email?: string | undefined;
     bloodGroup?: "A+" | "A-" | "B+" | "B-" | "AB+" | "AB-" | "O+" | "O-" | undefined;
@@ -556,10 +550,10 @@ export declare const employeeSchema: z.ZodObject<{
     department: string;
     fathersName: string;
     gender: "Male" | "Female" | "Other";
-    dateOfBirth: string;
     employeeName: string;
     dateOfRegistration: string;
     contactNo: string;
+    dateOfBirth: string;
     maritalStatus: "Married" | "Unmarried";
     email?: string | undefined;
     bloodGroup?: "A+" | "A-" | "B+" | "B-" | "AB+" | "AB-" | "O+" | "O-" | undefined;
@@ -1196,3 +1190,85 @@ export declare const prescriptionFilterSchema: z.ZodObject<{
     cursor?: number | undefined;
 }>;
 export type PrescriptionFilterInput = z.infer<typeof prescriptionFilterSchema>;
+export declare const patientLedgerFilterSchema: z.ZodObject<{
+    amountType: z.ZodOptional<z.ZodEnum<["Credit", "Debit"]>>;
+    paymentMode: z.ZodOptional<z.ZodEnum<["Cash", "Card", "UPI", "Insurance"]>>;
+    fromDate: z.ZodOptional<z.ZodDate>;
+    toDate: z.ZodOptional<z.ZodDate>;
+    limit: z.ZodDefault<z.ZodNumber>;
+    cursor: z.ZodOptional<z.ZodNumber>;
+}, "strip", z.ZodTypeAny, {
+    limit: number;
+    paymentMode?: "Cash" | "Card" | "UPI" | "Insurance" | undefined;
+    amountType?: "Credit" | "Debit" | undefined;
+    fromDate?: Date | undefined;
+    toDate?: Date | undefined;
+    cursor?: number | undefined;
+}, {
+    paymentMode?: "Cash" | "Card" | "UPI" | "Insurance" | undefined;
+    amountType?: "Credit" | "Debit" | undefined;
+    fromDate?: Date | undefined;
+    toDate?: Date | undefined;
+    limit?: number | undefined;
+    cursor?: number | undefined;
+}>;
+export declare const bankLedgerFilterSchema: z.ZodObject<{
+    amountType: z.ZodOptional<z.ZodEnum<["Credit", "Debit"]>>;
+    fromDate: z.ZodOptional<z.ZodDate>;
+    toDate: z.ZodOptional<z.ZodDate>;
+    limit: z.ZodDefault<z.ZodNumber>;
+    cursor: z.ZodOptional<z.ZodNumber>;
+}, "strip", z.ZodTypeAny, {
+    limit: number;
+    amountType?: "Credit" | "Debit" | undefined;
+    fromDate?: Date | undefined;
+    toDate?: Date | undefined;
+    cursor?: number | undefined;
+}, {
+    amountType?: "Credit" | "Debit" | undefined;
+    fromDate?: Date | undefined;
+    toDate?: Date | undefined;
+    limit?: number | undefined;
+    cursor?: number | undefined;
+}>;
+export declare const cashLedgerFilterSchema: z.ZodObject<{
+    amountType: z.ZodOptional<z.ZodEnum<["Income", "Expense"]>>;
+    fromDate: z.ZodOptional<z.ZodDate>;
+    toDate: z.ZodOptional<z.ZodDate>;
+    limit: z.ZodDefault<z.ZodNumber>;
+    cursor: z.ZodOptional<z.ZodNumber>;
+}, "strip", z.ZodTypeAny, {
+    limit: number;
+    amountType?: "Income" | "Expense" | undefined;
+    fromDate?: Date | undefined;
+    toDate?: Date | undefined;
+    cursor?: number | undefined;
+}, {
+    amountType?: "Income" | "Expense" | undefined;
+    fromDate?: Date | undefined;
+    toDate?: Date | undefined;
+    limit?: number | undefined;
+    cursor?: number | undefined;
+}>;
+export declare const doctorLedgerFilterSchema: z.ZodObject<{
+    amountType: z.ZodOptional<z.ZodEnum<["Credit", "Debit"]>>;
+    paymentMode: z.ZodOptional<z.ZodEnum<["Cash", "UPI", "Bank"]>>;
+    fromDate: z.ZodOptional<z.ZodDate>;
+    toDate: z.ZodOptional<z.ZodDate>;
+    limit: z.ZodDefault<z.ZodNumber>;
+    cursor: z.ZodOptional<z.ZodNumber>;
+}, "strip", z.ZodTypeAny, {
+    limit: number;
+    paymentMode?: "Cash" | "UPI" | "Bank" | undefined;
+    amountType?: "Credit" | "Debit" | undefined;
+    fromDate?: Date | undefined;
+    toDate?: Date | undefined;
+    cursor?: number | undefined;
+}, {
+    paymentMode?: "Cash" | "UPI" | "Bank" | undefined;
+    amountType?: "Credit" | "Debit" | undefined;
+    fromDate?: Date | undefined;
+    toDate?: Date | undefined;
+    limit?: number | undefined;
+    cursor?: number | undefined;
+}>;

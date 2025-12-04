@@ -6,19 +6,21 @@ import {
   getDoctorBalanceAPI,
   updateDoctorLedgerEntryAPI,
   deleteDoctorLedgerEntryAPI,
+  filterDoctorLedgerAPI,
+  searchDoctorLedgerAPI,
 } from "../ledgerApi/doctorLedgerApi";
 import { toast } from "sonner";
 import { getErrorMessage } from "../../utils/errorUtils";
 
-export const useGetDoctorLedgerEntries = () => {
+export const useGetDoctorLedgerEntries = (cursor = null, limit = 50) => {
   return useQuery({
-    queryKey: ["doctorLedgerEntries"],
+    queryKey: ["doctorLedgerEntries", cursor, limit],
     queryFn: async () => {
-      const { data } = await getAllDoctorLedgerEntriesAPI();
-      return data.data;
+      const { data } = await getAllDoctorLedgerEntriesAPI(cursor, limit);
+      return data || { data: [], pagination: {} };
     },
-    onError: (error) => toast.error(getErrorMessage(error)),
     select: (data) => data || [],
+    onError: (error) => toast.error(getErrorMessage(error)),
   });
 };
 
@@ -51,7 +53,9 @@ export const useCreateDoctorLedgerEntry = () => {
   return useMutation({
     mutationFn: createDoctorLedgerEntryAPI,
     onSuccess: (response) => {
-      toast.success(response?.data?.message || "Doctor ledger entry created successfully");
+      toast.success(
+        response?.data?.message || "Doctor ledger entry created successfully"
+      );
       queryClient.invalidateQueries({ queryKey: ["doctorLedgerEntries"] });
     },
     onError: (error) => toast.error(getErrorMessage(error)),
@@ -63,7 +67,9 @@ export const useUpdateDoctorLedgerEntry = () => {
   return useMutation({
     mutationFn: ({ id, data }) => updateDoctorLedgerEntryAPI(id, data),
     onSuccess: (response) => {
-      toast.success(response?.data?.message || "Doctor ledger entry updated successfully");
+      toast.success(
+        response?.data?.message || "Doctor ledger entry updated successfully"
+      );
       queryClient.invalidateQueries({ queryKey: ["doctorLedgerEntries"] });
     },
     onError: (error) => toast.error(getErrorMessage(error)),
@@ -75,9 +81,38 @@ export const useDeleteDoctorLedgerEntry = () => {
   return useMutation({
     mutationFn: deleteDoctorLedgerEntryAPI,
     onSuccess: (response) => {
-      toast.success(response?.data?.message || "Doctor ledger entry deleted successfully");
+      toast.success(
+        response?.data?.message || "Doctor ledger entry deleted successfully"
+      );
       queryClient.invalidateQueries({ queryKey: ["doctorLedgerEntries"] });
     },
+    onError: (error) => toast.error(getErrorMessage(error)),
+  });
+};
+
+export const useSearchDoctorLedger = (searchTerm) => {
+  return useQuery({
+    queryKey: ["doctor-ledger-search", searchTerm],
+    queryFn: async () => {
+      if (!searchTerm) return [];
+      const { data } = await searchDoctorLedgerAPI(searchTerm);
+      return data?.data || [];
+    },
+    enabled: !!searchTerm,
+    retry: 1,
+    onError: (error) => toast.error(getErrorMessage(error)),
+  });
+};
+
+export const useFilterDoctorLedger = (filters) => {
+  return useQuery({
+    queryKey: ["doctor-ledger-filter", filters],
+    queryFn: async () => {
+      const { data } = await filterDoctorLedgerAPI(filters);
+      return data || { data: [], pagination: {} };
+    },
+    enabled: !!filters,
+    retry: 1,
     onError: (error) => toast.error(getErrorMessage(error)),
   });
 };

@@ -1,76 +1,187 @@
-import React, { useMemo } from "react";
+import React, { useMemo, useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { FaPlus } from "react-icons/fa6";
 import Table from "../../components/Table/Table";
-import { cashLedgerData, doctorLedgerData, patientLedgerData } from "../../assets/ledgerData";
-import { useGetCashLedgerEntries } from "../../feature/ledgerHook/useCashLedger";
-import Loader from "../../components/Loader/Loader";
+
+import {
+  useGetCashLedgerEntries,
+  useSearchCashLedger,
+  useFilterCashLedger,
+} from "../../feature/ledgerHook/useCashLedger";
+
+const filterLabels = {
+  amountType: "Amount Type",
+  fromDate: "From Date",
+  toDate: "To Date",
+};
 
 const CashLedger = () => {
+  const [currentCursor, setCurrentCursor] = useState(null);
+  const [cursorHistory, setCursorHistory] = useState([]);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [filters, setFilters] = useState({});
+  const [mode, setMode] = useState("normal"); // normal | search | filter
 
-    const { data, error, isLoading, isError } = useGetCashLedgerEntries();
+  // Normal paginated ledger
+  const { data: ledgerData, isLoading: ledgerLoading } =
+    useGetCashLedgerEntries(currentCursor, 50);
+
+  // Search results
+  const { data: searchData, isLoading: searchLoading } =
+    useSearchCashLedger(searchTerm);
+
+  // Filter results
+  const { data: filterData, isLoading: filterLoading } = useFilterCashLedger({
+    ...filters,
+    cursor: currentCursor,
+    limit: 50,
+  });
+
+  // Select active dataset
+  const getCurrentData = () => {
+    switch (mode) {
+      case "search":
+        return { data: searchData || [], pagination: null };
+      case "filter":
+        return filterData || { data: [], pagination: {} };
+      default:
+        return ledgerData || { data: [], pagination: {} };
+    }
+  };
+
+  const data = getCurrentData();
+  const isLoading = ledgerLoading || searchLoading || filterLoading;
+
+  // Auto-switch modes
+  useEffect(() => {
+    if (searchTerm) {
+      setMode("search");
+      setCurrentCursor(null);
+      setCursorHistory([]);
+    } else if (Object.keys(filters).length > 0) {
+      setMode("filter");
+    } else {
+      setMode("normal");
+    }
+  }, [searchTerm, filters]);
 
   const columns = useMemo(
     () => [
       {
         accessorKey: "date",
         header: "Date",
-        cell: (info) => info.getValue(),
+        cell: (info) => {
+          const date = new Date(info.getValue());
+          return isNaN(date)
+            ? info.getValue()
+            : date.toLocaleDateString("en-GB", {
+                day: "2-digit",
+                month: "short",
+                year: "numeric",
+              });
+        },
       },
-      {
-        accessorKey: "purpose",
-        header: "Purpose",
-        cell: (info) => info.getValue() || "-",
-      },
+      { accessorKey: "purpose", header: "Purpose" },
       {
         accessorKey: "amountType",
         header: "Amount Type",
         cell: (info) => {
           const value = info.getValue();
-          const badgeClass =
+          const classes =
             value === "Debit"
               ? "bg-red-100 text-red-700"
               : "bg-green-100 text-green-700";
+
           return (
             <span
-              className={`px-2 py-1 rounded text-xs font-medium ${badgeClass}`}
+              className={`px-2 py-1 rounded text-xs font-medium ${classes}`}
             >
               {value}
             </span>
           );
         },
       },
-      {
-        accessorKey: "amount",
-        header: "Amount",
-        cell: (info) => `$${info.getValue()}`,
-      },
-      {
-        accessorKey: "remarks",
-        header: "Remarks",
-        cell: (info) => info.getValue() || "-",
-      },
+      { accessorKey: "amount", header: "Amount" },
+      { accessorKey: "remarks", header: "Remarks" },
     ],
     []
   );
 
-   if (isLoading) {
-    return <Loader />;
-  }
+  // Pagination
+  const handleNextPage = () => {
+    if (data?.pagination?.nextCursor) {
+      setCursorHistory((prev) => [...prev, currentCursor]);
+      setCurrentCursor(data.pagination.nextCursor);
+    }
+  };
 
+  const handlePrevPage = () => {
+    if (cursorHistory.length > 0) {
+      const prevCursor = cursorHistory[cursorHistory.length - 1];
+      setCursorHistory((prev) => prev.slice(0, -1));
+      setCurrentCursor(prevCursor);
+    }
+  };
+
+  // Filters
+  const handleApplyFilters = (newFilters) => {
+    setFilters(newFilters);
+    setCurrentCursor(null);
+    setCursorHistory([]);
+  };
+
+  const handleClearFilters = () => {
+    setFilters({});
+    setSearchTerm("");
+    setMode("normal");
+    setCurrentCursor(null);
+    setCursorHistory([]);
+  };
 
   return (
-    <div className="">
+    <div>
       <div className="flex justify-between items-center">
         <h2 className="text-2xl font-bold text-gray-800 flex items-center">
           Cash Ledger
         </h2>
-        <Link className="btn-primary" to={"/new-ledger"}>
+        <Link className="btn-primary" to="/new-ledger">
           <FaPlus /> New Ledger
         </Link>
       </div>
 
-      <Table data={data} columns={columns} path="cash-ledger" />
+      <Table
+        data={data?.data || []}
+        columns={columns}
+        path="cash-ledger"
+        loading={isLoading}
+        searchConfig={{
+          placeholder: "Search by purpose...",
+          searchTerm,
+          onSearchChange: setSearchTerm,
+        }}
+        filtersConfig={[
+          {
+            key: "amountType",
+            label: "Amount Type",
+            type: "select",
+            options: ["Income", "Expense"],
+          },
+          { key: "fromDate", label: "From Date", type: "date" },
+          { key: "toDate", label: "To Date", type: "date" },
+        ]}
+        pagination={{
+          hasPrevious: cursorHistory.length > 0 && mode !== "search",
+          hasNext: !!data?.pagination?.nextCursor && mode !== "search",
+          currentPage: cursorHistory.length,
+          mode,
+        }}
+        onNextPage={handleNextPage}
+        onPrevPage={handlePrevPage}
+        onApplyFilters={handleApplyFilters}
+        onClearFilters={handleClearFilters}
+        activeFilters={filters}
+        filterLabels={filterLabels}
+      />
     </div>
   );
 };

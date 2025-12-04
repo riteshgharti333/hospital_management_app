@@ -1,24 +1,32 @@
 import express from "express";
 import {
   createLedgerEntryRecord,
-  getAllLedgerEntryRecords,
+  getAllPatientLedgerEntryRecords,
   getLedgerEntryRecordById,
   getPatientBalanceRecord,
   updateLedgerEntryRecord,
   deleteLedgerEntryRecord,
+  searchPatientLedgerResults,
+  filterPatientLedger,
 } from "../../controllers/ledger/PatientLedgerController";
 import { isAuthenticated } from "../../middlewares/isAuthenticated";
 import { isAdmin } from "../../middlewares/isAdmin";
 
 const router = express.Router();
 
-router.route("/")
+router
+  .route("/")
   .post(isAuthenticated, isAdmin, createLedgerEntryRecord)
-  .get(getAllLedgerEntryRecords);
+  .get(getAllPatientLedgerEntryRecords);
 
 router.route("/balance").get(getPatientBalanceRecord);
 
-router.route("/:id")
+router.get("/search", searchPatientLedgerResults);
+
+router.get("/filter", filterPatientLedger);
+
+router
+  .route("/:id")
   .get(getLedgerEntryRecordById)
   .patch(isAuthenticated, isAdmin, updateLedgerEntryRecord)
   .delete(isAuthenticated, isAdmin, deleteLedgerEntryRecord);

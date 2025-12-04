@@ -89,13 +89,13 @@ const NewLedger = () => {
   const ledgerTypes = [
     { value: "Patient", label: "Patient Ledger", icon: <FaUser /> },
     { value: "Doctor", label: "Doctor Ledger", icon: <FaUserMd /> },
-    { value: "Supplier", label: "Supplier Ledger", icon: <FaTruck /> },
-    { value: "Pharmacy", label: "Pharmacy Ledger", icon: <FaPills /> },
-    { value: "Lab", label: "Lab Ledger", icon: <FaFlask /> },
+    // { value: "Supplier", label: "Supplier Ledger", icon: <FaTruck /> },
+    // { value: "Pharmacy", label: "Pharmacy Ledger", icon: <FaPills /> },
+    // { value: "Lab", label: "Lab Ledger", icon: <FaFlask /> },
     { value: "Cash", label: "Cash Ledger", icon: <FaMoneyBillAlt /> },
     { value: "Bank", label: "Bank Ledger", icon: <FaBuilding /> },
-    { value: "Insurance", label: "Insurance Ledger", icon: <FaFileMedical /> },
-    { value: "Expense", label: "Expense Ledger", icon: <FaFileInvoice /> },
+    // { value: "Insurance", label: "Insurance Ledger", icon: <FaFileMedical /> },
+    // { value: "Expense", label: "Expense Ledger", icon: <FaFileInvoice /> },
   ];
 
   // More dynamic rendering of the form component
@@ -506,7 +506,7 @@ const bankFormConfig = {
     date: new Date().toISOString().split("T")[0],
     description: "",
     amountType: "Debit",
-    amount:  0,
+    amount: 0,
     transactionId: "",
     remarks: "",
   },
@@ -635,45 +635,53 @@ const BaseLedgerForm = ({ ledgerType, schema, formConfig }) => {
     defaultValues: formConfig.defaultValues,
   });
 
- 
-
   const onSubmit = async (data) => {
-  // Handle date fields safely
-  const processedData = {
-    ...data,
-    // Convert only valid dates to ISO strings
-    ...(data.date && { date: new Date(data.date).toISOString() }),
-    // Special handling for insurance ledger dates
-    ...(ledgerType === 'Insurance' && {
-      ...(data.claimDate && { claimDate: new Date(data.claimDate).toISOString() }),
-      ...(data.approvalDate && { approvalDate: new Date(data.approvalDate).toISOString() }),
-      ...(data.settlementDate && { settlementDate: new Date(data.settlementDate).toISOString() })
-    })
-  };
+    // Handle date fields safely
+    const processedData = {
+      ...data,
+      // Convert only valid dates to ISO strings
+      ...(data.date && { date: new Date(data.date).toISOString() }),
+      // Special handling for insurance ledger dates
+      ...(ledgerType === "Insurance" && {
+        ...(data.claimDate && {
+          claimDate: new Date(data.claimDate).toISOString(),
+        }),
+        ...(data.approvalDate && {
+          approvalDate: new Date(data.approvalDate).toISOString(),
+        }),
+        ...(data.settlementDate && {
+          settlementDate: new Date(data.settlementDate).toISOString(),
+        }),
+      }),
+    };
 
-  // Handle file attachments
-  const cleanedData = {
-    ...processedData,
-    ...(data.attachBill && { attachBill: "https://example.com/dummy-bill.pdf" }),
-    ...(data.attachReport && { attachReport: "https://example.com/dummy-report.pdf" })
-  };
+    // Handle file attachments
+    const cleanedData = {
+      ...processedData,
+      ...(data.attachBill && {
+        attachBill: "https://example.com/dummy-bill.pdf",
+      }),
+      ...(data.attachReport && {
+        attachReport: "https://example.com/dummy-report.pdf",
+      }),
+    };
 
-  // Clean empty values
-  Object.keys(cleanedData).forEach(key => {
-    if (cleanedData[key] === undefined || cleanedData[key] === "") {
-      delete cleanedData[key];
+    // Clean empty values
+    Object.keys(cleanedData).forEach((key) => {
+      if (cleanedData[key] === undefined || cleanedData[key] === "") {
+        delete cleanedData[key];
+      }
+    });
+
+    try {
+      const response = await mutateAsync(cleanedData);
+      if (response?.data?.success) {
+        navigate(`${navigationPaths[ledgerType]}/${response.data.data.id}`);
+      }
+    } catch (error) {
+      console.error("Error:", error);
     }
-  });
-
-  try {
-    const response = await mutateAsync(cleanedData);
-    if (response?.data?.success) {
-      navigate(`${navigationPaths[ledgerType]}/${response.data.data.id}`);
-    }
-  } catch (error) {
-    console.error("Error:", error);
-  }
-};
+  };
   const handleCancel = () => {
     reset(formConfig.defaultValues);
     toast.info("Form reset.");

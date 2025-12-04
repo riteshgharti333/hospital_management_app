@@ -58,9 +58,6 @@ const EditBill = () => {
   // --- Sample data, ideally from API ---
   const billTypes = ["OPD", "IPD", "Pharmacy", "Pathology", "Radiology"];
   const genders = ["Male", "Female", "Other"];
-  const doctors = ["Dr. Sharma", "Dr. Mehta", "Dr. Gupta", "Dr. Roy"];
-  const wards = ["Ward 1", "Ward 2", "Ward 3", "ICU", "Emergency"];
-  const beds = ["Bed 1", "Bed 2", "Bed 3", "Bed 4", "Bed 5"];
   const companies = ["Company A", "Company B", "Company C", "Company D"];
   const services = ["Service 1", "Service 2", "Service 3", "Service 4"];
   // ---
@@ -451,90 +448,7 @@ const EditBill = () => {
           </div>
         </div>
 
-        {/* Doctor & Ward Information */}
-        <div className="p-6 border-t border-gray-100">
-          <div className="flex items-center mb-6">
-            <FaUserMd className="text-blue-500" />
-            <h3 className="ml-2 text-lg font-semibold text-gray-800">
-              Doctor & Ward Information
-            </h3>
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            <div className="space-y-1">
-              <label className="block text-sm font-medium text-gray-700">
-                Doctor Name<span className="text-red-500 ml-1">*</span>
-              </label>
-              <select
-                {...register("doctorName")}
-                disabled={!editMode}
-                className={`${getInputClass("doctorName", !editMode)} pr-8`}
-              >
-                <option value="" disabled hidden>
-                  Select doctor
-                </option>
-                {doctors.map((d) => (
-                  <option key={d} value={d}>
-                    {d}
-                  </option>
-                ))}
-              </select>
-              {errors.doctorName && (
-                <p className="text-red-600 text-sm mt-1">
-                  {errors.doctorName.message}
-                </p>
-              )}
-            </div>
-            <div className="space-y-1">
-              <label className="block text-sm font-medium text-gray-700">
-                Ward No<span className="text-red-500 ml-1">*</span>
-              </label>
-              <select
-                {...register("wardNo")}
-                disabled={!editMode}
-                className={`${getInputClass("wardNo", !editMode)} pr-8`}
-              >
-                <option value="" disabled hidden>
-                  Select ward
-                </option>
-                {wards.map((w) => (
-                  <option key={w} value={w}>
-                    {w}
-                  </option>
-                ))}
-              </select>
-              {errors.wardNo && (
-                <p className="text-red-600 text-sm mt-1">
-                  {errors.wardNo.message}
-                </p>
-              )}
-            </div>
-            <div className="space-y-1">
-              <label className="block text-sm font-medium text-gray-700">
-                Bed No<span className="text-red-500 ml-1">*</span>
-              </label>
-              <select
-                {...register("bedNo")}
-                disabled={!editMode}
-                className={`${getInputClass("bedNo", !editMode)} pr-8`}
-              >
-                <option value="" disabled hidden>
-                  Select bed
-                </option>
-                {beds.map((b) => (
-                  <option key={b} value={b}>
-                    {b}
-                  </option>
-                ))}
-              </select>
-              {errors.bedNo && (
-                <p className="text-red-600 text-sm mt-1">
-                  {errors.bedNo.message}
-                </p>
-              )}
-            </div>
-          </div>
-        </div>
-
+      
         {/* Product Data Section */}
         {editMode && (
           <div className="p-6 border-t border-gray-100">

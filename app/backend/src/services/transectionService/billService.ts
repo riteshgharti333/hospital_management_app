@@ -13,23 +13,21 @@ export type BillInput = {
   billType: string;
   mobile: string;
   admissionNo: string;
+  patientName: string;
   admissionDate: Date;
   dateOfBirth: Date;
-  gender: string;
+  patientSex: string;
+  patientAge: number;
   dischargeDate?: Date | null;
   address: string;
-  doctorName: string;
-  wardNo: string;
-  bedNo: string;
   status?: string;
   billItems: BillItemInput[];
 };
 
 export const createBill = async (data: BillInput) => {
-  
-  const processedItems = data.billItems.map(item => ({
+  const processedItems = data.billItems.map((item) => ({
     ...item,
-    totalAmount: item.totalAmount ?? item.mrp * item.quantity
+    totalAmount: item.totalAmount ?? item.mrp * item.quantity,
   }));
 
   return prisma.bill.create({
@@ -42,7 +40,6 @@ export const createBill = async (data: BillInput) => {
     include: { billItems: true },
   });
 };
-
 
 export const getAllBills = async () => {
   return prisma.bill.findMany({

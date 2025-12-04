@@ -6,6 +6,8 @@ import {
   getBankBalanceRecord,
   updateBankLedgerRecord,
   deleteBankLedgerRecord,
+  searchBankLedgerResults,
+  filterBankLedger,
 } from "../../controllers/ledger/BankLedgerController";
 import { isAuthenticated } from "../../middlewares/isAuthenticated";
 import { isAdmin } from "../../middlewares/isAdmin";
@@ -19,6 +21,10 @@ router
 
 router.route("/balance").get(getBankBalanceRecord);
 
+router.get("/search", searchBankLedgerResults);
+
+router.get("/filter", filterBankLedger);
+ 
 router
   .route("/:id")
   .get(getBankLedgerRecordById)

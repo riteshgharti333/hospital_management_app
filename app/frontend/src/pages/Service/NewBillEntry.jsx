@@ -22,6 +22,7 @@ import LoadingButton from "../../components/LoadingButton/LoadingButton";
 
 import { billSchema } from "@hospital/schemas";
 import { useCreateBill } from "../../feature/transectionHooks/useBill";
+import { useSearchAdmissions } from "../../feature/hooks/useAdmisson";
 
 const NewBillEntry = () => {
   const [productData, setProductData] = useState({
@@ -32,6 +33,11 @@ const NewBillEntry = () => {
     totalAmount: "",
   });
 
+  const [searchAdmission, setSearchAdmission] = useState("");
+  const [selectedAdmission, setSelectedAdmission] = useState(null);
+
+  const { data: admissionResults = [] } = useSearchAdmissions(searchAdmission);
+
   const navigate = useNavigate();
   const { mutateAsync, isPending } = useCreateBill();
 
@@ -39,6 +45,7 @@ const NewBillEntry = () => {
     register,
     handleSubmit,
     control,
+    setValue,
     formState: { errors },
   } = useForm({
     resolver: zodResolver(billSchema),
@@ -47,14 +54,11 @@ const NewBillEntry = () => {
       billType: "",
       mobile: "",
       admissionNo: "",
+      patientName: "",
       admissionDate: "",
-      dateOfBirth: "",
-      gender: "Male",
-      dischargeDate: "",
+      patientAge: "",
+      patientSex: "Male",
       address: "",
-      doctorName: "",
-      wardNo: "",
-      bedNo: "",
       billItems: [],
       status: "Pending",
     },
@@ -68,10 +72,7 @@ const NewBillEntry = () => {
   const watchedItems = useWatch({ control, name: "billItems" });
 
   const billTypes = ["OPD", "IPD", "Pharmacy", "Pathology", "Radiology"];
-  const genders = ["Male", "Female", "Other"];
-  const doctors = ["Dr. Sharma", "Dr. Mehta", "Dr. Gupta", "Dr. Roy"];
-  const wards = ["Ward 1", "Ward 2", "Ward 3", "ICU", "Emergency"];
-  const beds = ["Bed 1", "Bed 2", "Bed 3", "Bed 4", "Bed 5"];
+  const patientSex = ["Male", "Female", "Other"];
   const companies = ["Company A", "Company B", "Company C", "Company D"];
   const services = ["Service 1", "Service 2", "Service 3", "Service 4"];
 
@@ -129,33 +130,54 @@ const NewBillEntry = () => {
     );
   };
 
-  const onSubmit = async (data) => {
-    const payload = {
-      ...data,
-      billDate: data.billDate || today,
-      admissionDate: data.admissionDate || today,
-      dateOfBirth: data.dateOfBirth || today,
-      dischargeDate: data.dischargeDate || undefined,
-      billItems: data.billItems.map((item) => ({
-        ...item,
-        mrp: Number(item.mrp),
-        totalAmount: Number(item.totalAmount),
-      })),
-    };
+  const [showDropdown, setShowDropdown] = useState(false);
 
+  // ADMISSION SELECT HANDLER
+  // -------------------------
+  const handleSelectAdmission = (item) => {
+    setSelectedAdmission(item);
+    setSearchAdmission(item.gsRsRegNo);
+    setShowDropdown(false);
+
+    // AUTO FILL FIELDS FROM ADMISSION
+    setValue("admissionNo", item.gsRsRegNo);
+    setValue("patientName", item.patientName);
+    setValue("mobile", item.phoneNo);
+    setValue("admissionDate", item.admissionDate.split("T")[0]);
+    setValue("patientAge", item.patientAge);
+    setValue("patientSex", item.patientSex);
+    setValue("address", item.patientAddress);
+    setValue(
+      "dischargeDate",
+      item.dischargeDate ? item.dischargeDate.split("T")[0] : ""
+    );
+
+    toast.success("Patient details auto-filled");
+  };
+
+  const onSubmit = async (data) => {
     try {
+      const payload = {
+        ...data,
+        billItems: data.billItems.map((item) => ({
+          ...item,
+          mrp: Number(item.mrp),
+          totalAmount: Number(item.totalAmount),
+        })),
+      };
+
       const response = await mutateAsync(payload);
-      if (response?.data?.success) {
+      if (response?.success || response?.data?.success) {
         navigate(`/bill/${response?.data?.data?.id}`);
       }
-    } catch (error) {
-      console.log(error)
+    } catch (err) {
+      console.log(err);
     }
   };
 
-  const getInputClass = (fieldName) =>
+  const getInputClass = (name) =>
     `block w-full px-4 py-2 border rounded-lg focus:ring-blue-500 focus:border-blue-500 ${
-      errors[fieldName] ? "border-red-500" : "border-gray-300"
+      errors[name] ? "border-red-500" : "border-gray-300"
     }`;
 
   return (
@@ -238,28 +260,8 @@ const NewBillEntry = () => {
               )}
             </div>
 
-            {/* Mobile */}
-            <div className="space-y-1">
-              <label className="block text-sm font-medium text-gray-700">
-                Mobile<span className="text-red-500 ml-1">*</span>
-              </label>
-              <div className="relative">
-                <input
-                  type="tel"
-                  {...register("mobile")}
-                  placeholder="Enter mobile number"
-                  className={`${getInputClass("mobile")} pl-10`}
-                />
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <FaMobileAlt className="text-gray-400" />
-                </div>
-              </div>
-              {errors.mobile && (
-                <p className="text-red-600 text-sm mt-1">
-                  {errors.mobile.message}
-                </p>
-              )}
-            </div>
+
+            
           </div>
         </div>
 
@@ -273,24 +275,133 @@ const NewBillEntry = () => {
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {/* Admission No */}
-            <div className="space-y-1">
+            {/* Admission No (Searchable) */}
+            <div className="space-y-1 relative">
               <label className="block text-sm font-medium text-gray-700">
                 Admission No<span className="text-red-500 ml-1">*</span>
+              </label>
+
+              <div className="relative">
+                <input
+                  type="text"
+                  value={searchAdmission}
+                  onChange={(e) => {
+                    setSearchAdmission(e.target.value);
+                    setValue("admissionNo", e.target.value);
+                    setShowDropdown(true);
+                  }}
+                  placeholder="Enter admission number"
+                  className={`${getInputClass("admissionNo")} pl-10`}
+                  autoComplete="off"
+                />
+
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <FaIdCard className="text-gray-400" />
+                </div>
+              </div>
+
+              {/* dropdown results */}
+              {showDropdown &&
+                searchAdmission &&
+                admissionResults?.length > 0 && (
+                  <ul className="absolute z-50 mt-1 w-full bg-white border border-gray-300 rounded-lg shadow-sm max-h-60 overflow-y-auto">
+                    {admissionResults.slice(0, 10).map((item) => (
+                      <li
+                        key={item.id}
+                        onClick={() => handleSelectAdmission(item)}
+                        className="px-4 py-2 cursor-pointer hover:bg-gray-100"
+                      >
+                        <p className="font-medium text-[12px] text-gray-800">
+                          {item.gsRsRegNo} — {item.patientName}
+                        </p>
+                        <p className="text-[12px] text-gray-500">
+                          {item.phoneNo}
+                        </p>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+
+              {errors.admissionNo && (
+                <p className="text-red-600 text-sm mt-1">
+                  {errors.admissionNo.message}
+                </p>
+              )}
+            </div>
+
+            {/* Patient Name */}
+            <div className="space-y-1">
+              <label className="block text-sm font-medium text-gray-700">
+                Patient Name<span className="text-red-500 ml-1">*</span>
               </label>
               <div className="relative">
                 <input
                   type="text"
-                  {...register("admissionNo")}
-                  placeholder="Enter admission number"
-                  className={`${getInputClass("admissionNo")} pl-10`}
+                  {...register("patientName")}
+                  disabled
+                  placeholder="Enter patient name"
+                  className={`${getInputClass(
+                    "patientName"
+                  )} bg-gray-100 cursor-not-allowed pl-10`}
                 />
+
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <FaIdCard className="text-gray-400" />
+                  <FaUser className="text-gray-400" />
                 </div>
               </div>
               {errors.admissionNo && (
                 <p className="text-red-600 text-sm mt-1">
                   {errors.admissionNo.message}
+                </p>
+              )}
+            </div>
+            <div className="space-y-1">
+              <label className="block text-sm font-medium text-gray-700">
+                Patient Age<span className="text-red-500 ml-1">*</span>
+              </label>
+              <div className="relative">
+                <input
+                  type="number"
+                  {...register("patientAge")}
+                  disabled
+                  placeholder="Enter patient age "
+                  className={`${getInputClass(
+                    "patientAge"
+                  )} bg-gray-100 cursor-not-allowed`}
+                />
+
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none"></div>
+              </div>
+              {errors.patientAge && (
+                <p className="text-red-600 text-sm mt-1">
+                  {errors.patientAge.message}
+                </p>
+              )}
+            </div>
+
+            {/* Mobile */}
+            <div className="space-y-1">
+              <label className="block text-sm font-medium text-gray-700">
+                Mobile<span className="text-red-500 ml-1">*</span>
+              </label>
+              <div className="relative">
+                <input
+                  type="tel"
+                  {...register("mobile")}
+                  disabled
+                  placeholder="Enter mobile number"
+                  className={`${getInputClass(
+                    "mobile"
+                  )} bg-gray-100 cursor-not-allowed pl-10`}
+                />
+
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <FaMobileAlt className="text-gray-400" />
+                </div>
+              </div>
+              {errors.mobile && (
+                <p className="text-red-600 text-sm mt-1">
+                  {errors.mobile.message}
                 </p>
               )}
             </div>
@@ -304,8 +415,12 @@ const NewBillEntry = () => {
                 <input
                   type="date"
                   {...register("admissionDate")}
-                  className={`${getInputClass("admissionDate")} pl-10`}
+                  disabled
+                  className={`${getInputClass(
+                    "admissionDate"
+                  )} bg-gray-100 cursor-not-allowed pl-10`}
                 />
+
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                   <FaCalendarAlt className="text-gray-400" />
                 </div>
@@ -317,51 +432,27 @@ const NewBillEntry = () => {
               )}
             </div>
 
-            {/* Date of Birth */}
-            <div className="space-y-1">
-              <label className="block text-sm font-medium text-gray-700">
-                Date of Birth<span className="text-red-500 ml-1">*</span>
-              </label>
-              <div className="relative">
-                <input
-                  type="date"
-                  {...register("dateOfBirth")}
-                  className={`${getInputClass("dateOfBirth")} pl-10`}
-                />
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <FaCalendarAlt className="text-gray-400" />
-                </div>
-              </div>
-              {errors.dateOfBirth && (
-                <p className="text-red-600 text-sm mt-1">
-                  {errors.dateOfBirth.message}
-                </p>
-              )}
-            </div>
-
             {/* Gender */}
             <div className="space-y-1">
               <label className="block text-sm font-medium text-gray-700">
-                Gender<span className="text-red-500 ml-1">*</span>
+                Patient Sex<span className="text-red-500 ml-1">*</span>
               </label>
               <div className="relative">
                 <select
-                  {...register("gender")}
-                  className={`${getInputClass("gender")}  bg-white pr-8`}
+                  {...register("patientSex")}
+                  disabled
+                  className={`${getInputClass(
+                    "patientSex"
+                  )} bg-gray-100 cursor-not-allowed pr-8`}
                 >
-                  <option value="" disabled selected hidden>
-                    Select gender
-                  </option>
-                  {genders.map((g) => (
-                    <option key={g} value={g}>
-                      {g}
-                    </option>
-                  ))}
+                  <option value="Male">Male</option>
+                  <option value="Female">Female</option>
+                  <option value="Other">Other</option>
                 </select>
               </div>
-              {errors.gender && (
+              {errors.patientSex && (
                 <p className="text-red-600 text-sm mt-1">
-                  {errors.gender.message}
+                  {errors.patientSex.message}
                 </p>
               )}
             </div>
@@ -375,8 +466,12 @@ const NewBillEntry = () => {
                 <input
                   type="date"
                   {...register("dischargeDate")}
-                  className={`${getInputClass("dischargeDate")} pl-10`}
+                  disabled
+                  className={`${getInputClass(
+                    "dischargeDate"
+                  )} bg-gray-100 cursor-not-allowed pl-10`}
                 />
+
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                   <FaCalendarAlt className="text-gray-400" />
                 </div>
@@ -384,90 +479,6 @@ const NewBillEntry = () => {
               {errors.dischargeDate && (
                 <p className="text-red-600 text-sm mt-1">
                   {errors.dischargeDate.message}
-                </p>
-              )}
-            </div>
-          </div>
-        </div>
-
-        {/* Doctor & Ward Information Section */}
-        <div className="p-6 border-t border-gray-100">
-          <div className="flex items-center mb-6">
-            <FaUserMd className="text-blue-500" />
-            <h3 className="ml-2 text-lg font-semibold text-gray-800">
-              Doctor & Ward Information
-            </h3>
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {/* Doctor Name */}
-            <div className="space-y-1">
-              <label className="block text-sm font-medium text-gray-700">
-                Doctor Name<span className="text-red-500 ml-1">*</span>
-              </label>
-              <select
-                {...register("doctorName")}
-                className={`${getInputClass("doctorName")} bg-white pr-8`}
-              >
-                <option value="" disabled selected hidden>
-                  Select doctor
-                </option>
-                {doctors.map((d) => (
-                  <option key={d} value={d}>
-                    {d}
-                  </option>
-                ))}
-              </select>
-              {errors.doctorName && (
-                <p className="text-red-600 text-sm mt-1">
-                  {errors.doctorName.message}
-                </p>
-              )}
-            </div>
-            {/* Ward No */}
-            <div className="space-y-1">
-              <label className="block text-sm font-medium text-gray-700">
-                Ward No<span className="text-red-500 ml-1">*</span>
-              </label>
-              <select
-                {...register("wardNo")}
-                className={`${getInputClass("wardNo")} bg-white pr-8`}
-              >
-                <option value="" disabled selected hidden>
-                  Select ward
-                </option>
-                {wards.map((w) => (
-                  <option key={w} value={w}>
-                    {w}
-                  </option>
-                ))}
-              </select>
-              {errors.wardNo && (
-                <p className="text-red-600 text-sm mt-1">
-                  {errors.wardNo.message}
-                </p>
-              )}
-            </div>
-            {/* Bed No */}
-            <div className="space-y-1">
-              <label className="block text-sm font-medium text-gray-700">
-                Bed No<span className="text-red-500 ml-1">*</span>
-              </label>
-              <select
-                {...register("bedNo")}
-                className={`${getInputClass("bedNo")} bg-white pr-8`}
-              >
-                <option value="" disabled selected hidden>
-                  Select bed
-                </option>
-                {beds.map((b) => (
-                  <option key={b} value={b}>
-                    {b}
-                  </option>
-                ))}
-              </select>
-              {errors.bedNo && (
-                <p className="text-red-600 text-sm mt-1">
-                  {errors.bedNo.message}
                 </p>
               )}
             </div>
@@ -488,10 +499,14 @@ const NewBillEntry = () => {
             </label>
             <textarea
               {...register("address")}
+              disabled
               placeholder="Enter patient address"
               rows={3}
-              className={getInputClass("address")}
+              className={`${getInputClass(
+                "address"
+              )} bg-gray-100 cursor-not-allowed`}
             />
+
             {errors.address && (
               <p className="text-red-600 text-sm mt-1">
                 {errors.address.message}

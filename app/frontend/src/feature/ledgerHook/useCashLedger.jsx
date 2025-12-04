@@ -6,19 +6,21 @@ import {
   getCashBalanceAPI,
   updateCashLedgerEntryAPI,
   deleteCashLedgerEntryAPI,
+  filterCashLedgerAPI,
+  searchCashLedgerAPI,
 } from "../ledgerApi/cashLedgerApi";
 import { toast } from "sonner";
 import { getErrorMessage } from "../../utils/errorUtils";
 
-export const useGetCashLedgerEntries = () => {
+export const useGetCashLedgerEntries = (cursor = null, limit = 50) => {
   return useQuery({
-    queryKey: ["cashLedgerEntries"],
+    queryKey: ["cashLedgerEntries", cursor, limit],
     queryFn: async () => {
-      const { data } = await getAllCashLedgerEntriesAPI();
-      return data.data;
+      const { data } = await getAllCashLedgerEntriesAPI(cursor, limit);
+      return data || { data: [], pagination: {} };
     },
-    onError: (error) => toast.error(getErrorMessage(error)),
     select: (data) => data || [],
+    onError: (error) => toast.error(getErrorMessage(error)),
   });
 };
 
@@ -51,7 +53,9 @@ export const useCreateCashLedgerEntry = () => {
   return useMutation({
     mutationFn: createCashLedgerEntryAPI,
     onSuccess: (response) => {
-      toast.success(response?.data?.message || "Cash ledger entry created successfully");
+      toast.success(
+        response?.data?.message || "Cash ledger entry created successfully"
+      );
       queryClient.invalidateQueries({ queryKey: ["cashLedgerEntries"] });
     },
     onError: (error) => toast.error(getErrorMessage(error)),
@@ -63,7 +67,9 @@ export const useUpdateCashLedgerEntry = () => {
   return useMutation({
     mutationFn: ({ id, data }) => updateCashLedgerEntryAPI(id, data),
     onSuccess: (response) => {
-      toast.success(response?.data?.message || "Cash ledger entry updated successfully");
+      toast.success(
+        response?.data?.message || "Cash ledger entry updated successfully"
+      );
       queryClient.invalidateQueries({ queryKey: ["cashLedgerEntries"] });
     },
     onError: (error) => toast.error(getErrorMessage(error)),
@@ -75,9 +81,38 @@ export const useDeleteCashLedgerEntry = () => {
   return useMutation({
     mutationFn: deleteCashLedgerEntryAPI,
     onSuccess: (response) => {
-      toast.success(response?.data?.message || "Cash ledger entry deleted successfully");
+      toast.success(
+        response?.data?.message || "Cash ledger entry deleted successfully"
+      );
       queryClient.invalidateQueries({ queryKey: ["cashLedgerEntries"] });
     },
+    onError: (error) => toast.error(getErrorMessage(error)),
+  });
+};
+
+export const useSearchCashLedger = (searchTerm) => {
+  return useQuery({
+    queryKey: ["cash-ledger-search", searchTerm],
+    queryFn: async () => {
+      if (!searchTerm) return [];
+      const { data } = await searchCashLedgerAPI(searchTerm);
+      return data?.data || [];
+    },
+    enabled: !!searchTerm,
+    retry: 1,
+    onError: (error) => toast.error(getErrorMessage(error)),
+  });
+};
+
+export const useFilterCashLedger = (filters) => {
+  return useQuery({
+    queryKey: ["cash-ledger-filter", filters],
+    queryFn: async () => {
+      const { data } = await filterCashLedgerAPI(filters);
+      return data || { data: [], pagination: {} };
+    },
+    enabled: !!filters,
+    retry: 1,
     onError: (error) => toast.error(getErrorMessage(error)),
   });
 };

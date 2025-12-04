@@ -85,14 +85,14 @@ app.use("/api/v1/pharmacist", pharmacistRoutes);
 app.use("/api/v1/prescription", prescriptionRoutes);
 app.use("/api/v1/ambulance", ambulanceRoutes);
 app.use("/api/v1/xray", xrayRoutes);
-
-// ledger
+ 
+// ledger             
 app.use("/api/v1/ledger/patient-ledger", patientLedgerRoutes);
 app.use("/api/v1/ledger/bank-ledger", bankLedgerRoutes);
 app.use("/api/v1/ledger/cash-ledger", cashLedgerRoutes);
 app.use("/api/v1/ledger/diagnostics-ledger", diagnosticsLedgerRoutes);
 app.use("/api/v1/ledger/doctor-ledger", doctorLedgerRoutes);
-app.use("/api/v1/ledger/expense-ledger", expenseLedgerRoutes);
+app.use("/api/v1/ledger/expense-ledger", expenseLedgerRoutes); 
 app.use("/api/v1/ledger/insurance-ledger", insuranceLedgerRoutes);
 app.use("/api/v1/ledger/pharmacy-ledger", pharmacyLedgerRoutes);
 app.use("/api/v1/ledger/supplier-ledger", supplierLedgerRoutes);

@@ -6,14 +6,17 @@ import { sendResponse } from "../../utils/sendResponse";
 import { StatusCodes } from "../../constants/statusCodes";
 import {
   createBankLedgerEntry,
-  getAllBankLedgerEntries,
   getBankLedgerEntryById,
   getBankBalance,
   updateBankLedgerEntry,
   deleteBankLedgerEntry,
+  searchBankLedger,
+  filterBankLedgerService,
+  getAllBankLedgerService,
 } from "../../services/ledgerService/bankLedgerService";
 
-import { bankLedgerSchema } from "@hospital/schemas";
+import { bankLedgerFilterSchema, bankLedgerSchema } from "@hospital/schemas";
+import { validateSearchQuery } from "../../utils/queryValidation";
 
 export const createBankLedgerRecord = catchAsyncError(
   async (req: Request, res: Response, next: NextFunction) => {
@@ -34,23 +37,25 @@ export const createBankLedgerRecord = catchAsyncError(
 
 export const getAllBankLedgerRecords = catchAsyncError(
   async (req: Request, res: Response) => {
-    const filters = {
-      bankName: req.query.bankName as string | undefined,
-      startDate: req.query.startDate
-        ? new Date(req.query.startDate as string)
-        : undefined,
-      endDate: req.query.endDate
-        ? new Date(req.query.endDate as string)
-        : undefined,
-      amountType: req.query.amountType as string | undefined,
+    const { cursor, limit } = req.query as {
+      cursor?: string;
+      limit?: string;
     };
 
-    const entries = await getAllBankLedgerEntries(filters);
+    const { data: records, nextCursor } = await getAllBankLedgerService(
+      cursor,
+      limit ? Number(limit) : undefined
+    );
+
     sendResponse(res, {
       success: true,
       statusCode: StatusCodes.OK,
-      message: "Bank ledger entries fetched successfully",
-      data: entries,
+      message: "Bank ledger records fetched",
+      data: records,
+      pagination: {
+        nextCursor: nextCursor !== null ? String(nextCursor) : undefined,
+        limit: limit ? Number(limit) : 50,
+      },
     });
   }
 );
@@ -148,3 +153,38 @@ export const deleteBankLedgerRecord = catchAsyncError(
     });
   }
 );
+
+export const searchBankLedgerResults = catchAsyncError(
+  async (req: Request, res: Response, next: NextFunction) => {
+    const { query } = req.query;
+
+    const searchTerm = validateSearchQuery(query, next);
+    if (!searchTerm) return;
+
+    const results = await searchBankLedger(searchTerm);
+
+    sendResponse(res, {
+      success: true,
+      statusCode: StatusCodes.OK,
+      message: "Bank ledger search results fetched",
+      data: results,
+    });
+  }
+);
+
+export const filterBankLedger = catchAsyncError(async (req, res) => {
+  const validated = bankLedgerFilterSchema.parse(req.query);
+
+  const { data, nextCursor } = await filterBankLedgerService(validated);
+
+  sendResponse(res, {
+    success: true,
+    statusCode: StatusCodes.OK,
+    message: "Filtered bank ledger fetched",
+    data,
+    pagination: {
+      nextCursor: nextCursor !== null ? String(nextCursor) : undefined,
+      limit: validated.limit,
+    },
+  });
+});

@@ -1,79 +1,142 @@
-import React, { useMemo } from "react";
+import React, { useMemo, useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { FaPlus } from "react-icons/fa6";
 import Table from "../../components/Table/Table";
+
 import {
-  bankLedgerData,
-  doctorLedgerData,
-  patientLedgerData,
-} from "../../assets/ledgerData";
-import { useGetBankLedgerEntries } from "../../feature/ledgerHook/useBankLedger";
-import Loader from "../../components/Loader/Loader";
+  useGetBankLedgerEntries,
+  useSearchBankLedger,
+  useFilterBankLedger,
+} from "../../feature/ledgerHook/useBankLedger";
+
+const filterLabels = {
+  amountType: "Amount Type",
+  fromDate: "From Date",
+  toDate: "To Date",
+};
 
 const BankLedger = () => {
+  const [currentCursor, setCurrentCursor] = useState(null);
+  const [cursorHistory, setCursorHistory] = useState([]);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [filters, setFilters] = useState({});
+  const [mode, setMode] = useState("normal"); // normal | search | filter
 
-   const { data, error, isLoading, isError } = useGetBankLedgerEntries();
+  // Normal paginated ledger
+  const { data: ledgerData, isLoading: ledgerLoading } =
+    useGetBankLedgerEntries(currentCursor, 50);
+
+  // Search results
+  const { data: searchData, isLoading: searchLoading } =
+    useSearchBankLedger(searchTerm);
+
+  // Filter results
+  const { data: filterData, isLoading: filterLoading } =
+    useFilterBankLedger({
+      ...filters,
+      cursor: currentCursor,
+      limit: 50,
+    });
+
+  // Decide active dataset
+  const getCurrentData = () => {
+    switch (mode) {
+      case "search":
+        return { data: searchData || [], pagination: null };
+      case "filter":
+        return filterData || { data: [], pagination: {} };
+      default:
+        return ledgerData || { data: [], pagination: {} };
+    }
+  };
+
+  const data = getCurrentData();
+  const isLoading = ledgerLoading || searchLoading || filterLoading;
+
+  // Auto mode switching
+  useEffect(() => {
+    if (searchTerm) {
+      setMode("search");
+      setCurrentCursor(null);
+      setCursorHistory([]);
+    } else if (Object.keys(filters).length > 0) {
+      setMode("filter");
+    } else {
+      setMode("normal");
+    }
+  }, [searchTerm, filters]);
 
   const columns = useMemo(
     () => [
-      {
-        accessorKey: "bankName",
-        header: "Bank Name",
-        cell: (info) => info.getValue() || "-",
-      },
-      {
-        accessorKey: "date",
-        header: "Date",
-        cell: (info) => info.getValue(),
-      },
-      {
-        accessorKey: "description",
-        header: "Description",
-        cell: (info) => info.getValue() || "-",
-      },
+      { accessorKey: "bankName", header: "Bank Name" },
+      { accessorKey: "date", header: "Date", cell: (info) => {
+          const date = new Date(info.getValue());
+          return isNaN(date)
+            ? info.getValue()
+            : date.toLocaleDateString("en-GB", {
+                day: "2-digit",
+                month: "short",
+                year: "numeric",
+              });
+        }, },
+      { accessorKey: "description", header: "Description" },
       {
         accessorKey: "amountType",
         header: "Amount Type",
         cell: (info) => {
           const value = info.getValue();
-          const badgeClass =
+          const classes =
             value === "Debit"
               ? "bg-red-100 text-red-700"
               : "bg-green-100 text-green-700";
+
           return (
-            <span
-              className={`px-2 py-1 rounded text-xs font-medium ${badgeClass}`}
-            >
+            <span className={`px-2 py-1 rounded text-xs font-medium ${classes}`}>
               {value}
             </span>
           );
         },
       },
-      {
-        accessorKey: "amount",
-        header: "Amount",
-        cell: (info) => `$${info.getValue()}`,
-      },
-      {
-        accessorKey: "transactionId",
-        header: "Transaction ID",
-        cell: (info) => info.getValue() || "-",
-      },
-      {
-        accessorKey: "remarks",
-        header: "Remarks",
-        cell: (info) => info.getValue() || "-",
-      },
+      { accessorKey: "amount", header: "Amount" },
+      { accessorKey: "transactionId", header: "Transaction ID" },
+      { accessorKey: "remarks", header: "Remarks" },
     ],
     []
   );
 
-    if (isLoading) {
-    return <Loader />;
-  }
+  // Pagination handlers
+  const handleNextPage = () => {
+    if (data?.pagination?.nextCursor) {
+      setCursorHistory((prev) => [...prev, currentCursor]);
+      setCurrentCursor(data.pagination.nextCursor);
+    }
+  };
+
+  const handlePrevPage = () => {
+    if (cursorHistory.length > 0) {
+      const prevCursor = cursorHistory[cursorHistory.length - 1];
+      setCursorHistory((prev) => prev.slice(0, -1));
+      setCurrentCursor(prevCursor);
+    }
+  };
+
+  // Filters
+  const handleApplyFilters = (newFilters) => {
+    setFilters(newFilters);
+    setCurrentCursor(null);
+    setCursorHistory([]);
+  };
+
+  const handleClearFilters = () => {
+    setFilters({});
+    setSearchTerm("");
+    setMode("normal");
+    setCurrentCursor(null);
+    setCursorHistory([]);
+  };
 
   return (
-    <div className="">
+    <div>
       <div className="flex justify-between items-center">
         <h2 className="text-2xl font-bold text-gray-800 flex items-center">
           Bank Ledger
@@ -83,7 +146,39 @@ const BankLedger = () => {
         </Link>
       </div>
 
-      <Table data={data} columns={columns} path="bank-ledger" />
+      <Table
+        data={data?.data || []}
+        columns={columns}
+        path="bank-ledger"
+        loading={isLoading}
+        searchConfig={{
+          placeholder: "Search by bank name...",
+          searchTerm,
+          onSearchChange: setSearchTerm,
+        }}
+        filtersConfig={[
+          {
+            key: "amountType",
+            label: "Amount Type",
+            type: "select",
+            options: ["Credit", "Debit"],
+          },
+          { key: "fromDate", label: "From Date", type: "date" },
+          { key: "toDate", label: "To Date", type: "date" },
+        ]}
+        pagination={{
+          hasPrevious: cursorHistory.length > 0 && mode !== "search",
+          hasNext: !!data?.pagination?.nextCursor && mode !== "search",
+          currentPage: cursorHistory.length,
+          mode,
+        }}
+        onNextPage={handleNextPage}
+        onPrevPage={handlePrevPage}
+        onApplyFilters={handleApplyFilters}
+        onClearFilters={handleClearFilters}
+        activeFilters={filters}
+        filterLabels={filterLabels}
+      />
     </div>
   );
 };

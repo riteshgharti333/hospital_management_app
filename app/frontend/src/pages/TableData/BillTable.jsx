@@ -7,15 +7,23 @@ import { useGetBills } from "../../feature/transectionHooks/useBill";
 import Loader from "../../components/Loader/Loader";
 
 const BillTable = () => {
-
-    const { data, error, isLoading, isError } = useGetBills();
-  
+  const { data, error, isLoading, isError } = useGetBills();
 
   const columns = useMemo(
     () => [
       {
         accessorKey: "billDate",
         header: "Bill Date",
+        cell: (info) => {
+          const date = new Date(info.getValue());
+          return isNaN(date)
+            ? info.getValue()
+            : date.toLocaleDateString("en-GB", {
+                day: "2-digit",
+                month: "short",
+                year: "numeric",
+              });
+        },
       },
       {
         accessorKey: "billType",
@@ -32,11 +40,18 @@ const BillTable = () => {
       {
         accessorKey: "admissionDate",
         header: "Admission Date",
+        cell: (info) => {
+          const date = new Date(info.getValue());
+          return isNaN(date)
+            ? info.getValue()
+            : date.toLocaleDateString("en-GB", {
+                day: "2-digit",
+                month: "short",
+                year: "numeric",
+              });
+        },
       },
-      {
-        accessorKey: "dob",
-        header: "Date of Birth",
-      },
+
       {
         accessorKey: "gender",
         header: "Gender",
@@ -44,6 +59,16 @@ const BillTable = () => {
       {
         accessorKey: "dischargeDate",
         header: "Discharge Date",
+        cell: (info) => {
+          const date = new Date(info.getValue());
+          return isNaN(date)
+            ? info.getValue()
+            : date.toLocaleDateString("en-GB", {
+                day: "2-digit",
+                month: "short",
+                year: "numeric",
+              });
+        },
       },
       {
         accessorKey: "doctorName",
@@ -65,7 +90,7 @@ const BillTable = () => {
     []
   );
 
-    if (isLoading) {
+  if (isLoading) {
     return <Loader />;
   }
 
@@ -80,7 +105,7 @@ const BillTable = () => {
         </Link>
       </div>
 
-      <Table data={data} columns={columns} path="bill"/>
+      <Table data={data} columns={columns} path="bill" />
     </div>
   );
 };

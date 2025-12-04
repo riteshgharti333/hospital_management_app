@@ -1,4 +1,8 @@
 import { prisma } from "../../lib/prisma";
+import { applyCommonFields } from "../../utils/applyCommonFields";
+import { filterPaginate } from "../../utils/filterPaginate";
+import { cursorPaginate } from "../../utils/pagination";
+import { createSearchService } from "../../utils/searchCache";
 
 export const createDoctorLedgerEntry = async (data: {
   doctorName: string;
@@ -13,33 +17,22 @@ export const createDoctorLedgerEntry = async (data: {
   return prisma.doctorLedger.create({ data });
 };
 
-export const getAllDoctorLedgerEntries = async (filters: {
-  doctorName?: string;
-  startDate?: Date;
-  endDate?: Date;
-  amountType?: string;
-}) => {
-  const where: any = {};
-
-  if (filters.doctorName) {
-    where.doctorName = filters.doctorName;
-  }
-
-  if (filters.startDate || filters.endDate) {
-    where.date = {};
-    if (filters.startDate) where.date.gte = filters.startDate;
-    if (filters.endDate) where.date.lte = filters.endDate;
-  }
-
-  if (filters.amountType) {
-    where.amountType = filters.amountType;
-  }
-
-  return prisma.doctorLedger.findMany({
-    where,
-    orderBy: { date: "desc" },
-  });
+export const getAllDoctorLedgerService = async (
+  cursor?: string,
+  limit?: number
+) => {
+  return cursorPaginate(
+    prisma,
+    {
+      model: "doctorLedger",
+      cursorField: "id",
+      limit: limit || 50,
+      cacheExpiry: 600,
+    },
+    cursor ? Number(cursor) : undefined
+  );
 };
+
 
 export const getDoctorLedgerEntryById = async (id: number) => {
   return prisma.doctorLedger.findUnique({ where: { id } });
@@ -78,4 +71,51 @@ export const updateDoctorLedgerEntry = async (
 
 export const deleteDoctorLedgerEntry = async (id: number) => {
   return prisma.doctorLedger.delete({ where: { id } });
+};
+
+
+const commonSearchFields = ["doctorName"];
+
+export const searchDoctorLedger = createSearchService(prisma, {
+  tableName: "DoctorLedger",
+  cacheKeyPrefix: "doctor-ledger",
+  ...applyCommonFields(commonSearchFields),
+});
+
+
+export const filterDoctorLedgerService = async (filters: {
+  amountType?: string;
+  paymentMode?: string;
+  fromDate?: Date;
+  toDate?: Date;
+  cursor?: string | number;
+  limit?: number;
+}) => {
+  const { amountType, paymentMode, fromDate, toDate, cursor, limit } = filters;
+
+  const filterObj: any = {};
+
+  if (amountType)
+    filterObj.amountType = { equals: amountType, mode: "insensitive" };
+
+  if (paymentMode)
+    filterObj.paymentMode = { equals: paymentMode, mode: "insensitive" };
+
+  if (fromDate || toDate) {
+    filterObj.date = {
+      gte: fromDate ? new Date(fromDate) : undefined,
+      lte: toDate ? new Date(toDate) : undefined,
+    };
+  }
+
+  return filterPaginate(
+    prisma,
+    {
+      model: "doctorLedger",
+      cursorField: "id",
+      limit: limit || 50,
+      filters: filterObj,
+    },
+    cursor
+  );
 };
