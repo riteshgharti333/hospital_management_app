@@ -652,6 +652,7 @@ model MoneyReceipt {
   mobile       String
   amount       Float
   paymentMode  String
+  admissionNo  String
   remarks      String?
   receivedBy   String
   status       String    @default("Active")

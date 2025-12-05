@@ -275,13 +275,15 @@ export const billSchema = z.object({
     })
     .transform((val) => new Date(val)),
   patientAge: z.coerce.number().int().positive("Age must be positive"),
-  pateintSex: z.enum(["Male", "Female", "Other"]),
+  patientSex: z.enum(["Male", "Female", "Other"]),
   dischargeDate: z.preprocess(
     (val) => (val === "" ? undefined : val),
     z.coerce.date().optional()
   ),
   address: z.string().min(1, "Address is required"),
-  status: z.string().optional().default("Pending"),
+  status: z
+    .enum(["Pending", "PartiallyPaid", "Paid", "Cancelled", "Refunded"])
+    .default("Pending"),
   billItems: z
     .array(billItemSchema)
     .min(1, "At least one bill item is required"),
@@ -315,6 +317,7 @@ export const moneyReceiptSchema = z.object({
   date: z.string().transform((val) => new Date(val)),
   patientName: z.string().min(1, "Patient name is required"),
   mobile: z.string().min(10, "Mobile must be at least 10 digits"),
+  admissionNo: z.string().min(1, "Admission number is required"),
   amount: z.coerce.number().min(0.01, "Amount must be greater than 0"),
   paymentMode: z.enum(["Cash", "Cheque", "Card", "Online Transfer", "Other"]),
   remarks: z.string().optional(),
@@ -680,3 +683,43 @@ export const doctorLedgerFilterSchema = z.object({
   limit: z.coerce.number().default(50),
   cursor: z.coerce.number().optional(),
 });
+
+/// bill filter
+
+export const billFilterSchema = z.object({
+  billType: z
+    .enum(["OPD", "IPD", "Pharmacy", "Pathology", "Radiology"])
+    .optional(),
+
+  patientSex: z.enum(["Male", "Female", "Other"]).optional(),
+
+  status: z
+    .enum(["Pending", "PartiallyPaid", "Paid", "Cancelled", "Refunded"])
+    .optional(),
+
+  fromDate: z.coerce.date().optional(),
+  toDate: z.coerce.date().optional(),
+
+  limit: z.coerce.number().default(50),
+  cursor: z.coerce.number().optional(),
+});
+
+/// filter money
+
+export const moneyReceiptFilterSchema = z.object({
+  paymentMode: z
+    .enum(["Cash", "Cheque", "Card", "Online Transfer", "Other"])
+    .optional(),
+
+  status: z
+    .enum(["Active", "Cancelled", "Refunded"])
+    .optional(),
+
+  fromDate: z.coerce.date().optional(),
+  toDate: z.coerce.date().optional(),
+
+  limit: z.coerce.number().default(50),
+  cursor: z.coerce.number().optional(),
+});
+
+

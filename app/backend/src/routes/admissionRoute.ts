@@ -15,6 +15,7 @@ const router = express.Router();
 
 router.post("/", isAuthenticated, isAdmin, createAdmission);
 router.get("/", getAllAdmissions);
+
 router.get("/search", searchAdmissionsResults);
 router.get("/filter", filterAdmissions);
 

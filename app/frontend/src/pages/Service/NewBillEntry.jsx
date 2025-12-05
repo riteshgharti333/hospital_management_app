@@ -75,6 +75,13 @@ const NewBillEntry = () => {
   const patientSex = ["Male", "Female", "Other"];
   const companies = ["Company A", "Company B", "Company C", "Company D"];
   const services = ["Service 1", "Service 2", "Service 3", "Service 4"];
+  const billStatusOptions = [
+    "Pending",
+    "PartiallyPaid",
+    "Paid",
+    "Cancelled",
+    "Refunded",
+  ];
 
   const handleProductChange = (e) => {
     const { name, value } = e.target;
@@ -156,6 +163,7 @@ const NewBillEntry = () => {
   };
 
   const onSubmit = async (data) => {
+    console.log("Submitting data:", data);
     try {
       const payload = {
         ...data,
@@ -260,8 +268,29 @@ const NewBillEntry = () => {
               )}
             </div>
 
-
-            
+            {/* Bill Status */}
+            <div className="space-y-1">
+              <label className="block text-sm font-medium text-gray-700">
+                Bill Status<span className="text-red-500 ml-1">*</span>
+              </label>
+              <div className="relative">
+                <select
+                  {...register("status")}
+                  className={`${getInputClass("status")} bg-white pr-8`}
+                >
+                  {billStatusOptions.map((s) => (
+                    <option key={s} value={s}>
+                      {s}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              {errors.status && (
+                <p className="text-red-600 text-sm mt-1">
+                  {errors.status.message}
+                </p>
+              )}
+            </div>
           </div>
         </div>
 

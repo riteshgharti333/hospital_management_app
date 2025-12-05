@@ -5,6 +5,8 @@ import {
   getMoneyReceiptRecordById,
   updateMoneyReceiptRecord,
   deleteMoneyReceiptRecord,
+  searchMoneyReceiptResults,
+  filterMoneyReceipts,
 } from "../../controllers/transection/MoneyReceiptController";
 import { isAuthenticated } from "../../middlewares/isAuthenticated";
 import { isAdmin } from "../../middlewares/isAdmin";
@@ -15,6 +17,9 @@ router
   .route("/")
   .post(isAuthenticated, isAdmin, createMoneyReceiptRecord)
   .get(getAllMoneyReceiptRecords);
+
+router.get("/search", searchMoneyReceiptResults);
+router.get("/filter", filterMoneyReceipts);
 
 router
   .route("/:id")

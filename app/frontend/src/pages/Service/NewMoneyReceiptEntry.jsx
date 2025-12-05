@@ -1,99 +1,43 @@
-import React from "react";
-import { FaUser, FaPhone, FaMoneyBillWave, FaFileAlt, FaCheckCircle } from "react-icons/fa";
+import React, { useState } from "react";
+import { FaIdCard, FaUser, FaPhone, FaMoneyBillWave } from "react-icons/fa";
+
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod";
 import { moneyReceiptSchema } from "@hospital/schemas";
-import { useNavigate } from "react-router-dom";
+
 import { toast } from "sonner";
+import { useNavigate } from "react-router-dom";
 
 import BackButton from "../../components/BackButton/BackButton";
 import LoadingButton from "../../components/LoadingButton/LoadingButton";
+
 import { useCreateMoneyReceipt } from "../../feature/transectionHooks/useMoneyReceipt";
+import { useSearchAdmissions } from "../../feature/hooks/useAdmisson";
 
 const paymentModes = ["Cash", "Cheque", "Card", "Online Transfer", "Other"];
-const statuses = ["Active", "Cancelled", "Refunded"];
-
-const formFields = [
-  {
-    section: "Receipt Details",
-    icon: <FaMoneyBillWave className="text-blue-500" />,
-    fields: [
-      {
-        label: "Date",
-        type: "date",
-        name: "date",
-      },
-      {
-        label: "Patient Name",
-        type: "text",
-        name: "patientName",
-        placeholder: "Enter patient name",
-        icon: <FaUser className="text-gray-400" />,
-      },
-      {
-        label: "Mobile Number",
-        type: "tel",
-        name: "mobile",
-        placeholder: "Enter mobile number",
-        icon: <FaPhone className="text-gray-400" />,
-      },
-      {
-        label: "Amount",
-        type: "number",
-        name: "amount",
-        placeholder: "Enter amount",
-      },
-    ],
-  },
-  {
-    section: "Payment Info",
-    icon: <FaFileAlt className="text-blue-500" />,
-    fields: [
-      {
-        label: "Payment Mode",
-        type: "select",
-        name: "paymentMode",
-        options: paymentModes,
-        placeholder: "Select payment mode",
-      },
-      {
-        label: "Remarks",
-        type: "textarea",
-        name: "remarks",
-        placeholder: "Enter any remarks (optional)",
-      },
-      {
-        label: "Received By",
-        type: "text",
-        name: "receivedBy",
-        placeholder: "Enter staff name",
-      },
-      {
-        label: "Status",
-        type: "select",
-        name: "status",
-        options: statuses,
-        placeholder: "Select status",
-      },
-    ],
-  },
-];
+const status = ["Active", "Cancelled", "Refunded"];
 
 const NewMoneyReceiptEntry = () => {
   const navigate = useNavigate();
+
+  const [searchAdmission, setSearchAdmission] = useState("");
+  const [showDropdown, setShowDropdown] = useState(false);
+
+  const { data: admissionResults = [] } = useSearchAdmissions(searchAdmission);
+
   const {
     register,
     handleSubmit,
-    reset,
+    setValue,
     formState: { errors },
   } = useForm({
     resolver: zodResolver(moneyReceiptSchema),
     defaultValues: {
       date: new Date().toISOString().split("T")[0],
+      admissionNo: "",
       patientName: "",
       mobile: "",
-      amount: 0,
+      amount: "",
       paymentMode: "Cash",
       remarks: "",
       receivedBy: "",
@@ -103,15 +47,32 @@ const NewMoneyReceiptEntry = () => {
 
   const { mutateAsync, isPending } = useCreateMoneyReceipt();
 
-  const onSubmit = async (formData) => {
-    const response = await mutateAsync(formData);
+  const handleSelectAdmission = (item) => {
+    setSearchAdmission(item.gsRsRegNo);
+    setShowDropdown(false);
+
+    setValue("admissionNo", item.gsRsRegNo);
+    setValue("patientName", item.patientName);
+    setValue("mobile", item.phoneNo);
+
+    toast.success("Patient details auto-filled");
+  };
+
+  const onSubmit = async (data) => {
+    const response = await mutateAsync(data);
     if (response?.data?.success) {
       navigate(`/money-receipt/${response.data.data.id}`);
     }
   };
 
+  const inputClass = (error) =>
+    `block w-full px-4 py-2 border rounded-lg focus:ring-blue-500 focus:border-blue-500 ${
+      error ? "border-red-500" : "border-gray-300"
+    }`;
+
   return (
     <div className="mx-auto">
+      {/* HEADER */}
       <div className="mb-8">
         <div className="flex items-center">
           <BackButton />
@@ -120,7 +81,9 @@ const NewMoneyReceiptEntry = () => {
               <FaMoneyBillWave className="mr-2 text-blue-500" />
               New Money Receipt
             </h2>
-            <p className="text-gray-600 mt-1">Fill all required details to generate a receipt</p>
+            <p className="text-gray-600 mt-1">
+              Fill all required details to generate a receipt
+            </p>
           </div>
         </div>
       </div>
@@ -129,102 +92,245 @@ const NewMoneyReceiptEntry = () => {
         onSubmit={handleSubmit(onSubmit)}
         className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden"
       >
-        {formFields.map((section, sectionIndex) => (
-          <div
-            key={sectionIndex}
-            className={`p-6 ${sectionIndex !== 0 ? "border-t border-gray-100" : ""}`}
-          >
-            <div className="flex items-center mb-6">
-              {section.icon}
-              <h3 className="ml-2 text-lg font-semibold text-gray-800">
-                {section.section}
-              </h3>
+        {/* =======================
+            ADMISSION SEARCH
+        ======================== */}
+        <div className="p-6 border-b border-gray-100">
+          <h3 className="text-lg font-semibold flex items-center text-gray-800 mb-4">
+            <FaIdCard className="text-blue-500 mr-2" />
+            Admission Information
+          </h3>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {/* Admission No */}
+            <div className="space-y-1 relative">
+              <label className="block text-sm font-medium text-gray-700">
+                Admission No<span className="text-red-500">*</span>
+              </label>
+
+              <div className="relative">
+                <input
+                  type="text"
+                  value={searchAdmission}
+                  onChange={(e) => {
+                    setSearchAdmission(e.target.value);
+                    setValue("admissionNo", e.target.value);
+                    setShowDropdown(true);
+                  }}
+                  placeholder="Search admission number"
+                  autoComplete="off"
+                  className={`${inputClass(errors.admissionNo)} pl-10`}
+                />
+
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <FaIdCard className="text-gray-400" />
+                </div>
+              </div>
+
+              {showDropdown &&
+                searchAdmission &&
+                admissionResults.length > 0 && (
+                  <ul className="absolute z-50 bg-white w-full border border-gray-300 rounded-lg shadow-sm max-h-60 overflow-y-auto mt-1">
+                    {admissionResults.slice(0, 10).map((item) => (
+                      <li
+                        key={item.id}
+                        onClick={() => handleSelectAdmission(item)}
+                        className="px-4 py-2 cursor-pointer hover:bg-gray-100"
+                      >
+                        <p className="font-medium text-sm text-gray-800">
+                          {item.gsRsRegNo} — {item.patientName}
+                        </p>
+                        <p className="text-xs text-gray-500">{item.phoneNo}</p>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+
+              {errors.admissionNo && (
+                <p className="text-red-600 text-sm mt-1">
+                  {errors.admissionNo.message}
+                </p>
+              )}
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {section.fields.map((field, fieldIndex) => {
-                const error = errors[field.name];
-                return (
-                  <div
-                    key={fieldIndex}
-                    className={`space-y-1 ${field.type === "textarea" ? "md:col-span-2" : ""}`}
-                  >
-                    <label className="block text-sm font-medium text-gray-700">
-                      {field.label}
-                      {field.name !== "remarks" && <span className="text-red-500 ml-1">*</span>}
-                    </label>
+            {/* Patient Name */}
+            <div className="space-y-1">
+              <label className="block text-sm font-medium text-gray-700">
+                Patient Name
+              </label>
+              <input
+                type="text"
+                disabled
+                {...register("patientName")}
+                className={`${inputClass(
+                  errors.patientName
+                )} bg-gray-100 cursor-not-allowed`}
+              />
 
-                    {field.type === "select" ? (
-                      <div className="relative">
-                        <select
-                          {...register(field.name)}
-                          className={`block w-full px-4 py-2 border rounded-lg focus:ring-blue-500 focus:border-blue-500 appearance-none bg-white pr-8 ${
-                            error ? "border-red-500" : "border-gray-300"
-                          }`}
-                        >
-                          <option value="" disabled hidden>
-                            {field.placeholder}
-                          </option>
-                          {field.options.map((option, idx) => (
-                            <option key={idx} value={option}>
-                              {option}
-                            </option>
-                          ))}
-                        </select>
-                        <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
-                          <svg
-                            className="h-5 w-5 text-gray-400"
-                            xmlns="http://www.w3.org/2000/svg"
-                            viewBox="0 0 20 20"
-                            fill="currentColor"
-                          >
-                            <path
-                              fillRule="evenodd"
-                              d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"
-                              clipRule="evenodd"
-                            />
-                          </svg>
-                        </div>
-                      </div>
-                    ) : field.type === "textarea" ? (
-                      <textarea
-                        {...register(field.name)}
-                        rows={3}
-                        placeholder={field.placeholder}
-                        className={`block w-full px-4 py-2 border rounded-lg focus:ring-blue-500 focus:border-blue-500 ${
-                          error ? "border-red-500" : "border-gray-300"
-                        }`}
-                      />
-                    ) : (
-                      <div className="relative">
-                        <input
-                          type={field.type}
-                          {...register(field.name)}
-                          placeholder={field.placeholder}
-                          className={`block w-full px-4 py-2 border rounded-lg focus:ring-blue-500 focus:border-blue-500 ${
-                            field.icon ? "pl-10" : ""
-                          } ${error ? "border-red-500" : "border-gray-300"}`}
-                        />
-                        {field.icon && (
-                          <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                            {field.icon}
-                          </div>
-                        )}
-                      </div>
-                    )}
+              {errors.patientName && (
+                <p className="text-red-600 text-sm mt-1">
+                  {errors.patientName.message}
+                </p>
+              )}
+            </div>
 
-                    {error && (
-                      <p className="text-red-600 text-sm mt-1" role="alert">
-                        {error.message}
-                      </p>
-                    )}
-                  </div>
-                );
-              })}
+            {/* Mobile */}
+            <div className="space-y-1">
+              <label className="block text-sm font-medium text-gray-700">
+                Mobile
+              </label>
+              <input
+                type="text"
+                disabled
+                {...register("mobile")}
+                className={`${inputClass(
+                  errors.mobile
+                )} bg-gray-100 cursor-not-allowed`}
+              />
+
+              {errors.mobile && (
+                <p className="text-red-600 text-sm mt-1">
+                  {errors.mobile.message}
+                </p>
+              )}
             </div>
           </div>
-        ))}
+        </div>
 
+        {/* =======================
+            RECEIPT DETAILS
+        ======================= */}
+        <div className="p-6">
+          <h3 className="text-lg font-semibold flex items-center text-gray-800 mb-4">
+            <FaMoneyBillWave className="text-blue-500 mr-2" />
+            Receipt Details
+          </h3>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {/* Date */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700">
+                Date<span className="text-red-500">*</span>
+              </label>
+              <input
+                type="date"
+                {...register("date")}
+                className={inputClass(errors.date)}
+              />
+
+              {errors.date && (
+                <p className="text-red-600 text-sm mt-1">
+                  {errors.date.message}
+                </p>
+              )}
+            </div>
+
+            {/* Amount */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700">
+                Amount<span className="text-red-500">*</span>
+              </label>
+              <input
+                type="number"
+                {...register("amount", { valueAsNumber: true })}
+                placeholder="Enter amount"
+                className={inputClass(errors.amount)}
+              />
+
+              {errors.amount && (
+                <p className="text-red-600 text-sm mt-1">
+                  {errors.amount.message}
+                </p>
+              )}
+            </div>
+
+            {/* Payment Mode */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700">
+                Payment Mode<span className="text-red-500">*</span>
+              </label>
+              <select
+                {...register("paymentMode")}
+                className={inputClass(errors.paymentMode)}
+              >
+                {paymentModes.map((pm) => (
+                  <option key={pm} value={pm}>
+                    {pm}
+                  </option>
+                ))}
+              </select>
+
+              {errors.paymentMode && (
+                <p className="text-red-600 text-sm mt-1">
+                  {errors.paymentMode.message}
+                </p>
+              )}
+            </div>
+
+            {/* Received By */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700">
+                Received By<span className="text-red-500">*</span>
+              </label>
+              <input
+                type="text"
+                {...register("receivedBy")}
+                placeholder="Enter staff name"
+                className={inputClass(errors.receivedBy)}
+              />
+
+              {errors.receivedBy && (
+                <p className="text-red-600 text-sm mt-1">
+                  {errors.receivedBy.message}
+                </p>
+              )}
+            </div>
+
+            {/* Status */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700">
+                Status<span className="text-red-500">*</span>
+              </label>
+              <select
+                {...register("status")}
+                className={inputClass(errors.status)}
+              >
+                {status.map((s) => (
+                  <option key={s} value={s}>
+                    {s}
+                  </option>
+                ))}
+              </select>
+
+              {errors.status && (
+                <p className="text-red-600 text-sm mt-1">
+                  {errors.status.message}
+                </p>
+              )}
+            </div>
+
+            {/* Remarks */}
+            <div className="md:col-span-2">
+              <label className="block text-sm font-medium text-gray-700">
+                Remarks
+              </label>
+              <textarea
+                {...register("remarks")}
+                rows={3}
+                placeholder="Optional remarks"
+                className={inputClass(errors.remarks)}
+              />
+
+              {errors.remarks && (
+                <p className="text-red-600 text-sm mt-1">
+                  {errors.remarks.message}
+                </p>
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* SUBMIT BUTTON */}
         <div className="bg-gray-50 px-6 py-4 border-t border-gray-200 flex justify-end">
           <LoadingButton isLoading={isPending} type="submit">
             {isPending ? "Creating..." : "Create Receipt"}

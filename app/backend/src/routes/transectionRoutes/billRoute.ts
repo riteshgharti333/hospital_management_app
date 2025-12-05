@@ -5,17 +5,24 @@ import {
   getBillRecordById,
   updateBillRecord,
   deleteBillRecord,
+  searchBillsResults,
+  filterBills
 } from "../../controllers/transection/BillController";
 import { isAuthenticated } from "../../middlewares/isAuthenticated";
 import { isAdmin } from "../../middlewares/isAdmin";
 
 const router = express.Router();
 
-router.route("/")
+router
+  .route("/")
   .post(isAuthenticated, isAdmin, createBillRecord)
   .get(getAllBillRecords);
 
-router.route("/:id")
+router.get("/search", searchBillsResults);
+router.get("/filter", filterBills);
+
+router
+  .route("/:id")
   .get(getBillRecordById)
   .patch(isAuthenticated, isAdmin, updateBillRecord)
   .delete(isAuthenticated, isAdmin, deleteBillRecord);

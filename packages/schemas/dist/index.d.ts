@@ -456,10 +456,10 @@ export declare const billSchema: z.ZodObject<{
     admissionNo: z.ZodString;
     admissionDate: z.ZodEffects<z.ZodEffects<z.ZodString, string, string>, Date, string>;
     patientAge: z.ZodNumber;
-    pateintSex: z.ZodEnum<["Male", "Female", "Other"]>;
+    patientSex: z.ZodEnum<["Male", "Female", "Other"]>;
     dischargeDate: z.ZodEffects<z.ZodOptional<z.ZodDate>, Date | undefined, unknown>;
     address: z.ZodString;
-    status: z.ZodDefault<z.ZodOptional<z.ZodString>>;
+    status: z.ZodDefault<z.ZodEnum<["Pending", "PartiallyPaid", "Paid", "Cancelled", "Refunded"]>>;
     billItems: z.ZodArray<z.ZodObject<{
         company: z.ZodString;
         itemOrService: z.ZodString;
@@ -480,16 +480,16 @@ export declare const billSchema: z.ZodObject<{
         totalAmount?: number | undefined;
     }>, "many">;
 }, "strip", z.ZodTypeAny, {
-    status: string;
+    status: "Pending" | "PartiallyPaid" | "Paid" | "Cancelled" | "Refunded";
     admissionDate: Date;
     patientName: string;
     patientAge: number;
+    patientSex: "Male" | "Female" | "Other";
     address: string;
     billDate: Date;
     billType: string;
     mobile: string;
     admissionNo: string;
-    pateintSex: "Male" | "Female" | "Other";
     billItems: {
         company: string;
         itemOrService: string;
@@ -502,12 +502,12 @@ export declare const billSchema: z.ZodObject<{
     admissionDate: string;
     patientName: string;
     patientAge: number;
+    patientSex: "Male" | "Female" | "Other";
     address: string;
     billDate: Date;
     billType: string;
     mobile: string;
     admissionNo: string;
-    pateintSex: "Male" | "Female" | "Other";
     billItems: {
         company: string;
         itemOrService: string;
@@ -515,7 +515,7 @@ export declare const billSchema: z.ZodObject<{
         mrp: number;
         totalAmount?: number | undefined;
     }[];
-    status?: string | undefined;
+    status?: "Pending" | "PartiallyPaid" | "Paid" | "Cancelled" | "Refunded" | undefined;
     dischargeDate?: unknown;
 }>;
 export declare const employeeSchema: z.ZodObject<{
@@ -565,6 +565,7 @@ export declare const moneyReceiptSchema: z.ZodObject<{
     date: z.ZodEffects<z.ZodString, Date, string>;
     patientName: z.ZodString;
     mobile: z.ZodString;
+    admissionNo: z.ZodString;
     amount: z.ZodNumber;
     paymentMode: z.ZodEnum<["Cash", "Cheque", "Card", "Online Transfer", "Other"]>;
     remarks: z.ZodOptional<z.ZodString>;
@@ -575,6 +576,7 @@ export declare const moneyReceiptSchema: z.ZodObject<{
     date: Date;
     patientName: string;
     mobile: string;
+    admissionNo: string;
     amount: number;
     paymentMode: "Other" | "Cash" | "Cheque" | "Card" | "Online Transfer";
     receivedBy: string;
@@ -583,6 +585,7 @@ export declare const moneyReceiptSchema: z.ZodObject<{
     date: string;
     patientName: string;
     mobile: string;
+    admissionNo: string;
     amount: number;
     paymentMode: "Other" | "Cash" | "Cheque" | "Card" | "Online Transfer";
     receivedBy: string;
@@ -601,7 +604,7 @@ export declare const voucherSchema: z.ZodObject<{
     description: z.ZodOptional<z.ZodString>;
     status: z.ZodDefault<z.ZodOptional<z.ZodEnum<["Pending", "Approved", "Rejected", "Paid"]>>>;
 }, "strip", z.ZodTypeAny, {
-    status: "Pending" | "Approved" | "Rejected" | "Paid";
+    status: "Pending" | "Paid" | "Approved" | "Rejected";
     amount: number;
     paymentMode: "Cash" | "Cheque" | "Card" | "Bank Transfer" | "Online";
     voucherDate: Date;
@@ -619,7 +622,7 @@ export declare const voucherSchema: z.ZodObject<{
     voucherType: "Payment" | "Receipt" | "Journal";
     vendorName: string;
     paymentDate: string;
-    status?: "Pending" | "Approved" | "Rejected" | "Paid" | undefined;
+    status?: "Pending" | "Paid" | "Approved" | "Rejected" | undefined;
     description?: string | undefined;
     referenceNo?: string | undefined;
 }>;
@@ -1267,6 +1270,53 @@ export declare const doctorLedgerFilterSchema: z.ZodObject<{
 }, {
     paymentMode?: "Cash" | "UPI" | "Bank" | undefined;
     amountType?: "Credit" | "Debit" | undefined;
+    fromDate?: Date | undefined;
+    toDate?: Date | undefined;
+    limit?: number | undefined;
+    cursor?: number | undefined;
+}>;
+export declare const billFilterSchema: z.ZodObject<{
+    billType: z.ZodOptional<z.ZodEnum<["OPD", "IPD", "Pharmacy", "Pathology", "Radiology"]>>;
+    patientSex: z.ZodOptional<z.ZodEnum<["Male", "Female", "Other"]>>;
+    status: z.ZodOptional<z.ZodEnum<["Pending", "PartiallyPaid", "Paid", "Cancelled", "Refunded"]>>;
+    fromDate: z.ZodOptional<z.ZodDate>;
+    toDate: z.ZodOptional<z.ZodDate>;
+    limit: z.ZodDefault<z.ZodNumber>;
+    cursor: z.ZodOptional<z.ZodNumber>;
+}, "strip", z.ZodTypeAny, {
+    limit: number;
+    status?: "Pending" | "PartiallyPaid" | "Paid" | "Cancelled" | "Refunded" | undefined;
+    patientSex?: "Male" | "Female" | "Other" | undefined;
+    billType?: "OPD" | "IPD" | "Pharmacy" | "Pathology" | "Radiology" | undefined;
+    fromDate?: Date | undefined;
+    toDate?: Date | undefined;
+    cursor?: number | undefined;
+}, {
+    status?: "Pending" | "PartiallyPaid" | "Paid" | "Cancelled" | "Refunded" | undefined;
+    patientSex?: "Male" | "Female" | "Other" | undefined;
+    billType?: "OPD" | "IPD" | "Pharmacy" | "Pathology" | "Radiology" | undefined;
+    fromDate?: Date | undefined;
+    toDate?: Date | undefined;
+    limit?: number | undefined;
+    cursor?: number | undefined;
+}>;
+export declare const moneyReceiptFilterSchema: z.ZodObject<{
+    paymentMode: z.ZodOptional<z.ZodEnum<["Cash", "Cheque", "Card", "Online Transfer", "Other"]>>;
+    status: z.ZodOptional<z.ZodEnum<["Active", "Cancelled", "Refunded"]>>;
+    fromDate: z.ZodOptional<z.ZodDate>;
+    toDate: z.ZodOptional<z.ZodDate>;
+    limit: z.ZodDefault<z.ZodNumber>;
+    cursor: z.ZodOptional<z.ZodNumber>;
+}, "strip", z.ZodTypeAny, {
+    limit: number;
+    status?: "Active" | "Cancelled" | "Refunded" | undefined;
+    paymentMode?: "Other" | "Cash" | "Cheque" | "Card" | "Online Transfer" | undefined;
+    fromDate?: Date | undefined;
+    toDate?: Date | undefined;
+    cursor?: number | undefined;
+}, {
+    status?: "Active" | "Cancelled" | "Refunded" | undefined;
+    paymentMode?: "Other" | "Cash" | "Cheque" | "Card" | "Online Transfer" | undefined;
     fromDate?: Date | undefined;
     toDate?: Date | undefined;
     limit?: number | undefined;

@@ -6,14 +6,15 @@ import { sendResponse } from "../../utils/sendResponse";
 import { StatusCodes } from "../../constants/statusCodes";
 import {
   createBill,
-  getAllBills,
+  getAllBillsService,
   getBillById,
-  getBillsByPatient,
   updateBill,
+  searchBills,
   deleteBill,
+  filterBillsService,
 } from "../../services/transectionService/billService";
-import { billItemSchema } from "@hospital/schemas";
-import { billSchema } from "@hospital/schemas";
+import { billSchema, billFilterSchema } from "@hospital/schemas";
+import { validateSearchQuery } from "../../utils/queryValidation";
 
 export const createBillRecord = catchAsyncError(
   async (req: Request, res: Response, next: NextFunction) => {
@@ -31,19 +32,25 @@ export const createBillRecord = catchAsyncError(
 
 export const getAllBillRecords = catchAsyncError(
   async (req: Request, res: Response) => {
-    const mobile = req.query.mobile as string | undefined;
+    const { cursor, limit } = req.query as {
+      cursor?: string;
+      limit?: string;
+    };
 
-    const bills = mobile
-      ? await getBillsByPatient(mobile)
-      : await getAllBills();
+    const { data: bills, nextCursor } = await getAllBillsService(
+      cursor,
+      limit ? Number(limit) : undefined
+    );
 
     sendResponse(res, {
       success: true,
       statusCode: StatusCodes.OK,
-      message: mobile
-        ? `Bills for patient ${mobile} fetched`
-        : "All bills fetched",
+      message: "Bill records fetched",
       data: bills,
+      pagination: {
+        nextCursor: nextCursor !== null ? String(nextCursor) : undefined,
+        limit: limit ? Number(limit) : 50,
+      },
     });
   }
 );
@@ -82,9 +89,7 @@ export const updateBillRecord = catchAsyncError(
     const updateData = {
       ...validated,
       dischargeDate: validated.dischargeDate ?? undefined,
-      billItems: validated.billItems
-        ? { create: validated.billItems }
-        : undefined,
+      billItems: validated.billItems ?? undefined,
     };
 
     const updatedBill = await updateBill(id, updateData);
@@ -121,3 +126,36 @@ export const deleteBillRecord = catchAsyncError(
     });
   }
 );
+
+export const searchBillsResults = catchAsyncError(async (req, res, next) => {
+  const { query } = req.query;
+
+  const searchTerm = validateSearchQuery(query, next);
+  if (!searchTerm) return;
+
+  const results = await searchBills(searchTerm);
+
+  sendResponse(res, {
+    success: true,
+    statusCode: 200,
+    message: "Bill search results fetched",
+    data: results,
+  });
+});
+
+export const filterBills = catchAsyncError(async (req, res) => {
+  const validated = billFilterSchema.parse(req.query);
+
+  const { data, nextCursor } = await filterBillsService(validated);
+
+  sendResponse(res, {
+    success: true,
+    statusCode: 200,
+    message: "Filtered bills fetched",
+    data,
+    pagination: {
+      nextCursor: nextCursor !== null ? String(nextCursor) : undefined,
+      limit: validated.limit || 50,
+    },
+  });
+});

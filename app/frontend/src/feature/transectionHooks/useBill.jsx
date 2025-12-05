@@ -5,18 +5,20 @@ import {
   getBillByIdAPI,
   updateBillAPI,
   deleteBillAPI,
+  filterBillsAPI,
+  searchBillsAPI,
 } from "../transectionApi/billApi";
 import { toast } from "sonner";
 import { getErrorMessage } from "../../utils/errorUtils";
 
-export const useGetBills = () => {
+export const useGetBills = (cursor, limit = 50) => {
   return useQuery({
-    queryKey: ["bills"],
+    queryKey: ["bills", cursor, limit],
     queryFn: async () => {
-      const { data } = await getAllBillsAPI();
-      return data.data;
+      const { data } = await getAllBillsAPI(cursor, limit);
+      return data || { data: [], pagination: {} };
     },
-    select: (data) => data || [],
+    retry: 1,
     onError: (error) => toast.error(getErrorMessage(error)),
   });
 };
@@ -66,5 +68,32 @@ export const useDeleteBill = () => {
       queryClient.invalidateQueries({ queryKey: ["bills"] });
     },
     onError: (error) => toast.error(getErrorMessage(error)),
+  });
+};
+
+export const useSearchBills = (searchTerm) => {
+  return useQuery({
+    queryKey: ["bill-search", searchTerm],
+    queryFn: async () => {
+      if (!searchTerm) return [];
+      const { data } = await searchBillsAPI(searchTerm);
+      return data?.data || [];
+    },
+    enabled: !!searchTerm,
+    retry: 1,
+    onError: (e) => toast.error(getErrorMessage(e)),
+  });
+};
+
+export const useFilterBills = (filters) => {
+  return useQuery({
+    queryKey: ["bill-filter", filters],
+    queryFn: async () => {
+      const { data } = await filterBillsAPI(filters);
+      return data || { data: [], pagination: {} };
+    },
+    enabled: !!filters,
+    retry: 1,
+    onError: (e) => toast.error(getErrorMessage(e)),
   });
 };
