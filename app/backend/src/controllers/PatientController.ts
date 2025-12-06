@@ -12,6 +12,8 @@ import {
   deletePatient,
   searchPatient,
   filterPatientsService,
+  getPatientAnalytics,
+  getPatientAgeDistribution,
 } from "../services/patientService";
 import { patientFilterSchema, patientSchema } from "@hospital/schemas";
 import { validateSearchQuery } from "../utils/queryValidation";
@@ -145,3 +147,27 @@ export const filterPatients = catchAsyncError(async (req, res) => {
     },
   });
 });
+
+export const getPatientAnalyticsRecord = catchAsyncError(async (_req, res) => {
+  const result = await getPatientAnalytics();
+
+  sendResponse(res, {
+    success: true,
+    statusCode: StatusCodes.OK,
+    message: "Patient analytics fetched successfully",
+    data: result,
+  });
+});
+
+export const getPatientAgeDistributionRecord = catchAsyncError(
+  async (_req, res) => {
+    const result = await getPatientAgeDistribution();
+
+    sendResponse(res, {
+      success: true,
+      statusCode: 200,
+      message: "Patient age distribution fetched successfully",
+      data: result,
+    });
+  }
+);

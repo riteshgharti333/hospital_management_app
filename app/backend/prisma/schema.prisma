@@ -354,6 +354,25 @@ model CashLedger {
 }
 
 
+model DoctorLedger {
+  id            Int      @id @default(autoincrement())
+  doctorName    String
+  date          DateTime
+  description   String
+  amountType    String   // "Credit" or "Debit"
+  amount        Decimal
+  paymentMode   String   // Cash, Bank Transfer, UPI, etc.
+  transactionId String?
+  remarks       String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@index([doctorName])
+  @@index([date])
+  @@index([amountType])
+}
+
+
 model DiagnosticsLedger {
   id           Int      @id @default(autoincrement())
   patientName  String
@@ -373,23 +392,7 @@ model DiagnosticsLedger {
 }
 
 
-model DoctorLedger {
-  id            Int      @id @default(autoincrement())
-  doctorName    String
-  date          DateTime
-  description   String
-  amountType    String   // "Credit" or "Debit"
-  amount        Decimal
-  paymentMode   String   // Cash, Bank Transfer, UPI, etc.
-  transactionId String?
-  remarks       String?
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
 
-  @@index([doctorName])
-  @@index([date])
-  @@index([amountType])
-}
 
 model ExpenseLedger {
   id              Int      @id @default(autoincrement())
@@ -586,6 +589,7 @@ model Bill {
   patientAge     Int
   patientSex     String
   dischargeDate  DateTime?
+  totalAmount    Float
   address        String
   status         String       @default("Pending")
   createdAt      DateTime     @default(now())

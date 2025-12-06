@@ -41,18 +41,7 @@ const ledgerTitles = [
     title: "Doctor Ledger",
     link: "ledger/doctor-ledger",
   },
-  // {
-  //   title: "Supplier Ledger",
-  //   link: "ledger/supplier-ledger",
-  // },
-  // {
-  //   title: "Pharmacy Ledger",
-  //   link: "ledger/pharmacy-ledger",
-  // },
-  // {
-  //   title: "Lab/Diagnostics Ledger",
-  //   link: "ledger/diagnostics-ledger",
-  // },
+ 
   {
     title: "Cash Ledger",
     link: "ledger/cash-ledger",
@@ -61,14 +50,7 @@ const ledgerTitles = [
     title: "Bank Ledger",
     link: "ledger/bank-ledger",
   },
-  // {
-  //   title: "Insurance / TPA Ledger",
-  //   link: "ledger/insurance-tpa-ledger",
-  // },
-  // {
-  //   title: "General Expense Ledger",
-  //   link: "ledger/expense-ledger",
-  // },
+ 
 ];
 
 export const sidebarData = [
@@ -97,16 +79,7 @@ export const sidebarData = [
     icon: LuHousePlus,
     link: "/departments",
   },
-  // {
-  //   title: "Bed Master",
-  //   icon: LuBedSingle,
-  //   link: "/bed-master",
-  // },
-  // {
-  //   title: "Bed Assign Management",
-  //   icon: PiBedDuotone,
-  //   link: "/bed-assign-management",
-  // },
+  
   {
     title: "Appointments",
     icon: MdOutlineEditCalendar,
@@ -122,21 +95,13 @@ export const sidebarData = [
     icon: FaStethoscope,
     link: "/doctors",
   },
-  // {
-  //   title: "Pharmacist Register",
-  //   icon: GiMedicines,
-  //   link: "/pharmacists",
-  // },
+ 
   {
     title: "Prescription Register",
     icon: BsPrescription2,
     link: "/prescriptions",
   },
-  // {
-  //   title: "Ambulance Management",
-  //   icon: LuAmbulance,
-  //   link: "/ambulances",
-  // },
+  
   {
     title: "Add Ledger",
     icon: MdOutlineNoteAdd,
@@ -150,28 +115,7 @@ export const sidebarData = [
       link: `/${item.link}`,
     })),
   },
-  // {
-  //   title: "X-Ray",
-  //   icon: LuScanFace,
-  //   subItems: [
-  //     { title: "X-Ray Entry", link: "/xray/new-xray" },
-  //     { title: "X-Ray Commision Report", link: "/xray/xray-commision-report" },
-  //   ],
-  // },
-
-
-  // {
-  //   title: "Item / Service",
-  //   icon: FiCalendar,
-  //   subItems: [
-  //     { title: "Company Creation", link: "/company-creation" },
-  //     { title: "Product Category", link: "/product-category" },
-  //     // { title: "Add Item / Service", link: "/add-product" },
-  //     // { title: "View All Item / Service", link: "/all-products" },
-  //     // { title: "Service Charges Update", link: "/service-charges-update" },
-  //   ],
-  // },
-  
+ 
 ];
 
 export const sidebar2Data = [

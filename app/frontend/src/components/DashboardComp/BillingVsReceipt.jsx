@@ -1,85 +1,108 @@
-// components/Dashboard/Charts/BillingVsReceipt.jsx
-import React from 'react';
-import Chart from 'react-apexcharts';
+import Chart from "react-apexcharts";
+import { useBillingVsReceipt } from "../../feature/dashboardHooks/useCharts";
 
 const BillingVsReceipt = () => {
+  const { data, isLoading } = useBillingVsReceipt();
+
+  if (isLoading || !data) {
+    return (
+      <div className="bg-white rounded-xl shadow-md p-6">
+        <p>Loading...</p>
+      </div>
+    );
+  }
+
+  const {
+    billingMonthly,
+    receiptMonthly,
+    totalBilling,
+    totalReceipt,
+    year,
+  } = data;
+
   const options = {
     chart: {
-      type: 'bar',
+      type: "bar",
       height: 350,
       stacked: false,
-      toolbar: {
-        show: true
-      }
+      toolbar: { show: true },
     },
-    colors: ['#3B82F6', '#10B981'],
+    colors: ["#3B82F6", "#10B981"],
     plotOptions: {
       bar: {
         horizontal: false,
-        columnWidth: '55%',
-        endingShape: 'rounded'
+        columnWidth: "55%",
+        endingShape: "rounded",
       },
     },
-    dataLabels: {
-      enabled: false
-    },
+    dataLabels: { enabled: false },
     stroke: {
       show: true,
       width: 2,
-      colors: ['transparent']
+      colors: ["transparent"],
     },
     xaxis: {
-      categories: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
+      categories: [
+        "Jan",
+        "Feb",
+        "Mar",
+        "Apr",
+        "May",
+        "Jun",
+        "Jul",
+        "Aug",
+        "Sep",
+        "Oct",
+        "Nov",
+        "Dec",
+      ],
     },
     yaxis: {
       title: {
-        text: 'Amount (₹)',
-        style: {
-          fontSize: '14px'
-        }
+        text: "Amount (₹)",
+        style: { fontSize: "14px" },
       },
       labels: {
-        formatter: function(value) {
-          return '₹' + (value / 1000) + 'k';
-        }
-      }
+        formatter: (value) => `₹${(value / 1000).toFixed(0)}k`,
+      },
     },
-    fill: {
-      opacity: 1
-    },
+    fill: { opacity: 1 },
     tooltip: {
       y: {
-        formatter: function(val) {
-          return "₹" + val.toLocaleString('en-IN')
-        }
-      }
+        formatter: (val) => "₹" + val.toLocaleString("en-IN"),
+      },
     },
     legend: {
-      position: 'top',
-      horizontalAlign: 'left'
+      position: "top",
+      horizontalAlign: "left",
     },
-    grid: {
-      borderColor: '#f1f1f1',
-    }
+    grid: { borderColor: "#f1f1f1" },
   };
 
   const series = [
     {
-      name: 'Billing Amount',
-      data: [450000, 520000, 480000, 610000, 590000, 680000, 720000, 650000, 710000, 630000, 690000, 750000]
+      name: "Billing Amount",
+      data: billingMonthly || [],
     },
     {
-      name: 'Money Receipt',
-      data: [420000, 490000, 450000, 580000, 560000, 640000, 680000, 620000, 670000, 600000, 650000, 710000]
-    }
+      name: "Money Receipt",
+      data: receiptMonthly || [],
+    },
   ];
+
+  const formatLakh = (num) =>
+    "₹" + (num / 100000).toFixed(2) + "L";
 
   return (
     <div className="bg-white rounded-xl shadow-md p-6">
       <div className="flex justify-between items-center mb-6">
         <div>
-          <h3 className="text-lg font-semibold text-gray-800">Monthly Billing vs Money Receipt</h3>
-          <p className="text-sm text-gray-600">Comparative analysis of billed amount vs actual receipts</p>
+          <h3 className="text-lg font-semibold text-gray-800">
+            Monthly Billing vs Money Receipt
+          </h3>
+          <p className="text-sm text-gray-600">
+            Comparative analysis of billed amount vs actual receipts
+          </p>
         </div>
         <div className="flex items-center space-x-2">
           <div className="flex items-center">
@@ -92,20 +115,26 @@ const BillingVsReceipt = () => {
           </div>
         </div>
       </div>
-      <Chart 
-        options={options} 
-        series={series} 
-        type="bar" 
-        height={350} 
-      />
+
+      <Chart options={options} series={series} type="bar" height={350} />
+
       <div className="mt-4 grid grid-cols-2 gap-4 text-sm">
         <div className="bg-blue-50 p-3 rounded-lg">
-          <p className="font-medium text-blue-800">Total Billed (2024)</p>
-          <p className="text-2xl font-bold">₹72.5L</p>
+          <p className="font-medium text-blue-800">
+            Total Billed ({year})
+          </p>
+          <p className="text-2xl font-bold">
+            {formatLakh(totalBilling)}
+          </p>
         </div>
+
         <div className="bg-green-50 p-3 rounded-lg">
-          <p className="font-medium text-green-800">Total Received (2024)</p>
-          <p className="text-2xl font-bold">₹68.9L</p>
+          <p className="font-medium text-green-800">
+            Total Received ({year})
+          </p>
+          <p className="text-2xl font-bold">
+            {formatLakh(totalReceipt)}
+          </p>
         </div>
       </div>
     </div>

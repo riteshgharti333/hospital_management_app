@@ -7,6 +7,8 @@ import {
   deleteMoneyReceiptRecord,
   searchMoneyReceiptResults,
   filterMoneyReceipts,
+  getRevenueAnalyticsData,
+  getPaymentModeBreakdown,
 } from "../../controllers/transection/MoneyReceiptController";
 import { isAuthenticated } from "../../middlewares/isAuthenticated";
 import { isAdmin } from "../../middlewares/isAdmin";
@@ -20,6 +22,9 @@ router
 
 router.get("/search", searchMoneyReceiptResults);
 router.get("/filter", filterMoneyReceipts);
+
+router.get("/revenue", getRevenueAnalyticsData);
+router.get("/analytics/payment-modes", getPaymentModeBreakdown);
 
 router
   .route("/:id")

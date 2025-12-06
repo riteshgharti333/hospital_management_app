@@ -6,7 +6,10 @@ import {
   updateBillRecord,
   deleteBillRecord,
   searchBillsResults,
-  filterBills
+  filterBills,
+  getBillStatusAnalyticsRecord,
+  getMonthlyBillingVsReceiptRecord,
+  getBillsByStatus,
 } from "../../controllers/transection/BillController";
 import { isAuthenticated } from "../../middlewares/isAuthenticated";
 import { isAdmin } from "../../middlewares/isAdmin";
@@ -20,6 +23,9 @@ router
 
 router.get("/search", searchBillsResults);
 router.get("/filter", filterBills);
+router.get("/bill-status-analytics", getBillStatusAnalyticsRecord);
+router.get("/analytics/billing-vs-receipt", getMonthlyBillingVsReceiptRecord);
+router.get("/analytics/status", getBillsByStatus);
 
 router
   .route("/:id")

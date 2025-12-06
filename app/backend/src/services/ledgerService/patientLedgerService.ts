@@ -115,3 +115,85 @@ export const filterPatientLedgerService = async (filters: {
     cursor
   );
 };
+
+
+
+export const getLedgerFlowSummary = async () => {
+  // Helper function to calculate Money In & Out for a model
+  const calcLedgerFlow = async (
+    model: any,
+    moneyInType: string,
+    moneyOutType: string
+  ) => {
+    const moneyIn = await model.aggregate({
+      _sum: { amount: true },
+      where: { amountType: moneyInType },
+    });
+
+    const moneyOut = await model.aggregate({
+      _sum: { amount: true },
+      where: { amountType: moneyOutType },
+    });
+
+    const inAmount = Number(moneyIn._sum.amount || 0);
+    const outAmount = Number(moneyOut._sum.amount || 0);
+
+    return {
+      moneyIn: inAmount,
+      moneyOut: outAmount,
+      netBalance: inAmount - outAmount,
+    };
+  };
+
+  // Ledger calculations
+  const patientLedger = await calcLedgerFlow(
+    prisma.patientLedger,
+    "Credit",
+    "Debit"
+  );
+
+  const doctorLedger = await calcLedgerFlow(
+    prisma.doctorLedger,
+    "Credit",
+    "Debit"
+  );
+
+  const bankLedger = await calcLedgerFlow(
+    prisma.bankLedger,
+    "Credit",
+    "Debit"
+  );
+
+  const cashLedger = await calcLedgerFlow(
+    prisma.cashLedger,
+    "Income",
+    "Expense"
+  );
+
+  // Totals
+  const totalMoneyIn =
+    patientLedger.moneyIn +
+    doctorLedger.moneyIn +
+    cashLedger.moneyIn +
+    bankLedger.moneyIn;
+
+  const totalMoneyOut =
+    patientLedger.moneyOut +
+    doctorLedger.moneyOut +
+    cashLedger.moneyOut +
+    bankLedger.moneyOut;
+
+  return {
+    ledgers: {
+      patient: patientLedger,
+      doctor: doctorLedger,
+      cash: cashLedger,
+      bank: bankLedger,
+    },
+    totals: {
+      totalMoneyIn,
+      totalMoneyOut,
+      overallNetBalance: totalMoneyIn - totalMoneyOut,
+    },
+  };
+};

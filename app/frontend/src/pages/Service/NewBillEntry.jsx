@@ -163,18 +163,27 @@ const NewBillEntry = () => {
   };
 
   const onSubmit = async (data) => {
-    console.log("Submitting data:", data);
     try {
+      const processedItems = data.billItems.map((item) => ({
+        ...item,
+        mrp: Number(item.mrp),
+        totalAmount: Number(item.totalAmount),
+      }));
+
+      // Calculate grand total of bill
+      const grandTotal = processedItems.reduce(
+        (sum, item) => sum + (item.totalAmount || 0),
+        0
+      );
+
       const payload = {
         ...data,
-        billItems: data.billItems.map((item) => ({
-          ...item,
-          mrp: Number(item.mrp),
-          totalAmount: Number(item.totalAmount),
-        })),
+        billItems: processedItems,
+        totalAmount: grandTotal, // <-- ADD THIS 🔥
       };
 
       const response = await mutateAsync(payload);
+
       if (response?.success || response?.data?.success) {
         navigate(`/bill/${response?.data?.data?.id}`);
       }

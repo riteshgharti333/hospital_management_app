@@ -1,72 +1,78 @@
-// components/Dashboard/Charts/AgeDistribution.jsx
-import React from 'react';
-import Chart from 'react-apexcharts';
+import Chart from "react-apexcharts";
+import { usePatientAgeDistribution } from "../../feature/dashboardHooks/useCharts";
 
 const AgeDistribution = () => {
+  const { data, isLoading } = usePatientAgeDistribution();
+
+  if (isLoading) return <p>Loading...</p>;
+  if (!data) return null;
+
+  const groups = data.groups || {};
+  const averageAge = data.averageAge || 0;
+  const modeGroup = data.modeGroup || "N/A";
+  const modeCount = data.modeCount || 0;
+
+  const categories = Object.keys(groups);
+  const counts = Object.values(groups);
+
   const options = {
     chart: {
-      type: 'bar',
+      type: "bar",
       height: 300,
-      toolbar: {
-        show: false
-      }
+      toolbar: { show: false },
     },
-    colors: ['#10B981'],
+    colors: ["#10B981"],
     plotOptions: {
       bar: {
         borderRadius: 4,
         horizontal: false,
-        columnWidth: '60%',
-      }
+        columnWidth: "60%",
+      },
     },
-    dataLabels: {
-      enabled: false
-    },
+    dataLabels: { enabled: false },
     xaxis: {
-      categories: ['0-10', '11-20', '21-30', '31-40', '41-50', '51-60', '61-70', '71+'],
-      labels: {
-        style: {
-          fontSize: '12px'
-        }
-      }
+      categories,
+      labels: { style: { fontSize: "12px" } },
     },
     yaxis: {
-      title: {
-        text: 'Number of Patients'
-      }
+      title: { text: "Number of Patients" },
     },
-    grid: {
-      borderColor: '#f1f1f1',
-    },
+    grid: { borderColor: "#f1f1f1" },
     tooltip: {
       y: {
-        formatter: function(val) {
-          return val + " patients"
-        }
-      }
-    }
+        formatter: (val) => `${val} patients`,
+      },
+    },
   };
 
-  const series = [{
-    name: 'Patients',
-    data: [85, 120, 185, 210, 175, 140, 95, 50]
-  }];
+  const series = [
+    {
+      name: "Patients",
+      data: counts,
+    },
+  ];
 
   return (
     <div className="bg-white rounded-xl shadow-md p-6">
       <div className="flex justify-between items-center mb-4">
-        <h3 className="text-lg font-semibold text-gray-800">Age Distribution</h3>
-        <span className="text-xs bg-green-50 text-green-600 px-2 py-1 rounded">Most: 31-40 yrs</span>
+        <h3 className="text-lg font-semibold text-gray-800">
+          Age Distribution
+        </h3>
+        <span className="text-xs bg-green-50 text-green-600 px-2 py-1 rounded">
+          Most: {modeGroup} yrs
+        </span>
       </div>
-      <Chart 
-        options={options} 
-        series={series} 
-        type="bar" 
-        height={300} 
-      />
+
+      <Chart options={options} series={series} type="bar" height={300} />
+
       <div className="mt-4 text-sm text-gray-600">
-        <p>Average Age: <span className="font-semibold">38.5 years</span></p>
-        <p className="text-xs mt-1">Mode: 31-40 age group (210 patients)</p>
+        <p>
+          Average Age: <span className="font-semibold">{averageAge} years</span>
+        </p>
+        <p className="text-xs mt-1">
+          Mode: <span className="font-semibold">{modeGroup}</span> age group (
+          {modeCount} patients)
+        </p>
       </div>
     </div>
   );

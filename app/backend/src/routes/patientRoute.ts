@@ -7,6 +7,8 @@ import {
   deletePatientRecord,
   searchPatientResults,
   filterPatients,
+  getPatientAnalyticsRecord,
+  getPatientAgeDistributionRecord,
 } from "../controllers/PatientController";
 import { isAuthenticated } from "../middlewares/isAuthenticated";
 import { isAdmin } from "../middlewares/isAdmin";
@@ -21,6 +23,9 @@ router
 router.get("/search", searchPatientResults);
 
 router.get("/filter", filterPatients);
+
+router.get("/analytics", getPatientAnalyticsRecord);
+router.get("/analytics/age-distribution", getPatientAgeDistributionRecord);
 
 router
   .route("/:id")

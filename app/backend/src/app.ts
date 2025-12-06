@@ -108,11 +108,11 @@ app.use("/api/v1/transection/bill", billRoutes);
 app.use("/api/v1/transection/voucher", voucherRoutes);
 app.use("/api/v1/transection/money-receipt", moneyReceiptRoutes);
 app.use("/api/v1/transection/employee", employeeRoutes);
-
+ 
 // Sample Route
 app.get("/", (_req, res) => {
-  res.send("Welcome 🚀");
-});
+  res.send("Welcome 🚀"); 
+});     
 
 export default app;
 

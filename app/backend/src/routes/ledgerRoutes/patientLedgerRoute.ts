@@ -8,6 +8,7 @@ import {
   deleteLedgerEntryRecord,
   searchPatientLedgerResults,
   filterPatientLedger,
+  getLedgerFlowSummaryController,
 } from "../../controllers/ledger/PatientLedgerController";
 import { isAuthenticated } from "../../middlewares/isAuthenticated";
 import { isAdmin } from "../../middlewares/isAdmin";
@@ -24,6 +25,8 @@ router.route("/balance").get(getPatientBalanceRecord);
 router.get("/search", searchPatientLedgerResults);
 
 router.get("/filter", filterPatientLedger);
+
+router.get("/ledger-flow-summary", getLedgerFlowSummaryController);
 
 router
   .route("/:id")

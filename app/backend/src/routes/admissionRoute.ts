@@ -7,6 +7,9 @@ import {
   deleteAdmission,
   searchAdmissionsResults,
   filterAdmissions,
+  getAdmissionAnalyticsRecord,
+  getMonthlyAdmissionTrendRecord,
+  getAdmissionGenderAnalyticsRecord,
 } from "../controllers/AdmissionController";
 import { isAuthenticated } from "../middlewares/isAuthenticated";
 import { isAdmin } from "../middlewares/isAdmin";
@@ -18,6 +21,9 @@ router.get("/", getAllAdmissions);
 
 router.get("/search", searchAdmissionsResults);
 router.get("/filter", filterAdmissions);
+router.get("/analytics", getAdmissionAnalyticsRecord);
+router.get("/analytics/monthly-trend", getMonthlyAdmissionTrendRecord);
+router.get("/analytics/gender-distribution", getAdmissionGenderAnalyticsRecord);
 
 router.get("/:id", getAdmissionById);
 router.put("/:id", isAuthenticated, isAdmin, updateAdmission);

@@ -137,8 +137,7 @@ const EditBill = () => {
   };
 
   const handleAddItem = () => {
-    const { company, itemOrService, quantity, mrp, totalAmount } =
-      productData;
+    const { company, itemOrService, quantity, mrp, totalAmount } = productData;
 
     if (!company || !itemOrService || quantity < 1 || !mrp || !totalAmount) {
       toast.error("Please fill all required item fields");
@@ -185,13 +184,22 @@ const EditBill = () => {
 
   const onSubmit = async (formData) => {
     try {
+      const processedItems = formData.billItems.map((item) => ({
+        ...item,
+        mrp: Number(item.mrp),
+        totalAmount: Number(item.totalAmount),
+      }));
+
+      // Calculate total bill amount
+      const grandTotal = processedItems.reduce(
+        (sum, item) => sum + (item.totalAmount || 0),
+        0
+      );
+
       const payload = {
         ...formData,
-        billItems: formData.billItems.map((item) => ({
-          ...item,
-          mrp: Number(item.mrp),
-          totalAmount: Number(item.totalAmount),
-        })),
+        billItems: processedItems,
+        totalAmount: grandTotal, // <-- 🔥 ADD THIS FIX
       };
 
       const res = await updateBill({ id, data: payload });
@@ -288,7 +296,10 @@ const EditBill = () => {
                 <select
                   {...register("billType")}
                   disabled={!editMode}
-                  className={`${getInputClass("billType", !editMode)} bg-white pr-8`}
+                  className={`${getInputClass(
+                    "billType",
+                    !editMode
+                  )} bg-white pr-8`}
                 >
                   <option value="" disabled hidden>
                     Select bill type
@@ -316,7 +327,10 @@ const EditBill = () => {
                 <select
                   {...register("status")}
                   disabled={!editMode}
-                  className={`${getInputClass("status", !editMode)} bg-white pr-8`}
+                  className={`${getInputClass(
+                    "status",
+                    !editMode
+                  )} bg-white pr-8`}
                 >
                   {billStatusOptions.map((s) => (
                     <option key={s} value={s}>

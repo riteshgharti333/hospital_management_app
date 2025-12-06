@@ -12,6 +12,8 @@ import {
   getAllMoneyReceiptsService,
   filterMoneyReceiptsService,
   searchMoneyReceipts,
+  getRevenueAnalytics,
+  getPaymentModeBreakdownAnalytics,
 } from "../../services/transectionService/moneyReceiptService";
 
 import {
@@ -162,5 +164,27 @@ export const filterMoneyReceipts = catchAsyncError(async (req, res) => {
       nextCursor: nextCursor !== null ? String(nextCursor) : undefined,
       limit: validated.limit || 50,
     },
+  });
+});
+
+export const getRevenueAnalyticsData = catchAsyncError(async (req, res) => {
+  const revenue = await getRevenueAnalytics();
+
+  sendResponse(res, {
+    success: true,
+    statusCode: 200,
+    message: "Revenue analytics fetched successfully",
+    data: revenue,
+  });
+});
+
+export const getPaymentModeBreakdown = catchAsyncError(async (_req, res) => {
+  const data = await getPaymentModeBreakdownAnalytics();
+
+  sendResponse(res, {
+    success: true,
+    statusCode: 200,
+    message: "Payment mode breakdown fetched successfully",
+    data,
   });
 });
