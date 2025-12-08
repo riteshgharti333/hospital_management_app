@@ -1,19 +1,7 @@
 import { useState, useEffect, useRef } from "react";
-import {
-  FiSearch,
-  FiBell,
-  FiMessageSquare,
-  FiUser,
-  FiMenu,
-  FiHelpCircle,
-  FiLogOut,
-  FiSettings,
-  FiCalendar,
-} from "react-icons/fi";
-import { MdLocalHospital, MdGroups, MdForum } from "react-icons/md";
-import { IoMdNotificationsOutline } from "react-icons/io";
-import { BsChatDots, BsPeople } from "react-icons/bs";
+import { FiSearch, FiUser, FiLogOut } from "react-icons/fi";
 import { Link, useNavigate } from "react-router-dom";
+import Fuse from "fuse.js";
 
 import { useDispatch, useSelector } from "react-redux";
 import {
@@ -21,113 +9,206 @@ import {
   logoutAsyncUser,
 } from "../../redux/asyncThunks/authThunks";
 import { toast } from "sonner";
+import { GLOBAL_SEARCH_PAGES } from "../../assets/searchData";
 
 const Navbar = () => {
   const [isScrolled, setIsScrolled] = useState(false);
   const [showProfileMenu, setShowProfileMenu] = useState(false);
-  const [showMessages, setShowMessages] = useState(false);
-  const [showNotifications, setShowNotifications] = useState(false);
-  const [unreadMessages, setUnreadMessages] = useState(3);
-  const [unreadNotifications, setUnreadNotifications] = useState(5);
   const navigate = useNavigate();
 
+  const [query, setQuery] = useState("");
+  const [searchResults, setSearchResults] = useState([]);
+  const [showSearchDropdown, setShowSearchDropdown] = useState(false);
+  const [activeIndex, setActiveIndex] = useState(-1); // ⬅️ NEW
+
   const { profile, user } = useSelector((state) => state.auth);
+  const searchInputRef = useRef(null);
+  const searchRef = useRef(null);
+  const cardRef = useRef(null);
 
   const dispatch = useDispatch();
 
-  useEffect(() => {
-    if (user) {
-      dispatch(getUserProfile());
+  // ------------------ Fuse.js Search Engine ------------------
+  const fuse = new Fuse(GLOBAL_SEARCH_PAGES, {
+    keys: ["title"],
+    threshold: 0.3,
+  });
+
+  // ------------------ Search Logic ------------------
+  const handleSearch = (value) => {
+    setQuery(value);
+
+    if (!value.trim()) {
+      setSearchResults([]);
+      setShowSearchDropdown(false);
+      return;
     }
+
+    const results = fuse.search(value).map((r) => r.item);
+    setSearchResults(results);
+    setShowSearchDropdown(true);
+    setActiveIndex(-1); // reset highlight
+  };
+
+  // ------------------ Keyboard Navigation ↑ ↓ Enter ------------------
+  const handleKeyNavigation = (e) => {
+    if (!showSearchDropdown || searchResults.length === 0) return;
+
+    if (e.key === "ArrowDown") {
+      e.preventDefault();
+      setActiveIndex((prev) =>
+        prev + 1 >= searchResults.length ? 0 : prev + 1
+      );
+    }
+
+    if (e.key === "ArrowUp") {
+      e.preventDefault();
+      setActiveIndex((prev) =>
+        prev - 1 < 0 ? searchResults.length - 1 : prev - 1
+      );
+    }
+
+    if (e.key === "Enter") {
+      if (activeIndex >= 0) {
+        navigate(searchResults[activeIndex].path);
+        setShowSearchDropdown(false);
+        setQuery("");
+        setActiveIndex(-1);
+      }
+    }
+  };
+
+  // ------------------ GLOBAL HOTKEY (CTRL + K) ------------------
+  useEffect(() => {
+    const handleHotkey = (e) => {
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "k") {
+        e.preventDefault();
+        if (searchInputRef.current) {
+          searchInputRef.current.focus();
+          searchInputRef.current.select();
+        }
+      }
+    };
+
+    window.addEventListener("keydown", handleHotkey);
+    return () => window.removeEventListener("keydown", handleHotkey);
+  }, []);
+
+  // ------------------ Fetch User Profile ------------------
+  useEffect(() => {
+    if (user) dispatch(getUserProfile());
   }, [dispatch, user]);
 
   const handleLogout = async () => {
     try {
       const res = await dispatch(logoutAsyncUser()).unwrap();
-
       if (res?.message) {
         localStorage.removeItem("user");
         toast.success(res.message);
         navigate("/login");
       }
     } catch (error) {
-      console.error("Logout failed:", error);
       toast.error(error?.message || "Logout failed");
     }
   };
 
-  const cardRef = useRef(null);
-
-  // Handle click outside
+  // ------------------ Close dropdown on outside click ------------------
   useEffect(() => {
-    const handleClickOutside = (event) => {
-      if (cardRef.current && !cardRef.current.contains(event.target)) {
+    const handleClickOutside = (e) => {
+      if (searchRef.current && !searchRef.current.contains(e.target)) {
+        setShowSearchDropdown(false);
+      }
+      if (cardRef.current && !cardRef.current.contains(e.target)) {
         setShowProfileMenu(false);
       }
     };
 
     document.addEventListener("mousedown", handleClickOutside);
-
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-    };
+    return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
+  // ------------------ Scroll Effect ------------------
   useEffect(() => {
-    const handleScroll = () => {
-      if (window.scrollY > 10) {
-        setIsScrolled(true);
-      } else {
-        setIsScrolled(false);
-      }
-    };
+    const handleScroll = () => setIsScrolled(window.scrollY > 10);
     window.addEventListener("scroll", handleScroll);
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
-  const markMessagesAsRead = () => {
-    setUnreadMessages(0);
-  };
-
-  const markNotificationsAsRead = () => {
-    setUnreadNotifications(0);
-  };
-
   return (
     <header
-      className={`rounded-2xl px-2 top-0 z-50 transition-all duration-300
-        bg-white/95 backdrop-blur-sm`}
+      className={`relative rounded-2xl px-2 top-0 z-50 transition-all duration-300
+      bg-white/95 backdrop-blur-sm`}
     >
       <div className="">
         <div className="flex items-center justify-between h-16">
-          {/* Left section - Logo and Search */}
+          {/* ---------------- SEARCH BAR ---------------- */}
           <div className="flex items-center">
-            <div className=" relative">
+            <div className="relative" ref={searchRef}>
               <div className="relative flex items-center">
                 <FiSearch className="absolute left-3 h-4 w-4 text-gray-400" />
+
                 <input
+                  ref={searchInputRef} // ⬅️ FIXED CTRL+K
                   type="text"
-                  placeholder="Search patients, doctors, reports..."
-                  className="block w-[300px] pl-10 pr-3 py-2 border border-gray-300 rounded-full text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  value={query}
+                  onChange={(e) => handleSearch(e.target.value)}
+                  onFocus={() => query && setShowSearchDropdown(true)}
+                  onKeyDown={handleKeyNavigation} // ⬅️ KEY NAVIGATION
+                  placeholder="Quick Search — Press Ctrl + K"
+                  className="block w-[300px] pl-10 pr-3 py-2 border border-gray-200 rounded-xl text-sm 
+                    focus:outline-none focus:ring-2 focus:ring-blue-500 bg-gray-50"
                 />
               </div>
+
+              {/* ---------------- DROPDOWN ---------------- */}
+              {showSearchDropdown && searchResults.length > 0 && (
+                <div className="absolute mt-2 w-full bg-white shadow-lg rounded-lg py-2 border border-gray-100 z-50 isolate">
+                  {searchResults.map((item, index) => (
+                    <Link
+                      to={item.path}
+                      key={index}
+                      className={`block px-4 py-2 text-sm rounded-md transition-all
+                      ${
+                        activeIndex === index
+                          ? "bg-blue-500 text-white"
+                          : "text-gray-700 hover:bg-blue-50 hover:text-blue-600"
+                      }`}
+                      onClick={() => {
+                        setShowSearchDropdown(false);
+                        setQuery("");
+                        setActiveIndex(-1);
+                      }}
+                    >
+                      {item.title}
+                    </Link>
+                  ))}
+                </div>
+              )}
+
+              {/* No Results */}
+              {showSearchDropdown &&
+                searchResults.length === 0 &&
+                query.length > 1 && (
+                  <div className="absolute mt-2 w-full bg-white shadow-lg rounded-lg py-3 text-center text-sm text-gray-500 border border-gray-100">
+                    No matching pages
+                  </div>
+                )}
             </div>
           </div>
 
-          {/* Right section - Icons and Profile */}
+          {/* ---------------- PROFILE MENU ---------------- */}
           <div className="flex items-center space-x-4">
             {user ? (
-              /* Profile dropdown when user is logged in */
-              <div className="relative ml-2 ">
+              <div className="relative ml-2">
                 <button
                   onClick={() => setShowProfileMenu(!showProfileMenu)}
                   className="flex items-center cursor-pointer space-x-2 focus:outline-none"
                 >
                   <div className="h-8 w-8 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-medium">
-                    {profile?.name?.charAt(0) || 'U'}
+                    {profile?.name?.charAt(0) || "U"}
                   </div>
                   <span className="hidden md:inline-block text-sm font-medium text-gray-700">
-                    {profile?.name || 'User'}
+                    {profile?.name || "User"}
                   </span>
                 </button>
 
@@ -153,18 +234,7 @@ const Navbar = () => {
                   </div>
                 )}
               </div>
-            ) : (
-              /* Login button when user is not logged in */
-              <div className="relative ml-2">
-                <button
-                  onClick={() => navigate('/login')}
-                  className="flex items-center space-x-2 cursor-pointer focus:outline-none bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-full text-sm font-medium transition-colors"
-                >
-                  <FiUser className="h-4 w-4" />
-                  <span>Login</span>
-                </button>
-              </div>
-            )}
+            ) : null}
           </div>
         </div>
       </div>

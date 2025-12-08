@@ -13,7 +13,7 @@ import TodayAdmissionsCard from "../../components/DashboardComp/TodayAdmissionsC
 
 const Dashboard = () => {
   return (
-    <div className="min-h-screen bg-gray-50 p-2 md:p-6">
+    <div className="min-h-screen">
       <div className="max-w-7xl mx-auto">
         {/* Header */}
         <div className="flex flex-col md:flex-row md:items-center justify-between mb-8">
@@ -42,7 +42,7 @@ const Dashboard = () => {
               </p>
             </div>
           </div>
-          <div className="text-sm text-gray-600 bg-white px-4 py-2 rounded-lg shadow-sm">
+          <div className="text-sm text-gray-600px-4 py-2 rounded-lg">
             <span className="font-medium">Last Updated: </span>
             {new Date().toLocaleDateString("en-US", {
               weekday: "short",

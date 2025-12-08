@@ -72,9 +72,9 @@ const Table = ({
   return (
     <div className="mt-5 max-w-[1050px] m-auto flex flex-col rounded-xl border border-gray-200 bg-white shadow-sm">
       {/* Header with Search and Filters */}
-      <div className="flex flex-col sm:flex-row items-center justify-between p-4 border-b border-gray-200 bg-white gap-3">
+      <div className="flex flex-col sm:flex-row items-center justify-between p-4 border-b border-gray-200 gap-3 ">
         {/* Search Input */}
-        <div className="relative w-full sm:w-64">
+        <div className="relative w-full sm:w-64  z-1">
           <FiSearch className="absolute left-3 top-2.5 text-gray-400" />
           <input
             type="text"

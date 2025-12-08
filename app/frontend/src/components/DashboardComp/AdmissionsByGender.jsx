@@ -5,9 +5,26 @@ import { useAdmissionGenderDistribution } from "../../feature/dashboardHooks/use
 const AdmissionsByGender = () => {
   const { data, isLoading } = useAdmissionGenderDistribution();
 
-  if (isLoading) return <p>Loading...</p>;
+  // ---------------- SKELETON LOADER (Inline) ----------------
+  const GenderChartSkeleton = () => (
+    <div className="bg-white rounded-xl shadow-md p-6 animate-pulse">
+      <div className="flex justify-between items-center mb-4">
+        <div className="h-4 w-40 bg-gray-200 rounded"></div>
+        <div className="h-5 w-16 bg-gray-200 rounded"></div>
+      </div>
+
+      <div className="h-[260px] w-[260px] bg-gray-200 rounded-full mx-auto"></div>
+    </div>
+  );
+
+  // Show skeleton while loading
+  if (isLoading) {
+    return <GenderChartSkeleton />;
+  }
+
   if (!data) return null;
 
+  // ---------------- REAL DATA ----------------
   const total = data.totalAdmissions || 0;
 
   const male = data.male?.percentage || 0;
@@ -59,12 +76,14 @@ const AdmissionsByGender = () => {
 
   const series = [male, female, other];
 
+  // ---------------- UI ----------------
   return (
     <div className="bg-white rounded-xl shadow-md p-6">
       <div className="flex justify-between items-center mb-4">
         <h3 className="text-lg font-semibold text-gray-800">
           Admissions by Gender
         </h3>
+
         <span className="text-xs bg-gray-100 text-gray-600 px-2 py-1 rounded">
           All Time
         </span>

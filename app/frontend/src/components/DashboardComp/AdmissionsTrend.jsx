@@ -5,9 +5,33 @@ import { useAdmissionMonthlyTrend } from "../../feature/dashboardHooks/useCharts
 const AdmissionsTrend = () => {
   const { data, isLoading } = useAdmissionMonthlyTrend();
 
-  if (isLoading) return <p>Loading...</p>;
+  // ---------------- SKELETON LOADER (Inline) ----------------
+  const ChartSkeleton = () => (
+    <div className="bg-white rounded-xl shadow-md p-6 animate-pulse">
+      <div className="flex justify-between items-center mb-6">
+        <div>
+          <div className="h-4 w-40 bg-gray-200 rounded mb-2"></div>
+          <div className="h-3 w-28 bg-gray-200 rounded"></div>
+        </div>
+
+        <div className="flex space-x-2">
+          <div className="h-5 w-12 bg-gray-200 rounded"></div>
+          <div className="h-5 w-20 bg-gray-200 rounded"></div>
+        </div>
+      </div>
+
+      <div className="h-[350px] w-full bg-gray-200 rounded"></div>
+    </div>
+  );
+
+  // Show skeleton while loading
+  if (isLoading) {
+    return <ChartSkeleton />;
+  }
+
   if (!data) return null;
 
+  // ---------------- REAL DATA ----------------
   const months = data.months;
   const counts = data.counts;
   const percentChange = data.growth?.percentChange || 0;
@@ -28,9 +52,7 @@ const AdmissionsTrend = () => {
           reset: true,
         },
       },
-      zoom: {
-        enabled: true,
-      },
+      zoom: { enabled: true },
     },
     colors: ["#3B82F6"],
     dataLabels: { enabled: false },
@@ -50,16 +72,12 @@ const AdmissionsTrend = () => {
     },
     yaxis: {
       title: { text: "Number of Admissions" },
-      labels: {
-        formatter: (val) => Math.floor(val),
-      },
+      labels: { formatter: (val) => Math.floor(val) },
     },
     grid: { borderColor: "#f1f1f1" },
     tooltip: {
       y: {
-        formatter: function (val) {
-          return val + " admissions";
-        },
+        formatter: (val) => `${val} admissions`,
       },
     },
     markers: {
@@ -78,6 +96,7 @@ const AdmissionsTrend = () => {
     },
   ];
 
+  // ---------------- REAL UI ----------------
   return (
     <div className="bg-white rounded-xl shadow-md p-6">
       <div className="flex justify-between items-center mb-6">
