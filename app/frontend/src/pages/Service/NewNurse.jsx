@@ -8,7 +8,6 @@ import { nurseSchema } from "@hospital/schemas";
 import { useNavigate } from "react-router-dom";
 import { useCreateNurse } from "../../feature/hooks/useNurse";
 
-
 const formFields = [
   {
     section: "Nurse Information",
@@ -31,11 +30,11 @@ const formFields = [
         required: true,
       },
       {
-        label: "Registration No",
-        type: "text",
-        name: "registrationNo",
-        placeholder: "Enter registration number",
-        icon: <FaIdCard className="text-gray-400" />,
+        label: "Email",
+        type: "email",
+        name: "email",
+        placeholder: "Enter nurse's email",
+        icon: <FaIdCard className="text-gray-400" />, // or use FaEnvelope if you want
         required: true,
       },
       {
@@ -91,7 +90,7 @@ const NewNurse = () => {
     defaultValues: {
       fullName: "",
       mobileNumber: "",
-      registrationNo: "",
+      email: "",
       department: "",
       address: "",
       shift: "Day",
@@ -103,7 +102,7 @@ const NewNurse = () => {
 
   const onSubmit = async (data) => {
     const response = await mutateAsync(data);
-     navigate(`/nurse/${response.data.data.id}`);
+    navigate(`/nurse/${response.data.data.id}`);
   };
 
   return (

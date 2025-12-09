@@ -12,6 +12,7 @@ router
     .route("/")
     .post(isAuthenticated_1.isAuthenticated, isAdmin_1.isAdmin, BedAssignController_1.createBedAssignmentRecord)
     .get(BedAssignController_1.getAllBedAssignmentRecords);
+router.get("/search", BedAssignController_1.searchBedAssignmentResults);
 router
     .route("/:id")
     .get(BedAssignController_1.getBedAssignmentRecordById)

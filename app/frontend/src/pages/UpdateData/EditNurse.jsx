@@ -49,6 +49,13 @@ const formFields = [
         icon: <FaPhone className="text-gray-400" />,
       },
       {
+        label: "Email",
+        type: "email",
+        name: "email",
+        placeholder: "Enter nurse email",
+        icon: <FaIdCard className="text-gray-400" />,
+      },
+      {
         label: "Registration No",
         type: "text",
         name: "registrationNo",
@@ -129,7 +136,7 @@ const EditNurse = () => {
         setEditMode(false);
       }
     } catch (error) {
-      console.log(error)
+      console.log(error);
     }
   };
 
@@ -146,7 +153,7 @@ const EditNurse = () => {
         navigate("/nurses");
       }
     } catch (error) {
-      console.log(error)
+      console.log(error);
     } finally {
       setShowDeleteModal(false);
     }
@@ -266,16 +273,20 @@ const EditNurse = () => {
                         <input
                           type={field.type}
                           {...register(field.name)}
-                          disabled={!editMode}
+                          disabled={
+                            field.name === "registrationNo" || !editMode
+                          }
                           placeholder={field.placeholder}
                           defaultValue={fieldValue}
                           className={`block w-full px-4 py-2 border rounded-lg focus:ring-blue-500 focus:border-blue-500 ${
                             field.icon ? "pl-10" : ""
-                          } ${
-                            error ? "border-red-500" : "border-gray-300"
-                          } ${getDisabledStyles(!editMode)}`}
-                          aria-invalid={error ? "true" : "false"}
+                          } ${error ? "border-red-500" : "border-gray-300"} ${
+                            !editMode || field.name === "registrationNo"
+                              ? "bg-gray-100 cursor-not-allowed"
+                              : ""
+                          }`}
                         />
+
                         {field.icon && (
                           <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                             {field.icon}

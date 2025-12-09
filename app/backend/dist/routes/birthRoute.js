@@ -11,7 +11,9 @@ const router = express_1.default.Router();
 router
     .route("/")
     .post(isAuthenticated_1.isAuthenticated, isAdmin_1.isAdmin, BirthController_1.createBirthRecord)
-    .get(BirthController_1.getAllBirthRecords);
+    .get(BirthController_1.getAllBirth);
+router.get("/search", BirthController_1.searchBirthResults);
+router.get("/filter", BirthController_1.filterBirths);
 router
     .route("/:id")
     .get(BirthController_1.getBirthRecordById)

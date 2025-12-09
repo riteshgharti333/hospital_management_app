@@ -1,12 +1,13 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.deleteBirthRecord = exports.updateBirthRecord = exports.getBirthRecordById = exports.getAllBirthRecords = exports.createBirthRecord = void 0;
+exports.filterBirths = exports.searchBirthResults = exports.deleteBirthRecord = exports.updateBirthRecord = exports.getBirthRecordById = exports.getAllBirth = exports.createBirthRecord = void 0;
 const catchAsyncError_1 = require("../middlewares/catchAsyncError");
 const errorHandler_1 = require("../middlewares/errorHandler");
 const sendResponse_1 = require("../utils/sendResponse");
 const statusCodes_1 = require("../constants/statusCodes");
 const birthService_1 = require("../services/birthService");
 const schemas_1 = require("@hospital/schemas");
+const queryValidation_1 = require("../utils/queryValidation");
 exports.createBirthRecord = (0, catchAsyncError_1.catchAsyncError)(async (req, res, next) => {
     try {
         const validated = schemas_1.birthSchema.parse(req.body);
@@ -22,13 +23,18 @@ exports.createBirthRecord = (0, catchAsyncError_1.catchAsyncError)(async (req, r
         console.log(error);
     }
 });
-exports.getAllBirthRecords = (0, catchAsyncError_1.catchAsyncError)(async (_req, res) => {
-    const births = await (0, birthService_1.getAllBirths)();
+exports.getAllBirth = (0, catchAsyncError_1.catchAsyncError)(async (req, res) => {
+    const { cursor, limit } = req.query;
+    const { data: birth, nextCursor } = await (0, birthService_1.getAllBirthService)(cursor, limit ? Number(limit) : undefined);
     (0, sendResponse_1.sendResponse)(res, {
         success: true,
         statusCode: statusCodes_1.StatusCodes.OK,
-        message: "All birth records fetched",
-        data: births,
+        message: "Birth records fetched",
+        data: birth,
+        pagination: {
+            nextCursor: nextCursor !== null ? String(nextCursor) : undefined,
+            limit: limit ? Number(limit) : 50,
+        },
     });
 });
 exports.getBirthRecordById = (0, catchAsyncError_1.catchAsyncError)(async (req, res, next) => {
@@ -73,5 +79,35 @@ exports.deleteBirthRecord = (0, catchAsyncError_1.catchAsyncError)(async (req, r
         statusCode: statusCodes_1.StatusCodes.OK,
         message: "Birth record deleted successfully",
         data: deletedBirth,
+    });
+});
+exports.searchBirthResults = (0, catchAsyncError_1.catchAsyncError)(async (req, res, next) => {
+    const { query } = req.query;
+    const searchTerm = (0, queryValidation_1.validateSearchQuery)(query, next);
+    if (!searchTerm)
+        return;
+    const birth = await (0, birthService_1.searchBirth)(searchTerm);
+    (0, sendResponse_1.sendResponse)(res, {
+        success: true,
+        statusCode: statusCodes_1.StatusCodes.OK,
+        message: "Search results fetched successfully",
+        data: birth,
+    });
+});
+exports.filterBirths = (0, catchAsyncError_1.catchAsyncError)(async (req, res) => {
+    // Validate query params
+    const validated = schemas_1.birthFilterSchema.parse(req.query);
+    // Get filtered results
+    const { data, nextCursor } = await (0, birthService_1.filterBirthsService)(validated);
+    // Send response
+    (0, sendResponse_1.sendResponse)(res, {
+        success: true,
+        statusCode: statusCodes_1.StatusCodes.OK,
+        message: "Filtered births fetched",
+        data,
+        pagination: {
+            nextCursor: nextCursor !== null ? String(nextCursor) : undefined,
+            limit: validated.limit || 50,
+        },
     });
 });

@@ -1,83 +1,96 @@
 import { Request, Response, NextFunction } from "express";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
+import { findUserByRegId, getUserById, updateUserPassword } from "../services/authService";
+import { sendTokenCookie } from "../utils/cookie";
 import { catchAsyncError } from "../middlewares/catchAsyncError";
 import { ErrorHandler } from "../middlewares/errorHandler";
-import { sendResponse } from "../utils/sendResponse";
 import { StatusCodes } from "../constants/statusCodes";
-import {
-  createUser,
-  getUserByEmail,
-  getUserById,
-  updateUserDetails,
-  updateUserPassword,
-} from "../services/authService";
-import { createAccessToken, sendTokenCookie } from "../utils/cookie";
-import { registerSchema, loginSchema } from "@hospital/schemas";
 
-// REGISTER
-
-export const register = catchAsyncError(
+/**
+ * STEP 1 — USER ENTERS REG ID → RETURN NAME + EMAIL + ROLE
+ */
+export const getUserByRegIdController = catchAsyncError(
   async (req: Request, res: Response, next: NextFunction) => {
-    const validated = registerSchema.parse(req.body);
+    const { regId } = req.body;
 
-    const existingUser = await getUserByEmail(validated.email);
-    if (existingUser) {
-      return next(
-        new ErrorHandler("Email already in use", StatusCodes.CONFLICT)
-      );
+    if (!regId) {
+      return next(new ErrorHandler("Reg ID is required", StatusCodes.BAD_REQUEST));
     }
 
-    const hashedPassword = await bcrypt.hash(validated.password, 12);
+    const user = await findUserByRegId(regId);
+    if (!user) {
+      return next(new ErrorHandler("No user found with this Reg ID", StatusCodes.NOT_FOUND));
+    }
 
-    const isAdmin = validated.email === process.env.ADMIN_EMAIL;
+    if (!user.isActive) {
+      return next(new ErrorHandler("User is disabled by admin", StatusCodes.FORBIDDEN));
+    }
 
-    const user = await createUser({
-      name: validated.name ?? "",
-      email: validated.email,
-      password: hashedPassword,
-      isAdmin,
-    });
-
-    sendResponse(res, {
+    return res.status(StatusCodes.OK).json({
       success: true,
-      statusCode: StatusCodes.CREATED,
-      message: "User registered successfully",
+      message: "User found",
       data: {
-        id: user.id,
+        regId: user.regId,
         name: user.name,
         email: user.email,
-        isAdmin: user.isAdmin,
+        role: user.role,
+        mustChangePassword: user.mustChangePassword,
       },
     });
   }
 );
 
-// LOGIN
-export const login = catchAsyncError(
-  async (req: Request, res: Response, next: NextFunction) => {
-    const { email, password } = loginSchema.parse(req.body);
 
-    const user = await getUserByEmail(email);
-    if (!user) {
+
+/**
+ * STEP 2 — LOGIN WITH PASSWORD
+ */
+export const loginUserController = catchAsyncError(
+  async (req: Request, res: Response, next: NextFunction) => {
+    const { regId, password } = req.body;
+
+    if (!regId || !password) {
       return next(
-        new ErrorHandler("Email not found", StatusCodes.UNAUTHORIZED)
+        new ErrorHandler("Reg ID and Password required", StatusCodes.BAD_REQUEST)
       );
     }
 
-    const isPasswordValid = await bcrypt.compare(password, user.password);
-    if (!isPasswordValid) {
+    const user = await findUserByRegId(regId);
+    if (!user) {
       return next(
-        new ErrorHandler("Invalid Email or Password", StatusCodes.UNAUTHORIZED)
+        new ErrorHandler("Invalid Reg ID or Password", StatusCodes.UNAUTHORIZED)
       );
+    }
+
+    if (!user.isActive) {
+      return next(new ErrorHandler("User disabled by admin", StatusCodes.FORBIDDEN));
+    }
+
+    const isMatch = await bcrypt.compare(password, user.password);
+    if (!isMatch) {
+      return next(
+        new ErrorHandler("Invalid Reg ID or Password", StatusCodes.UNAUTHORIZED)
+      );
+    }
+
+    // user must change password first time
+    if (user.mustChangePassword) {
+      return res.status(StatusCodes.OK).json({
+        success: true,
+        mustChangePassword: true,
+        message: "You must set a new password",
+        data: { userId: user.id },
+      });
     }
 
     sendTokenCookie(
       {
         id: user.id,
+        regId: user.regId,
         name: user.name,
         email: user.email,
-        isAdmin: user.isAdmin, // ✅ required for type safety
+        role: user.role,
       },
       res,
       "Login successful",
@@ -86,29 +99,17 @@ export const login = catchAsyncError(
   }
 );
 
-// LOGOUT
-export const logout = catchAsyncError(async (_req: Request, res: Response) => {
-  res.cookie("accessToken", "", {
-    httpOnly: true,
-    sameSite: "lax",
-    secure: process.env.NODE_ENV === "production",
-    expires: new Date(0),
-  });
 
-sendResponse(res, {
-    success: true,
-    statusCode: StatusCodes.OK,
-    message: "Logout successfully",
-  });
-});
 
-// GET MY PROFILE
-export const getMyProfile = catchAsyncError(
+/**
+ * STEP 3 — USER SETS NEW PASSWORD ON FIRST LOGIN
+ */
+export const setNewPasswordController = catchAsyncError(
   async (req: Request, res: Response, next: NextFunction) => {
-    const userId = (req.user as any)?.id;
+    const { userId, newPassword } = req.body;
 
-    if (!userId) {
-      return next(new ErrorHandler("Unauthorized", StatusCodes.UNAUTHORIZED));
+    if (!userId || !newPassword) {
+      return next(new ErrorHandler("New password is required", StatusCodes.BAD_REQUEST));
     }
 
     const user = await getUserById(userId);
@@ -116,119 +117,13 @@ export const getMyProfile = catchAsyncError(
       return next(new ErrorHandler("User not found", StatusCodes.NOT_FOUND));
     }
 
-    sendResponse(res, {
+    const hashed = await bcrypt.hash(newPassword, 12);
+
+    await updateUserPassword(userId, hashed);
+
+    return res.status(StatusCodes.OK).json({
       success: true,
-      statusCode: StatusCodes.OK,
-      message: "User profile fetched successfully",
-      data: user,
+      message: "Password updated successfully. You can now log in.",
     });
   }
 );
-
-// UPDATE PROFILE
-export const updateProfile = catchAsyncError(
-  async (req: Request, res: Response, next: NextFunction) => {
-    const userId = (req.user as any)?.id;
-    const { name, email } = req.body;
-
-    if (!userId) {
-      return next(new ErrorHandler("Unauthorized", StatusCodes.UNAUTHORIZED));
-    }
-
-    const updatedUser = await updateUserDetails(userId, { name, email });
-
-    sendResponse(res, {
-      success: true,
-      statusCode: StatusCodes.OK,
-      message: "Profile updated successfully",
-      data: {
-        id: updatedUser.id,
-        name: updatedUser.name,
-        email: updatedUser.email,
-      },
-    });
-  }
-);
-
-// CHANGE PASSWORD
-export const changePassword = catchAsyncError(
-  async (req: Request, res: Response, next: NextFunction) => {
-    const userId = (req.user as any)?.id;
-    const { oldPassword, newPassword } = req.body;
-
-    if (!userId) {
-      return next(new ErrorHandler("Unauthorized", StatusCodes.UNAUTHORIZED));
-    }
-
-    const user = await getUserById(userId);
-    if (!user) {
-      return next(new ErrorHandler("User not found", StatusCodes.NOT_FOUND));
-    }
-
-    const isMatch = await bcrypt.compare(oldPassword, user.password);
-    if (!isMatch) {
-      return next(
-        new ErrorHandler("Old password is incorrect", StatusCodes.UNAUTHORIZED)
-      );
-    }
-
-    const hashedNewPassword = await bcrypt.hash(newPassword, 12);
-    await updateUserPassword(userId, hashedNewPassword);
-
-    sendResponse(res, {
-      success: true,
-      statusCode: StatusCodes.OK,
-      message: "Password updated successfully",
-    });
-  }
-);
-
-// // REFRESH ACCESS TOKEN
-// export const refreshAccessToken = catchAsyncError(
-//   async (req: Request, res: Response, next: NextFunction) => {
-//     const refreshToken = req.cookies?.refreshToken;
-
-//     if (!refreshToken) {
-//       return next(
-//         new ErrorHandler("Refresh token missing", StatusCodes.UNAUTHORIZED)
-//       );
-//     }
-
-//     try {
-//       const decoded = jwt.verify(
-//         refreshToken,
-//         process.env.JWT_REFRESH_SECRET!
-//       ) as {
-//         id: string;
-//         name: string;
-//         email: string;
-//       };
-
-//       const newAccessToken = createAccessToken({
-//         id: decoded.id,
-//         name: decoded.name,
-//         email: decoded.email,
-//       });
-
-//       res.cookie("accessToken", newAccessToken, {
-//         httpOnly: true,
-//         sameSite: "lax",
-//         secure: process.env.NODE_ENV === "development",
-//         maxAge: 60 * 60 * 1000,
-//       });
-
-//       sendResponse(res, {
-//         success: true,
-//         statusCode: StatusCodes.OK,
-//         message: "Access token refreshed",
-//       });
-//     } catch (error) {
-//       return next(
-//         new ErrorHandler(
-//           "Invalid or expired refresh token",
-//           StatusCodes.UNAUTHORIZED
-//         )
-//       );
-//     }
-//   }
-// );

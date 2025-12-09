@@ -155,22 +155,22 @@ export const departmentSchema = z.object({
 export const doctorSchema = z.object({
   fullName: z.string().min(1, "Full name is required"),
   mobileNumber: z.string().min(10, "Mobile number must be at least 10 digits"),
-  registrationNo: z.string().min(1, "Registration number is required"),
+  email: z.string().email("Invalid email format"),
   qualification: z.string().min(1, "Qualification is required"),
   designation: z.string().min(1, "Designation is required"),
   department: z.string().min(1, "Department is required"),
   specialization: z.string().min(1, "Specialization is required"),
   status: z.string().optional().default("Active"),
 });
-
+ 
 ///////////
 
 export const nurseSchema = z.object({
   fullName: z.string().min(1, "Full name is required"),
   mobileNumber: z.string().min(10, "Mobile number must be at least 10 digits"),
-  registrationNo: z.string().min(1, "Registration number is required"),
   department: z.string().min(1, "Department is required"),
   address: z.string().min(1, "Address is required"),
+  email: z.string().email("Invalid email format"),
   shift: z.string().min(1, "Shift is required"),
   status: z.string().optional().default("Active"),
 });
@@ -467,8 +467,6 @@ export const diagnosticsLedgerSchema = z.object({
   remarks: z.string().optional(),
 });
 
-
-
 export const expenseLedgerSchema = z.object({
   expenseCategory: z.string().min(1, "Expense category is required"),
   date: z.coerce.date(),
@@ -502,8 +500,6 @@ export const insuranceLedgerSchema = z.object({
     .union([z.coerce.date(), z.literal(""), z.undefined()])
     .transform((val) => (val === "" ? undefined : val)),
 });
-
-
 
 export const pharmacyLedgerSchema = z.object({
   date: z.coerce.date(),

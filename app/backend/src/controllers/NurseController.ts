@@ -1,5 +1,4 @@
 import { Request, Response, NextFunction } from "express";
-import { z } from "zod";
 import { catchAsyncError } from "../middlewares/catchAsyncError";
 import { ErrorHandler } from "../middlewares/errorHandler";
 import { sendResponse } from "../utils/sendResponse";
@@ -8,33 +7,32 @@ import {
   createNurse,
   getAllNurses,
   getNurseById,
-  getNurseByRegistration,
   updateNurse,
   deleteNurse,
   searchNurse,
-  filterNursesService
+  filterNursesService,
+  getNurseByEmail,
 } from "../services/nurseService";
-import { nurseSchema,nurseFilterSchema } from "@hospital/schemas";
+import { nurseSchema, nurseFilterSchema } from "@hospital/schemas";
 import { validateSearchQuery } from "../utils/queryValidation";
 
 export const createNurseRecord = catchAsyncError(
   async (req: Request, res: Response, next: NextFunction) => {
     const validated = nurseSchema.parse(req.body);
 
-    // Check if registration number already exists
-    const existingNurse = await getNurseByRegistration(
-      validated.registrationNo
-    );
-    if (existingNurse) {
+    // 🔍 Check email uniqueness
+    const existingEmail = await getNurseByEmail(validated.email);
+    if (existingEmail) {
       return next(
         new ErrorHandler(
-          "Nurse with this registration number already exists",
+          "Nurse with this email already exists",
           StatusCodes.CONFLICT
         )
       );
     }
 
     const nurse = await createNurse(validated);
+
     sendResponse(res, {
       success: true,
       statusCode: StatusCodes.CREATED,
@@ -69,7 +67,6 @@ export const getAllNurseRecords = catchAsyncError(
   }
 );
 
-
 export const getNurseRecordById = catchAsyncError(
   async (req: Request, res: Response, next: NextFunction) => {
     const id = Number(req.params.id);
@@ -101,15 +98,14 @@ export const updateNurseRecord = catchAsyncError(
     const partialSchema = nurseSchema.partial();
     const validatedData = partialSchema.parse(req.body);
 
-    // Check if updating registration number to an existing one
-    if (validatedData.registrationNo) {
-      const existingNurse = await getNurseByRegistration(
-        validatedData.registrationNo
-      );
-      if (existingNurse && existingNurse.id !== id) {
+    // 🔍 Email uniqueness check
+    if (validatedData.email) {
+      const existingEmail = await getNurseByEmail(validatedData.email);
+
+      if (existingEmail && existingEmail.id !== id) {
         return next(
           new ErrorHandler(
-            "Another nurse with this registration number already exists",
+            "Another nurse with this email already exists",
             StatusCodes.CONFLICT
           )
         );
@@ -117,6 +113,7 @@ export const updateNurseRecord = catchAsyncError(
     }
 
     const updatedNurse = await updateNurse(id, validatedData);
+
     if (!updatedNurse) {
       return next(new ErrorHandler("Nurse not found", StatusCodes.NOT_FOUND));
     }
@@ -168,7 +165,6 @@ export const searchNurseResults = catchAsyncError(
     });
   }
 );
-
 
 export const filterNurses = catchAsyncError(async (req, res) => {
   const validated = nurseFilterSchema.parse(req.query);

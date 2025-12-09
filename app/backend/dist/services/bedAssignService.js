@@ -1,13 +1,21 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.deleteBedAssignment = exports.dischargePatient = exports.updateBedAssignment = exports.getActiveAssignments = exports.getAssignmentsByWard = exports.getAssignmentsByBed = exports.getBedAssignmentById = exports.getAllBedAssignments = exports.createBedAssignment = void 0;
+exports.searchBedAssignment = exports.deleteBedAssignment = exports.dischargePatient = exports.updateBedAssignment = exports.getActiveAssignments = exports.getAssignmentsByWard = exports.getAssignmentsByBed = exports.getBedAssignmentById = exports.getAllBedAssignments = exports.createBedAssignment = void 0;
 const prisma_1 = require("../lib/prisma");
+const applyCommonFields_1 = require("../utils/applyCommonFields");
+const pagination_1 = require("../utils/pagination");
+const searchCache_1 = require("../utils/searchCache");
 const createBedAssignment = async (data) => {
     return prisma_1.prisma.bedAssignment.create({ data });
 };
 exports.createBedAssignment = createBedAssignment;
-const getAllBedAssignments = async () => {
-    return prisma_1.prisma.bedAssignment.findMany({ orderBy: { allocateDate: "desc" } });
+const getAllBedAssignments = async (cursor, limit) => {
+    return (0, pagination_1.cursorPaginate)(prisma_1.prisma, {
+        model: "bedAssignment",
+        cursorField: "id",
+        limit: limit || 50,
+        cacheExpiry: 600,
+    }, cursor ? Number(cursor) : undefined);
 };
 exports.getAllBedAssignments = getAllBedAssignments;
 const getBedAssignmentById = async (id) => {
@@ -56,3 +64,9 @@ const deleteBedAssignment = async (id) => {
     return prisma_1.prisma.bedAssignment.delete({ where: { id } });
 };
 exports.deleteBedAssignment = deleteBedAssignment;
+const commonSearchFields = ["wardNumber", "bedNumber", "patientName"];
+exports.searchBedAssignment = (0, searchCache_1.createSearchService)(prisma_1.prisma, {
+    tableName: "BedAssignment",
+    cacheKeyPrefix: "bedAssignment",
+    ...(0, applyCommonFields_1.applyCommonFields)(commonSearchFields),
+});

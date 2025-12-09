@@ -1,12 +1,13 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.deleteDepartmentRecord = exports.updateDepartmentRecord = exports.getDepartmentRecordById = exports.getAllDepartmentRecords = exports.createDepartmentRecord = void 0;
+exports.filterDepartments = exports.searchDepartmentResults = exports.deleteDepartmentRecord = exports.updateDepartmentRecord = exports.getDepartmentRecordById = exports.getAllDepartmentRecords = exports.createDepartmentRecord = void 0;
 const catchAsyncError_1 = require("../middlewares/catchAsyncError");
 const errorHandler_1 = require("../middlewares/errorHandler");
 const sendResponse_1 = require("../utils/sendResponse");
 const statusCodes_1 = require("../constants/statusCodes");
 const departmentService_1 = require("../services/departmentService");
 const schemas_1 = require("@hospital/schemas");
+const queryValidation_1 = require("../utils/queryValidation");
 exports.createDepartmentRecord = (0, catchAsyncError_1.catchAsyncError)(async (req, res, next) => {
     const validated = schemas_1.departmentSchema.parse(req.body);
     // Check if department name already exists
@@ -22,13 +23,18 @@ exports.createDepartmentRecord = (0, catchAsyncError_1.catchAsyncError)(async (r
         data: department,
     });
 });
-exports.getAllDepartmentRecords = (0, catchAsyncError_1.catchAsyncError)(async (_req, res) => {
-    const departments = await (0, departmentService_1.getAllDepartments)();
+exports.getAllDepartmentRecords = (0, catchAsyncError_1.catchAsyncError)(async (req, res) => {
+    const { cursor, limit } = req.query;
+    const { data: department, nextCursor } = await (0, departmentService_1.getAllDepartmentService)(cursor, limit ? Number(limit) : undefined);
     (0, sendResponse_1.sendResponse)(res, {
         success: true,
         statusCode: statusCodes_1.StatusCodes.OK,
-        message: "All departments fetched",
-        data: departments,
+        message: "Department records fetched",
+        data: department,
+        pagination: {
+            nextCursor: nextCursor !== null ? String(nextCursor) : undefined,
+            limit: limit ? Number(limit) : 50,
+        },
     });
 });
 exports.getDepartmentRecordById = (0, catchAsyncError_1.catchAsyncError)(async (req, res, next) => {
@@ -86,5 +92,32 @@ exports.deleteDepartmentRecord = (0, catchAsyncError_1.catchAsyncError)(async (r
         statusCode: statusCodes_1.StatusCodes.OK,
         message: "Department deleted successfully",
         data: deletedDepartment,
+    });
+});
+exports.searchDepartmentResults = (0, catchAsyncError_1.catchAsyncError)(async (req, res, next) => {
+    const { query } = req.query;
+    const searchTerm = (0, queryValidation_1.validateSearchQuery)(query, next);
+    if (!searchTerm)
+        return;
+    const departments = await (0, departmentService_1.searchDepartment)(searchTerm);
+    (0, sendResponse_1.sendResponse)(res, {
+        success: true,
+        statusCode: statusCodes_1.StatusCodes.OK,
+        message: "Search results fetched successfully",
+        data: departments,
+    });
+});
+exports.filterDepartments = (0, catchAsyncError_1.catchAsyncError)(async (req, res) => {
+    const validated = schemas_1.departmentFilterSchema.parse(req.query);
+    const { data, nextCursor } = await (0, departmentService_1.filterDepartmentsService)(validated);
+    (0, sendResponse_1.sendResponse)(res, {
+        success: true,
+        statusCode: statusCodes_1.StatusCodes.OK,
+        message: "Filtered departments fetched",
+        data,
+        pagination: {
+            nextCursor: nextCursor !== null ? String(nextCursor) : undefined,
+            limit: validated.limit || 50,
+        },
     });
 });

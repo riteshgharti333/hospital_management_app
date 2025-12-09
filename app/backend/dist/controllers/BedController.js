@@ -1,12 +1,13 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.deleteBedRecord = exports.updateBedRecord = exports.getBedRecordById = exports.getAllBedRecords = exports.createBedRecord = void 0;
+exports.searchBedResults = exports.deleteBedRecord = exports.updateBedRecord = exports.getBedRecordById = exports.getAllBedRecords = exports.createBedRecord = void 0;
 const catchAsyncError_1 = require("../middlewares/catchAsyncError");
 const errorHandler_1 = require("../middlewares/errorHandler");
 const sendResponse_1 = require("../utils/sendResponse");
 const statusCodes_1 = require("../constants/statusCodes");
 const bedService_1 = require("../services/bedService");
 const schemas_1 = require("@hospital/schemas");
+const queryValidation_1 = require("../utils/queryValidation");
 exports.createBedRecord = (0, catchAsyncError_1.catchAsyncError)(async (req, res, next) => {
     const validated = schemas_1.bedSchema.parse(req.body);
     const existingBed = await (0, bedService_1.getBedByNumber)(validated.bedNumber);
@@ -22,18 +23,18 @@ exports.createBedRecord = (0, catchAsyncError_1.catchAsyncError)(async (req, res
     });
 });
 exports.getAllBedRecords = (0, catchAsyncError_1.catchAsyncError)(async (req, res) => {
-    // Optional ward filter
-    const wardNumber = req.query.ward;
-    const beds = wardNumber
-        ? await (0, bedService_1.getBedsByWard)(wardNumber)
-        : await (0, bedService_1.getAllBeds)();
+    const { cursor, limit } = req.query;
+    const { data: bed, nextCursor } = await (0, bedService_1.getAllBeds)(cursor, limit ? Number(limit) : undefined);
+    console.log("Bed data:", bed);
     (0, sendResponse_1.sendResponse)(res, {
         success: true,
         statusCode: statusCodes_1.StatusCodes.OK,
-        message: wardNumber
-            ? `Beds in ward ${wardNumber} fetched`
-            : "All beds fetched",
-        data: beds,
+        message: "Bed records fetched",
+        data: bed,
+        pagination: {
+            nextCursor: nextCursor !== null ? String(nextCursor) : undefined,
+            limit: limit ? Number(limit) : 50,
+        },
     });
 });
 exports.getBedRecordById = (0, catchAsyncError_1.catchAsyncError)(async (req, res, next) => {
@@ -91,5 +92,18 @@ exports.deleteBedRecord = (0, catchAsyncError_1.catchAsyncError)(async (req, res
         statusCode: statusCodes_1.StatusCodes.OK,
         message: "Bed deleted successfully",
         data: deletedBed,
+    });
+});
+exports.searchBedResults = (0, catchAsyncError_1.catchAsyncError)(async (req, res, next) => {
+    const { query } = req.query;
+    const searchTerm = (0, queryValidation_1.validateSearchQuery)(query, next);
+    if (!searchTerm)
+        return;
+    const beds = await (0, bedService_1.searchBed)(searchTerm);
+    (0, sendResponse_1.sendResponse)(res, {
+        success: true,
+        statusCode: statusCodes_1.StatusCodes.OK,
+        message: "Search results fetched successfully",
+        data: beds,
     });
 });

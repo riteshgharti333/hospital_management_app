@@ -78,7 +78,7 @@ app.use("/api/v1/pharmacist", pharmacistRoute_1.default);
 app.use("/api/v1/prescription", prescriptionRoute_1.default);
 app.use("/api/v1/ambulance", ambulanceRoute_1.default);
 app.use("/api/v1/xray", xrayRoute_1.default);
-// ledger
+// ledger             
 app.use("/api/v1/ledger/patient-ledger", patientLedgerRoute_1.default);
 app.use("/api/v1/ledger/bank-ledger", bankLedgerRoute_1.default);
 app.use("/api/v1/ledger/cash-ledger", cashLedgerRoute_1.default);

@@ -230,15 +230,15 @@ export declare const departmentSchema: z.ZodObject<{
 export declare const doctorSchema: z.ZodObject<{
     fullName: z.ZodString;
     mobileNumber: z.ZodString;
-    registrationNo: z.ZodString;
+    email: z.ZodString;
     qualification: z.ZodString;
     designation: z.ZodString;
     department: z.ZodString;
     specialization: z.ZodString;
     status: z.ZodDefault<z.ZodOptional<z.ZodString>>;
 }, "strip", z.ZodTypeAny, {
+    email: string;
     status: string;
-    registrationNo: string;
     department: string;
     mobileNumber: string;
     fullName: string;
@@ -246,7 +246,7 @@ export declare const doctorSchema: z.ZodObject<{
     designation: string;
     specialization: string;
 }, {
-    registrationNo: string;
+    email: string;
     department: string;
     mobileNumber: string;
     fullName: string;
@@ -258,22 +258,22 @@ export declare const doctorSchema: z.ZodObject<{
 export declare const nurseSchema: z.ZodObject<{
     fullName: z.ZodString;
     mobileNumber: z.ZodString;
-    registrationNo: z.ZodString;
     department: z.ZodString;
     address: z.ZodString;
+    email: z.ZodString;
     shift: z.ZodString;
     status: z.ZodDefault<z.ZodOptional<z.ZodString>>;
 }, "strip", z.ZodTypeAny, {
+    email: string;
     shift: string;
     status: string;
-    registrationNo: string;
     department: string;
     mobileNumber: string;
     fullName: string;
     address: string;
 }, {
+    email: string;
     shift: string;
-    registrationNo: string;
     department: string;
     mobileNumber: string;
     fullName: string;
@@ -451,6 +451,7 @@ export declare const billItemSchema: z.ZodObject<{
 export declare const billSchema: z.ZodObject<{
     billDate: z.ZodDate;
     billType: z.ZodString;
+    totalAmount: z.ZodNumber;
     mobile: z.ZodString;
     patientName: z.ZodString;
     admissionNo: z.ZodString;
@@ -487,6 +488,7 @@ export declare const billSchema: z.ZodObject<{
     patientSex: "Male" | "Female" | "Other";
     address: string;
     billDate: Date;
+    totalAmount: number;
     billType: string;
     mobile: string;
     admissionNo: string;
@@ -505,6 +507,7 @@ export declare const billSchema: z.ZodObject<{
     patientSex: "Male" | "Female" | "Other";
     address: string;
     billDate: Date;
+    totalAmount: number;
     billType: string;
     mobile: string;
     admissionNo: string;
@@ -822,34 +825,6 @@ export declare const cashLedgerSchema: z.ZodObject<{
     purpose: string;
     remarks?: string | undefined;
 }>;
-export declare const diagnosticsLedgerSchema: z.ZodObject<{
-    patientName: z.ZodString;
-    date: z.ZodDate;
-    testName: z.ZodString;
-    description: z.ZodString;
-    amount: z.ZodNumber;
-    paymentMode: z.ZodString;
-    attachReport: z.ZodOptional<z.ZodNullable<z.ZodString>>;
-    remarks: z.ZodOptional<z.ZodString>;
-}, "strip", z.ZodTypeAny, {
-    description: string;
-    date: Date;
-    patientName: string;
-    amount: number;
-    paymentMode: string;
-    testName: string;
-    remarks?: string | undefined;
-    attachReport?: string | null | undefined;
-}, {
-    description: string;
-    date: Date;
-    patientName: string;
-    amount: number;
-    paymentMode: string;
-    testName: string;
-    remarks?: string | undefined;
-    attachReport?: string | null | undefined;
-}>;
 export declare const doctorLedgerSchema: z.ZodObject<{
     doctorName: z.ZodString;
     date: z.ZodDate;
@@ -877,6 +852,62 @@ export declare const doctorLedgerSchema: z.ZodObject<{
     amountType: "Credit" | "Debit";
     remarks?: string | undefined;
     transactionId?: string | undefined;
+}>;
+export declare const patientLedgerSchema: z.ZodObject<{
+    patientName: z.ZodString;
+    date: z.ZodDate;
+    description: z.ZodString;
+    amountType: z.ZodEnum<["Credit", "Debit"]>;
+    amount: z.ZodNumber;
+    paymentMode: z.ZodString;
+    transactionId: z.ZodOptional<z.ZodString>;
+    remarks: z.ZodOptional<z.ZodString>;
+}, "strip", z.ZodTypeAny, {
+    description: string;
+    date: Date;
+    patientName: string;
+    amount: number;
+    paymentMode: string;
+    amountType: "Credit" | "Debit";
+    remarks?: string | undefined;
+    transactionId?: string | undefined;
+}, {
+    description: string;
+    date: Date;
+    patientName: string;
+    amount: number;
+    paymentMode: string;
+    amountType: "Credit" | "Debit";
+    remarks?: string | undefined;
+    transactionId?: string | undefined;
+}>;
+export declare const diagnosticsLedgerSchema: z.ZodObject<{
+    patientName: z.ZodString;
+    date: z.ZodDate;
+    testName: z.ZodString;
+    description: z.ZodString;
+    amount: z.ZodNumber;
+    paymentMode: z.ZodString;
+    attachReport: z.ZodOptional<z.ZodNullable<z.ZodString>>;
+    remarks: z.ZodOptional<z.ZodString>;
+}, "strip", z.ZodTypeAny, {
+    description: string;
+    date: Date;
+    patientName: string;
+    amount: number;
+    paymentMode: string;
+    testName: string;
+    remarks?: string | undefined;
+    attachReport?: string | null | undefined;
+}, {
+    description: string;
+    date: Date;
+    patientName: string;
+    amount: number;
+    paymentMode: string;
+    testName: string;
+    remarks?: string | undefined;
+    attachReport?: string | null | undefined;
 }>;
 export declare const expenseLedgerSchema: z.ZodObject<{
     expenseCategory: z.ZodString;
@@ -936,34 +967,6 @@ export declare const insuranceLedgerSchema: z.ZodObject<{
     settledAmount?: number | undefined;
     approvalDate?: "" | Date | undefined;
     settlementDate?: "" | Date | undefined;
-}>;
-export declare const patientLedgerSchema: z.ZodObject<{
-    patientName: z.ZodString;
-    date: z.ZodDate;
-    description: z.ZodString;
-    amountType: z.ZodEnum<["Credit", "Debit"]>;
-    amount: z.ZodNumber;
-    paymentMode: z.ZodString;
-    transactionId: z.ZodOptional<z.ZodString>;
-    remarks: z.ZodOptional<z.ZodString>;
-}, "strip", z.ZodTypeAny, {
-    description: string;
-    date: Date;
-    patientName: string;
-    amount: number;
-    paymentMode: string;
-    amountType: "Credit" | "Debit";
-    remarks?: string | undefined;
-    transactionId?: string | undefined;
-}, {
-    description: string;
-    date: Date;
-    patientName: string;
-    amount: number;
-    paymentMode: string;
-    amountType: "Credit" | "Debit";
-    remarks?: string | undefined;
-    transactionId?: string | undefined;
 }>;
 export declare const pharmacyLedgerSchema: z.ZodObject<{
     date: z.ZodDate;

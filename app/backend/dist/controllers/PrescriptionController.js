@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.deletePrescriptionRecord = exports.updatePrescriptionRecord = exports.getPrescriptionRecordById = exports.getAllPrescriptionRecords = exports.createPrescriptionRecord = void 0;
+exports.filterPrescriptions = exports.searchPrescriptionsResults = exports.deletePrescriptionRecord = exports.updatePrescriptionRecord = exports.getPrescriptionRecordById = exports.getAllPrescriptionRecords = exports.createPrescriptionRecord = void 0;
 const catchAsyncError_1 = require("../middlewares/catchAsyncError");
 const errorHandler_1 = require("../middlewares/errorHandler");
 const sendResponse_1 = require("../utils/sendResponse");
@@ -8,6 +8,8 @@ const statusCodes_1 = require("../constants/statusCodes");
 const prescriptionService_1 = require("../services/prescriptionService");
 const schemas_1 = require("@hospital/schemas");
 const cloudinaryUploader_1 = require("../utils/cloudinaryUploader");
+const queryValidation_1 = require("../utils/queryValidation");
+const prescriptionSearchCache_1 = require("../utils/prescriptionSearchCache");
 const createPrescriptionRecord = async (req, res, next) => {
     try {
         let uploadedUrl;
@@ -36,19 +38,17 @@ const createPrescriptionRecord = async (req, res, next) => {
 };
 exports.createPrescriptionRecord = createPrescriptionRecord;
 exports.getAllPrescriptionRecords = (0, catchAsyncError_1.catchAsyncError)(async (req, res) => {
-    const patientId = req.query.patientId
-        ? Number(req.query.patientId)
-        : undefined;
-    const prescriptions = patientId
-        ? await (0, prescriptionService_1.getPrescriptionsByPatient)(patientId)
-        : await (0, prescriptionService_1.getAllPrescriptions)();
+    const { cursor, limit } = req.query;
+    const { data: prescription, nextCursor } = await (0, prescriptionService_1.getAllPrescriptions)(cursor, limit ? Number(limit) : undefined);
     (0, sendResponse_1.sendResponse)(res, {
         success: true,
         statusCode: statusCodes_1.StatusCodes.OK,
-        message: patientId
-            ? `Prescriptions for patient ${patientId} fetched`
-            : "All prescriptions fetched",
-        data: prescriptions,
+        message: "Prescription records fetched",
+        data: prescription,
+        pagination: {
+            nextCursor: nextCursor !== null ? String(nextCursor) : undefined,
+            limit: limit ? Number(limit) : 50,
+        },
     });
 });
 exports.getPrescriptionRecordById = (0, catchAsyncError_1.catchAsyncError)(async (req, res, next) => {
@@ -119,5 +119,31 @@ exports.deletePrescriptionRecord = (0, catchAsyncError_1.catchAsyncError)(async 
         success: true,
         statusCode: statusCodes_1.StatusCodes.OK,
         message: "Prescription deleted successfully",
+    });
+});
+exports.searchPrescriptionsResults = (0, catchAsyncError_1.catchAsyncError)(async (req, res, next) => {
+    const { query } = req.query;
+    const searchTerm = (0, queryValidation_1.validateSearchQuery)(query, next);
+    if (!searchTerm)
+        return;
+    const prescriptions = await (0, prescriptionSearchCache_1.searchPrescriptions)(searchTerm);
+    res.status(200).json({
+        success: true,
+        message: "Prescriptions fetched successfully",
+        data: prescriptions,
+    });
+});
+exports.filterPrescriptions = (0, catchAsyncError_1.catchAsyncError)(async (req, res) => {
+    const validated = schemas_1.prescriptionFilterSchema.parse(req.query);
+    const { data, nextCursor } = await (0, prescriptionService_1.filterPrescriptionsService)(validated);
+    (0, sendResponse_1.sendResponse)(res, {
+        success: true,
+        statusCode: statusCodes_1.StatusCodes.OK,
+        message: "Filtered prescriptions fetched",
+        data,
+        pagination: {
+            nextCursor: nextCursor !== null ? String(nextCursor) : undefined,
+            limit: validated.limit || 50,
+        },
     });
 });

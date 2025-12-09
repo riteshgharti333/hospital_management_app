@@ -6,17 +6,24 @@ import {
   updateDoctorRecord,
   deleteDoctorRecord,
   searchDoctorResults,
-  filterDoctors
+  filterDoctors,
 } from "../controllers/DoctorController";
 import { isAuthenticated } from "../middlewares/isAuthenticated";
 import { isAdmin } from "../middlewares/isAdmin";
+import { authorizeRoles } from "../middlewares/authorize";
+import { authenticateUser } from "../middlewares/authenticate";
 
 const router = express.Router();
 
-router
-  .route("/")
-  .post(isAuthenticated, isAdmin, createDoctorRecord)
-  .get(getAllDoctorRecords);
+router.post(
+  "/create", 
+  authenticateUser,
+  authorizeRoles("ADMIN"), 
+  createDoctorRecord
+);
+
+// GET request to: /api/doctors/list
+router.get("/", getAllDoctorRecords);
 
 router.get("/search", searchDoctorResults);
 

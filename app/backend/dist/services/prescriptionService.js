@@ -1,7 +1,11 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.deletePrescription = exports.updatePrescription = exports.getPrescriptionsByPatient = exports.getPrescriptionById = exports.getAllPrescriptions = exports.createPrescription = void 0;
+exports.filterPrescriptionsService = exports.searchPrescription = exports.deletePrescription = exports.updatePrescription = exports.getPrescriptionsByPatient = exports.getPrescriptionById = exports.getAllPrescriptions = exports.createPrescription = void 0;
 const prisma_1 = require("../lib/prisma");
+const applyCommonFields_1 = require("../utils/applyCommonFields");
+const pagination_1 = require("../utils/pagination");
+const filterPaginate_1 = require("../utils/filterPaginate");
+const searchCache_1 = require("../utils/searchCache");
 const createPrescription = async (data) => {
     return prisma_1.prisma.prescription.create({
         data: {
@@ -19,15 +23,13 @@ const createPrescription = async (data) => {
     });
 };
 exports.createPrescription = createPrescription;
-const getAllPrescriptions = async () => {
-    return prisma_1.prisma.prescription.findMany({
-        orderBy: { prescriptionDate: "desc" },
-        include: {
-            medicines: true,
-            doctor: true,
-            patient: true,
-        },
-    });
+const getAllPrescriptions = async (cursor, limit) => {
+    return (0, pagination_1.cursorPaginate)(prisma_1.prisma, {
+        model: "prescription",
+        cursorField: "id",
+        limit: limit || 50,
+        cacheExpiry: 600,
+    }, cursor ? Number(cursor) : undefined);
 };
 exports.getAllPrescriptions = getAllPrescriptions;
 const getPrescriptionById = async (id) => {
@@ -100,3 +102,29 @@ const deletePrescription = async (id) => {
     });
 };
 exports.deletePrescription = deletePrescription;
+const commonSearchFields = ["doctor.fullName", "patient.fullName"];
+exports.searchPrescription = (0, searchCache_1.createSearchService)(prisma_1.prisma, {
+    tableName: "Prescription",
+    cacheKeyPrefix: "prescription",
+    include: {
+        doctor: true,
+        patient: true,
+    },
+    ...(0, applyCommonFields_1.applyCommonFields)(commonSearchFields),
+});
+const filterPrescriptionsService = async (filters) => {
+    const { fromDate, toDate, cursor, limit } = filters;
+    const filterObj = {};
+    if (fromDate || toDate)
+        filterObj.prescriptionDate = {
+            gte: fromDate ? new Date(fromDate) : undefined,
+            lte: toDate ? new Date(toDate) : undefined,
+        };
+    return (0, filterPaginate_1.filterPaginate)(prisma_1.prisma, {
+        model: "prescription",
+        cursorField: "id",
+        limit: limit || 50,
+        filters: filterObj,
+    }, cursor);
+};
+exports.filterPrescriptionsService = filterPrescriptionsService;

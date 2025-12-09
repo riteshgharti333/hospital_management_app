@@ -1,12 +1,13 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.deleteBedAssignmentRecord = exports.dischargePatientFromBed = exports.updateBedAssignmentRecord = exports.getBedAssignmentRecordById = exports.getAllBedAssignmentRecords = exports.createBedAssignmentRecord = void 0;
+exports.searchBedAssignmentResults = exports.deleteBedAssignmentRecord = exports.dischargePatientFromBed = exports.updateBedAssignmentRecord = exports.getBedAssignmentRecordById = exports.getAllBedAssignmentRecords = exports.createBedAssignmentRecord = void 0;
 const catchAsyncError_1 = require("../middlewares/catchAsyncError");
 const errorHandler_1 = require("../middlewares/errorHandler");
 const sendResponse_1 = require("../utils/sendResponse");
 const statusCodes_1 = require("../constants/statusCodes");
 const bedAssignService_1 = require("../services/bedAssignService");
 const schemas_1 = require("@hospital/schemas");
+const queryValidation_1 = require("../utils/queryValidation");
 exports.createBedAssignmentRecord = (0, catchAsyncError_1.catchAsyncError)(async (req, res, next) => {
     const validated = schemas_1.bedAssignmentSchema.parse(req.body);
     const assignment = await (0, bedAssignService_1.createBedAssignment)(validated);
@@ -18,25 +19,17 @@ exports.createBedAssignmentRecord = (0, catchAsyncError_1.catchAsyncError)(async
     });
 });
 exports.getAllBedAssignmentRecords = (0, catchAsyncError_1.catchAsyncError)(async (req, res) => {
-    const { ward, bed, status } = req.query;
-    let assignments;
-    if (ward) {
-        assignments = await (0, bedAssignService_1.getAssignmentsByWard)(ward);
-    }
-    else if (bed) {
-        assignments = await (0, bedAssignService_1.getAssignmentsByBed)(bed);
-    }
-    else if (status === "Active") {
-        assignments = await (0, bedAssignService_1.getActiveAssignments)();
-    }
-    else {
-        assignments = await (0, bedAssignService_1.getAllBedAssignments)();
-    }
+    const { cursor, limit } = req.query;
+    const { data: bedAssignments, nextCursor } = await (0, bedAssignService_1.getAllBedAssignments)(cursor, limit ? Number(limit) : undefined);
     (0, sendResponse_1.sendResponse)(res, {
         success: true,
         statusCode: statusCodes_1.StatusCodes.OK,
-        message: "Bed assignments fetched successfully",
-        data: assignments,
+        message: "Bed assign records fetched",
+        data: bedAssignments,
+        pagination: {
+            nextCursor: nextCursor !== null ? String(nextCursor) : undefined,
+            limit: limit ? Number(limit) : 50,
+        },
     });
 });
 exports.getBedAssignmentRecordById = (0, catchAsyncError_1.catchAsyncError)(async (req, res, next) => {
@@ -112,5 +105,18 @@ exports.deleteBedAssignmentRecord = (0, catchAsyncError_1.catchAsyncError)(async
         statusCode: statusCodes_1.StatusCodes.OK,
         message: "Bed assignment deleted successfully",
         data: deletedAssignment,
+    });
+});
+exports.searchBedAssignmentResults = (0, catchAsyncError_1.catchAsyncError)(async (req, res, next) => {
+    const { query } = req.query;
+    const searchTerm = (0, queryValidation_1.validateSearchQuery)(query, next);
+    if (!searchTerm)
+        return;
+    const assignments = await (0, bedAssignService_1.searchBedAssignment)(searchTerm);
+    (0, sendResponse_1.sendResponse)(res, {
+        success: true,
+        statusCode: statusCodes_1.StatusCodes.OK,
+        message: "Search results fetched successfully",
+        data: assignments,
     });
 });

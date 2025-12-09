@@ -12,6 +12,10 @@ router
     .route("/")
     .post(isAuthenticated_1.isAuthenticated, isAdmin_1.isAdmin, MoneyReceiptController_1.createMoneyReceiptRecord)
     .get(MoneyReceiptController_1.getAllMoneyReceiptRecords);
+router.get("/search", MoneyReceiptController_1.searchMoneyReceiptResults);
+router.get("/filter", MoneyReceiptController_1.filterMoneyReceipts);
+router.get("/revenue", MoneyReceiptController_1.getRevenueAnalyticsData);
+router.get("/analytics/payment-modes", MoneyReceiptController_1.getPaymentModeBreakdown);
 router
     .route("/:id")
     .get(MoneyReceiptController_1.getMoneyReceiptRecordById)

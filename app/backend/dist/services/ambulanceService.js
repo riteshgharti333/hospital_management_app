@@ -1,7 +1,9 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.deleteAmbulance = exports.updateAmbulance = exports.getAmbulanceByRegistration = exports.getAmbulanceById = exports.getAllAmbulances = exports.createAmbulance = void 0;
+exports.searchAmbulance = exports.deleteAmbulance = exports.updateAmbulance = exports.getAmbulanceByRegistration = exports.getAmbulanceById = exports.getAllAmbulances = exports.createAmbulance = void 0;
 const prisma_1 = require("../lib/prisma");
+const applyCommonFields_1 = require("../utils/applyCommonFields");
+const searchCache_1 = require("../utils/searchCache");
 const createAmbulance = async (data) => {
     return prisma_1.prisma.ambulance.create({ data });
 };
@@ -30,3 +32,9 @@ const deleteAmbulance = async (id) => {
     return prisma_1.prisma.ambulance.delete({ where: { id } });
 };
 exports.deleteAmbulance = deleteAmbulance;
+const commonSearchFields = ["modelName", "brand", "registrationNo"];
+exports.searchAmbulance = (0, searchCache_1.createSearchService)(prisma_1.prisma, {
+    tableName: "Ambulance",
+    cacheKeyPrefix: "ambulance",
+    ...(0, applyCommonFields_1.applyCommonFields)(commonSearchFields),
+});

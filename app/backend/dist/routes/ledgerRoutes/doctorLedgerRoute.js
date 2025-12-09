@@ -13,6 +13,8 @@ router
     .post(isAuthenticated_1.isAuthenticated, isAdmin_1.isAdmin, DoctorLedgerController_1.createDoctorLedgerRecord)
     .get(DoctorLedgerController_1.getAllDoctorLedgerRecords);
 router.route("/balance").get(DoctorLedgerController_1.getDoctorBalanceRecord);
+router.get("/search", DoctorLedgerController_1.searchDoctorLedgerResults);
+router.get("/filter", DoctorLedgerController_1.filterDoctorLedger);
 router
     .route("/:id")
     .get(DoctorLedgerController_1.getDoctorLedgerRecordById)

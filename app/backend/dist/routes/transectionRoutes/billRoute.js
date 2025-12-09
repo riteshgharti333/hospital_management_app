@@ -8,10 +8,17 @@ const BillController_1 = require("../../controllers/transection/BillController")
 const isAuthenticated_1 = require("../../middlewares/isAuthenticated");
 const isAdmin_1 = require("../../middlewares/isAdmin");
 const router = express_1.default.Router();
-router.route("/")
+router
+    .route("/")
     .post(isAuthenticated_1.isAuthenticated, isAdmin_1.isAdmin, BillController_1.createBillRecord)
     .get(BillController_1.getAllBillRecords);
-router.route("/:id")
+router.get("/search", BillController_1.searchBillsResults);
+router.get("/filter", BillController_1.filterBills);
+router.get("/bill-status-analytics", BillController_1.getBillStatusAnalyticsRecord);
+router.get("/analytics/billing-vs-receipt", BillController_1.getMonthlyBillingVsReceiptRecord);
+router.get("/analytics/status", BillController_1.getBillsByStatus);
+router
+    .route("/:id")
     .get(BillController_1.getBillRecordById)
     .patch(isAuthenticated_1.isAuthenticated, isAdmin_1.isAdmin, BillController_1.updateBillRecord)
     .delete(isAuthenticated_1.isAuthenticated, isAdmin_1.isAdmin, BillController_1.deleteBillRecord);

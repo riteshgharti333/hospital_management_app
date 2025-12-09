@@ -13,6 +13,8 @@ router
     .post(isAuthenticated_1.isAuthenticated, isAdmin_1.isAdmin, CashLedgerController_1.createCashLedgerRecord)
     .get(CashLedgerController_1.getAllCashLedgerRecords);
 router.route("/balance").get(CashLedgerController_1.getCashBalanceRecord);
+router.get("/search", CashLedgerController_1.searchCashLedgerResults);
+router.get("/filter", CashLedgerController_1.filterCashLedger);
 router
     .route("/:id")
     .get(CashLedgerController_1.getCashLedgerRecordById)

@@ -12,6 +12,8 @@ router
     .route("/")
     .post(isAuthenticated_1.isAuthenticated, isAdmin_1.isAdmin, DepartmentController_1.createDepartmentRecord)
     .get(DepartmentController_1.getAllDepartmentRecords);
+router.get("/search", DepartmentController_1.searchDepartmentResults);
+router.get("/filter", DepartmentController_1.filterDepartments);
 router
     .route("/:id")
     .get(DepartmentController_1.getDepartmentRecordById)

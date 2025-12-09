@@ -12,6 +12,7 @@ router
     .route("/")
     .post(isAuthenticated_1.isAuthenticated, isAdmin_1.isAdmin, PharmacistController_1.createPharmacistRecord)
     .get(PharmacistController_1.getAllPharmacistRecords);
+router.get("/search", PharmacistController_1.searchPharmacistResults);
 router
     .route("/:id")
     .get(PharmacistController_1.getPharmacistRecordById)

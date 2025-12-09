@@ -1,12 +1,13 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.deletePharmacistRecord = exports.updatePharmacistRecord = exports.getPharmacistRecordById = exports.getAllPharmacistRecords = exports.createPharmacistRecord = void 0;
+exports.searchPharmacistResults = exports.deletePharmacistRecord = exports.updatePharmacistRecord = exports.getPharmacistRecordById = exports.getAllPharmacistRecords = exports.createPharmacistRecord = void 0;
 const catchAsyncError_1 = require("../middlewares/catchAsyncError");
 const errorHandler_1 = require("../middlewares/errorHandler");
 const sendResponse_1 = require("../utils/sendResponse");
 const statusCodes_1 = require("../constants/statusCodes");
 const pharmacistService_1 = require("../services/pharmacistService");
 const schemas_1 = require("@hospital/schemas");
+const queryValidation_1 = require("../utils/queryValidation");
 // import {medicineSchema} from "@hospital/schemas"
 exports.createPharmacistRecord = (0, catchAsyncError_1.catchAsyncError)(async (req, res, next) => {
     const validated = schemas_1.pharmacistSchema.parse(req.body);
@@ -92,5 +93,18 @@ exports.deletePharmacistRecord = (0, catchAsyncError_1.catchAsyncError)(async (r
         statusCode: statusCodes_1.StatusCodes.OK,
         message: "Pharmacist deleted successfully",
         data: deletedPharmacist,
+    });
+});
+exports.searchPharmacistResults = (0, catchAsyncError_1.catchAsyncError)(async (req, res, next) => {
+    const { query } = req.query;
+    const searchTerm = (0, queryValidation_1.validateSearchQuery)(query, next);
+    if (!searchTerm)
+        return;
+    const pharmacists = await (0, pharmacistService_1.searchPharmacist)(searchTerm);
+    (0, sendResponse_1.sendResponse)(res, {
+        success: true,
+        statusCode: statusCodes_1.StatusCodes.OK,
+        message: "Search results fetched successfully",
+        data: pharmacists,
     });
 });

@@ -3,11 +3,12 @@ import { applyCommonFields } from "../utils/applyCommonFields";
 import { cursorPaginate } from "../utils/pagination";
 import { filterPaginate } from "../utils/filterPaginate";
 import { createSearchService } from "../utils/searchCache";
+import { generateRegistrationNumber } from "../utils/registrationGenerator";
 
 export type DoctorInput = {
   fullName: string;
   mobileNumber: string;
-  registrationNo: string;
+  email: string;
   qualification: string;
   designation: string;
   department: string;
@@ -16,13 +17,27 @@ export type DoctorInput = {
 };
 
 export const createDoctor = async (data: DoctorInput) => {
-  return prisma.doctor.create({ data });
+  // Auto-generate registration number
+  const registrationNo = await generateRegistrationNumber(
+    prisma.doctor,
+    "DOC",
+    "registrationNo"
+  );
+
+  return prisma.doctor.create({
+    data: {
+      ...data,
+      registrationNo,
+    },
+  });
 };
 
-export const getAllDoctors = async (
-  cursor?: string,
-  limit?: number
-) => {
+export const getDoctorByEmail = async (email: string) => {
+  return prisma.doctor.findUnique({ where: { email } });
+};
+
+
+export const getAllDoctors = async (cursor?: string, limit?: number) => {
   return cursorPaginate(
     prisma,
     {
@@ -66,7 +81,6 @@ export const searchDoctor = createSearchService(prisma, {
   ...applyCommonFields(commonSearchFields),
 });
 
-
 export const filterDoctorsService = async (filters: {
   fromDate?: Date;
   toDate?: Date;
@@ -78,8 +92,7 @@ export const filterDoctorsService = async (filters: {
 
   const filterObj: Record<string, any> = {};
 
-  if (status)
-    filterObj.status = { equals: status, mode: "insensitive" };
+  if (status) filterObj.status = { equals: status, mode: "insensitive" };
 
   if (fromDate || toDate)
     filterObj.createdAt = {

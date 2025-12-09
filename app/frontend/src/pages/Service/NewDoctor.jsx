@@ -37,13 +37,14 @@ const formFields = [
         required: true, // Marked as required
       },
       {
-        label: "Registration No",
-        type: "text",
-        name: "registrationNo", // Matches schema key
-        placeholder: "Enter registration number",
-        icon: <FaIdCard className="text-gray-400" />,
-        required: true, // Marked as required
+        label: "Email",
+        type: "email",
+        name: "email",
+        placeholder: "Enter doctor's email",
+        icon: <FaIdCard className="text-gray-400" />, // or use FaEnvelope if you want
+        required: true,
       },
+
       {
         label: "Qualification",
         type: "text",
@@ -111,8 +112,8 @@ const NewDoctor = () => {
     defaultValues: {
       fullName: "",
       mobileNumber: "",
-      registrationNo: "",
       qualification: "",
+      email: "",
       designation: "",
       department: "",
       specialization: "",
@@ -130,7 +131,7 @@ const NewDoctor = () => {
 
     const response = await mutateAsync(cleanedData);
 
-       navigate(`/doctor/${response.data.data.id}`);
+    navigate(`/doctor/${response.data.data.id}`);
   };
 
   return (

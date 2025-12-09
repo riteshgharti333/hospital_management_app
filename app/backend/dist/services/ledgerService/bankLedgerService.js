@@ -1,32 +1,24 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.deleteBankLedgerEntry = exports.updateBankLedgerEntry = exports.getBankBalance = exports.getBankLedgerEntryById = exports.getAllBankLedgerEntries = exports.createBankLedgerEntry = void 0;
+exports.filterBankLedgerService = exports.searchBankLedger = exports.deleteBankLedgerEntry = exports.updateBankLedgerEntry = exports.getBankBalance = exports.getBankLedgerEntryById = exports.getAllBankLedgerService = exports.createBankLedgerEntry = void 0;
 const prisma_1 = require("../../lib/prisma");
+const applyCommonFields_1 = require("../../utils/applyCommonFields");
+const filterPaginate_1 = require("../../utils/filterPaginate");
+const pagination_1 = require("../../utils/pagination");
+const searchCache_1 = require("../../utils/searchCache");
 const createBankLedgerEntry = async (data) => {
     return prisma_1.prisma.bankLedger.create({ data });
 };
 exports.createBankLedgerEntry = createBankLedgerEntry;
-const getAllBankLedgerEntries = async (filters) => {
-    const where = {};
-    if (filters.bankName) {
-        where.bankName = filters.bankName;
-    }
-    if (filters.startDate || filters.endDate) {
-        where.date = {};
-        if (filters.startDate)
-            where.date.gte = filters.startDate;
-        if (filters.endDate)
-            where.date.lte = filters.endDate;
-    }
-    if (filters.amountType) {
-        where.amountType = filters.amountType;
-    }
-    return prisma_1.prisma.bankLedger.findMany({
-        where,
-        orderBy: { date: "desc" },
-    });
+const getAllBankLedgerService = async (cursor, limit) => {
+    return (0, pagination_1.cursorPaginate)(prisma_1.prisma, {
+        model: "bankLedger",
+        cursorField: "id",
+        limit: limit || 50,
+        cacheExpiry: 600,
+    }, cursor ? Number(cursor) : undefined);
 };
-exports.getAllBankLedgerEntries = getAllBankLedgerEntries;
+exports.getAllBankLedgerService = getAllBankLedgerService;
 const getBankLedgerEntryById = async (id) => {
     return prisma_1.prisma.bankLedger.findUnique({ where: { id } });
 };
@@ -53,3 +45,28 @@ const deleteBankLedgerEntry = async (id) => {
     return prisma_1.prisma.bankLedger.delete({ where: { id } });
 };
 exports.deleteBankLedgerEntry = deleteBankLedgerEntry;
+const commonSearchFields = ["bankName"];
+exports.searchBankLedger = (0, searchCache_1.createSearchService)(prisma_1.prisma, {
+    tableName: "BankLedger",
+    cacheKeyPrefix: "bank-ledger",
+    ...(0, applyCommonFields_1.applyCommonFields)(commonSearchFields),
+});
+const filterBankLedgerService = async (filters) => {
+    const { amountType, fromDate, toDate, cursor, limit } = filters;
+    const filterObj = {};
+    if (amountType)
+        filterObj.amountType = { equals: amountType, mode: "insensitive" };
+    if (fromDate || toDate) {
+        filterObj.date = {
+            gte: fromDate ? new Date(fromDate) : undefined,
+            lte: toDate ? new Date(toDate) : undefined,
+        };
+    }
+    return (0, filterPaginate_1.filterPaginate)(prisma_1.prisma, {
+        model: "bankLedger",
+        cursorField: "id",
+        limit: limit || 50,
+        filters: filterObj,
+    }, cursor);
+};
+exports.filterBankLedgerService = filterBankLedgerService;

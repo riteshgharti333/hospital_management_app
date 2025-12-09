@@ -1,12 +1,13 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.deleteBankLedgerRecord = exports.updateBankLedgerRecord = exports.getBankBalanceRecord = exports.getBankLedgerRecordById = exports.getAllBankLedgerRecords = exports.createBankLedgerRecord = void 0;
+exports.filterBankLedger = exports.searchBankLedgerResults = exports.deleteBankLedgerRecord = exports.updateBankLedgerRecord = exports.getBankBalanceRecord = exports.getBankLedgerRecordById = exports.getAllBankLedgerRecords = exports.createBankLedgerRecord = void 0;
 const catchAsyncError_1 = require("../../middlewares/catchAsyncError");
 const errorHandler_1 = require("../../middlewares/errorHandler");
 const sendResponse_1 = require("../../utils/sendResponse");
 const statusCodes_1 = require("../../constants/statusCodes");
 const bankLedgerService_1 = require("../../services/ledgerService/bankLedgerService");
 const schemas_1 = require("@hospital/schemas");
+const queryValidation_1 = require("../../utils/queryValidation");
 exports.createBankLedgerRecord = (0, catchAsyncError_1.catchAsyncError)(async (req, res, next) => {
     const validated = schemas_1.bankLedgerSchema.parse({
         ...req.body,
@@ -21,22 +22,17 @@ exports.createBankLedgerRecord = (0, catchAsyncError_1.catchAsyncError)(async (r
     });
 });
 exports.getAllBankLedgerRecords = (0, catchAsyncError_1.catchAsyncError)(async (req, res) => {
-    const filters = {
-        bankName: req.query.bankName,
-        startDate: req.query.startDate
-            ? new Date(req.query.startDate)
-            : undefined,
-        endDate: req.query.endDate
-            ? new Date(req.query.endDate)
-            : undefined,
-        amountType: req.query.amountType,
-    };
-    const entries = await (0, bankLedgerService_1.getAllBankLedgerEntries)(filters);
+    const { cursor, limit } = req.query;
+    const { data: records, nextCursor } = await (0, bankLedgerService_1.getAllBankLedgerService)(cursor, limit ? Number(limit) : undefined);
     (0, sendResponse_1.sendResponse)(res, {
         success: true,
         statusCode: statusCodes_1.StatusCodes.OK,
-        message: "Bank ledger entries fetched successfully",
-        data: entries,
+        message: "Bank ledger records fetched",
+        data: records,
+        pagination: {
+            nextCursor: nextCursor !== null ? String(nextCursor) : undefined,
+            limit: limit ? Number(limit) : 50,
+        },
     });
 });
 exports.getBankLedgerRecordById = (0, catchAsyncError_1.catchAsyncError)(async (req, res, next) => {
@@ -103,5 +99,32 @@ exports.deleteBankLedgerRecord = (0, catchAsyncError_1.catchAsyncError)(async (r
         statusCode: statusCodes_1.StatusCodes.OK,
         message: "Bank ledger entry deleted successfully",
         data: deletedEntry,
+    });
+});
+exports.searchBankLedgerResults = (0, catchAsyncError_1.catchAsyncError)(async (req, res, next) => {
+    const { query } = req.query;
+    const searchTerm = (0, queryValidation_1.validateSearchQuery)(query, next);
+    if (!searchTerm)
+        return;
+    const results = await (0, bankLedgerService_1.searchBankLedger)(searchTerm);
+    (0, sendResponse_1.sendResponse)(res, {
+        success: true,
+        statusCode: statusCodes_1.StatusCodes.OK,
+        message: "Bank ledger search results fetched",
+        data: results,
+    });
+});
+exports.filterBankLedger = (0, catchAsyncError_1.catchAsyncError)(async (req, res) => {
+    const validated = schemas_1.bankLedgerFilterSchema.parse(req.query);
+    const { data, nextCursor } = await (0, bankLedgerService_1.filterBankLedgerService)(validated);
+    (0, sendResponse_1.sendResponse)(res, {
+        success: true,
+        statusCode: statusCodes_1.StatusCodes.OK,
+        message: "Filtered bank ledger fetched",
+        data,
+        pagination: {
+            nextCursor: nextCursor !== null ? String(nextCursor) : undefined,
+            limit: validated.limit,
+        },
     });
 });

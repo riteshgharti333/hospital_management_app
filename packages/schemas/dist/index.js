@@ -127,7 +127,7 @@ export const departmentSchema = z.object({
 export const doctorSchema = z.object({
     fullName: z.string().min(1, "Full name is required"),
     mobileNumber: z.string().min(10, "Mobile number must be at least 10 digits"),
-    registrationNo: z.string().min(1, "Registration number is required"),
+    email: z.string().email("Invalid email format"),
     qualification: z.string().min(1, "Qualification is required"),
     designation: z.string().min(1, "Designation is required"),
     department: z.string().min(1, "Department is required"),
@@ -138,9 +138,9 @@ export const doctorSchema = z.object({
 export const nurseSchema = z.object({
     fullName: z.string().min(1, "Full name is required"),
     mobileNumber: z.string().min(10, "Mobile number must be at least 10 digits"),
-    registrationNo: z.string().min(1, "Registration number is required"),
     department: z.string().min(1, "Department is required"),
     address: z.string().min(1, "Address is required"),
+    email: z.string().email("Invalid email format"),
     shift: z.string().min(1, "Shift is required"),
     status: z.string().optional().default("Active"),
 });
@@ -221,6 +221,7 @@ export const billItemSchema = z.object({
 export const billSchema = z.object({
     billDate: z.coerce.date(),
     billType: z.string().min(1, "Bill type is required"),
+    totalAmount: z.number().min(0, "Total amount must be positive"),
     mobile: z.string().min(10, "Mobile must be at least 10 digits"),
     patientName: z.string().min(1, "Patient name is required"),
     admissionNo: z.string().min(1, "Admission number is required"),
@@ -370,16 +371,6 @@ export const cashLedgerSchema = z.object({
     amount: z.number().positive("Amount must be positive"),
     remarks: z.string().optional(),
 });
-export const diagnosticsLedgerSchema = z.object({
-    patientName: z.string().min(1, "Patient name is required"),
-    date: z.coerce.date(),
-    testName: z.string().min(1, "Test name is required"),
-    description: z.string().min(1, "Description is required"),
-    amount: z.number().positive("Amount must be positive"),
-    paymentMode: z.string().min(1, "Payment mode is required"),
-    attachReport: z.string().url().nullable().optional(),
-    remarks: z.string().optional(),
-});
 export const doctorLedgerSchema = z.object({
     doctorName: z.string().min(1, "Doctor name is required"),
     date: z.coerce.date(),
@@ -388,6 +379,26 @@ export const doctorLedgerSchema = z.object({
     amount: z.number().positive("Amount must be positive"),
     paymentMode: z.string().min(1, "Payment mode is required"),
     transactionId: z.string().optional(),
+    remarks: z.string().optional(),
+});
+export const patientLedgerSchema = z.object({
+    patientName: z.string().min(1, "Patient name is required"),
+    date: z.coerce.date(),
+    description: z.string().min(1, "Description is required"),
+    amountType: z.enum(["Credit", "Debit"]),
+    amount: z.number().positive("Amount must be positive"),
+    paymentMode: z.string().min(1, "Payment mode is required"),
+    transactionId: z.string().optional(),
+    remarks: z.string().optional(),
+});
+export const diagnosticsLedgerSchema = z.object({
+    patientName: z.string().min(1, "Patient name is required"),
+    date: z.coerce.date(),
+    testName: z.string().min(1, "Test name is required"),
+    description: z.string().min(1, "Description is required"),
+    amount: z.number().positive("Amount must be positive"),
+    paymentMode: z.string().min(1, "Payment mode is required"),
+    attachReport: z.string().url().nullable().optional(),
     remarks: z.string().optional(),
 });
 export const expenseLedgerSchema = z.object({
@@ -420,16 +431,6 @@ export const insuranceLedgerSchema = z.object({
     settlementDate: z
         .union([z.coerce.date(), z.literal(""), z.undefined()])
         .transform((val) => (val === "" ? undefined : val)),
-});
-export const patientLedgerSchema = z.object({
-    patientName: z.string().min(1, "Patient name is required"),
-    date: z.coerce.date(),
-    description: z.string().min(1, "Description is required"),
-    amountType: z.enum(["Credit", "Debit"]),
-    amount: z.number().positive("Amount must be positive"),
-    paymentMode: z.string().min(1, "Payment mode is required"),
-    transactionId: z.string().optional(),
-    remarks: z.string().optional(),
 });
 export const pharmacyLedgerSchema = z.object({
     date: z.coerce.date(),
@@ -577,9 +578,7 @@ export const moneyReceiptFilterSchema = z.object({
     paymentMode: z
         .enum(["Cash", "Cheque", "Card", "Online Transfer", "Other"])
         .optional(),
-    status: z
-        .enum(["Active", "Cancelled", "Refunded"])
-        .optional(),
+    status: z.enum(["Active", "Cancelled", "Refunded"]).optional(),
     fromDate: z.coerce.date().optional(),
     toDate: z.coerce.date().optional(),
     limit: z.coerce.number().default(50),

@@ -12,6 +12,8 @@ router
     .route("/")
     .post(isAuthenticated_1.isAuthenticated, isAdmin_1.isAdmin, AppointmentController_1.createAppointmentRecord)
     .get(AppointmentController_1.getAllAppointmentRecords);
+router.get("/search", AppointmentController_1.searchAppointmentResults);
+router.get("/filter", AppointmentController_1.filterAppointments);
 router
     .route("/:id")
     .get(AppointmentController_1.getAppointmentRecordById)

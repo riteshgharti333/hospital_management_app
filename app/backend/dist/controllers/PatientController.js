@@ -1,12 +1,13 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.deletePatientRecord = exports.updatePatientRecord = exports.getPatientRecordById = exports.getAllPatientRecords = exports.createPatientRecord = void 0;
+exports.getPatientAgeDistributionRecord = exports.getPatientAnalyticsRecord = exports.filterPatients = exports.searchPatientResults = exports.deletePatientRecord = exports.updatePatientRecord = exports.getPatientRecordById = exports.getAllPatientRecords = exports.createPatientRecord = void 0;
 const catchAsyncError_1 = require("../middlewares/catchAsyncError");
 const errorHandler_1 = require("../middlewares/errorHandler");
 const sendResponse_1 = require("../utils/sendResponse");
 const statusCodes_1 = require("../constants/statusCodes");
 const patientService_1 = require("../services/patientService");
 const schemas_1 = require("@hospital/schemas");
+const queryValidation_1 = require("../utils/queryValidation");
 exports.createPatientRecord = (0, catchAsyncError_1.catchAsyncError)(async (req, res, next) => {
     const validated = schemas_1.patientSchema.parse(req.body);
     const patient = await (0, patientService_1.createPatient)(validated);
@@ -74,5 +75,54 @@ exports.deletePatientRecord = (0, catchAsyncError_1.catchAsyncError)(async (req,
         statusCode: statusCodes_1.StatusCodes.OK,
         message: "Patient deleted successfully",
         data: deletedPatient,
+    });
+});
+///
+exports.searchPatientResults = (0, catchAsyncError_1.catchAsyncError)(async (req, res, next) => {
+    const { query } = req.query;
+    const searchTerm = (0, queryValidation_1.validateSearchQuery)(query, next);
+    if (!searchTerm)
+        return;
+    const admissions = await (0, patientService_1.searchPatient)(searchTerm);
+    (0, sendResponse_1.sendResponse)(res, {
+        success: true,
+        statusCode: statusCodes_1.StatusCodes.OK,
+        message: "Search results fetched successfully",
+        data: admissions,
+    });
+});
+exports.filterPatients = (0, catchAsyncError_1.catchAsyncError)(async (req, res) => {
+    // Validate query
+    const validated = schemas_1.patientFilterSchema.parse(req.query);
+    // Call service
+    const { data, nextCursor } = await (0, patientService_1.filterPatientsService)(validated);
+    // Response
+    (0, sendResponse_1.sendResponse)(res, {
+        success: true,
+        statusCode: statusCodes_1.StatusCodes.OK,
+        message: "Filtered patients fetched",
+        data,
+        pagination: {
+            nextCursor: nextCursor !== null ? String(nextCursor) : undefined,
+            limit: validated.limit || 50,
+        },
+    });
+});
+exports.getPatientAnalyticsRecord = (0, catchAsyncError_1.catchAsyncError)(async (_req, res) => {
+    const result = await (0, patientService_1.getPatientAnalytics)();
+    (0, sendResponse_1.sendResponse)(res, {
+        success: true,
+        statusCode: statusCodes_1.StatusCodes.OK,
+        message: "Patient analytics fetched successfully",
+        data: result,
+    });
+});
+exports.getPatientAgeDistributionRecord = (0, catchAsyncError_1.catchAsyncError)(async (_req, res) => {
+    const result = await (0, patientService_1.getPatientAgeDistribution)();
+    (0, sendResponse_1.sendResponse)(res, {
+        success: true,
+        statusCode: 200,
+        message: "Patient age distribution fetched successfully",
+        data: result,
     });
 });

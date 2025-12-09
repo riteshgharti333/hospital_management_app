@@ -7,34 +7,34 @@ import {
   createDoctor,
   getAllDoctors,
   getDoctorById,
-  getDoctorByRegistration,
   updateDoctor,
   deleteDoctor,
   searchDoctor,
-  filterDoctorsService
+  filterDoctorsService,
+  getDoctorByEmail,
 } from "../services/doctorService";
-import { doctorSchema,doctorFilterSchema } from "@hospital/schemas";
+import { doctorSchema, doctorFilterSchema } from "@hospital/schemas";
+import { PrismaClientKnownRequestError } from "@prisma/client/runtime/library";
+import { validateSearchQuery } from "../utils/queryValidation";
 
 export const createDoctorRecord = catchAsyncError(
   async (req: Request, res: Response, next: NextFunction) => {
     const validated = doctorSchema.parse(req.body);
 
-    // Check if registration number already exists
-    const existingDoctor = await getDoctorByRegistration(
-      validated.registrationNo
-    );
+    const existingDoctor = await getDoctorByEmail(validated.email);
     if (existingDoctor) {
       return next(
         new ErrorHandler(
-          "Doctor with this registration number already exists",
+          "Doctor with this email already exists",
           StatusCodes.CONFLICT
         )
       );
     }
- 
+
     const doctor = await createDoctor(validated);
+
     sendResponse(res, {
-      success: true, 
+      success: true,
       statusCode: StatusCodes.CREATED,
       message: "Doctor created successfully",
       data: doctor,
@@ -98,15 +98,14 @@ export const updateDoctorRecord = catchAsyncError(
     const partialSchema = doctorSchema.partial();
     const validatedData = partialSchema.parse(req.body);
 
-    // Check if updating registration number to an existing one
-    if (validatedData.registrationNo) {
-      const existingDoctor = await getDoctorByRegistration(
-        validatedData.registrationNo
-      );
+    // 🔍 Email uniqueness check (only if email is being changed)
+    if (validatedData.email) {
+      const existingDoctor = await getDoctorByEmail(validatedData.email);
+
       if (existingDoctor && existingDoctor.id !== id) {
         return next(
           new ErrorHandler(
-            "Another doctor with this registration number already exists",
+            "Another doctor with this email already exists",
             StatusCodes.CONFLICT
           )
         );
@@ -114,6 +113,7 @@ export const updateDoctorRecord = catchAsyncError(
     }
 
     const updatedDoctor = await updateDoctor(id, validatedData);
+
     if (!updatedDoctor) {
       return next(new ErrorHandler("Doctor not found", StatusCodes.NOT_FOUND));
     }
@@ -126,9 +126,6 @@ export const updateDoctorRecord = catchAsyncError(
     });
   }
 );
-
-import { PrismaClientKnownRequestError } from "@prisma/client/runtime/library";
-import { validateSearchQuery } from "../utils/queryValidation";
 
 export const deleteDoctorRecord = catchAsyncError(
   async (req: Request, res: Response, next: NextFunction) => {
@@ -193,7 +190,6 @@ export const searchDoctorResults = catchAsyncError(
     });
   }
 );
-
 
 export const filterDoctors = catchAsyncError(async (req, res) => {
   const validated = doctorFilterSchema.parse(req.query);

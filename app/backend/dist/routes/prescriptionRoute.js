@@ -13,6 +13,8 @@ router
     .route("/")
     .post(isAuthenticated_1.isAuthenticated, isAdmin_1.isAdmin, multer_middleware_1.uploadMiddleware.single("file"), PrescriptionController_1.createPrescriptionRecord)
     .get(PrescriptionController_1.getAllPrescriptionRecords);
+router.get("/search", PrescriptionController_1.searchPrescriptionsResults);
+router.get("/filter", PrescriptionController_1.filterPrescriptions);
 router
     .route("/:id")
     .get(PrescriptionController_1.getPrescriptionRecordById)

@@ -1,12 +1,13 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.deleteAppointmentRecord = exports.updateAppointmentRecord = exports.getAppointmentRecordById = exports.getAllAppointmentRecords = exports.createAppointmentRecord = void 0;
+exports.filterAppointments = exports.searchAppointmentResults = exports.deleteAppointmentRecord = exports.updateAppointmentRecord = exports.getAppointmentRecordById = exports.getAllAppointmentRecords = exports.createAppointmentRecord = void 0;
 const catchAsyncError_1 = require("../middlewares/catchAsyncError");
 const errorHandler_1 = require("../middlewares/errorHandler");
 const sendResponse_1 = require("../utils/sendResponse");
 const statusCodes_1 = require("../constants/statusCodes");
 const appointmentService_1 = require("../services/appointmentService");
 const schemas_1 = require("@hospital/schemas");
+const queryValidation_1 = require("../utils/queryValidation");
 exports.createAppointmentRecord = (0, catchAsyncError_1.catchAsyncError)(async (req, res) => {
     const validated = schemas_1.appointmentSchema.parse(req.body);
     const appointment = await (0, appointmentService_1.createAppointment)(validated);
@@ -17,13 +18,18 @@ exports.createAppointmentRecord = (0, catchAsyncError_1.catchAsyncError)(async (
         data: appointment,
     });
 });
-exports.getAllAppointmentRecords = (0, catchAsyncError_1.catchAsyncError)(async (_req, res) => {
-    const appointments = await (0, appointmentService_1.getAllAppointments)();
+exports.getAllAppointmentRecords = (0, catchAsyncError_1.catchAsyncError)(async (req, res) => {
+    const { cursor, limit } = req.query;
+    const { data: appointment, nextCursor } = await (0, appointmentService_1.getAllAppointments)(cursor, limit ? Number(limit) : undefined);
     (0, sendResponse_1.sendResponse)(res, {
         success: true,
         statusCode: statusCodes_1.StatusCodes.OK,
-        message: "Appointments fetched successfully",
-        data: appointments,
+        message: "Appointment records fetched",
+        data: appointment,
+        pagination: {
+            nextCursor: nextCursor !== null ? String(nextCursor) : undefined,
+            limit: limit ? Number(limit) : 50,
+        },
     });
 });
 exports.getAppointmentRecordById = (0, catchAsyncError_1.catchAsyncError)(async (req, res, next) => {
@@ -50,7 +56,9 @@ exports.updateAppointmentRecord = (0, catchAsyncError_1.catchAsyncError)(async (
     const partialSchema = schemas_1.appointmentSchema.partial();
     const validatedData = partialSchema.parse({
         ...req.body,
-        appointmentDate: req.body.appointmentDate ? new Date(req.body.appointmentDate) : undefined
+        appointmentDate: req.body.appointmentDate
+            ? new Date(req.body.appointmentDate)
+            : undefined,
     });
     const updatedAppointment = await (0, appointmentService_1.updateAppointment)(id, validatedData);
     if (!updatedAppointment) {
@@ -77,5 +85,32 @@ exports.deleteAppointmentRecord = (0, catchAsyncError_1.catchAsyncError)(async (
         statusCode: statusCodes_1.StatusCodes.OK,
         message: "Appointment deleted successfully",
         data: deletedAppointment,
+    });
+});
+exports.searchAppointmentResults = (0, catchAsyncError_1.catchAsyncError)(async (req, res, next) => {
+    const { query } = req.query;
+    const searchTerm = (0, queryValidation_1.validateSearchQuery)(query, next);
+    if (!searchTerm)
+        return;
+    const appointments = await (0, appointmentService_1.searchAppointment)(searchTerm);
+    (0, sendResponse_1.sendResponse)(res, {
+        success: true,
+        statusCode: statusCodes_1.StatusCodes.OK,
+        message: "Search results fetched successfully",
+        data: appointments,
+    });
+});
+exports.filterAppointments = (0, catchAsyncError_1.catchAsyncError)(async (req, res) => {
+    const validated = schemas_1.appointmentFilterSchema.parse(req.query);
+    const { data, nextCursor } = await (0, appointmentService_1.filterAppointmentsService)(validated);
+    (0, sendResponse_1.sendResponse)(res, {
+        success: true,
+        statusCode: statusCodes_1.StatusCodes.OK,
+        message: "Filtered appointments fetched",
+        data,
+        pagination: {
+            nextCursor: nextCursor !== null ? String(nextCursor) : undefined,
+            limit: validated.limit || 50,
+        },
     });
 });

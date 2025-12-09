@@ -7,10 +7,11 @@
     "rootDir": "src",
     "strict": true,
     "esModuleInterop": true,
-    "skipLibCheck": true,
+    "skipLibCheck": false,       // ❗ IMPORTANT
     "forceConsistentCasingInFileNames": true,
-    // "typeRoots": ["./node_modules/@types"]
+    "types": ["node", "jsonwebtoken"],  // ❗ FORCE TypeScript to use correct sign()
+    "allowSyntheticDefaultImports": true
   },
-  "include": ["src"],
+  "include": ["src", "**/*.d.ts"],
   "exclude": ["node_modules"]
 }

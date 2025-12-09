@@ -12,6 +12,8 @@ router
     .route("/")
     .post(isAuthenticated_1.isAuthenticated, isAdmin_1.isAdmin, NurseController_1.createNurseRecord)
     .get(NurseController_1.getAllNurseRecords);
+router.get("/search", NurseController_1.searchNurseResults);
+router.get("/filter", NurseController_1.filterNurses);
 router
     .route("/:id")
     .get(NurseController_1.getNurseRecordById)

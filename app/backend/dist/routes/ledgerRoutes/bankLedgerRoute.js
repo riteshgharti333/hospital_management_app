@@ -13,6 +13,8 @@ router
     .post(isAuthenticated_1.isAuthenticated, isAdmin_1.isAdmin, BankLedgerController_1.createBankLedgerRecord)
     .get(BankLedgerController_1.getAllBankLedgerRecords);
 router.route("/balance").get(BankLedgerController_1.getBankBalanceRecord);
+router.get("/search", BankLedgerController_1.searchBankLedgerResults);
+router.get("/filter", BankLedgerController_1.filterBankLedger);
 router
     .route("/:id")
     .get(BankLedgerController_1.getBankLedgerRecordById)

@@ -12,6 +12,10 @@ router
     .route("/")
     .post(isAuthenticated_1.isAuthenticated, isAdmin_1.isAdmin, PatientController_1.createPatientRecord)
     .get(PatientController_1.getAllPatientRecords);
+router.get("/search", PatientController_1.searchPatientResults);
+router.get("/filter", PatientController_1.filterPatients);
+router.get("/analytics", PatientController_1.getPatientAnalyticsRecord);
+router.get("/analytics/age-distribution", PatientController_1.getPatientAgeDistributionRecord);
 router
     .route("/:id")
     .get(PatientController_1.getPatientRecordById)

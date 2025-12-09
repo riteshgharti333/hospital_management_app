@@ -1,21 +1,14 @@
-import express from "express";
-import { register, login, logout, getMyProfile, updateProfile, changePassword } from "../controllers/AuthController";
-import { authLimiter } from "../middlewares/rateLimiter";
-import { isAuthenticated } from "../middlewares/isAuthenticated";
+import { Router } from "express";
+import {
+  getUserByRegIdController,
+  loginUserController,
+  setNewPasswordController,
+} from "../controllers/AuthController";
 
-const router = express.Router();
+const router = Router();
 
-router.post("/register", register);
-
-router.post("/login", authLimiter, login);
-
-router.post("/logout", logout);
-
-router.get("/profile" , isAuthenticated, getMyProfile);
-router.put("/update-profile" , isAuthenticated, updateProfile);
-router.put("/change-password" , isAuthenticated, changePassword);
-
-
-
+router.post("/identify", getUserByRegIdController);      // Step 1
+router.post("/login", loginUserController);              // Step 2
+router.post("/set-password", setNewPasswordController);  // Step 3
 
 export default router;

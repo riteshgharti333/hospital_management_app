@@ -12,6 +12,7 @@ router
     .route("/")
     .post(isAuthenticated_1.isAuthenticated, isAdmin_1.isAdmin, AmbulanceController_1.createAmbulanceRecord)
     .get(AmbulanceController_1.getAllAmbulanceRecords);
+router.get("/search", AmbulanceController_1.searchAmbulanceResults);
 router
     .route("/:id")
     .get(AmbulanceController_1.getAmbulanceRecordById)

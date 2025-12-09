@@ -10,14 +10,58 @@ datasource db {
 
 
 model User {
-  id        String   @id @default(uuid())
-  name      String
-  email     String   @unique
-  password  String
-  isAdmin   Boolean  @default(false)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id                 String    @id @default(uuid())
+  regId              String    @unique
+  name               String
+  email              String    @unique
+
+  role               Role      @default(DOCTOR)
+  password           String
+
+  mustChangePassword Boolean   @default(true)
+  isActive           Boolean   @default(true)
+
+  permissions        Json      @default("{}")
+
+  resetToken         String?
+  resetTokenExpiry   DateTime?
+
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
+
+  sessions           Session[]
+  activityLogs       ActivityLog[]
 }
+
+model Session {
+  id                String   @id @default(uuid())
+  userId            String
+  user              User     @relation(fields: [userId], references: [id])
+
+  refreshTokenHash  String
+  ip                String?
+  userAgent         String?
+
+  createdAt         DateTime @default(now())
+  expiresAt         DateTime
+}
+
+model ActivityLog {
+  id        String   @id @default(uuid())
+  userId    String
+  action    String
+  ip        String?
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id])
+}
+
+enum Role {
+  ADMIN
+  DOCTOR
+  NURSE
+}
+
 
 
 /////////////////
@@ -191,6 +235,7 @@ model Nurse {
   fullName       String
   mobileNumber   String
   registrationNo String   @unique
+  email          String   @unique
   department     String
   address        String
   shift          String
@@ -220,6 +265,7 @@ model Doctor {
   qualification  String
   designation    String
   department     String
+  email          String   @unique
   specialization String
   status         String   @default("Active")
   createdAt      DateTime @default(now())
