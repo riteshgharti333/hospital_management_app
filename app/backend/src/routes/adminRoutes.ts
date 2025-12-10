@@ -1,15 +1,25 @@
 import express from "express";
-import { giveDoctorAccess } from "../controllers/adminUserController";
 import { authenticateUser } from "../middlewares/authenticate";
 import { authorizeRoles } from "../middlewares/authorize";
+import {
+  createStaffAccess,
+  toggleStaffAccess,
+} from "../controllers/AdminUserController";
 
 const router = express.Router();
 
 router.post(
-  "/doctor/create-access",
+  "/staff/create-access",
   authenticateUser,
   authorizeRoles("ADMIN"),
-  giveDoctorAccess
+  createStaffAccess
+);
+
+router.post(
+  "/staff/toggle-access",
+  authenticateUser,
+  authorizeRoles("ADMIN"),
+  toggleStaffAccess
 );
 
 export default router;

@@ -3,60 +3,144 @@ import bcrypt from "bcrypt";
 import { catchAsyncError } from "../middlewares/catchAsyncError";
 import { ErrorHandler } from "../middlewares/errorHandler";
 import { StatusCodes } from "../constants/statusCodes";
-
 import { prisma } from "../lib/prisma";
-import { createDoctorUser, getUserByRegId } from "../services/userService";
+import { createUserLogin, getUserByRegId } from "../services/userService";
 import { sendResponse } from "../utils/sendResponse";
 
-export const giveDoctorAccess = catchAsyncError(
+// Reusable Type for allowed staff roles
+type StaffRole = "DOCTOR" | "NURSE";
+
+// Shared shape for Doctor and Nurse fields we use
+interface StaffBase {
+  fullName: string;
+  email: string;
+  registrationNo: string;
+}
+
+// CREATE ACCESS (Doctor or Nurse)
+export const createStaffAccess = catchAsyncError(
   async (req: Request, res: Response, next: NextFunction) => {
-    const { regId } = req.body; // Example: DOC-101
+    const { regId } = req.body;
 
-    if (!regId || !regId.startsWith("DOC-")) {
+    if (!regId) {
       return next(
-        new ErrorHandler("Invalid doctor registration number", StatusCodes.BAD_REQUEST)
+        new ErrorHandler("Registration ID required", StatusCodes.BAD_REQUEST)
       );
     }
 
-    // Step 1: Look up doctor in Doctor table
-    const doctor = await prisma.doctor.findUnique({
-      where: { registrationNo: regId },
-    });
+    let staff: StaffBase | null = null;
+    let role: StaffRole;
 
-    if (!doctor) {
-      return next(new ErrorHandler("Doctor not found", StatusCodes.NOT_FOUND));
-    }
+    // Detect Type + Fetch Typed Staff
+    if (regId.startsWith("DOC-")) {
+      const doctor = await prisma.doctor.findUnique({
+        where: { registrationNo: regId },
+        select: { fullName: true, email: true, registrationNo: true },
+      });
 
-    // Step 2: Check if doctor already has login access
-    const existingUser = await getUserByRegId(regId);
-    if (existingUser) {
+      staff = doctor;
+      role = "DOCTOR";
+    } else if (regId.startsWith("NUR-")) {
+      const nurse = await prisma.nurse.findUnique({
+        where: { registrationNo: regId },
+        select: { fullName: true, email: true, registrationNo: true },
+      });
+
+      staff = nurse;
+      role = "NURSE";
+    } else {
       return next(
-        new ErrorHandler("Login already created for this doctor", StatusCodes.CONFLICT)
+        new ErrorHandler("Invalid registration format", StatusCodes.BAD_REQUEST)
       );
     }
 
-    // Step 3: Generate temporary password
-    const tempPassword = "Doc@" + Math.floor(100000 + Math.random() * 900000);
+    if (!staff) {
+      return next(new ErrorHandler("Staff not found", StatusCodes.NOT_FOUND));
+    }
+
+    // Check if login already exists
+    const existing = await getUserByRegId(regId);
+    if (existing) {
+      return next(
+        new ErrorHandler(
+          "Login already created for this user",
+          StatusCodes.CONFLICT
+        )
+      );
+    }
+
+    // Generate temporary password
+    const tempPassword =
+      (role === "DOCTOR" ? "Doc@" : "Nur@") +
+      Math.floor(100000 + Math.random() * 900000);
+
     const hashed = await bcrypt.hash(tempPassword, 12);
 
-    // Step 4: Create User Login
-    const newUser = await createDoctorUser({
+    // Create user login
+    const newUser = await createUserLogin({
       regId,
-      name: doctor.fullName,
-      email: doctor.email,
-      role: "DOCTOR",
+      name: staff.fullName,
+      email: staff.email,
+      role,
       password: hashed,
     });
 
     return sendResponse(res, {
       success: true,
       statusCode: StatusCodes.CREATED,
-      message: "Doctor login access created successfully",
+      message: `${role} access created successfully`,
       data: {
         regId: newUser.regId,
         name: newUser.name,
         email: newUser.email,
+        role,
         tempPassword,
+      },
+    });
+  }
+);
+
+// TOGGLE ACCESS (doctor or nurse)
+export const toggleStaffAccess = catchAsyncError(
+  async (req: Request, res: Response, next: NextFunction) => {
+    const { regId, action } = req.body;
+
+    if (!regId) {
+      return next(new ErrorHandler("regId required", StatusCodes.BAD_REQUEST));
+    }
+
+    const user = await prisma.user.findUnique({ where: { regId } });
+    if (!user) {
+      return next(
+        new ErrorHandler("User login not found", StatusCodes.NOT_FOUND)
+      );
+    }
+
+    if (!["ENABLE", "DISABLE"].includes(action)) {
+      return next(
+        new ErrorHandler(
+          "Action must be ENABLE or DISABLE",
+          StatusCodes.BAD_REQUEST
+        )
+      );
+    }
+
+    const updated = await prisma.user.update({
+      where: { regId },
+      data: { isActive: action === "ENABLE" },
+    });
+
+    return sendResponse(res, {
+      success: true,
+      statusCode: StatusCodes.OK,
+      message: `Access ${
+        action === "ENABLE" ? "enabled" : "disabled"
+      } successfully`,
+      data: {
+        regId: updated.regId,
+        name: updated.name,
+        role: updated.role,
+        status: updated.isActive ? "ACTIVE" : "DISABLED",
       },
     });
   }

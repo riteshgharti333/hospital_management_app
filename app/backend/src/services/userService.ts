@@ -1,14 +1,14 @@
 import { prisma } from "../lib/prisma";
 
-export type CreateDoctorUserInput = {
-  regId: string;    // DOC-123
-  name: string;     // Doctor name from doctor table
-  email: string;    // Doctor email from doctor table
-  role: "DOCTOR";   // fixed
-  password: string; // hashed
+export type CreateUserInput = {
+  regId: string;
+  name: string;
+  email: string;
+  role: "DOCTOR" | "NURSE"; // 👈 now supports both
+  password: string;
 };
 
-export const createDoctorUser = async (data: CreateDoctorUserInput) => {
+export const createUserLogin = async (data: CreateUserInput) => {
   return prisma.user.create({ data });
 };
 

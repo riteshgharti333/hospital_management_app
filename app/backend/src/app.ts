@@ -21,6 +21,12 @@ import prescriptionRoutes from "./routes/prescriptionRoute";
 import ambulanceRoutes from "./routes/ambulanceRoute";
 import xrayRoutes from "./routes/xrayRoute";
 
+// Admin
+import adminRoutes from "./routes/adminRoutes";
+
+// Password Reset
+import passwordRoutes from "./routes/passwordRoutes";
+
 // ledger
 import patientLedgerRoutes from "./routes/ledgerRoutes/patientLedgerRoute";
 import bankLedgerRoutes from "./routes/ledgerRoutes/bankLedgerRoute";
@@ -71,6 +77,12 @@ app.use(express.json());
 app.use(morgan("dev"));
 
 app.use("/api/v1/auth", authRoutes);
+
+// admin routes
+app.use("/api/v1/admin", adminRoutes);
+
+// password reset routes
+app.use("/api/v1/password", passwordRoutes);
 
 app.use("/api/v1/admission", admissionRoutes);
 app.use("/api/v1/birth", birthRoutes);
