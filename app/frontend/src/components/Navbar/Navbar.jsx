@@ -4,29 +4,34 @@ import { Link, useNavigate } from "react-router-dom";
 import Fuse from "fuse.js";
 
 import { useDispatch, useSelector } from "react-redux";
-import {
-  getUserProfile,
-  logoutAsyncUser,
-} from "../../redux/asyncThunks/authThunks";
 import { toast } from "sonner";
+
+// Redux Thunks
+import { getUserProfile, logoutAsyncUser } from "../../redux/asyncThunks/authThunks";
+
 import { GLOBAL_SEARCH_PAGES } from "../../assets/searchData";
 
 const Navbar = () => {
   const [isScrolled, setIsScrolled] = useState(false);
   const [showProfileMenu, setShowProfileMenu] = useState(false);
-  const navigate = useNavigate();
-
   const [query, setQuery] = useState("");
   const [searchResults, setSearchResults] = useState([]);
   const [showSearchDropdown, setShowSearchDropdown] = useState(false);
-  const [activeIndex, setActiveIndex] = useState(-1); // ⬅️ NEW
+  const [activeIndex, setActiveIndex] = useState(-1);
 
-  const { profile, user } = useSelector((state) => state.auth);
   const searchInputRef = useRef(null);
   const searchRef = useRef(null);
   const cardRef = useRef(null);
 
   const dispatch = useDispatch();
+  const navigate = useNavigate();
+
+  const { user } = useSelector((state) => state.auth);
+
+  // 🔹 Auto load profile when navbar loads (only if we have a logged-in user)
+  useEffect(() => {
+    if (user) dispatch(getUserProfile());
+  }, [dispatch, user]);
 
   // ------------------ Fuse.js Search Engine ------------------
   const fuse = new Fuse(GLOBAL_SEARCH_PAGES, {
@@ -34,7 +39,6 @@ const Navbar = () => {
     threshold: 0.3,
   });
 
-  // ------------------ Search Logic ------------------
   const handleSearch = (value) => {
     setQuery(value);
 
@@ -47,46 +51,38 @@ const Navbar = () => {
     const results = fuse.search(value).map((r) => r.item);
     setSearchResults(results);
     setShowSearchDropdown(true);
-    setActiveIndex(-1); // reset highlight
+    setActiveIndex(-1);
   };
 
-  // ------------------ Keyboard Navigation ↑ ↓ Enter ------------------
+  // KEYBOARD NAVIGATION
   const handleKeyNavigation = (e) => {
     if (!showSearchDropdown || searchResults.length === 0) return;
 
     if (e.key === "ArrowDown") {
       e.preventDefault();
-      setActiveIndex((prev) =>
-        prev + 1 >= searchResults.length ? 0 : prev + 1
-      );
+      setActiveIndex((prev) => (prev + 1 >= searchResults.length ? 0 : prev + 1));
     }
 
     if (e.key === "ArrowUp") {
       e.preventDefault();
-      setActiveIndex((prev) =>
-        prev - 1 < 0 ? searchResults.length - 1 : prev - 1
-      );
+      setActiveIndex((prev) => (prev - 1 < 0 ? searchResults.length - 1 : prev - 1));
     }
 
-    if (e.key === "Enter") {
-      if (activeIndex >= 0) {
-        navigate(searchResults[activeIndex].path);
-        setShowSearchDropdown(false);
-        setQuery("");
-        setActiveIndex(-1);
-      }
+    if (e.key === "Enter" && activeIndex >= 0) {
+      navigate(searchResults[activeIndex].path);
+      setShowSearchDropdown(false);
+      setQuery("");
+      setActiveIndex(-1);
     }
   };
 
-  // ------------------ GLOBAL HOTKEY (CTRL + K) ------------------
+  // GLOBAL HOTKEY (CTRL + K)
   useEffect(() => {
     const handleHotkey = (e) => {
       if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "k") {
         e.preventDefault();
-        if (searchInputRef.current) {
-          searchInputRef.current.focus();
-          searchInputRef.current.select();
-        }
+        searchInputRef.current?.focus();
+        searchInputRef.current?.select();
       }
     };
 
@@ -94,19 +90,27 @@ const Navbar = () => {
     return () => window.removeEventListener("keydown", handleHotkey);
   }, []);
 
-  // ------------------ Fetch User Profile ------------------
-  useEffect(() => {
-    if (user) dispatch(getUserProfile());
-  }, [dispatch, user]);
-
+  // ------------------ LOGOUT FUNCTION ------------------
   const handleLogout = async () => {
+    // Close menu immediately for better UX
+    setShowProfileMenu(false);
+
     try {
+      // dispatch the thunk which calls API and clears server session/cookie
       const res = await dispatch(logoutAsyncUser()).unwrap();
-      if (res?.message) {
+
+      // defensive local cleanup (thunk should already clear store/localStorage)
+      try {
         localStorage.removeItem("user");
-        toast.success(res.message);
-        navigate("/login");
+      } catch (e) {
+        // ignore
       }
+
+      // show feedback (use server message if available)
+      toast.success(res?.message || "Logged out successfully");
+
+      // navigate to login page
+      navigate("/login");
     } catch (error) {
       toast.error(error?.message || "Logout failed");
     }
@@ -148,21 +152,21 @@ const Navbar = () => {
                 <FiSearch className="absolute left-3 h-4 w-4 text-gray-400" />
 
                 <input
-                  ref={searchInputRef} // ⬅️ FIXED CTRL+K
+                  ref={searchInputRef}
                   type="text"
                   value={query}
                   onChange={(e) => handleSearch(e.target.value)}
                   onFocus={() => query && setShowSearchDropdown(true)}
-                  onKeyDown={handleKeyNavigation} // ⬅️ KEY NAVIGATION
+                  onKeyDown={handleKeyNavigation}
                   placeholder="Quick Search — Press Ctrl + K"
                   className="block w-[300px] pl-10 pr-3 py-2 border border-gray-200 rounded-xl text-sm 
                     focus:outline-none focus:ring-2 focus:ring-blue-500 bg-gray-50"
                 />
               </div>
 
-              {/* ---------------- DROPDOWN ---------------- */}
+              {/* SEARCH DROPDOWN */}
               {showSearchDropdown && searchResults.length > 0 && (
-                <div className="absolute mt-2 w-full bg-white shadow-lg rounded-lg py-2 border border-gray-100 z-50 isolate">
+                <div className="absolute mt-2 w-full bg-white shadow-lg rounded-lg py-2 border border-gray-100 z-50">
                   {searchResults.map((item, index) => (
                     <Link
                       to={item.path}
@@ -185,7 +189,6 @@ const Navbar = () => {
                 </div>
               )}
 
-              {/* No Results */}
               {showSearchDropdown &&
                 searchResults.length === 0 &&
                 query.length > 1 && (
@@ -205,10 +208,10 @@ const Navbar = () => {
                   className="flex items-center cursor-pointer space-x-2 focus:outline-none"
                 >
                   <div className="h-8 w-8 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-medium">
-                    {profile?.name?.charAt(0) || "U"}
+                    {user?.name?.charAt(0) || "U"}
                   </div>
                   <span className="hidden md:inline-block text-sm font-medium text-gray-700">
-                    {profile?.name || "User"}
+                    {user?.name || "User"}
                   </span>
                 </button>
 
@@ -224,6 +227,14 @@ const Navbar = () => {
                       >
                         <FiUser className="inline mr-2" /> Your Profile
                       </Link>
+
+                      <Link
+                        to={"/permissions"}
+                        className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                      >
+                        <FiUser className="inline mr-2" /> Permissions
+                      </Link>
+
                       <span
                         onClick={handleLogout}
                         className="block px-4 cursor-pointer py-2 text-sm text-gray-700 hover:bg-gray-100 border-t border-gray-100"

@@ -1,11 +1,17 @@
 import { Request, Response, NextFunction } from "express";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
-import { findUserByRegId, getUserById, updateUserPassword } from "../services/authService";
+import {
+  findUserByRegId,
+  getUserById,
+  updateUserPassword,
+} from "../services/authService";
 import { sendTokenCookie } from "../utils/cookie";
 import { catchAsyncError } from "../middlewares/catchAsyncError";
 import { ErrorHandler } from "../middlewares/errorHandler";
 import { StatusCodes } from "../constants/statusCodes";
+import { sendResponse } from "../utils/sendResponse";
+import { prisma } from "../lib/prisma";
 
 /**
  * STEP 1 — USER ENTERS REG ID → RETURN NAME + EMAIL + ROLE
@@ -15,16 +21,25 @@ export const getUserByRegIdController = catchAsyncError(
     const { regId } = req.body;
 
     if (!regId) {
-      return next(new ErrorHandler("Reg ID is required", StatusCodes.BAD_REQUEST));
+      return next(
+        new ErrorHandler("Reg ID is required", StatusCodes.BAD_REQUEST)
+      );
     }
 
     const user = await findUserByRegId(regId);
     if (!user) {
-      return next(new ErrorHandler("No user found with this Reg ID", StatusCodes.NOT_FOUND));
+      return next(
+        new ErrorHandler(
+          "No user found with this Reg ID",
+          StatusCodes.NOT_FOUND
+        )
+      );
     }
 
     if (!user.isActive) {
-      return next(new ErrorHandler("User is disabled by admin", StatusCodes.FORBIDDEN));
+      return next(
+        new ErrorHandler("User is disabled by admin", StatusCodes.FORBIDDEN)
+      );
     }
 
     return res.status(StatusCodes.OK).json({
@@ -41,8 +56,6 @@ export const getUserByRegIdController = catchAsyncError(
   }
 );
 
-
-
 /**
  * STEP 2 — LOGIN WITH PASSWORD
  */
@@ -52,7 +65,10 @@ export const loginUserController = catchAsyncError(
 
     if (!regId || !password) {
       return next(
-        new ErrorHandler("Reg ID and Password required", StatusCodes.BAD_REQUEST)
+        new ErrorHandler(
+          "Reg ID and Password required",
+          StatusCodes.BAD_REQUEST
+        )
       );
     }
 
@@ -64,7 +80,9 @@ export const loginUserController = catchAsyncError(
     }
 
     if (!user.isActive) {
-      return next(new ErrorHandler("User disabled by admin", StatusCodes.FORBIDDEN));
+      return next(
+        new ErrorHandler("User disabled by admin", StatusCodes.FORBIDDEN)
+      );
     }
 
     const isMatch = await bcrypt.compare(password, user.password);
@@ -74,17 +92,10 @@ export const loginUserController = catchAsyncError(
       );
     }
 
-    // user must change password first time
-    if (user.mustChangePassword) {
-      return res.status(StatusCodes.OK).json({
-        success: true,
-        mustChangePassword: true,
-        message: "You must set a new password",
-        data: { userId: user.id },
-      });
-    }
+    // ⛔ REMOVE mustChangePassword check
+    // User can always log in normally
 
-    sendTokenCookie(
+    return sendTokenCookie(
       {
         id: user.id,
         regId: user.regId,
@@ -99,8 +110,6 @@ export const loginUserController = catchAsyncError(
   }
 );
 
-
-
 /**
  * STEP 3 — USER SETS NEW PASSWORD ON FIRST LOGIN
  */
@@ -109,7 +118,9 @@ export const setNewPasswordController = catchAsyncError(
     const { userId, newPassword } = req.body;
 
     if (!userId || !newPassword) {
-      return next(new ErrorHandler("New password is required", StatusCodes.BAD_REQUEST));
+      return next(
+        new ErrorHandler("New password is required", StatusCodes.BAD_REQUEST)
+      );
     }
 
     const user = await getUserById(userId);
@@ -124,6 +135,76 @@ export const setNewPasswordController = catchAsyncError(
     return res.status(StatusCodes.OK).json({
       success: true,
       message: "Password updated successfully. You can now log in.",
+    });
+  }
+);
+
+// ===============================
+// GET PROFILE
+// ===============================
+export const getProfile = catchAsyncError(
+  async (req: Request, res: Response, next: NextFunction) => {
+    const userId = req.user?.id;
+
+    if (!userId) {
+      return next(new ErrorHandler("Unauthorized", StatusCodes.UNAUTHORIZED));
+    }
+
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+    });
+
+    if (!user) {
+      return next(new ErrorHandler("User not found", StatusCodes.NOT_FOUND));
+    }
+
+    return sendResponse(res, {
+      success: true,
+      statusCode: StatusCodes.OK,
+      message: "Profile fetched successfully",
+      data: user,
+    });
+  }
+);
+
+// ===============================
+// UPDATE PROFILE (name + email)
+// ===============================
+export const updateProfile = catchAsyncError(
+  async (req: Request, res: Response, next: NextFunction) => {
+    const userId = req.user?.id;
+    const { name, email } = req.body;
+
+    if (!userId) {
+      return next(new ErrorHandler("Unauthorized", StatusCodes.UNAUTHORIZED));
+    }
+
+    const updated = await prisma.user.update({
+      where: { id: userId },
+      data: { name, email },
+      select: { name: true, email: true },
+    });
+
+    return sendResponse(res, {
+      success: true,
+      statusCode: StatusCodes.OK,
+      message: "Profile updated successfully",
+      data: updated,
+    });
+  }
+);
+
+// ===============================
+// LOGOUT
+// ===============================
+export const logoutUser = catchAsyncError(
+  async (req: Request, res: Response) => {
+    res.clearCookie("token");
+
+    return sendResponse(res, {
+      success: true,
+      statusCode: StatusCodes.OK,
+      message: "Logged out successfully",
     });
   }
 );

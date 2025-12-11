@@ -71,7 +71,7 @@ app.use(
     credentials: true,
   })
 );
-
+  
 app.use(cookieParser());
 app.use(express.json());
 app.use(morgan("dev"));
@@ -79,26 +79,26 @@ app.use(morgan("dev"));
 app.use("/api/v1/auth", authRoutes);
 
 // admin routes
-app.use("/api/v1/admin", adminRoutes);
+app.use("/api/v1/admin", adminRoutes);    
 
 // password reset routes
 app.use("/api/v1/password", passwordRoutes);
-
-app.use("/api/v1/admission", admissionRoutes);
+ 
+app.use("/api/v1/admission", admissionRoutes); 
 app.use("/api/v1/birth", birthRoutes);
 app.use("/api/v1/patient", patientRoutes);
-app.use("/api/v1/department", departmentRoutes);
-app.use("/api/v1/bed", bedRoutes);
+app.use("/api/v1/department", departmentRoutes);  
+app.use("/api/v1/bed", bedRoutes); 
 app.use("/api/v1/bed-assign", bedAssignRoutes);
-app.use("/api/v1/appointment", appointmentRoutes);
+app.use("/api/v1/appointment", appointmentRoutes);      
 app.use("/api/v1/nurse", nurseRoutes);
-app.use("/api/v1/doctor", doctorRoutes);
-app.use("/api/v1/pharmacist", pharmacistRoutes);
-app.use("/api/v1/prescription", prescriptionRoutes);
+app.use("/api/v1/doctor", doctorRoutes);                   
+app.use("/api/v1/pharmacist", pharmacistRoutes);   
+app.use("/api/v1/prescription", prescriptionRoutes);   
 app.use("/api/v1/ambulance", ambulanceRoutes);
-app.use("/api/v1/xray", xrayRoutes);
- 
-// ledger             
+app.use("/api/v1/xray", xrayRoutes);                     
+      
+// ledger              
 app.use("/api/v1/ledger/patient-ledger", patientLedgerRoutes);
 app.use("/api/v1/ledger/bank-ledger", bankLedgerRoutes);
 app.use("/api/v1/ledger/cash-ledger", cashLedgerRoutes);

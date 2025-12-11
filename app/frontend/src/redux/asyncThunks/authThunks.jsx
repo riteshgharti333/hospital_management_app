@@ -1,12 +1,12 @@
 import { createAsyncThunk } from "@reduxjs/toolkit";
 import {
-  changePassword,
-  getProfile,
+  createStaffAccess,
+  getProfileApi,
+  getUsersApi,
   loginUser,
-  logoutUser,
-  refreshToken,
-  registerUser,
-  updateProfile,
+  logoutApi,
+  toggleStaffAccess,
+  updateProfileApi,
 } from "../api/authAPI";
 
 // LOGIN ASYNC THUNK
@@ -24,86 +24,126 @@ export const loginAsyncUser = createAsyncThunk(
   }
 );
 
-// REGISTER ASYNC THUNK
-export const registerAsyncUser = createAsyncThunk(
-  "auth/registerUser",
-  async (userData, { rejectWithValue }) => {
+export const createStaffAccessThunk = createAsyncThunk(
+  "admin/createAccess",
+  async (payload, { rejectWithValue }) => {
     try {
-      const response = await registerUser(userData);
-      localStorage.setItem("user", JSON.stringify(response.data));
-      return response.data;
-    } catch (error) {
-      console.error("Failed to register:", error);
-      return rejectWithValue(error.response.data || "Failed to register");
+      const res = await createStaffAccess(payload);
+      return res.data;
+    } catch (err) {
+      return rejectWithValue(err.response?.data || "Failed to create access");
     }
   }
 );
 
-// LOGOUT ASYNC THUNK
-export const logoutAsyncUser = createAsyncThunk(
-  "auth/logoutUser",
-  async (_, { rejectWithValue }) => {
+export const toggleStaffAccessThunk = createAsyncThunk(
+  "admin/toggleAccess",
+  async (payload, { rejectWithValue }) => {
     try {
-      const response = await logoutUser();
-      // Remove user info from local storage
-      localStorage.removeItem("user");
-      return response.data;
-    } catch (error) {
-      console.error("Failed to log out:", error);
-      return rejectWithValue(error.response.data || "Failed to log out");
+      const res = await toggleStaffAccess(payload);
+      return res.data;
+    } catch (err) {
+      return rejectWithValue(err.response?.data || "Failed to toggle access");
     }
   }
 );
 
 
-// GET PROFILE THUNK
+
+
+// STEP 1 — SEND OTP
+export const forgotPasswordThunk = createAsyncThunk(
+  "password/forgotPassword",
+  async (email, { rejectWithValue }) => {
+    try {
+      const res = await forgotPasswordAPI(email);
+      return res.data;
+    } catch (err) {
+      return rejectWithValue(err.response?.data || "Failed to send OTP");
+    }
+  }
+);
+
+// STEP 2 — VERIFY OTP
+export const verifyOtpThunk = createAsyncThunk(
+  "password/verifyOtp",
+  async (payload, { rejectWithValue }) => {
+    try {
+      const res = await verifyOtpAPI(payload);
+      return res.data;
+    } catch (err) {
+      return rejectWithValue(err.response?.data || "OTP verification failed");
+    }
+  }
+);
+
+// STEP 3 — RESET PASSWORD
+export const resetPasswordThunk = createAsyncThunk(
+  "password/resetPassword",
+  async (payload, { rejectWithValue }) => {
+    try {
+      const res = await resetPasswordAPI(payload);
+      return res.data;
+    } catch (err) {
+      return rejectWithValue(err.response?.data || "Password reset failed");
+    }
+  }
+);
+
+
+// GET PROFILE
 export const getUserProfile = createAsyncThunk(
-  "auth/getUserProfile",
+  "auth/getProfile",
   async (_, { rejectWithValue }) => {
     try {
-      const res = await getProfile();
-      return res.data;
-    } catch (error) {
-      return rejectWithValue(error.response?.data || "Failed to fetch profile");
+      const { data } = await getProfileApi();
+      return data.data; // because your sendResponse wraps data in data.data
+    } catch (err) {
+      return rejectWithValue(err.response?.data?.message || "Failed to fetch profile");
     }
   }
 );
 
-// UPDATE PROFILE THUNK
+
+// UPDATE PROFILE
 export const updateUserProfile = createAsyncThunk(
-  "auth/updateUserProfile",
-  async (userData, { rejectWithValue }) => {
+  "auth/updateProfile",
+  async (updateData, { rejectWithValue }) => {
     try {
-      const res = await updateProfile(userData);
-      return res.data;
-    } catch (error) {
-      return rejectWithValue(error.response?.data || "Failed to update profile");
+      const { data } = await updateProfileApi(updateData);
+      return data.data;
+    } catch (err) {
+      return rejectWithValue(err.response?.data?.message || "Failed to update profile");
     }
   }
 );
 
-// CHANGE PASSWORD THUNK
-export const updateUserPassword = createAsyncThunk(
-  "auth/updateUserPassword",
-  async (passwords, { rejectWithValue }) => {
-    try {
-      const res = await changePassword(passwords);
-      return res.data;
-    } catch (error) {
-      return rejectWithValue(error.response?.data || "Failed to change password");
-    }
-  }
-);
 
-// REFRESH TOKEN (auto-used later)
-export const refreshAccessToken = createAsyncThunk(
-  "auth/refreshAccessToken",
+// LOGOUT
+export const logoutAsyncUser = createAsyncThunk(
+  "auth/logout",
   async (_, { rejectWithValue }) => {
     try {
-      await refreshToken(); // token stored in cookie
+      await logoutApi();
       return true;
-    } catch (error) {
-      return rejectWithValue(error.response?.data || "Refresh token failed");
+    } catch (err) {
+      return rejectWithValue(err.response?.data?.message || "Logout failed");
     }
   }
 );
+
+
+export const getUsers = createAsyncThunk(
+  "admin/staff",
+  async (params = { page: 1, limit: 25 }, { rejectWithValue }) => {
+    try {
+      const { data } = await getUsersApi(params);
+      // backend returns { data: { ...payload } }
+      return data.data;
+    } catch (err) {
+      return rejectWithValue(err.response?.data?.message || "Failed to fetch users");
+    }
+  }
+);
+
+

@@ -56,6 +56,8 @@ import EditMoneyReceipt from "./pages/UpdateData/EditMoneyReceipt";
 import Login from "./pages/Auth/Login";
 import Profile from "./pages/Auth/Profile";
 import { Toaster } from "sonner";
+import ForgotPassword from "./pages/Auth/ForgotPassword";
+import AdminAccessManagement from "./pages/Auth/AdminAccessManagement";
 
 function App() {
   return (
@@ -64,11 +66,15 @@ function App() {
         <Toaster position="top-center" richColors />
         <Routes>
           <Route path="/login" element={<Login />} />
+          <Route path="/forgot-password" element={<ForgotPassword />} />
+
 
           <Route element={<Layout />}>
             <Route path="/" element={<Navigate to="/dashboard" replace />} />
             <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/profile" element={<Profile />} />
+            <Route path="/permissions" element={<AdminAccessManagement />} />
+
 
             {/* Admission Entry  */}
             <Route

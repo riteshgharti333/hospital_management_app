@@ -1,19 +1,43 @@
+// src/redux/slices/authSlice.js
 import { createSlice } from "@reduxjs/toolkit";
 import {
-  loginAsyncUser,
-  registerAsyncUser,
-  logoutAsyncUser,
+  createStaffAccessThunk,
+  forgotPasswordThunk,
   getUserProfile,
+  loginAsyncUser,
+  logoutAsyncUser,
+  resetPasswordThunk,
+  toggleStaffAccessThunk,
   updateUserProfile,
-  updateUserPassword,
-  refreshAccessToken 
-} from "../asyncThunks/authThunks";
+  verifyOtpThunk,
+  getUsers
+} from "../asyncThunks/authThunks"; 
 
 const initialState = {
-  user: JSON.parse(localStorage.getItem("user")) || null,
+  user: JSON.parse(localStorage.getItem("user") || "null"),
   profile: null,
   status: "idle",
   error: null,
+  // pagination + 'all' bucket
+  page: 1,
+  limit: 25,
+  all: {
+    users: [],
+    total: 0,
+  },
+  // grouped buckets
+  admin: { count: 0, users: [] },
+  doctor: { count: 0, users: [] },
+  nurse: { count: 0, users: [] },
+  // top-level totals
+  totalUsers: 0,
+  activeAccess: 0,
+  deniedAccess: 0,
+  // other flags used in your slice
+  loading: false,
+  lastAction: null,
+  otpVerified: false,
+  resetUserId: null,
 };
 
 const authSlice = createSlice({
@@ -21,8 +45,8 @@ const authSlice = createSlice({
   initialState,
   reducers: {},
   extraReducers: (builder) => {
+    // LOGIN
     builder
-      // login
       .addCase(loginAsyncUser.pending, (state) => {
         state.status = "loading";
       })
@@ -36,43 +60,139 @@ const authSlice = createSlice({
         state.error = action.payload;
       });
 
+    // CREATE STAFF ACCESS
     builder
-      // register
-      .addCase(registerAsyncUser.pending, (state) => {
+      .addCase(createStaffAccessThunk.pending, (state) => {
+        state.loading = true;
+      })
+      .addCase(createStaffAccessThunk.fulfilled, (state, action) => {
+        state.loading = false;
+        state.lastAction = action.payload;
+      })
+      .addCase(createStaffAccessThunk.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload;
+      });
+
+    // TOGGLE STAFF ACCESS
+    builder
+      .addCase(toggleStaffAccessThunk.pending, (state) => {
+        state.loading = true;
+      })
+      .addCase(toggleStaffAccessThunk.fulfilled, (state, action) => {
+        state.loading = false;
+        state.lastAction = action.payload;
+      })
+      .addCase(toggleStaffAccessThunk.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload;
+      });
+
+    // FORGOT PASSWORD
+    builder
+      .addCase(forgotPasswordThunk.pending, (state) => {
+        state.loading = true;
+      })
+      .addCase(forgotPasswordThunk.fulfilled, (state) => {
+        state.loading = false;
+      })
+      .addCase(forgotPasswordThunk.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload;
+      });
+
+    // VERIFY OTP
+    builder
+      .addCase(verifyOtpThunk.fulfilled, (state, action) => {
+        state.loading = false;
+        state.otpVerified = true;
+        state.resetUserId = action.payload.resetUserId;
+      })
+      .addCase(verifyOtpThunk.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload;
+      });
+
+    // RESET PASSWORD
+    builder
+      .addCase(resetPasswordThunk.fulfilled, (state) => {
+        state.loading = false;
+        state.otpVerified = false;
+        state.resetUserId = null;
+      })
+      .addCase(resetPasswordThunk.rejected, (state, action) => {
+        state.error = action.payload;
+      });
+
+    // GET PROFILE
+    builder
+      .addCase(getUserProfile.pending, (state) => {
         state.status = "loading";
       })
-      .addCase(registerAsyncUser.fulfilled, (state, action) => {
+      .addCase(getUserProfile.fulfilled, (state, action) => {
         state.status = "succeeded";
-        state.user = action.payload;
-        localStorage.setItem("user", JSON.stringify(action.payload));
+        state.user = { ...state.user, ...action.payload };
+        localStorage.setItem("user", JSON.stringify(state.user));
       })
-      .addCase(registerAsyncUser.rejected, (state, action) => {
+      .addCase(getUserProfile.rejected, (state, action) => {
         state.status = "failed";
         state.error = action.payload;
       });
 
+    // UPDATE PROFILE
     builder
-      // logout
-      .addCase(logoutAsyncUser.fulfilled, (state) => {
-        state.user = null;
-        localStorage.removeItem("user");
-      });
-
-    // Add to builder
-    builder
-      .addCase(getUserProfile.fulfilled, (state, action) => {
-        state.profile = action.payload?.data;
+      .addCase(updateUserProfile.pending, (state) => {
+        state.status = "loading";
       })
       .addCase(updateUserProfile.fulfilled, (state, action) => {
-        state.user = action.payload?.data;
-        state.profile = action.payload?.data;
-      })
-      .addCase(updateUserPassword.fulfilled, (state) => {
         state.status = "succeeded";
+        state.user = { ...state.user, ...action.payload };
+        localStorage.setItem("user", JSON.stringify(state.user));
       })
-      .addCase(refreshAccessToken.rejected, (state) => {
-        state.user = null;
-        state.status = "unauthenticated";
+      .addCase(updateUserProfile.rejected, (state, action) => {
+        state.status = "failed";
+        state.error = action.payload;
+      });
+
+    // LOGOUT
+    builder.addCase(logoutAsyncUser.fulfilled, (state) => {
+      state.user = null;
+      localStorage.removeItem("user");
+    });
+
+    // GET USERS (new aggregated payload)
+    builder
+      .addCase(getUsers.pending, (state) => {
+        state.status = "loading";
+        state.error = null;
+      })
+      .addCase(getUsers.fulfilled, (state, action) => {
+        state.status = "succeeded";
+        const payload = action.payload || {};
+
+        // pagination meta
+        state.page = payload.page ?? state.page;
+        state.limit = payload.limit ?? state.limit;
+
+        // all (paginated)
+        state.all = {
+          users: payload.all?.users ?? [],
+          total: payload.all?.total ?? 0,
+        };
+
+        // grouped buckets
+        state.admin = payload.admin ?? { count: 0, users: [] };
+        state.doctor = payload.doctor ?? { count: 0, users: [] };
+        state.nurse = payload.nurse ?? { count: 0, users: [] };
+
+        // totals
+        state.totalUsers = payload.totalUsers ?? (state.all.total ?? 0);
+        state.activeAccess = payload.activeAccess ?? 0;
+        state.deniedAccess = payload.deniedAccess ?? 0;
+      })
+      .addCase(getUsers.rejected, (state, action) => {
+        state.status = "failed";
+        state.error = action.payload || action.error?.message;
       });
   },
 });

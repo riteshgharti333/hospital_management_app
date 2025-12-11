@@ -4,7 +4,12 @@ import { catchAsyncError } from "../middlewares/catchAsyncError";
 import { ErrorHandler } from "../middlewares/errorHandler";
 import { StatusCodes } from "../constants/statusCodes";
 import { prisma } from "../lib/prisma";
-import { generateOTP, saveOTP, verifyOTPService, resetPasswordService } from "../services/passwordService";
+import {
+  generateOTP,
+  saveOTP,
+  verifyOTPService,
+  resetPasswordService,
+} from "../services/passwordService";
 import { sendEmail } from "../utils/sendEmail";
 import { sendResponse } from "../utils/sendResponse";
 import jwt from "jsonwebtoken";
@@ -14,12 +19,16 @@ export const forgotPassword = catchAsyncError(
     const { email } = req.body;
 
     if (!email) {
-      return next(new ErrorHandler("Email is required", StatusCodes.BAD_REQUEST));
+      return next(
+        new ErrorHandler("Email is required", StatusCodes.BAD_REQUEST)
+      );
     }
 
     const user = await prisma.user.findUnique({ where: { email } });
     if (!user) {
-      return next(new ErrorHandler("No user found with this email", StatusCodes.NOT_FOUND));
+      return next(
+        new ErrorHandler("No user found with this email", StatusCodes.NOT_FOUND)
+      );
     }
 
     const otp = generateOTP();
@@ -34,20 +43,25 @@ export const forgotPassword = catchAsyncError(
   }
 );
 
-
-
 export const verifyResetOtp = catchAsyncError(
   async (req: Request, res: Response, next: NextFunction) => {
     const { email, otp } = req.body;
 
     if (!email || !otp) {
-      return next(new ErrorHandler("Email and OTP are required", StatusCodes.BAD_REQUEST));
+      return next(
+        new ErrorHandler("Email and OTP are required", StatusCodes.BAD_REQUEST)
+      );
     }
 
     const user = await prisma.user.findUnique({ where: { email } });
 
     if (!user || !user.resetToken || !user.resetTokenExpiry) {
-      return next(new ErrorHandler("OTP not found. Please request again.", StatusCodes.NOT_FOUND));
+      return next(
+        new ErrorHandler(
+          "OTP not found. Please request again.",
+          StatusCodes.NOT_FOUND
+        )
+      );
     }
 
     if (Date.now() > user.resetTokenExpiry.getTime()) {
@@ -74,14 +88,16 @@ export const verifyResetOtp = catchAsyncError(
   }
 );
 
-
 export const resetPassword = catchAsyncError(
   async (req: Request, res: Response, next: NextFunction) => {
     const { token, newPassword } = req.body;
 
     if (!token || !newPassword) {
       return next(
-        new ErrorHandler("Token and new password are required", StatusCodes.BAD_REQUEST)
+        new ErrorHandler(
+          "Token and new password are required",
+          StatusCodes.BAD_REQUEST
+        )
       );
     }
 
@@ -90,7 +106,9 @@ export const resetPassword = catchAsyncError(
     try {
       decoded = jwt.verify(token, process.env.JWT_RESET_SECRET!);
     } catch (err) {
-      return next(new ErrorHandler("Invalid or expired token", StatusCodes.UNAUTHORIZED));
+      return next(
+        new ErrorHandler("Invalid or expired token", StatusCodes.UNAUTHORIZED)
+      );
     }
 
     // Get user
@@ -107,7 +125,7 @@ export const resetPassword = catchAsyncError(
       where: { id: user.id },
       data: {
         password: hashedPassword,
-        mustChangePassword: false,  // 🔥 important: first login completed
+        mustChangePassword: false, // 🔥 important: first login completed
         resetToken: null,
         resetTokenExpiry: null,
       },
@@ -117,6 +135,47 @@ export const resetPassword = catchAsyncError(
       success: true,
       statusCode: StatusCodes.OK,
       message: "Password reset successfully. You can now log in.",
+    });
+  }
+);
+
+
+export const changePasswordLoggedIn = catchAsyncError(
+  async (req: Request, res: Response, next: NextFunction) => {
+    const userId = (req as any).user.id;
+    const { oldPassword, newPassword } = req.body;
+
+    if (!oldPassword || !newPassword) {
+      return next(
+        new ErrorHandler("Old password and new password are required", StatusCodes.BAD_REQUEST)
+      );
+    }
+
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+    });
+
+    if (!user) {
+      return next(new ErrorHandler("User not found", StatusCodes.NOT_FOUND));
+    }
+
+    const isMatch = await bcrypt.compare(oldPassword, user.password);
+    if (!isMatch) {
+      return next(
+        new ErrorHandler("Old password is incorrect", StatusCodes.UNAUTHORIZED)
+      );
+    }
+
+    const hashed = await bcrypt.hash(newPassword, 12);
+
+    await prisma.user.update({
+      where: { id: userId },
+      data: { password: hashed, mustChangePassword: false },
+    });
+
+    return res.status(StatusCodes.OK).json({
+      success: true,
+      message: "Password updated successfully",
     });
   }
 );

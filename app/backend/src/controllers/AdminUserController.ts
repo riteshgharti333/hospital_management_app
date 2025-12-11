@@ -4,8 +4,8 @@ import { catchAsyncError } from "../middlewares/catchAsyncError";
 import { ErrorHandler } from "../middlewares/errorHandler";
 import { StatusCodes } from "../constants/statusCodes";
 import { prisma } from "../lib/prisma";
-import { createUserLogin, getUserByRegId } from "../services/userService";
-import { sendResponse } from "../utils/sendResponse";
+import { createUserLogin, getUserByRegId, getUsersAggregated } from "../services/userService";
+import { sendResponse } from "../utils/sendResponse";  
 
 // Reusable Type for allowed staff roles
 type StaffRole = "DOCTOR" | "NURSE";
@@ -95,6 +95,7 @@ export const createStaffAccess = catchAsyncError(
         email: newUser.email,
         role,
         tempPassword,
+        status: "DISABLED",
       },
     });
   }
@@ -141,6 +142,45 @@ export const toggleStaffAccess = catchAsyncError(
         name: updated.name,
         role: updated.role,
         status: updated.isActive ? "ACTIVE" : "DISABLED",
+      },
+    });
+  }
+);
+
+export const getAllUsers = catchAsyncError(
+  async (req: Request, res: Response, next: NextFunction) => {
+    const rawRole = (req.query.role as string) || undefined;
+    const page = Math.max(1, Number(req.query.page || 1));
+    const limit = Math.max(1, Number(req.query.limit || 25));
+
+    const allowedRoles = ["ADMIN", "DOCTOR", "NURSE"];
+    let role: "ADMIN" | "DOCTOR" | "NURSE" | undefined = undefined;
+
+    if (rawRole) {
+      if (!allowedRoles.includes(rawRole.toUpperCase())) {
+        return next(
+          new ErrorHandler("Invalid role query", StatusCodes.BAD_REQUEST)
+        );
+      }
+      role = rawRole.toUpperCase() as "ADMIN" | "DOCTOR" | "NURSE";
+    }
+
+    const offset = (page - 1) * limit;
+
+    const data = await getUsersAggregated({
+      role,
+      skip: offset,
+      take: limit,
+    });
+
+    return sendResponse(res, {
+      success: true,
+      statusCode: StatusCodes.OK,
+      message: "Users fetched successfully",
+      data: {
+        page,
+        limit,
+        ...data,
       },
     });
   }
