@@ -28,7 +28,6 @@ import {
   createStaffAccessThunk,
   toggleStaffAccessThunk, 
   getUsers
-  // make sure this thunk exists and accepts payload { userId } or adapt below
 } from "../../redux/asyncThunks/authThunks";
 
 const AdminAccessManagement = () => {

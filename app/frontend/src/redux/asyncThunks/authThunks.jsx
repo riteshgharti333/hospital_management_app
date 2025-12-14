@@ -137,8 +137,7 @@ export const getUsers = createAsyncThunk(
   "admin/staff",
   async (params = { page: 1, limit: 25 }, { rejectWithValue }) => {
     try {
-      const { data } = await getUsersApi(params);
-      // backend returns { data: { ...payload } }
+      const { data } = await getUsersApI(params);
       return data.data;
     } catch (err) {
       return rejectWithValue(err.response?.data?.message || "Failed to fetch users");
