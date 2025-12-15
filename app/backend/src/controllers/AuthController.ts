@@ -6,7 +6,7 @@ import {
   getUserById,
   updateUserPassword,
 } from "../services/authService";
-import { sendTokenCookie } from "../utils/cookie";
+import { createAccessToken, sendTokenCookie } from "../utils/cookie";
 import { catchAsyncError } from "../middlewares/catchAsyncError";
 import { ErrorHandler } from "../middlewares/errorHandler";
 import { StatusCodes } from "../constants/statusCodes";
@@ -199,12 +199,87 @@ export const updateProfile = catchAsyncError(
 // ===============================
 export const logoutUser = catchAsyncError(
   async (req: Request, res: Response) => {
-    res.clearCookie("token");
+    res.clearCookie("accessToken", {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
+    });
+
+    res.clearCookie("refreshToken", {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
+    });
 
     return sendResponse(res, {
       success: true,
       statusCode: StatusCodes.OK,
       message: "Logged out successfully",
+    });
+  }
+);
+
+
+/////////////////
+
+export const refreshAccessTokenController = catchAsyncError(
+  async (req: Request, res: Response, next: NextFunction) => {
+    const refreshToken = req.cookies.refreshToken;
+
+    if (!refreshToken) {
+      return next(
+        new ErrorHandler("Refresh token missing", StatusCodes.UNAUTHORIZED)
+      );
+    }
+
+    // 🔐 Verify refresh token
+    let decoded: { id: string };
+    try {
+      decoded = jwt.verify(
+        refreshToken,
+        process.env.JWT_REFRESH_SECRET!
+      ) as { id: string };
+    } catch {
+      return next(
+        new ErrorHandler(
+          "Invalid or expired refresh token",
+          StatusCodes.UNAUTHORIZED
+        )
+      );
+    }
+
+    // 🔎 Fetch user
+    const user = await prisma.user.findUnique({
+      where: { id: decoded.id },
+    });
+
+    if (!user || !user.isActive) {
+      return next(
+        new ErrorHandler("User not authorized", StatusCodes.UNAUTHORIZED)
+      );
+    }
+
+    // 🎟️ Create new access token
+    const newAccessToken = createAccessToken({
+      id: user.id,
+      regId: user.regId,
+      name: user.name,
+      email: user.email,
+      role: user.role,
+    });
+
+    // 🍪 Update access token cookie
+    res.cookie("accessToken", newAccessToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
+      maxAge: 15 * 60 * 1000,
+    });
+
+    return sendResponse(res, {
+      success: true,
+      statusCode: StatusCodes.OK,
+      message: "Access token refreshed successfully",
     });
   }
 );

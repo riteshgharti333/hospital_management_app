@@ -11,7 +11,10 @@ import {
 import { MdLocalHospital } from "react-icons/md";
 
 import { useDispatch, useSelector } from "react-redux";
-import { getUserProfile } from "../../redux/asyncThunks/authThunks";
+import {
+  getUserProfile,
+  logoutAsyncUser,
+} from "../../redux/asyncThunks/authThunks";
 import { toast } from "sonner";
 
 const Sidebar = React.memo(() => {
@@ -23,28 +26,16 @@ const Sidebar = React.memo(() => {
 
   const dispatch = useDispatch();
 
-  // Get user from Redux store
   const { user } = useSelector((state) => state.auth);
-
-  // Fetch profile on mount (only once)
-  useEffect(() => {
-    dispatch(getUserProfile());
-  }, [dispatch]);
-
-  console.log(user);
 
   const handleLogout = async () => {
     try {
       const res = await dispatch(logoutAsyncUser()).unwrap();
 
-      if (res?.message) {
-        localStorage.removeItem("user");
-        toast.success(res.message);
-        navigate("/login");
-      }
+      toast.success(res.message);
+      navigate("/login");
     } catch (error) {
-      console.error("Logout failed:", error);
-      toast.error(error?.message || "Logout failed");
+      toast.error(error || "Logout failed");
     }
   };
 
@@ -213,13 +204,15 @@ const Sidebar = React.memo(() => {
             <>
               <Link to="/profile" className="flex items-center">
                 <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-bold">
-                  {user?.name?.charAt(0) || "U"}
+                  {user?.user?.name?.charAt(0) || "U"}
                 </div>
                 <div className="ml-3">
                   <div className="text-sm font-medium text-gray-800">
-                    {user?.name}
+                    {user?.user?.name}
                   </div>
-                  <div className="text-xs text-gray-500">{user?.role}</div>
+                  <div className="text-xs text-gray-500">
+                    {user?.user?.role}
+                  </div>
                 </div>
               </Link>
               <span

@@ -6,12 +6,15 @@ import queryClient from "./utils/queryClient";
 import "./index.css";
 import { store } from "./redux/store.jsx";
 import { Provider } from "react-redux";
+import AuthBootstrap from "./utils/authBootstrap.js";
 
 ReactDOM.createRoot(document.getElementById("root")).render(
   <React.StrictMode>
     <QueryClientProvider client={queryClient}>
       <Provider store={store}>
-        <App />
+        <AuthBootstrap>
+          <App />
+        </AuthBootstrap>
       </Provider>
     </QueryClientProvider>
   </React.StrictMode>

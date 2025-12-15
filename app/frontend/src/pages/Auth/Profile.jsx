@@ -25,6 +25,7 @@ import { useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import {
   getUserProfile,
+  refreshTokenThunk,
   updateUserProfile,
 } from "../../redux/asyncThunks/authThunks";
 
@@ -62,15 +63,24 @@ const Profile = () => {
   });
   const [loading, setLoading] = useState(false);
 
-  // ====== NEW: get redux auth user (backend) ======
-  const reduxAuthUser = useSelector((state) => state.auth.user);
+  const { user: reduxAuthUser, status } = useSelector((state) => state.auth);
 
-  // Fetch profile on mount
   useEffect(() => {
-    dispatch(getUserProfile());
-  }, [dispatch]);
+    const loadProfile = async () => {
+      try {
+        await dispatch(getUserProfile()).unwrap();
+      } catch (err) {
+        // 🔥 access token expired
+        await dispatch(refreshTokenThunk()).unwrap();
+        await dispatch(getUserProfile()).unwrap();
+      }
+    };
 
-  // Sync redux profile to local state without changing design / structure
+    if (status === "idle") {
+      loadProfile();
+    }
+  }, [status, dispatch]);
+
   useEffect(() => {
     if (reduxAuthUser) {
       setUser((prev) => ({
@@ -114,20 +124,15 @@ const Profile = () => {
     setLoading(true);
 
     try {
-      // call update thunk (we only update name + email as requested)
-      const result = await dispatch(
+      await dispatch(refreshTokenThunk()).unwrap();
+      const retryResult = await dispatch(
         updateUserProfile({
           name: user.name,
           email: user.email,
         })
       ).unwrap();
 
-      // result should be the updated user data according to your backend wrapper
-      // merge into local user without altering design
-      if (result) {
-        setUser((prev) => ({ ...prev, ...result }));
-      }
-
+      setUser((prev) => ({ ...prev, ...retryResult }));
       toast.success("Profile updated successfully!");
       setIsEditingProfile(false);
     } catch (err) {

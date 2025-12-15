@@ -7,7 +7,10 @@ import { useDispatch, useSelector } from "react-redux";
 import { toast } from "sonner";
 
 // Redux Thunks
-import { getUserProfile, logoutAsyncUser } from "../../redux/asyncThunks/authThunks";
+import {
+  getUserProfile,
+  logoutAsyncUser,
+} from "../../redux/asyncThunks/authThunks";
 
 import { GLOBAL_SEARCH_PAGES } from "../../assets/searchData";
 
@@ -28,12 +31,9 @@ const Navbar = () => {
 
   const { user } = useSelector((state) => state.auth);
 
-  // 🔹 Auto load profile when navbar loads (only if we have a logged-in user)
-  useEffect(() => {
-    if (user) dispatch(getUserProfile());
-  }, [dispatch, user]);
+  
 
-  // ------------------ Fuse.js Search Engine ------------------
+
   const fuse = new Fuse(GLOBAL_SEARCH_PAGES, {
     keys: ["title"],
     threshold: 0.3,
@@ -60,12 +60,16 @@ const Navbar = () => {
 
     if (e.key === "ArrowDown") {
       e.preventDefault();
-      setActiveIndex((prev) => (prev + 1 >= searchResults.length ? 0 : prev + 1));
+      setActiveIndex((prev) =>
+        prev + 1 >= searchResults.length ? 0 : prev + 1
+      );
     }
 
     if (e.key === "ArrowUp") {
       e.preventDefault();
-      setActiveIndex((prev) => (prev - 1 < 0 ? searchResults.length - 1 : prev - 1));
+      setActiveIndex((prev) =>
+        prev - 1 < 0 ? searchResults.length - 1 : prev - 1
+      );
     }
 
     if (e.key === "Enter" && activeIndex >= 0) {
@@ -90,26 +94,13 @@ const Navbar = () => {
     return () => window.removeEventListener("keydown", handleHotkey);
   }, []);
 
-  // ------------------ LOGOUT FUNCTION ------------------
   const handleLogout = async () => {
-    // Close menu immediately for better UX
     setShowProfileMenu(false);
 
     try {
-      // dispatch the thunk which calls API and clears server session/cookie
       const res = await dispatch(logoutAsyncUser()).unwrap();
 
-      // defensive local cleanup (thunk should already clear store/localStorage)
-      try {
-        localStorage.removeItem("user");
-      } catch (e) {
-        // ignore
-      }
-
-      // show feedback (use server message if available)
       toast.success(res?.message || "Logged out successfully");
-
-      // navigate to login page
       navigate("/login");
     } catch (error) {
       toast.error(error?.message || "Logout failed");
@@ -208,10 +199,10 @@ const Navbar = () => {
                   className="flex items-center cursor-pointer space-x-2 focus:outline-none"
                 >
                   <div className="h-8 w-8 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-medium">
-                    {user?.name?.charAt(0) || "U"}
+                    {user?.user?.name?.charAt(0) || "U"}
                   </div>
                   <span className="hidden md:inline-block text-sm font-medium text-gray-700">
-                    {user?.name || "User"}
+                    {user?.user?.name || "User"}
                   </span>
                 </button>
 

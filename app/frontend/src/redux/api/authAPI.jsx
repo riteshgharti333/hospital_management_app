@@ -12,6 +12,7 @@ export const loginUser = (data) => {
 };
 // CREATE ACCESS (Doctor or Nurse)
 export const createStaffAccess = (data) => {
+  
 return axios.post(`${baseUrl}/admin/staff/create-access`, data, {
   withCredentials: true,
 });
@@ -74,4 +75,12 @@ export const getUsersApi = (params = { page: 1, limit: 25 }) => {
     params,
     withCredentials: true,
   });
+};
+
+export const refreshTokenApi = () => {
+  return axios.post(
+    `${baseUrl}/auth/refresh-token`,
+    {},
+    { withCredentials: true }
+  );
 };

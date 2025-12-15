@@ -4,8 +4,12 @@ import { catchAsyncError } from "../middlewares/catchAsyncError";
 import { ErrorHandler } from "../middlewares/errorHandler";
 import { StatusCodes } from "../constants/statusCodes";
 import { prisma } from "../lib/prisma";
-import { createUserLogin, getUserByRegId, getUsersAggregated } from "../services/userService";
-import { sendResponse } from "../utils/sendResponse";  
+import {
+  createUserLogin,
+  getUserByRegId,
+  getUsersAggregated,
+} from "../services/userService";
+import { sendResponse } from "../utils/sendResponse";
 
 // Reusable Type for allowed staff roles
 type StaffRole = "DOCTOR" | "NURSE";

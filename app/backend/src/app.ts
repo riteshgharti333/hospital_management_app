@@ -54,14 +54,14 @@ import { ErrorHandler } from "./middlewares/errorHandler";
 dotenv.config();
 
 const app: Application = express();
-
+  
 const allowedOrigins = ["http://localhost:5173", process.env.FRONTEND_URL];
 
-app.use(
-  cors({
-    origin: (origin, callback) => {
+app.use(          
+  cors({     
+    origin: (origin, callback) => { 
       if (!origin) return callback(null, true);
-      if (allowedOrigins.includes(origin)) {
+      if (allowedOrigins.includes(origin)) {                   
         callback(null, true);
       } else {
         console.error(`Blocked by CORS: ${origin}`);
@@ -69,8 +69,8 @@ app.use(
       }
     },
     credentials: true,
-  })
-);
+  })  
+); 
   
 app.use(cookieParser());
 app.use(express.json());

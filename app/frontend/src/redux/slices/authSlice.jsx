@@ -10,8 +10,9 @@ import {
   toggleStaffAccessThunk,
   updateUserProfile,
   verifyOtpThunk,
-  getUsers
-} from "../asyncThunks/authThunks"; 
+  getUsers,
+  refreshTokenThunk,
+} from "../asyncThunks/authThunks";
 
 const initialState = {
   user: JSON.parse(localStorage.getItem("user") || "null"),
@@ -127,18 +128,18 @@ const authSlice = createSlice({
     // GET PROFILE
     builder
       .addCase(getUserProfile.pending, (state) => {
-        state.status = "loading";
+        if (state.status === "idle") {
+          state.status = "loading";
+        }
       })
       .addCase(getUserProfile.fulfilled, (state, action) => {
         state.status = "succeeded";
-        state.user = { ...state.user, ...action.payload };
-        localStorage.setItem("user", JSON.stringify(state.user));
+        state.user = action.payload;
       })
       .addCase(getUserProfile.rejected, (state, action) => {
         state.status = "failed";
         state.error = action.payload;
       });
-
     // UPDATE PROFILE
     builder
       .addCase(updateUserProfile.pending, (state) => {
@@ -155,10 +156,16 @@ const authSlice = createSlice({
       });
 
     // LOGOUT
-    builder.addCase(logoutAsyncUser.fulfilled, (state) => {
-      state.user = null;
-      localStorage.removeItem("user");
-    });
+    builder
+      .addCase(logoutAsyncUser.fulfilled, (state) => {
+        state.user = null;
+        localStorage.removeItem("user");
+      })
+
+      .addCase(logoutAsyncUser.rejected, (state) => {
+        state.user = null;
+        localStorage.removeItem("user");
+      });
 
     // GET USERS (new aggregated payload)
     builder
@@ -186,13 +193,26 @@ const authSlice = createSlice({
         state.nurse = payload.nurse ?? { count: 0, users: [] };
 
         // totals
-        state.totalUsers = payload.totalUsers ?? (state.all.total ?? 0);
+        state.totalUsers = payload.totalUsers ?? state.all.total ?? 0;
         state.activeAccess = payload.activeAccess ?? 0;
         state.deniedAccess = payload.deniedAccess ?? 0;
       })
       .addCase(getUsers.rejected, (state, action) => {
         state.status = "failed";
         state.error = action.payload || action.error?.message;
+      });
+
+    // REFRESH TOKEN
+    builder
+      .addCase(refreshTokenThunk.pending, (state) => {
+        state.status = "refreshing";
+      })
+      .addCase(refreshTokenThunk.fulfilled, (state) => {
+        state.status = "succeeded";
+      })
+      .addCase(refreshTokenThunk.rejected, (state) => {
+        state.status = "failed";
+        state.user = null;
       });
   },
 });

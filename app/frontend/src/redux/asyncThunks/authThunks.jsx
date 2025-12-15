@@ -5,6 +5,7 @@ import {
   getUsersApi,
   loginUser,
   logoutApi,
+  refreshTokenApi,
   toggleStaffAccess,
   updateProfileApi,
 } from "../api/authAPI";
@@ -25,7 +26,7 @@ export const loginAsyncUser = createAsyncThunk(
 );
 
 export const createStaffAccessThunk = createAsyncThunk(
-  "admin/createAccess",
+  "admin/staff/create-access",
   async (payload, { rejectWithValue }) => {
     try {
       const res = await createStaffAccess(payload);
@@ -47,9 +48,6 @@ export const toggleStaffAccessThunk = createAsyncThunk(
     }
   }
 );
-
-
-
 
 // STEP 1 — SEND OTP
 export const forgotPasswordThunk = createAsyncThunk(
@@ -90,20 +88,20 @@ export const resetPasswordThunk = createAsyncThunk(
   }
 );
 
-
 // GET PROFILE
 export const getUserProfile = createAsyncThunk(
   "auth/getProfile",
   async (_, { rejectWithValue }) => {
     try {
       const { data } = await getProfileApi();
-      return data.data; // because your sendResponse wraps data in data.data
+      return data.data; // backend wrapper respected
     } catch (err) {
-      return rejectWithValue(err.response?.data?.message || "Failed to fetch profile");
+      return rejectWithValue(
+        err.response?.data?.message || "Failed to fetch profile"
+      );
     }
   }
 );
-
 
 // UPDATE PROFILE
 export const updateUserProfile = createAsyncThunk(
@@ -113,21 +111,24 @@ export const updateUserProfile = createAsyncThunk(
       const { data } = await updateProfileApi(updateData);
       return data.data;
     } catch (err) {
-      return rejectWithValue(err.response?.data?.message || "Failed to update profile");
+      return rejectWithValue(
+        err.response?.data?.message || "Failed to update profile"
+      );
     }
   }
 );
-
 
 // LOGOUT
 export const logoutAsyncUser = createAsyncThunk(
   "auth/logout",
   async (_, { rejectWithValue }) => {
     try {
-      await logoutApi();
-      return true;
+      const { data } = await logoutApi(); // 👈 capture response
+      return data; // 👈 return backend response
     } catch (err) {
-      return rejectWithValue(err.response?.data?.message || "Logout failed");
+      return rejectWithValue(
+        err.response?.data?.message || "Logout failed"
+      );
     }
   }
 );
@@ -137,12 +138,24 @@ export const getUsers = createAsyncThunk(
   "admin/staff",
   async (params = { page: 1, limit: 25 }, { rejectWithValue }) => {
     try {
-      const { data } = await getUsersApI(params);
+      const { data } = await getUsersApi(params);
       return data.data;
     } catch (err) {
-      return rejectWithValue(err.response?.data?.message || "Failed to fetch users");
+      return rejectWithValue(
+        err.response?.data?.message || "Failed to fetch users"
+      );
     }
   }
 );
 
-
+export const refreshTokenThunk = createAsyncThunk(
+  "auth/refresh-token",
+  async (_, { rejectWithValue }) => {
+    try {
+      const { data } = await refreshTokenApi();
+      return data;
+    } catch (err) {
+      return rejectWithValue(err.response?.data?.message || "Session expired");
+    }
+  }
+);
