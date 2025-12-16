@@ -12,6 +12,7 @@ import {
   verifyOtpThunk,
   getUsers,
   refreshTokenThunk,
+  changePasswordThunk,
 } from "../asyncThunks/authThunks";
 
 const initialState = {
@@ -39,6 +40,7 @@ const initialState = {
   lastAction: null,
   otpVerified: false,
   resetUserId: null,
+  resetToken: null,
 };
 
 const authSlice = createSlice({
@@ -107,8 +109,9 @@ const authSlice = createSlice({
       .addCase(verifyOtpThunk.fulfilled, (state, action) => {
         state.loading = false;
         state.otpVerified = true;
-        state.resetUserId = action.payload.resetUserId;
+        state.resetToken = action.payload.data.resetToken;
       })
+
       .addCase(verifyOtpThunk.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload;
@@ -119,7 +122,7 @@ const authSlice = createSlice({
       .addCase(resetPasswordThunk.fulfilled, (state) => {
         state.loading = false;
         state.otpVerified = false;
-        state.resetUserId = null;
+        state.resetToken = null;
       })
       .addCase(resetPasswordThunk.rejected, (state, action) => {
         state.error = action.payload;
@@ -213,6 +216,21 @@ const authSlice = createSlice({
       .addCase(refreshTokenThunk.rejected, (state) => {
         state.status = "failed";
         state.user = null;
+      });
+
+    // CHANGE PASSWORD
+    builder
+      .addCase(changePasswordThunk.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(changePasswordThunk.fulfilled, (state) => {
+        state.loading = false;
+        state.lastAction = "PASSWORD_CHANGED";
+      })
+      .addCase(changePasswordThunk.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload;
       });
   },
 });

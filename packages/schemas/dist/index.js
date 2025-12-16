@@ -1,4 +1,25 @@
 import { z } from "zod";
+export const changePasswordSchema = z
+    .object({
+    currentPassword: z
+        .string()
+        .min(1, "Current password is required"),
+    newPassword: z
+        .string()
+        .min(8, "Password must be at least 8 characters long")
+        .max(64, "Password must not exceed 64 characters")
+        .regex(/[A-Z]/, "Password must contain at least one uppercase letter")
+        .regex(/[a-z]/, "Password must contain at least one lowercase letter")
+        .regex(/[0-9]/, "Password must contain at least one number")
+        .regex(/[^a-zA-Z0-9]/, "Password must contain at least one special character"),
+    confirmPassword: z
+        .string()
+        .min(1, "Confirm password is required"),
+})
+    .refine((data) => data.newPassword === data.confirmPassword, {
+    path: ["confirmPassword"],
+    message: "Passwords do not match",
+});
 export const registerSchema = z.object({
     name: z.string().min(3, "Name is too short").max(50).optional(),
     email: z.string().email("Invalid email format"),

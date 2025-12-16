@@ -1,13 +1,17 @@
 import { createAsyncThunk } from "@reduxjs/toolkit";
 import {
+  changePasswordAPI,
   createStaffAccess,
+  forgotPasswordAPI,
   getProfileApi,
   getUsersApi,
   loginUser,
   logoutApi,
   refreshTokenApi,
+  resetPasswordAPI,
   toggleStaffAccess,
   updateProfileApi,
+  verifyOtpAPI,
 } from "../api/authAPI";
 
 // LOGIN ASYNC THUNK
@@ -38,7 +42,7 @@ export const createStaffAccessThunk = createAsyncThunk(
 );
 
 export const toggleStaffAccessThunk = createAsyncThunk(
-  "admin/toggleAccess",
+  "admin/staff/toggle-access",
   async (payload, { rejectWithValue }) => {
     try {
       const res = await toggleStaffAccess(payload);
@@ -49,15 +53,19 @@ export const toggleStaffAccessThunk = createAsyncThunk(
   }
 );
 
+
 // STEP 1 — SEND OTP
 export const forgotPasswordThunk = createAsyncThunk(
   "password/forgotPassword",
   async (email, { rejectWithValue }) => {
     try {
       const res = await forgotPasswordAPI(email);
+      console.log(res)
       return res.data;
     } catch (err) {
-      return rejectWithValue(err.response?.data || "Failed to send OTP");
+      return rejectWithValue(
+        err.response?.data || "Failed to send OTP"
+      );
     }
   }
 );
@@ -70,7 +78,9 @@ export const verifyOtpThunk = createAsyncThunk(
       const res = await verifyOtpAPI(payload);
       return res.data;
     } catch (err) {
-      return rejectWithValue(err.response?.data || "OTP verification failed");
+      return rejectWithValue(
+        err.response?.data?.message || "OTP verification failed"
+      );
     }
   }
 );
@@ -83,10 +93,13 @@ export const resetPasswordThunk = createAsyncThunk(
       const res = await resetPasswordAPI(payload);
       return res.data;
     } catch (err) {
-      return rejectWithValue(err.response?.data || "Password reset failed");
+      return rejectWithValue(
+        err.response?.data?.message || "Password reset failed"
+      );
     }
   }
 );
+
 
 // GET PROFILE
 export const getUserProfile = createAsyncThunk(
@@ -126,13 +139,10 @@ export const logoutAsyncUser = createAsyncThunk(
       const { data } = await logoutApi(); // 👈 capture response
       return data; // 👈 return backend response
     } catch (err) {
-      return rejectWithValue(
-        err.response?.data?.message || "Logout failed"
-      );
+      return rejectWithValue(err.response?.data?.message || "Logout failed");
     }
   }
 );
-
 
 export const getUsers = createAsyncThunk(
   "admin/staff",
@@ -156,6 +166,21 @@ export const refreshTokenThunk = createAsyncThunk(
       return data;
     } catch (err) {
       return rejectWithValue(err.response?.data?.message || "Session expired");
+    }
+  }
+);
+
+// CHANGE PASSWORD
+export const changePasswordThunk = createAsyncThunk(
+  "auth/changePassword",
+  async (payload, { rejectWithValue }) => {
+    try {
+      const res = await changePasswordAPI(payload);
+      return res.data;
+    } catch (err) {
+      return rejectWithValue(
+        err.response?.data?.message || "Failed to change password"
+      );
     }
   }
 );

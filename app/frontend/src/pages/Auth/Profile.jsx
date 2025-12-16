@@ -28,6 +28,7 @@ import {
   refreshTokenThunk,
   updateUserProfile,
 } from "../../redux/asyncThunks/authThunks";
+import ChangePasswordModel from "../../components/Admin/ChangePasswordModel";
 
 const Profile = () => {
   const navigate = useNavigate();
@@ -110,14 +111,7 @@ const Profile = () => {
     setUser((prev) => ({ ...prev, [name]: value }));
   };
 
-  const handlePasswordChange = (e) => {
-    const { name, value } = e.target;
-    setPasswords((prev) => ({ ...prev, [name]: value }));
-  };
 
-  const togglePasswordVisibility = (field) => {
-    setShowPasswords((prev) => ({ ...prev, [field]: !prev[field] }));
-  };
 
   const handleProfileSubmit = async (e) => {
     e.preventDefault();
@@ -142,57 +136,7 @@ const Profile = () => {
     }
   };
 
-  const handlePasswordSubmit = async (e) => {
-    e.preventDefault();
 
-    if (passwords.new.length < 8) {
-      toast.error("Password must be at least 8 characters");
-      return;
-    }
-
-    if (passwords.new !== passwords.confirm) {
-      toast.error("Passwords do not match");
-      return;
-    }
-
-    setLoading(true);
-
-    // Dummy behavior — per request: not integrated to backend now
-    await new Promise((resolve) => setTimeout(resolve, 1500));
-
-    toast.success("Password changed successfully!");
-    setIsEditingPassword(false);
-    setPasswords({ current: "", new: "", confirm: "" });
-    setLoading(false);
-  };
-
-  // Calculate password strength (identical to your original)
-  const calculatePasswordStrength = (password) => {
-    let strength = 0;
-    if (password.length >= 8) strength += 1;
-    if (/[A-Z]/.test(password)) strength += 1;
-    if (/[a-z]/.test(password)) strength += 1;
-    if (/[0-9]/.test(password)) strength += 1;
-    if (/[^A-Za-z0-9]/.test(password)) strength += 1;
-    return strength;
-  };
-
-  const passwordStrength = calculatePasswordStrength(passwords.new);
-
-  const getPasswordStrengthColor = () => {
-    if (passwordStrength <= 2) return "bg-red-500";
-    if (passwordStrength === 3) return "bg-yellow-500";
-    if (passwordStrength === 4) return "bg-blue-500";
-    return "bg-green-500";
-  };
-
-  const getPasswordStrengthText = () => {
-    if (!passwords.new) return "";
-    if (passwordStrength <= 2) return "Weak";
-    if (passwordStrength === 3) return "Good";
-    if (passwordStrength === 4) return "Strong";
-    return "Very Strong";
-  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50 p-4">
@@ -475,141 +419,7 @@ const Profile = () => {
               </div>
 
               {isEditingPassword ? (
-                <form onSubmit={handlePasswordSubmit}>
-                  <div className="space-y-4">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Current Password
-                      </label>
-                      <div className="relative">
-                        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                          <MdLock className="text-gray-400" />
-                        </div>
-                        <input
-                          type={showPasswords.current ? "text" : "password"}
-                          name="current"
-                          value={passwords.current}
-                          onChange={handlePasswordChange}
-                          className="w-full pl-10 pr-10 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
-                          placeholder="••••••••"
-                        />
-                        <button
-                          type="button"
-                          onClick={() => togglePasswordVisibility("current")}
-                          className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600"
-                        >
-                          {showPasswords.current ? (
-                            <MdVisibilityOff />
-                          ) : (
-                            <MdVisibility />
-                          )}
-                        </button>
-                      </div>
-                    </div>
-
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        New Password
-                      </label>
-                      <div className="relative">
-                        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                          <MdLock className="text-gray-400" />
-                        </div>
-                        <input
-                          type={showPasswords.new ? "text" : "password"}
-                          name="new"
-                          value={passwords.new}
-                          onChange={handlePasswordChange}
-                          className="w-full pl-10 pr-10 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
-                          placeholder="••••••••"
-                        />
-                        <button
-                          type="button"
-                          onClick={() => togglePasswordVisibility("new")}
-                          className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600"
-                        >
-                          {showPasswords.new ? (
-                            <MdVisibilityOff />
-                          ) : (
-                            <MdVisibility />
-                          )}
-                        </button>
-                      </div>
-
-                      {/* Password Strength */}
-                      {passwords.new && (
-                        <div className="mt-3">
-                          <div className="flex items-center justify-between mb-1">
-                            <span className="text-xs text-gray-600">
-                              Password Strength:
-                            </span>
-                            <span
-                              className={`text-xs font-medium ${
-                                passwordStrength <= 2
-                                  ? "text-red-600"
-                                  : passwordStrength === 3
-                                  ? "text-yellow-600"
-                                  : passwordStrength === 4
-                                  ? "text-blue-600"
-                                  : "text-green-600"
-                              }`}
-                            >
-                              {getPasswordStrengthText()}
-                            </span>
-                          </div>
-                          <div className="h-1.5 bg-gray-200 rounded-full overflow-hidden">
-                            <div
-                              className={`h-full transition-all duration-300 ${getPasswordStrengthColor()}`}
-                              style={{
-                                width: `${(passwordStrength / 5) * 100}%`,
-                              }}
-                            />
-                          </div>
-                        </div>
-                      )}
-                    </div>
-
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Confirm New Password
-                      </label>
-                      <div className="relative">
-                        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                          <MdLock className="text-gray-400" />
-                        </div>
-                        <input
-                          type={showPasswords.confirm ? "text" : "password"}
-                          name="confirm"
-                          value={passwords.confirm}
-                          onChange={handlePasswordChange}
-                          className="w-full pl-10 pr-10 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
-                          placeholder="••••••••"
-                        />
-                        <button
-                          type="button"
-                          onClick={() => togglePasswordVisibility("confirm")}
-                          className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600"
-                        >
-                          {showPasswords.confirm ? (
-                            <MdVisibilityOff />
-                          ) : (
-                            <MdVisibility />
-                          )}
-                        </button>
-                      </div>
-                    </div>
-
-                    <button
-                      type="submit"
-                      disabled={loading}
-                      className={`w-full py-2.5 bg-blue-600 hover:bg-blue-700 rounded-lg font-medium text-white transition-colors ${
-                        loading ? "opacity-50 cursor-not-allowed" : ""
-                      }`}
-                    >
-                      {loading ? "Updating..." : "Update Password"}
-                    </button>
-                  </div>
-                </form>
+                <ChangePasswordModel />
               ) : (
                 <div className="space-y-4">
                   <div className="p-4 bg-gray-50 rounded-lg">

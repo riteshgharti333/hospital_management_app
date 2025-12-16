@@ -1,4 +1,25 @@
 import { z } from "zod";
+export declare const changePasswordSchema: z.ZodEffects<z.ZodObject<{
+    currentPassword: z.ZodString;
+    newPassword: z.ZodString;
+    confirmPassword: z.ZodString;
+}, "strip", z.ZodTypeAny, {
+    currentPassword: string;
+    newPassword: string;
+    confirmPassword: string;
+}, {
+    currentPassword: string;
+    newPassword: string;
+    confirmPassword: string;
+}>, {
+    currentPassword: string;
+    newPassword: string;
+    confirmPassword: string;
+}, {
+    currentPassword: string;
+    newPassword: string;
+    confirmPassword: string;
+}>;
 export declare const registerSchema: z.ZodObject<{
     name: z.ZodOptional<z.ZodString>;
     email: z.ZodString;
@@ -211,9 +232,9 @@ export declare const departmentSchema: z.ZodObject<{
     description: z.ZodString;
     status: z.ZodDefault<z.ZodOptional<z.ZodString>>;
 }, "strip", z.ZodTypeAny, {
+    status: string;
     name: string;
     email: string;
-    status: string;
     description: string;
     head: string;
     contactNumber: string;
@@ -237,8 +258,8 @@ export declare const doctorSchema: z.ZodObject<{
     specialization: z.ZodString;
     status: z.ZodDefault<z.ZodOptional<z.ZodString>>;
 }, "strip", z.ZodTypeAny, {
-    email: string;
     status: string;
+    email: string;
     department: string;
     mobileNumber: string;
     fullName: string;
@@ -264,16 +285,16 @@ export declare const nurseSchema: z.ZodObject<{
     shift: z.ZodString;
     status: z.ZodDefault<z.ZodOptional<z.ZodString>>;
 }, "strip", z.ZodTypeAny, {
-    email: string;
     shift: string;
     status: string;
+    email: string;
     department: string;
     mobileNumber: string;
     fullName: string;
     address: string;
 }, {
-    email: string;
     shift: string;
+    email: string;
     department: string;
     mobileNumber: string;
     fullName: string;

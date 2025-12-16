@@ -13,6 +13,8 @@ export const errorMiddleware = (
   let message: string | string[] = "Internal Server Error";
 
   // ZOD Error
+  
+
   if (err instanceof ZodError) {
     statusCode = 400;
     message = err.errors.map((e) => `${e.path.join(".")}: ${e.message}`);

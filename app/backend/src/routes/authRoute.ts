@@ -1,5 +1,6 @@
 import { Router } from "express";
 import {
+  changePasswordController,
   getProfile,
   getUserByRegIdController,
   loginUserController,
@@ -16,8 +17,9 @@ router.post("/refresh-token", refreshAccessTokenController);
 
 router.post("/identify", getUserByRegIdController); // Step 1
 router.post("/login", loginUserController); // Step 2
-router.post("/set-password", setNewPasswordController); // Step 3
+router.post("/set-password", setNewPasswordController); 
 
+router.put("/change-password", authenticateUser, changePasswordController);
 
 router.get("/profile", authenticateUser, getProfile);
 router.put("/profile/update", authenticateUser, updateProfile);

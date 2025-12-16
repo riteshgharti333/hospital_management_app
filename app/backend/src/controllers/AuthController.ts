@@ -12,6 +12,7 @@ import { ErrorHandler } from "../middlewares/errorHandler";
 import { StatusCodes } from "../constants/statusCodes";
 import { sendResponse } from "../utils/sendResponse";
 import { prisma } from "../lib/prisma";
+import { changePasswordSchema } from "@hospital/schemas";
 
 /**
  * STEP 1 — USER ENTERS REG ID → RETURN NAME + EMAIL + ROLE
@@ -219,7 +220,6 @@ export const logoutUser = catchAsyncError(
   }
 );
 
-
 /////////////////
 
 export const refreshAccessTokenController = catchAsyncError(
@@ -235,10 +235,9 @@ export const refreshAccessTokenController = catchAsyncError(
     // 🔐 Verify refresh token
     let decoded: { id: string };
     try {
-      decoded = jwt.verify(
-        refreshToken,
-        process.env.JWT_REFRESH_SECRET!
-      ) as { id: string };
+      decoded = jwt.verify(refreshToken, process.env.JWT_REFRESH_SECRET!) as {
+        id: string;
+      };
     } catch {
       return next(
         new ErrorHandler(
@@ -280,6 +279,59 @@ export const refreshAccessTokenController = catchAsyncError(
       success: true,
       statusCode: StatusCodes.OK,
       message: "Access token refreshed successfully",
+    });
+  }
+);
+
+////////////////
+
+export const changePasswordController = catchAsyncError(
+  async (req: Request, res: Response, next: NextFunction) => {
+    const parsed = changePasswordSchema.parse(req.body);
+    const { currentPassword, newPassword } = parsed;
+
+    const userId = req.user?.id;
+    if (!userId) {
+      return next(new ErrorHandler("Unauthorized", StatusCodes.UNAUTHORIZED));
+    }
+
+    const user = await getUserById(userId);
+    if (!user) {
+      return next(new ErrorHandler("User not found", StatusCodes.NOT_FOUND));
+    }
+
+    // 🔐 VERIFY CURRENT PASSWORD
+    const isMatch = await bcrypt.compare(currentPassword, user.password);
+    if (!isMatch) {
+      return next(
+        new ErrorHandler(
+          "Current password is incorrect",
+          StatusCodes.BAD_REQUEST
+        )
+      );
+    }
+
+    // 🚫 PREVENT USING SAME PASSWORD
+    const isSamePassword = await bcrypt.compare(newPassword, user.password);
+    if (isSamePassword) {
+      return next(
+        new ErrorHandler(
+          "New password cannot be the same as the current password",
+          StatusCodes.BAD_REQUEST
+        )
+      );
+    }
+
+    // 🔒 HASH NEW PASSWORD
+    const hashedPassword = await bcrypt.hash(newPassword, 12);
+
+    // ✅ UPDATE PASSWORD
+    await updateUserPassword(userId, hashedPassword);
+
+    return sendResponse(res, {
+      success: true,
+      statusCode: StatusCodes.OK,
+      message: "Password updated successfully",
     });
   }
 );
