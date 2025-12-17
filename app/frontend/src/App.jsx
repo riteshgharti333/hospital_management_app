@@ -58,6 +58,9 @@ import Profile from "./pages/Auth/Profile";
 import { Toaster } from "sonner";
 import ForgotPassword from "./pages/Auth/ForgotPassword";
 import AdminAccessManagement from "./pages/Auth/AdminAccessManagement";
+import Policy from "./pages/HelpPage/Policy";
+import Terms from "./pages/HelpPage/Terms";
+import Help from "./pages/HelpPage/Help";
 
 function App() {
   return (
@@ -68,6 +71,9 @@ function App() {
           <Route path="/login" element={<Login />} />
           <Route path="/forgot-password" element={<ForgotPassword />} />
 
+          <Route path="/privacy-policy" element={<Policy />} />
+          <Route path="/terms-&-conditions" element={<Terms />} />
+          <Route path="/help-center" element={<Help />} />
 
           <Route element={<Layout />}>
             <Route path="/" element={<Navigate to="/dashboard" replace />} />
@@ -75,6 +81,7 @@ function App() {
             <Route path="/profile" element={<Profile />} />
             <Route path="/permissions" element={<AdminAccessManagement />} />
 
+            {/* Help page */}
 
             {/* Admission Entry  */}
             <Route

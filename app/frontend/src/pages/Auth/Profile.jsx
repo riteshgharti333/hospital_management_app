@@ -19,7 +19,7 @@ import {
 } from "react-icons/md";
 import { motion } from "framer-motion";
 import { toast } from "sonner";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 
 // ====== NEW: Redux imports (profile + update) ======
 import { useDispatch, useSelector } from "react-redux";
@@ -111,8 +111,6 @@ const Profile = () => {
     setUser((prev) => ({ ...prev, [name]: value }));
   };
 
-
-
   const handleProfileSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
@@ -135,8 +133,6 @@ const Profile = () => {
       setLoading(false);
     }
   };
-
-
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50 p-4">
@@ -215,10 +211,10 @@ const Profile = () => {
                 <div className="flex items-center justify-between">
                   <div className="flex items-center space-x-4">
                     <div
-                      className={`w-20 h-20 rounded-full bg-gradient-to-br ${user.avatarColor} flex items-center justify-center border-4 border-white/30`}
+                      className={`w-20 h-20 rounded-full bg-gradient-to-br ${user?.user?.avatarColor} flex items-center justify-center border-4 border-white/30`}
                     >
                       <span className="text-2xl font-bold text-white">
-                        {(user.name || "")
+                        {(user?.user?.name || "")
                           .split(" ")
                           .map((n) => (n ? n[0] : ""))
                           .join("")}
@@ -226,13 +222,13 @@ const Profile = () => {
                     </div>
                     <div>
                       <h2 className="text-xl font-bold text-white">
-                        {user.name}
+                        {user?.user?.name}
                       </h2>
                       <div className="flex items-center space-x-2 mt-1">
                         <span className="px-3 py-1 bg-white/20 backdrop-blur-sm rounded-full text-sm text-white">
-                          {user.role}
+                          {user?.user?.role}
                         </span>
-                        {user.isVerified && (
+                        {user?.user?.isVerified && (
                           <span className="px-3 py-1 bg-green-500/20 backdrop-blur-sm rounded-full text-sm text-green-200 flex items-center space-x-1">
                             <MdVerified className="w-3 h-3" />
                             <span>Verified</span>
@@ -281,7 +277,7 @@ const Profile = () => {
                           <input
                             type="text"
                             name="name"
-                            value={user.name}
+                            value={user?.user?.name}
                             onChange={handleProfileChange}
                             disabled={!isEditingProfile}
                             className="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none disabled:bg-gray-50 disabled:text-gray-500"
@@ -300,7 +296,7 @@ const Profile = () => {
                           <input
                             type="email"
                             name="email"
-                            value={user.email}
+                            value={user?.user?.email}
                             onChange={handleProfileChange}
                             disabled={!isEditingProfile}
                             className="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none disabled:bg-gray-50 disabled:text-gray-500"
@@ -325,7 +321,7 @@ const Profile = () => {
                           </div>
                           <input
                             type="text"
-                            value={user.regId}
+                            value={user?.user?.regId}
                             disabled
                             className="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-lg bg-gray-50 text-gray-500"
                           />
@@ -342,7 +338,7 @@ const Profile = () => {
                           </div>
                           <select
                             name="role"
-                            value={user.role}
+                            value={user?.user?.role}
                             onChange={handleProfileChange}
                             disabled={!isEditingProfile}
                             className="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none disabled:bg-gray-50 disabled:text-gray-500 appearance-none"
@@ -446,15 +442,24 @@ const Profile = () => {
               © {new Date().getFullYear()} MediCare Hospital Management System
             </p>
             <div className="flex items-center space-x-4 mt-2 md:mt-0">
-              <button className="text-sm text-gray-500 hover:text-gray-700">
+              <Link
+                to="/privacy-policy"
+                className="text-sm text-gray-500 hover:text-gray-700"
+              >
                 Privacy Policy
-              </button>
-              <button className="text-sm text-gray-500 hover:text-gray-700">
-                Terms of Service
-              </button>
-              <button className="text-sm text-gray-500 hover:text-gray-700">
+              </Link>
+              <Link
+                to="/terms-&-conditions"
+                className="text-sm text-gray-500 hover:text-gray-700"
+              >
+                Terms & Conditions
+              </Link>
+              <Link
+                to="/help-center"
+                className="text-sm text-gray-500 hover:text-gray-700"
+              >
                 Help Center
-              </button>
+              </Link>
             </div>
           </div>
         </div>

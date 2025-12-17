@@ -255,12 +255,7 @@ const Login = () => {
               </motion.div>
             </form>
 
-            {/* Divider */}
-            <div className="mt-8 flex items-center">
-              <div className="flex-1 h-px bg-white/10" />
-              <span className="px-4 text-sm text-white/50">or</span>
-              <div className="flex-1 h-px bg-white/10" />
-            </div>
+            
 
             {/* Support & Footer */}
             <div className="mt-8 pt-6 border-t border-white/10">
@@ -280,24 +275,24 @@ const Login = () => {
                 </p>
                 <div className="mt-3 flex items-center justify-center space-x-4">
                   <Link
-                    to="/privacy"
+                    to="/privacy-policy"
                     className="text-xs text-white/50 hover:text-white/70 transition-colors"
                   >
-                    Privacy
+                    Privacy Policy
                   </Link>
                   <span className="text-white/30">•</span>
                   <Link
-                    to="/terms"
+                    to="/terms-&-conditions"
                     className="text-xs text-white/50 hover:text-white/70 transition-colors"
                   >
-                    Terms
+                    Terms & Conditions
                   </Link>
                   <span className="text-white/30">•</span>
                   <Link
-                    to="/contact"
+                    to="/help-center"
                     className="text-xs text-white/50 hover:text-white/70 transition-colors"
                   >
-                    Contact
+                    Help Center
                   </Link>
                 </div>
               </div>

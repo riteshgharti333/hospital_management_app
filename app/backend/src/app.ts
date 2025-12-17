@@ -20,7 +20,7 @@ import pharmacistRoutes from "./routes/pharmacistRoute";
 import prescriptionRoutes from "./routes/prescriptionRoute";
 import ambulanceRoutes from "./routes/ambulanceRoute";
 import xrayRoutes from "./routes/xrayRoute";
-
+    
 // Admin
 import adminRoutes from "./routes/adminRoutes";
 
