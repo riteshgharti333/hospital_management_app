@@ -13,7 +13,6 @@ import {
   searchPatientLedger,
   filterPatientLedgerService,
   getAllPatientLedgerService,
-  getLedgerFlowSummary,
 } from "../../services/ledgerService/patientLedgerService";
 
 import {
@@ -194,15 +193,4 @@ export const filterPatientLedger = catchAsyncError(async (req, res) => {
 
 
 
-export const getLedgerFlowSummaryController = catchAsyncError(
-  async (_req, res) => {
-    const data = await getLedgerFlowSummary();
 
-    sendResponse(res, {
-      success: true,
-      statusCode: StatusCodes.OK,
-      message: "Ledger flow summary fetched successfully",
-      data,
-    });
-  }
-);

@@ -12,9 +12,6 @@ import {
   searchBills,
   deleteBill,
   filterBillsService,
-  getBillStatusAnalytics,
-  getMonthlyBillingVsReceipt,
-  getBillsByStatusAnalytics,
 } from "../../services/transectionService/billService";
 import { billSchema, billFilterSchema } from "@hospital/schemas";
 import { validateSearchQuery } from "../../utils/queryValidation";
@@ -163,39 +160,3 @@ export const filterBills = catchAsyncError(async (req, res) => {
   });
 });
 
-export const getBillStatusAnalyticsRecord = catchAsyncError(
-  async (req, res) => {
-    const data = await getBillStatusAnalytics();
-
-    sendResponse(res, {
-      success: true,
-      statusCode: 200,
-      message: "Bill status analytics fetched successfully",
-      data,
-    });
-  }
-);
-
-export const getMonthlyBillingVsReceiptRecord = catchAsyncError(
-  async (_req, res) => {
-    const data = await getMonthlyBillingVsReceipt();
-
-    sendResponse(res, {
-      success: true,
-      statusCode: 200,
-      message: "Monthly billing vs receipt fetched successfully",
-      data,
-    });
-  }
-);
-
-export const getBillsByStatus = catchAsyncError(async (_req, res) => {
-  const result = await getBillsByStatusAnalytics();
-
-  sendResponse(res, {
-    success: true,
-    statusCode: 200,
-    message: "Bills by status analytics fetched successfully",
-    data: result,
-  });
-});

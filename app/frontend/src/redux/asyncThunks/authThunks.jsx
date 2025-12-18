@@ -20,7 +20,6 @@ export const loginAsyncUser = createAsyncThunk(
   async (userData, { rejectWithValue }) => {
     try {
       const response = await loginUser(userData);
-      localStorage.setItem("user", JSON.stringify(response.data));
       return response.data;
     } catch (error) {
       console.error("Failed to log in:", error);
@@ -53,19 +52,16 @@ export const toggleStaffAccessThunk = createAsyncThunk(
   }
 );
 
-
 // STEP 1 — SEND OTP
 export const forgotPasswordThunk = createAsyncThunk(
   "password/forgotPassword",
   async (email, { rejectWithValue }) => {
     try {
       const res = await forgotPasswordAPI(email);
-      console.log(res)
+      console.log(res);
       return res.data;
     } catch (err) {
-      return rejectWithValue(
-        err.response?.data || "Failed to send OTP"
-      );
+      return rejectWithValue(err.response?.data || "Failed to send OTP");
     }
   }
 );
@@ -100,14 +96,13 @@ export const resetPasswordThunk = createAsyncThunk(
   }
 );
 
-
 // GET PROFILE
 export const getUserProfile = createAsyncThunk(
   "auth/getProfile",
   async (_, { rejectWithValue }) => {
     try {
       const { data } = await getProfileApi();
-      return data.data; // backend wrapper respected
+      return data.data;
     } catch (err) {
       return rejectWithValue(
         err.response?.data?.message || "Failed to fetch profile"
@@ -122,6 +117,7 @@ export const updateUserProfile = createAsyncThunk(
   async (updateData, { rejectWithValue }) => {
     try {
       const { data } = await updateProfileApi(updateData);
+
       return data.data;
     } catch (err) {
       return rejectWithValue(

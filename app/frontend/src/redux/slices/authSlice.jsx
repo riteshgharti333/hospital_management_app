@@ -16,9 +16,10 @@ import {
 } from "../asyncThunks/authThunks";
 
 const initialState = {
-  user: JSON.parse(localStorage.getItem("user") || "null"),
+  user: null,
   profile: null,
   status: "idle",
+  authChecked: false,
   error: null,
   // pagination + 'all' bucket
   page: 1,
@@ -56,7 +57,6 @@ const authSlice = createSlice({
       .addCase(loginAsyncUser.fulfilled, (state, action) => {
         state.status = "succeeded";
         state.user = action.payload;
-        localStorage.setItem("user", JSON.stringify(action.payload));
       })
       .addCase(loginAsyncUser.rejected, (state, action) => {
         state.status = "failed";
@@ -128,21 +128,23 @@ const authSlice = createSlice({
         state.error = action.payload;
       });
 
-    // GET PROFILE
+    // GET USER PROFILE
+
     builder
       .addCase(getUserProfile.pending, (state) => {
-        if (state.status === "idle") {
-          state.status = "loading";
-        }
+        state.status = "loading";
       })
       .addCase(getUserProfile.fulfilled, (state, action) => {
         state.status = "succeeded";
-        state.user = action.payload;
+        state.profile = action.payload;
+        state.authChecked = true;
       })
-      .addCase(getUserProfile.rejected, (state, action) => {
+      .addCase(getUserProfile.rejected, (state) => {
         state.status = "failed";
-        state.error = action.payload;
+        state.profile = null;
+        state.authChecked = true;
       });
+
     // UPDATE PROFILE
     builder
       .addCase(updateUserProfile.pending, (state) => {

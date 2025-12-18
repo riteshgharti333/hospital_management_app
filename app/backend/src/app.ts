@@ -20,12 +20,12 @@ import pharmacistRoutes from "./routes/pharmacistRoute";
 import prescriptionRoutes from "./routes/prescriptionRoute";
 import ambulanceRoutes from "./routes/ambulanceRoute";
 import xrayRoutes from "./routes/xrayRoute";
-    
+
 // Admin
 import adminRoutes from "./routes/adminRoutes";
-
+  
 // Password Reset
-import passwordRoutes from "./routes/passwordRoutes";
+import passwordRoutes from "./routes/passwordRoutes"; 
 
 // ledger
 import patientLedgerRoutes from "./routes/ledgerRoutes/patientLedgerRoute";
@@ -49,19 +49,22 @@ import billRoutes from "./routes/transectionRoutes/billRoute";
 import employeeRoutes from "./routes/transectionRoutes/employeeRoute";
 import voucherRoutes from "./routes/transectionRoutes/voucherRoutes";
 import moneyReceiptRoutes from "./routes/transectionRoutes/moneyReceiptRoute";
-import { ErrorHandler } from "./middlewares/errorHandler";
+import { ErrorHandler } from "./middlewares/errorHandler"; 
+
+//
+import dashboardRoutes from "./routes/dashboardRoute";
 
 dotenv.config();
 
 const app: Application = express();
-  
+
 const allowedOrigins = ["http://localhost:5173", process.env.FRONTEND_URL];
 
-app.use(          
-  cors({     
-    origin: (origin, callback) => { 
+app.use(
+  cors({
+    origin: (origin, callback) => {
       if (!origin) return callback(null, true);
-      if (allowedOrigins.includes(origin)) {                   
+      if (allowedOrigins.includes(origin)) {
         callback(null, true);
       } else {
         console.error(`Blocked by CORS: ${origin}`);
@@ -69,9 +72,9 @@ app.use(
       }
     },
     credentials: true,
-  })  
-); 
-  
+  })
+);
+
 app.use(cookieParser());
 app.use(express.json());
 app.use(morgan("dev"));
@@ -79,32 +82,35 @@ app.use(morgan("dev"));
 app.use("/api/v1/auth", authRoutes);
 
 // admin routes
-app.use("/api/v1/admin", adminRoutes);    
+app.use("/api/v1/admin", adminRoutes);
 
 // password reset routes
 app.use("/api/v1/password", passwordRoutes);
+
+// dashboard route
+app.use("/api/v1/dashboard", dashboardRoutes);
  
-app.use("/api/v1/admission", admissionRoutes); 
+app.use("/api/v1/admission", admissionRoutes);
 app.use("/api/v1/birth", birthRoutes);
 app.use("/api/v1/patient", patientRoutes);
-app.use("/api/v1/department", departmentRoutes);  
-app.use("/api/v1/bed", bedRoutes); 
-app.use("/api/v1/bed-assign", bedAssignRoutes);
-app.use("/api/v1/appointment", appointmentRoutes);      
-app.use("/api/v1/nurse", nurseRoutes);
-app.use("/api/v1/doctor", doctorRoutes);                   
-app.use("/api/v1/pharmacist", pharmacistRoutes);   
-app.use("/api/v1/prescription", prescriptionRoutes);   
-app.use("/api/v1/ambulance", ambulanceRoutes);
-app.use("/api/v1/xray", xrayRoutes);                     
-      
-// ledger              
+app.use("/api/v1/department", departmentRoutes);
+app.use("/api/v1/bed", bedRoutes);
+app.use("/api/v1/bed-assign", bedAssignRoutes); 
+app.use("/api/v1/appointment", appointmentRoutes);
+app.use("/api/v1/nurse", nurseRoutes);  
+app.use("/api/v1/doctor", doctorRoutes);
+app.use("/api/v1/pharmacist", pharmacistRoutes);
+app.use("/api/v1/prescription", prescriptionRoutes);
+app.use("/api/v1/ambulance", ambulanceRoutes);  
+app.use("/api/v1/xray", xrayRoutes);
+
+// ledger
 app.use("/api/v1/ledger/patient-ledger", patientLedgerRoutes);
 app.use("/api/v1/ledger/bank-ledger", bankLedgerRoutes);
 app.use("/api/v1/ledger/cash-ledger", cashLedgerRoutes);
 app.use("/api/v1/ledger/diagnostics-ledger", diagnosticsLedgerRoutes);
 app.use("/api/v1/ledger/doctor-ledger", doctorLedgerRoutes);
-app.use("/api/v1/ledger/expense-ledger", expenseLedgerRoutes); 
+app.use("/api/v1/ledger/expense-ledger", expenseLedgerRoutes);
 app.use("/api/v1/ledger/insurance-ledger", insuranceLedgerRoutes);
 app.use("/api/v1/ledger/pharmacy-ledger", pharmacyLedgerRoutes);
 app.use("/api/v1/ledger/supplier-ledger", supplierLedgerRoutes);
@@ -120,11 +126,11 @@ app.use("/api/v1/transection/bill", billRoutes);
 app.use("/api/v1/transection/voucher", voucherRoutes);
 app.use("/api/v1/transection/money-receipt", moneyReceiptRoutes);
 app.use("/api/v1/transection/employee", employeeRoutes);
- 
+
 // Sample Route
 app.get("/", (_req, res) => {
-  res.send("Welcome 🚀"); 
-});     
+  res.send("Welcome 🚀");
+});
 
 export default app;
 

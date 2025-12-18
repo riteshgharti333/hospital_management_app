@@ -1,46 +1,58 @@
 import axiosInstance from "../../utils/axiosInstance";
 
-// 1. Revenue Analytics
+
+// Revenue Summary
 export const getRevenueAnalyticsAPI = () =>
-  axiosInstance.get("/transection/money-receipt/revenue");
+  axiosInstance.get("/dashboard/revenue/summary");
 
-// 2. Bill Status Analytics
-export const getBillStatusAnalyticsAPI = () =>
-  axiosInstance.get("/transection/bill/bill-status-analytics");
-
-// 3. Patient Analytics
-export const getPatientAnalyticsAPI = () =>
-  axiosInstance.get("/patient/analytics");
-
-// 4. Admission Analytics
-export const getAdmissionAnalyticsAPI = () =>
-  axiosInstance.get("/admission/analytics");
-
-// 1. Monthly Admissions Trend
-export const getAdmissionMonthlyTrendAPI = () =>
-  axiosInstance.get("/admission/analytics/monthly-trend");
-
-// 2. Admissions by Gender
-export const getAdmissionGenderDistributionAPI = () =>
-  axiosInstance.get("/admission/analytics/gender-distribution");
-
-// 3. Age Distribution (Patients)
-export const getPatientAgeDistributionAPI = () =>
-  axiosInstance.get("/patient/analytics/age-distribution");
-
-
-// 1️⃣ Bill Status Analytics
-export const getBillMoneyStatusAnalyticsAPI = () =>
-  axiosInstance.get("/transection/bill/analytics/status");
-
-// 2️⃣ Payment Mode Breakdown
+// Payment Mode Breakdown
 export const getPaymentModeAnalyticsAPI = () =>
-  axiosInstance.get("/transection/money-receipt/analytics/payment-modes");
+  axiosInstance.get("/dashboard/revenue/payment-modes");
 
-// 3️⃣ Billing vs Receipt Monthly Chart
+// Billing vs Receipt (Monthly)
 export const getBillingVsReceiptAPI = () =>
-  axiosInstance.get("/transection/bill/analytics/billing-vs-receipt");
+  axiosInstance.get("/dashboard/revenue/billing-vs-receipt");
 
-
+// Ledger Flow Summary
 export const getPatientLedgerFlowSummaryAPI = () =>
-  axiosInstance.get("/ledger/patient-ledger/ledger-flow-summary");
+  axiosInstance.get("/dashboard/ledger/flow-summary");
+
+/* =========================
+   BILLING
+========================= */
+
+// Bill Status Breakdown (Chart)
+export const getBillStatusAnalyticsAPI = () =>
+  axiosInstance.get("/dashboard/billing/status-breakdown");
+
+// Bill Status Summary (Counts)
+export const getBillMoneyStatusAnalyticsAPI = () =>
+  axiosInstance.get("/dashboard/billing/status-summary");
+
+/* =========================
+   PATIENTS
+========================= */
+
+// Patient Overview Analytics
+export const getPatientAnalyticsAPI = () =>
+  axiosInstance.get("/dashboard/patients/overview");
+
+// Patient Age Distribution
+export const getPatientAgeDistributionAPI = () =>
+  axiosInstance.get("/dashboard/patients/age-distribution");
+
+/* =========================
+   ADMISSIONS
+========================= */
+
+// Admission Overview Analytics
+export const getAdmissionAnalyticsAPI = () =>
+  axiosInstance.get("/dashboard/admissions/overview");
+
+// Monthly Admission Trend
+export const getAdmissionMonthlyTrendAPI = () =>
+  axiosInstance.get("/dashboard/admissions/monthly-trend");
+
+// Gender Distribution
+export const getAdmissionGenderDistributionAPI = () =>
+  axiosInstance.get("/dashboard/admissions/gender-distribution");

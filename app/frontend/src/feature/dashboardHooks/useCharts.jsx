@@ -138,9 +138,6 @@ export const useBillingVsReceipt = () => {
   });
 };
 
-
-
-
 export const usePatientLedgerFlowSummary = () => {
   return useQuery({
     queryKey: ["ledger-flow-summary"],

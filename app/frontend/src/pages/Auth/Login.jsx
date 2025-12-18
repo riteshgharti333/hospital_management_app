@@ -13,7 +13,10 @@ import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { useDispatch } from "react-redux";
 import { useNavigate, Link } from "react-router-dom";
-import { loginAsyncUser } from "../../redux/asyncThunks/authThunks";
+import {
+  getUserProfile,
+  loginAsyncUser,
+} from "../../redux/asyncThunks/authThunks";
 
 const Login = () => {
   const [showPassword, setShowPassword] = React.useState(false);
@@ -34,8 +37,11 @@ const Login = () => {
       };
 
       const response = await dispatch(loginAsyncUser(body)).unwrap();
+
+      await dispatch(getUserProfile()).unwrap();
+
       toast.success(response.message || "Login successful");
-      navigate("/");
+      navigate("/dashboard", { replace: true });
     } catch (error) {
       toast.error(error?.message || "Login failed");
     }
@@ -254,8 +260,6 @@ const Login = () => {
                 </button>
               </motion.div>
             </form>
-
-            
 
             {/* Support & Footer */}
             <div className="mt-8 pt-6 border-t border-white/10">

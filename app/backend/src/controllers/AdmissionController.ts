@@ -6,10 +6,7 @@ import { sendResponse } from "../utils/sendResponse";
 import { StatusCodes } from "../constants/statusCodes";
 import {
   filterAdmissionsService,
-  getAdmissionAnalytics,
-  getAdmissionGenderAnalytics,
   getAllAdmissionsService,
-  getMonthlyAdmissionTrend,
   searchAdmissions,
 } from "../services/admissionService";
 
@@ -202,41 +199,4 @@ export const filterAdmissions = catchAsyncError(async (req, res) => {
   });
 });
 
-export const getAdmissionAnalyticsRecord = catchAsyncError(
-  async (_req, res) => {
-    const result = await getAdmissionAnalytics();
 
-    sendResponse(res, {
-      success: true,
-      statusCode: 200,
-      message: "Admission analytics fetched successfully",
-      data: result,
-    });
-  }
-);
-
-export const getMonthlyAdmissionTrendRecord = catchAsyncError(
-  async (_req, res) => {
-    const result = await getMonthlyAdmissionTrend();
-
-    sendResponse(res, {
-      success: true,
-      statusCode: 200,
-      message: "Monthly admission trend fetched successfully",
-      data: result,
-    });
-  }
-);
-
-export const getAdmissionGenderAnalyticsRecord = catchAsyncError(
-  async (_req, res) => {
-    const result = await getAdmissionGenderAnalytics();
-
-    sendResponse(res, {
-      success: true,
-      statusCode: 200,
-      message: "Admission gender analytics fetched successfully",
-      data: result,
-    });
-  }
-);

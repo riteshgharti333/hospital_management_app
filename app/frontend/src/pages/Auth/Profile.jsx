@@ -64,44 +64,39 @@ const Profile = () => {
   });
   const [loading, setLoading] = useState(false);
 
-  const { user: reduxAuthUser, status } = useSelector((state) => state.auth);
+  const { profile, status } = useSelector((state) => state.auth);
 
   useEffect(() => {
+    if (status !== "idle") return;
+
     const loadProfile = async () => {
       try {
         await dispatch(getUserProfile()).unwrap();
-      } catch (err) {
-        // 🔥 access token expired
-        await dispatch(refreshTokenThunk()).unwrap();
-        await dispatch(getUserProfile()).unwrap();
+      } catch {
+        try {
+          await dispatch(refreshTokenThunk()).unwrap();
+          await dispatch(getUserProfile()).unwrap();
+        } catch {
+          // logout or redirect
+        }
       }
     };
 
-    if (status === "idle") {
-      loadProfile();
-    }
+    loadProfile();
   }, [status, dispatch]);
 
   useEffect(() => {
-    if (reduxAuthUser) {
+    if (profile) {
       setUser((prev) => ({
         ...prev,
-        name: reduxAuthUser.name ?? prev.name,
-        email: reduxAuthUser.email ?? prev.email,
-        regId: reduxAuthUser.regId ?? prev.regId,
-        role:
-          reduxAuthUser.role && typeof reduxAuthUser.role === "string"
-            ? // map backend constants like "DOCTOR" -> display "Doctor" to match original UI casing
-              reduxAuthUser.role[0] + reduxAuthUser.role.slice(1).toLowerCase()
-            : prev.role,
-        // keep avatarColor as default unless backend provides something
-        avatarColor: prev.avatarColor,
-        // isVerified may not exist; default false
-        isVerified: reduxAuthUser.isVerified ?? false,
+        name: profile.name ?? prev.name,
+        email: profile.email ?? prev.email,
+        regId: profile.regId ?? prev.regId,
+        role: profile.role?.[0] + profile.role?.slice(1).toLowerCase(),
+        isVerified: profile.isVerified ?? false,
       }));
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [reduxAuthUser]);
+  }, [profile]);
 
   // -------------------------
   // Handlers (unchanged behavior / UI)
@@ -211,10 +206,10 @@ const Profile = () => {
                 <div className="flex items-center justify-between">
                   <div className="flex items-center space-x-4">
                     <div
-                      className={`w-20 h-20 rounded-full bg-gradient-to-br ${user?.user?.avatarColor} flex items-center justify-center border-4 border-white/30`}
+                      className={`w-20 h-20 rounded-full bg-gradient-to-br ${profile?.avatarColor} flex items-center justify-center border-4 border-white/30`}
                     >
                       <span className="text-2xl font-bold text-white">
-                        {(user?.user?.name || "")
+                        {(profile?.name || "")
                           .split(" ")
                           .map((n) => (n ? n[0] : ""))
                           .join("")}
@@ -222,13 +217,13 @@ const Profile = () => {
                     </div>
                     <div>
                       <h2 className="text-xl font-bold text-white">
-                        {user?.user?.name}
+                        {profile?.name}
                       </h2>
                       <div className="flex items-center space-x-2 mt-1">
                         <span className="px-3 py-1 bg-white/20 backdrop-blur-sm rounded-full text-sm text-white">
-                          {user?.user?.role}
+                          {profile?.role}
                         </span>
-                        {user?.user?.isVerified && (
+                        {profile?.isVerified && (
                           <span className="px-3 py-1 bg-green-500/20 backdrop-blur-sm rounded-full text-sm text-green-200 flex items-center space-x-1">
                             <MdVerified className="w-3 h-3" />
                             <span>Verified</span>
@@ -277,7 +272,7 @@ const Profile = () => {
                           <input
                             type="text"
                             name="name"
-                            value={user?.user?.name}
+                            value={profile?.name}
                             onChange={handleProfileChange}
                             disabled={!isEditingProfile}
                             className="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none disabled:bg-gray-50 disabled:text-gray-500"
@@ -296,7 +291,7 @@ const Profile = () => {
                           <input
                             type="email"
                             name="email"
-                            value={user?.user?.email}
+                            value={profile?.email}
                             onChange={handleProfileChange}
                             disabled={!isEditingProfile}
                             className="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none disabled:bg-gray-50 disabled:text-gray-500"
@@ -321,7 +316,7 @@ const Profile = () => {
                           </div>
                           <input
                             type="text"
-                            value={user?.user?.regId}
+                            value={profile?.regId}
                             disabled
                             className="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-lg bg-gray-50 text-gray-500"
                           />
@@ -338,7 +333,7 @@ const Profile = () => {
                           </div>
                           <select
                             name="role"
-                            value={user?.user?.role}
+                            value={profile?.role}
                             onChange={handleProfileChange}
                             disabled={!isEditingProfile}
                             className="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none disabled:bg-gray-50 disabled:text-gray-500 appearance-none"

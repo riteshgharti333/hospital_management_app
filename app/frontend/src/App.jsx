@@ -61,113 +61,136 @@ import AdminAccessManagement from "./pages/Auth/AdminAccessManagement";
 import Policy from "./pages/HelpPage/Policy";
 import Terms from "./pages/HelpPage/Terms";
 import Help from "./pages/HelpPage/Help";
+import NetworkProvider from "./utils/NetworkProvider";
+import RequireRole from "./utils/RequireRole";
 
 function App() {
   return (
     <div className="app">
-      <BrowserRouter>
-        <Toaster position="top-center" richColors />
-        <Routes>
-          <Route path="/login" element={<Login />} />
-          <Route path="/forgot-password" element={<ForgotPassword />} />
+      <NetworkProvider>
+        <BrowserRouter>
+          <Toaster position="top-center" richColors />
+          <Routes>
+            <Route path="/login" element={<Login />} />
+            <Route path="/forgot-password" element={<ForgotPassword />} />
 
-          <Route path="/privacy-policy" element={<Policy />} />
-          <Route path="/terms-&-conditions" element={<Terms />} />
-          <Route path="/help-center" element={<Help />} />
+            <Route path="/privacy-policy" element={<Policy />} />
+            <Route path="/terms-&-conditions" element={<Terms />} />
+            <Route path="/help-center" element={<Help />} />
 
-          <Route element={<Layout />}>
-            <Route path="/" element={<Navigate to="/dashboard" replace />} />
-            <Route path="/dashboard" element={<Dashboard />} />
-            <Route path="/profile" element={<Profile />} />
-            <Route path="/permissions" element={<AdminAccessManagement />} />
+            <Route element={<Layout />}>
+              <Route path="/" element={<Navigate to="/dashboard" replace />} />
+              <Route path="/dashboard" element={<Dashboard />} />
+              <Route path="/profile" element={<Profile />} />
+              <Route
+                path="/permissions"
+                element={
+                  <RequireRole allowedRoles={["ADMIN"]}>
+                    <AdminAccessManagement />
+                  </RequireRole>
+                }
+              />
 
-            {/* Help page */}
+              {/* Help page */}
 
-            {/* Admission Entry  */}
-            <Route
-              path="/admission-entries"
-              element={<AddmissionEntriesTable />}
-            />
-            <Route path="/new-admission-entry" element={<AdmissionEntry />} />
-            <Route path="/admission/:id" element={<EditAdmission />} />
+              {/* Admission Entry  */}
+              <Route
+                path="/admission-entries"
+                element={<AddmissionEntriesTable />}
+              />
+              <Route path="/new-admission-entry" element={<AdmissionEntry />} />
+              <Route path="/admission/:id" element={<EditAdmission />} />
 
-            {/* Birth Entry */}
-            <Route path="/birth-entries" element={<BirthEntriesTable />} />
-            <Route path="/new-birth-register" element={<BirthRegister />} />
-            <Route path="/birth/:id" element={<EditBirth />} />
+              {/* Birth Entry */}
+              <Route path="/birth-entries" element={<BirthEntriesTable />} />
+              <Route path="/new-birth-register" element={<BirthRegister />} />
+              <Route path="/birth/:id" element={<EditBirth />} />
 
-            {/* patients */}
-            <Route
-              path="/patients-entries"
-              element={<PatientsEntriesTable />}
-            />
-            <Route path="/new-patient-register" element={<PatientRegister />} />
-            <Route path="/patient/:id" element={<EditPatients />} />
+              {/* patients */}
+              <Route
+                path="/patients-entries"
+                element={<PatientsEntriesTable />}
+              />
+              <Route
+                path="/new-patient-register"
+                element={<PatientRegister />}
+              />
+              <Route path="/patient/:id" element={<EditPatients />} />
 
-            {/* Department */}
-            <Route path="/departments" element={<DepartmentTable />} />
-            <Route path="/new-department" element={<NewDepartment />} />
-            <Route path="/department/:id" element={<EditDepartment />} />
+              {/* Department */}
+              <Route path="/departments" element={<DepartmentTable />} />
+              <Route path="/new-department" element={<NewDepartment />} />
+              <Route path="/department/:id" element={<EditDepartment />} />
 
-            {/* Appointments */}
-            <Route path="/appointments" element={<AppointmentTable />} />
-            <Route path="/new-appointment" element={<NewAppointment />} />
-            <Route path="/appointment/:id" element={<EditAppointment />} />
+              {/* Appointments */}
+              <Route path="/appointments" element={<AppointmentTable />} />
+              <Route path="/new-appointment" element={<NewAppointment />} />
+              <Route path="/appointment/:id" element={<EditAppointment />} />
 
-            {/* Nurse */}
-            <Route path="/nurses" element={<NurseTable />} />
-            <Route path="/new-nurse" element={<NewNurse />} />
-            <Route path="/nurse/:id" element={<EditNurse />} />
+              {/* Nurse */}
+              <Route path="/nurses" element={<NurseTable />} />
+              <Route path="/new-nurse" element={<NewNurse />} />
+              <Route path="/nurse/:id" element={<EditNurse />} />
 
-            {/* Doctors */}
-            <Route path="/doctors" element={<DoctorTable />} />
-            <Route path="/new-doctor" element={<NewDoctor />} />
-            <Route path="/doctor/:id" element={<EditDocter />} />
+              {/* Doctors */}
+              <Route path="/doctors" element={<DoctorTable />} />
+              <Route path="/new-doctor" element={<NewDoctor />} />
+              <Route path="/doctor/:id" element={<EditDocter />} />
 
-            {/* Prescription */}
-            <Route path="/prescriptions" element={<PrescriptionTable />} />
-            <Route path="/new-prescription" element={<NewPrescription />} />
-            <Route path="/prescription/:id" element={<EditPrescription />} />
+              {/* Prescription */}
+              <Route path="/prescriptions" element={<PrescriptionTable />} />
+              <Route path="/new-prescription" element={<NewPrescription />} />
+              <Route path="/prescription/:id" element={<EditPrescription />} />
 
-            {/* Ledger */}
-            <Route path="/new-ledger" element={<NewLedger />} />
-            <Route path="/ledger/:ledgerName/:id" element={<EditLedger />} />
+              {/* Ledger */}
+              <Route path="/new-ledger" element={<NewLedger />} />
+              <Route path="/ledger/:ledgerName/:id" element={<EditLedger />} />
 
-            {/* Ledger Tables */}
-            <Route path="/ledger/patient-ledger" element={<PatientLedger />} />
-            <Route path="/ledger/doctor-ledger" element={<DoctorLedger />} />
-            <Route path="/ledger/cash-ledger" element={<CashLedger />} />
-            <Route path="/ledger/bank-ledger" element={<BankLedger />} />
+              {/* Ledger Tables */}
+              <Route
+                path="/ledger/patient-ledger"
+                element={<PatientLedger />}
+              />
+              <Route path="/ledger/doctor-ledger" element={<DoctorLedger />} />
+              <Route path="/ledger/cash-ledger" element={<CashLedger />} />
+              <Route path="/ledger/bank-ledger" element={<BankLedger />} />
 
-            {/* Transection */}
-            <Route path="/bills" element={<BillTable />} />
-            <Route path="/new-bill-entry" element={<NewBillEntry />} />
-            <Route path="/bill/:id" element={<EditBill />} />
+              {/* Transection */}
+              <Route path="/bills" element={<BillTable />} />
+              <Route path="/new-bill-entry" element={<NewBillEntry />} />
+              <Route path="/bill/:id" element={<EditBill />} />
 
-            <Route path="/money-receipts" element={<MoneyReceiptTable />} />
-            <Route
-              path="/new-money-receipt-entry"
-              element={<NewMoneyReceiptEntry />}
-            />
-            <Route path="/money-receipt/:id" element={<EditMoneyReceipt />} />
+              <Route path="/money-receipts" element={<MoneyReceiptTable />} />
+              <Route
+                path="/new-money-receipt-entry"
+                element={<NewMoneyReceiptEntry />}
+              />
+              <Route path="/money-receipt/:id" element={<EditMoneyReceipt />} />
 
-            {/* Report */}
-            <Route path="/purchase-report" element={<PurchaseReportTable />} />
-            <Route
-              path="/provisional-invoice-report"
-              element={<ProvisionalTable />}
-            />
-            <Route path="/invoice/:id" element={<ViewInvoiceTable />} />
-            <Route path="/due-lists" element={<DueTable />} />
-            <Route
-              path="/payment-detail/:id"
-              element={<PaymentDetailsTable />}
-            />
-            <Route path="/view-money-receipts" element={<ViewReceiptTable />} />
-            <Route path="/discharge-lists" element={<DischargeTable />} />
-          </Route>
-        </Routes>
-      </BrowserRouter>
+              {/* Report */}
+              <Route
+                path="/purchase-report"
+                element={<PurchaseReportTable />}
+              />
+              <Route
+                path="/provisional-invoice-report"
+                element={<ProvisionalTable />}
+              />
+              <Route path="/invoice/:id" element={<ViewInvoiceTable />} />
+              <Route path="/due-lists" element={<DueTable />} />
+              <Route
+                path="/payment-detail/:id"
+                element={<PaymentDetailsTable />}
+              />
+              <Route
+                path="/view-money-receipts"
+                element={<ViewReceiptTable />}
+              />
+              <Route path="/discharge-lists" element={<DischargeTable />} />
+            </Route>
+          </Routes>
+        </BrowserRouter>
+      </NetworkProvider>
     </div>
   );
 }

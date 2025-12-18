@@ -1,30 +1,36 @@
 import { useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { getUserProfile } from "../redux/asyncThunks/authThunks";
+import {
+  getUserProfile,
+  refreshTokenThunk,
+  logoutAsyncUser,
+} from "../redux/asyncThunks/authThunks";
 
 const AuthBootstrap = ({ children }) => {
   const dispatch = useDispatch();
-  const { user, status } = useSelector((s) => s.auth);
+  const authChecked = useSelector((s) => s.auth.authChecked);
 
   useEffect(() => {
+    if (authChecked) return; // ✅ HARD STOP
+
     const bootstrapAuth = async () => {
-      if (!user && status === "idle") {
+      try {
+        // 1️⃣ Try access token
+        await dispatch(getUserProfile()).unwrap();
+      } catch {
         try {
+          // 2️⃣ Try refresh token
+          await dispatch(refreshTokenThunk()).unwrap();
           await dispatch(getUserProfile()).unwrap();
         } catch {
-          try {
-            // 🔥 THIS is where refresh token belongs
-            await dispatch(refreshTokenThunk()).unwrap();
-            await dispatch(getUserProfile()).unwrap();
-          } catch {
-            dispatch(logoutAsyncUser());
-          }
+          // 3️⃣ Fully logged out
+          dispatch(logoutAsyncUser());
         }
       }
     };
 
     bootstrapAuth();
-  }, [user, status, dispatch]);
+  }, [authChecked, dispatch]);
 
   return children;
 };

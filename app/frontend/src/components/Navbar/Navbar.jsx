@@ -1,5 +1,12 @@
 import { useState, useEffect, useRef } from "react";
-import { FiSearch, FiUser, FiLogOut } from "react-icons/fi";
+import {
+  FiSearch,
+  FiUser,
+  FiLogOut,
+  FiLogIn,
+  FiLock,
+  FiSettings,
+} from "react-icons/fi";
 import { Link, useNavigate } from "react-router-dom";
 import Fuse from "fuse.js";
 
@@ -13,6 +20,7 @@ import {
 } from "../../redux/asyncThunks/authThunks";
 
 import { GLOBAL_SEARCH_PAGES } from "../../assets/searchData";
+import { useIsLoggedIn } from "../../utils/userIsLoggedIn";
 
 const Navbar = () => {
   const [isScrolled, setIsScrolled] = useState(false);
@@ -29,10 +37,9 @@ const Navbar = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
 
-  const { user } = useSelector((state) => state.auth);
+  const isLoggedIn = useIsLoggedIn();
 
-  
-
+  const { profile } = useSelector((state) => state.auth);
 
   const fuse = new Fuse(GLOBAL_SEARCH_PAGES, {
     keys: ["title"],
@@ -129,6 +136,14 @@ const Navbar = () => {
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
+  const getUserName = () => {
+    return profile?.name || profile?.fullName || profile?.username || "User";
+  };
+
+  const getUserInitial = () => {
+    return getUserName().charAt(0).toUpperCase();
+  };
+
   return (
     <header
       className={`relative rounded-2xl px-2 top-0 z-50 transition-all duration-300
@@ -192,51 +207,77 @@ const Navbar = () => {
 
           {/* ---------------- PROFILE MENU ---------------- */}
           <div className="flex items-center space-x-4">
-            {user ? (
-              <div className="relative ml-2">
-                <button
-                  onClick={() => setShowProfileMenu(!showProfileMenu)}
-                  className="flex items-center cursor-pointer space-x-2 focus:outline-none"
-                >
-                  <div className="h-8 w-8 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-medium">
-                    {user?.user?.name?.charAt(0) || "U"}
-                  </div>
-                  <span className="hidden md:inline-block text-sm font-medium text-gray-700">
-                    {user?.user?.name || "User"}
-                  </span>
-                </button>
-
-                {showProfileMenu && (
-                  <div
-                    ref={cardRef}
-                    className="origin-top-right absolute right-0 mt-2 w-48 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 z-10"
+            {isLoggedIn === null ? null : isLoggedIn ? (
+              <div className="flex items-center space-x-4">
+                {/* Permissions Icon */}
+                {profile?.role === "ADMIN" && (
+                  <Link
+                    to="/permissions"
+                    className="p-2 rounded-lg hover:bg-gray-100 transition-colors"
+                    title="Permissions"
                   >
-                    <div className="py-1">
-                      <Link
-                        to={"/profile"}
-                        className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                      >
-                        <FiUser className="inline mr-2" /> Your Profile
-                      </Link>
-
-                      <Link
-                        to={"/permissions"}
-                        className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                      >
-                        <FiUser className="inline mr-2" /> Permissions
-                      </Link>
-
-                      <span
-                        onClick={handleLogout}
-                        className="block px-4 cursor-pointer py-2 text-sm text-gray-700 hover:bg-gray-100 border-t border-gray-100"
-                      >
-                        <FiLogOut className="inline mr-2" /> Sign out
-                      </span>
-                    </div>
-                  </div>
+                    <FiLock className="h-5 w-5 text-gray-600" />
+                  </Link>
                 )}
+
+                {/* Profile Dropdown */}
+                <div className="relative ml-2" ref={cardRef}>
+                  <button
+                    onClick={() => setShowProfileMenu(!showProfileMenu)}
+                    className="flex items-center cursor-pointer space-x-2 focus:outline-none"
+                  >
+                    <div className="h-8 w-8 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-medium">
+                      {getUserInitial()}
+                    </div>
+                    <span className="hidden md:inline-block text-sm font-medium text-gray-700">
+                      {getUserName()}
+                    </span>
+                  </button>
+
+                  {isLoggedIn && showProfileMenu && (
+                    <div className="origin-top-right absolute right-0 mt-2 w-48 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 z-10">
+                      <div className="py-1">
+                        <Link
+                          to="/profile"
+                          className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                          onClick={() => setShowProfileMenu(false)}
+                        >
+                          <FiUser className="mr-2 h-4 w-4" /> Your Profile
+                        </Link>
+
+                        {profile?.role === "ADMIN" && (
+                          <Link
+                            to="/permissions"
+                            className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                            onClick={() => setShowProfileMenu(false)}
+                          >
+                            <FiLock className="mr-2 h-4 w-4" /> Permissions
+                          </Link>
+                        )}
+
+                        <span
+                          onClick={handleLogout}
+                          className="flex items-center px-4 cursor-pointer py-2 text-sm text-gray-700 hover:bg-gray-100 border-t border-gray-100"
+                        >
+                          <FiLogOut className="mr-2 h-4 w-4" /> Sign out
+                        </span>
+                      </div>
+                    </div>
+                  )}
+                </div>
               </div>
-            ) : null}
+            ) : (
+              // Show Login button when not logged in
+              <div className="flex items-center space-x-4">
+                <Link
+                  to="/login"
+                  className="inline-flex items-center px-4 py-2 text-sm font-medium text-blue-600 bg-blue-50 hover:bg-blue-100 rounded-lg transition-colors"
+                >
+                  <FiLogIn className="mr-2 h-4 w-4" />
+                  Login
+                </Link>
+              </div>
+            )}
           </div>
         </div>
       </div>

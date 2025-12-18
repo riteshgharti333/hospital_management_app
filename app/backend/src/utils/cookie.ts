@@ -12,7 +12,7 @@ export const createAccessToken = (payload: {
   role: string;
 }) => {
   return jwt.sign(payload, process.env.JWT_ACCESS_SECRET!, {
-    expiresIn: "7d", // 🔥 Hardcoded → FIXES TYPE ERROR
+    expiresIn: "15m", // 🔥 Hardcoded → FIXES TYPE ERROR
   });
 };
 
@@ -48,7 +48,7 @@ export const sendTokenCookie = (
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",
     sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
-   maxAge: 7 * 24 * 60 * 60 * 1000, // 15 minutes
+    maxAge: 15 * 60 * 1000, // 15 minutes
   });
 
   // Refresh Token Cookie
