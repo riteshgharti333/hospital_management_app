@@ -26,7 +26,7 @@ import adminRoutes from "./routes/adminRoutes";
   
 // Password Reset
 import passwordRoutes from "./routes/passwordRoutes"; 
-
+ 
 // ledger
 import patientLedgerRoutes from "./routes/ledgerRoutes/patientLedgerRoute";
 import bankLedgerRoutes from "./routes/ledgerRoutes/bankLedgerRoute";

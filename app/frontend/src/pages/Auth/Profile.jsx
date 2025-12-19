@@ -41,9 +41,7 @@ const Profile = () => {
     name: "",
     email: "",
     regId: "",
-    role: "Doctor",
-    phone: "",
-    joinDate: "",
+    role: "",
     specialization: "",
     qualifications: [],
     avatarColor: "from-blue-500 to-indigo-600",
@@ -183,7 +181,7 @@ const Profile = () => {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm text-gray-500">Role</p>
-                  <p className="text-lg font-bold text-blue-600">{user.role}</p>
+                  <p className="text-lg font-bold text-blue-600">{profile?.role}</p>
                 </div>
                 <div className="p-2 bg-blue-50 rounded-lg">
                   <MdBadge className="text-blue-500 text-xl" />
@@ -272,7 +270,7 @@ const Profile = () => {
                           <input
                             type="text"
                             name="name"
-                            value={profile?.name}
+                            value={user?.name}
                             onChange={handleProfileChange}
                             disabled={!isEditingProfile}
                             className="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none disabled:bg-gray-50 disabled:text-gray-500"
@@ -291,7 +289,7 @@ const Profile = () => {
                           <input
                             type="email"
                             name="email"
-                            value={profile?.email}
+                            value={user?.email}
                             onChange={handleProfileChange}
                             disabled={!isEditingProfile}
                             className="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none disabled:bg-gray-50 disabled:text-gray-500"
@@ -316,7 +314,7 @@ const Profile = () => {
                           </div>
                           <input
                             type="text"
-                            value={profile?.regId}
+                            value={user?.regId}
                             disabled
                             className="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-lg bg-gray-50 text-gray-500"
                           />
@@ -333,7 +331,7 @@ const Profile = () => {
                           </div>
                           <select
                             name="role"
-                            value={profile?.role}
+                            value={user?.role}
                             onChange={handleProfileChange}
                             disabled={!isEditingProfile}
                             className="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none disabled:bg-gray-50 disabled:text-gray-500 appearance-none"
@@ -413,11 +411,11 @@ const Profile = () => {
                 <ChangePasswordModel />
               ) : (
                 <div className="space-y-4">
-                  <div className="p-4 bg-gray-50 rounded-lg">
+                  {/* <div className="p-4 bg-gray-50 rounded-lg">
                     <p className="text-sm text-gray-600">
                       Last password change: 3 months ago
                     </p>
-                  </div>
+                  </div> */}
                   <div className="p-4 bg-blue-50 rounded-lg">
                     <p className="text-sm text-blue-700">
                       For security reasons, it's recommended to change your

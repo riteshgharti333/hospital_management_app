@@ -235,13 +235,16 @@ const Sidebar = React.memo(() => {
                 </div>
               </div>
               <div className="flex items-center space-x-2">
-                <Link
-                  to="/permissions"
-                  className="p-1.5 rounded-md hover:bg-gray-100 text-gray-600"
-                  title="Permissions"
-                >
-                  <FiLock className="h-4 w-4" />
-                </Link>
+                {profile?.role === "ADMIN" && (
+                  <Link
+                    to="/permissions"
+                    className="p-1.5 rounded-md hover:bg-gray-100 text-gray-600"
+                    title="Permissions"
+                  >
+                    <FiLock className="h-4 w-4" />
+                  </Link>
+                )}
+
                 <span
                   onClick={handleLogout}
                   className="text-gray-500 cursor-pointer hover:text-gray-700 p-1.5 rounded-md hover:bg-gray-100"
