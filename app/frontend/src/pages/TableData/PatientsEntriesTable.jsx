@@ -22,16 +22,21 @@ const PatientsEntriesTable = () => {
   const [mode, setMode] = useState("normal"); // normal | search | filter
 
   // Normal dataset
-  const { data: patientData, isLoading: loadingPatients } =
-    useGetPatients(currentCursor, 50);
+  const { data: patientData, isLoading: loadingPatients } = useGetPatients(
+    currentCursor,
+    50
+  );
 
   // Search dataset
   const { data: searchData, isLoading: loadingSearch } =
     useSearchPatients(searchTerm);
 
   // Filter dataset
-  const { data: filterData, isLoading: loadingFilter } =
-    useFilterPatients({ ...filters, cursor: currentCursor, limit: 50 });
+  const { data: filterData, isLoading: loadingFilter } = useFilterPatients({
+    ...filters,
+    cursor: currentCursor,
+    limit: 50,
+  });
 
   // Select active dataset
   const getCurrentData = () => {
@@ -63,18 +68,12 @@ const PatientsEntriesTable = () => {
 
   const columns = useMemo(
     () => [
+      { accessorKey: "hospitalPatientId", header: "Patient ID" },
       { accessorKey: "fullName", header: "Name" },
-      {
-        accessorKey: "age",
-        header: "Age",
-        cell: (info) => `${info.getValue()} yrs`,
-      },
       { accessorKey: "mobileNumber", header: "Mobile" },
-      { accessorKey: "bedNumber", header: "Bed" },
+
       { accessorKey: "gender", header: "Gender" },
-      { accessorKey: "address", header: "Address" },
       { accessorKey: "aadhaarNumber", header: "Aadhaar" },
-      { accessorKey: "medicalHistory", header: "Medical History" },
     ],
     []
   );

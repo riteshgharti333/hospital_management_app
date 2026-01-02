@@ -45,34 +45,11 @@ export const bedSchema = z.object({
 });
 ////////////////
 export const admissionSchema = z.object({
+    patientId: z.number().int().positive("Patient ID is required"),
+    doctorId: z.number().int().positive("Doctor ID is required"),
     admissionDate: z.coerce.date(),
-    admissionTime: z.string().min(1, "Admission time is required"),
     dischargeDate: z.preprocess((val) => (val === "" || val === null ? undefined : val), z.coerce.date().optional()),
-    wardNo: z.string().min(1, "Ward No is required"),
-    bedNo: z.string().min(1, "Bed No is required"),
-    bloodGroup: z.string().min(1, "Blood group is required"),
-    aadhaarNo: z
-        .string()
-        .optional()
-        .refine((val) => !val || /^\d{12}$/.test(val), {
-        message: "Aadhaar No must be exactly 12 digits",
-    }),
-    patientName: z.string().min(1, "Patient name is required").trim(),
-    patientAge: z.coerce.number().int().positive("Age must be positive"),
-    patientSex: z.string().min(1, "Patient sex is required"),
-    guardianType: z.string().min(1, "Guardian type is required"),
-    guardianName: z.string().min(1, "Guardian name is required").trim(),
-    phoneNo: z
-        .string()
-        .min(10, "Phone number must be at least 10 digits")
-        .regex(/^\d+$/, "Phone number must contain only digits"),
-    patientAddress: z.string().min(1, "Address is required").trim(),
-    bodyWeightKg: z.coerce.number().positive("Weight must be positive"),
-    bodyHeightCm: z.coerce.number().positive("Height must be positive"),
-    literacy: z.string().min(1, "Literacy status is required"),
-    occupation: z.string().min(1, "Occupation is required"),
-    doctorName: z.string().min(1, "Doctor name is required").trim(),
-    isDelivery: z.preprocess((val) => val === "true" || val === true || val === 1, z.boolean().default(false)),
+    status: z.string().default("ADMITTED"),
 });
 ///////////////
 export const ambulanceSchema = z.object({
@@ -167,14 +144,20 @@ export const nurseSchema = z.object({
 });
 /////////////////
 export const patientSchema = z.object({
-    fullName: z.string().min(1, "Full name is required"),
-    age: z.number().positive("Age must be positive"),
-    mobileNumber: z.string().min(10, "Mobile number must be 10 digits"),
+    fullName: z.string().min(1, "Full name is required").trim(),
+    dateOfBirth: z.coerce.date({
+        required_error: "Date of birth is required",
+    }),
     gender: z.string().min(1, "Gender is required"),
-    bedNumber: z.string().min(1, "Bed number is required"),
-    aadhaarNumber: z.string().length(12, "Aadhaar must be 12 digits"),
-    address: z.string().min(1, "Address is required"),
-    medicalHistory: z.string().min(1, "Medical history is required"),
+    mobileNumber: z
+        .string()
+        .regex(/^\d{10}$/, "Mobile number must be 10 digits")
+        .optional(),
+    aadhaarNumber: z
+        .string()
+        .regex(/^\d{12}$/, "Aadhaar must be 12 digits")
+        .optional(),
+    address: z.string().min(1, "Address is required").trim(),
 });
 //////////////
 export const pharmacistSchema = z.object({
@@ -191,11 +174,10 @@ export const medicineSchema = z.object({
     description: z.string().min(1, "Description is required"),
 });
 export const prescriptionSchema = z.object({
+    admissionId: z.number().int().positive("Admission ID is required"),
+    doctorId: z.number().int().positive("Doctor ID is required"),
     prescriptionDate: z.coerce.date(),
-    doctorId: z.number().min(1, "Doctor ID is required"),
-    patientId: z.number().min(1, "Patient ID is required"),
     prescriptionDoc: z.string().url().optional(),
-    status: z.string().optional().default("Active"),
     medicines: z
         .array(medicineSchema)
         .min(1, "At least one medicine is required"),
@@ -478,11 +460,7 @@ export const supplierLedgerSchema = z.object({
 ////////// filter
 // 🔹 Admission Filters
 export const admissionFilterSchema = z.object({
-    patientSex: z.enum(["Male", "Female", "Other"]).optional(),
-    bloodGroup: z
-        .enum(["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"])
-        .optional()
-        .transform((val) => val?.trim()),
+    gender: z.enum(["Male", "Female", "Other"]).optional(),
     fromDate: z.coerce.date().optional(),
     toDate: z.coerce.date().optional(),
     limit: z.coerce.number().default(50),

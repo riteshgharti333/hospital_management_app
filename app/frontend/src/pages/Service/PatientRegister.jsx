@@ -8,6 +8,7 @@ import {
   FaHome,
   FaNotesMedical,
 } from "react-icons/fa";
+import { MdDateRange } from "react-icons/md";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -31,14 +32,6 @@ const formFields = [
         icon: <FaUser className="text-gray-400" />,
       },
       {
-        label: "Age",
-        type: "number",
-        name: "age",
-        placeholder: "Enter age",
-        min: 0,
-        max: 120,
-      },
-      {
         label: "Mobile Number",
         type: "tel",
         name: "mobileNumber",
@@ -53,19 +46,6 @@ const formFields = [
         options: ["Male", "Female", "Other"],
         icon: <FaVenusMars className="text-gray-400" />,
       },
-    ],
-  },
-  {
-    section: "Additional Details",
-    icon: <FaBed className="text-blue-500" />,
-    fields: [
-      {
-        label: "Bed Number",
-        type: "text",
-        name: "bedNumber",
-        placeholder: "Enter bed number",
-        icon: <FaBed className="text-gray-400" />,
-      },
       {
         label: "Aadhaar Number",
         type: "text",
@@ -75,18 +55,17 @@ const formFields = [
         maxLength: 12,
       },
       {
+        label: "Date Of Birth",
+        type: "date",
+        name: "dateOfBirth",
+        icon: <MdDateRange className="text-gray-400" />,
+      },
+      {
         label: "Address",
         type: "textarea",
         name: "address",
         placeholder: "Enter full address",
         icon: <FaHome className="text-gray-400" />,
-      },
-      {
-        label: "Medical History",
-        type: "textarea",
-        name: "medicalHistory",
-        placeholder: "Enter any known medical conditions or history",
-        icon: <FaNotesMedical className="text-gray-400" />,
       },
     ],
   },
@@ -103,33 +82,31 @@ const PatientRegister = () => {
     resolver: zodResolver(patientSchema),
     defaultValues: {
       fullName: "",
-      age: 0,
+      dateOfBirth: "",
       mobileNumber: "",
       gender: "",
-      bedNumber: "",
       aadhaarNumber: "",
       address: "",
-      medicalHistory: "",
     },
   });
 
   const { mutateAsync, isPending } = useCreatePatient();
 
   const onSubmit = async (data) => {
-       const formattedData = {
-        ...data,
-        age: parseInt(data.age, 10),
-      };
+    const formattedData = {
+      ...data,
+      age: parseInt(data.age, 10),
+    };
 
-      const response = await mutateAsync(formattedData);
-      const { success, message, data: createdPatient } = response;
+    const response = await mutateAsync(formattedData);
+    const { success, message, data: createdPatient } = response;
 
-         if (response?.data?.success) {
-            toast.success(response?.data?.message);
-            navigate(`/patient/${response.data.data.id}`);
-          }
+    if (response?.data?.success) {
+      toast.success(response?.data?.message);
+      navigate(`/patient/${response.data.data.id}`);
     }
- 
+  };
+
   return (
     <div className="mx-auto">
       <div className="mb-8">

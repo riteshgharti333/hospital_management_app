@@ -41,7 +41,7 @@ const ledgerTitles = [
     title: "Doctor Ledger",
     link: "ledger/doctor-ledger",
   },
- 
+
   {
     title: "Cash Ledger",
     link: "ledger/cash-ledger",
@@ -50,7 +50,6 @@ const ledgerTitles = [
     title: "Bank Ledger",
     link: "ledger/bank-ledger",
   },
- 
 ];
 
 export const sidebarData = [
@@ -65,21 +64,22 @@ export const sidebarData = [
     link: "/admission-entries",
   },
   {
-    title: "Birth Register",
-    icon: LuBaby,
-    link: "/birth-entries",
-  },
-  {
     title: "Patients Register",
     icon: FiUsers,
     link: "/patients-entries",
   },
   {
+    title: "Birth Register",
+    icon: LuBaby,
+    link: "/birth-entries",
+  },
+
+  {
     title: "Departments",
     icon: LuHousePlus,
     link: "/departments",
   },
-  
+
   {
     title: "Appointments",
     icon: MdOutlineEditCalendar,
@@ -95,13 +95,13 @@ export const sidebarData = [
     icon: FaStethoscope,
     link: "/doctors",
   },
- 
+
   {
     title: "Prescription Register",
     icon: BsPrescription2,
     link: "/prescriptions",
   },
-  
+
   {
     title: "Add Ledger",
     icon: MdOutlineNoteAdd,
@@ -115,7 +115,6 @@ export const sidebarData = [
       link: `/${item.link}`,
     })),
   },
- 
 ];
 
 export const sidebar2Data = [
@@ -147,9 +146,7 @@ export const sidebar3Data = [
   },
 ];
 
-
-// /////////////////////// another data 
-
+// /////////////////////// another data
 
 // const ledgerTitles = [
 //   {
@@ -278,7 +275,6 @@ export const sidebar3Data = [
 //   //   ],
 //   // },
 
-
 //   // {
 //   //   title: "Item / Service",
 //   //   icon: FiCalendar,
@@ -290,7 +286,7 @@ export const sidebar3Data = [
 //   //     // { title: "Service Charges Update", link: "/service-charges-update" },
 //   //   ],
 //   // },
-  
+
 // ];
 
 // export const sidebar2Data = [

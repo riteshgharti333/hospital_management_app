@@ -28,6 +28,7 @@ export const useGetAdmissionById = (id) => {
     queryKey: ["admission", id],
     queryFn: async () => {
       const { data } = await getAdmissionByIdAPI(id);
+
       return data?.data;
     },
     enabled: !!id,

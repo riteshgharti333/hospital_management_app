@@ -1,4 +1,3 @@
-
 import { PrismaClient } from "@prisma/client";
 import { upstashGet, upstashSet } from "./upstashRedisRest";
 
@@ -13,12 +12,14 @@ const memoryCache = new Map<
 const MEMORY_CACHE_TTL = 30000; // 30 seconds
 const MAX_MEMORY_ENTRIES = 1000;
 
+
 type PaginationOptions<T extends keyof PrismaClient> = {
   model: T;
   cursorField?: string;
   limit?: number;
   cacheExpiry?: number;
-  select?: Record<string, boolean>; 
+  select?: Record<string, any>;
+  include?: Record<string, any>;
 };
 
 export async function cursorPaginate<T extends keyof PrismaClient, R = any>(
@@ -33,9 +34,12 @@ export async function cursorPaginate<T extends keyof PrismaClient, R = any>(
     limit = 50,
     cacheExpiry = 3600,
     select,
+    include,
   } = options;
 
-  const cacheKey = `p:${String(model).slice(0, 3)}:c:${cursor || "0"}:l:${limit}`;
+  const cacheKey = `p:${String(model).slice(0, 3)}:c:${
+    cursor || "0"
+  }:l:${limit}`;
 
   // Memory cache
   const memoryHit = memoryCache.get(cacheKey);
@@ -52,6 +56,9 @@ export async function cursorPaginate<T extends keyof PrismaClient, R = any>(
   }
 
   // DB query
+
+  console.log("🔥 HITTING PRISMA DB QUERY");
+
   const data = await (prisma[model] as any).findMany({
     where: {
       ...(extraWhere || {}),
@@ -59,7 +66,9 @@ export async function cursorPaginate<T extends keyof PrismaClient, R = any>(
     },
     take: limit + 1,
     orderBy: { [cursorField]: "asc" },
-    select,
+
+    ...(select ? { select } : {}),
+    ...(include ? { include } : {}),
   });
 
   const hasMore = data.length > limit;
@@ -85,4 +94,3 @@ export async function cursorPaginate<T extends keyof PrismaClient, R = any>(
 
   return { data: results, nextCursor };
 }
-

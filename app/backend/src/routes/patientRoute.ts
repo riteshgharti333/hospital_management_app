@@ -8,25 +8,26 @@ import {
   searchPatientResults,
   filterPatients,
 } from "../controllers/PatientController";
-import { isAuthenticated } from "../middlewares/isAuthenticated";
-import { isAdmin } from "../middlewares/isAdmin";
+import { authenticateUser } from "../middlewares/authenticate";
+import { authorizeRoles } from "../middlewares/authorize";
 
 const router = express.Router();
 
+// CREATE + LIST
 router
   .route("/")
-  .post(isAuthenticated, isAdmin, createPatientRecord)
+  .post(authenticateUser, authorizeRoles("ADMIN"), createPatientRecord)
   .get(getAllPatientRecords);
 
+// SEARCH & FILTER
 router.get("/search", searchPatientResults);
-
 router.get("/filter", filterPatients);
 
-
+// GET / UPDATE / DELETE BY ID
 router
   .route("/:id")
   .get(getPatientRecordById)
-  .put(isAuthenticated, isAdmin, updatePatientRecord)
-  .delete(isAuthenticated, isAdmin, deletePatientRecord);
+  .put(authenticateUser, authorizeRoles("ADMIN"), updatePatientRecord)
+  .delete(authenticateUser, authorizeRoles("ADMIN"), deletePatientRecord);
 
 export default router;

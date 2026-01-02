@@ -1,37 +1,40 @@
 import { prisma } from "../lib/prisma";
 import { applyCommonFields } from "../utils/applyCommonFields";
 import { filterPaginate } from "../utils/filterPaginate";
+import { generateHospitalId } from "../utils/generateHospitalId";
 import { cursorPaginate } from "../utils/pagination";
 import { createSearchService } from "../utils/searchCache";
 
-
 export type AdmissionInput = {
+  patientId: number;
+  doctorId: number;
   admissionDate: Date;
-  admissionTime: string;
   dischargeDate?: Date;
-  gsRsRegNo: string;
-  wardNo: string;
-  bedNo: string;
-  bloodGroup: string;
-  aadhaarNo?: string;
-  urnNo: string;
-  patientName: string;
-  patientAge: number;
-  patientSex: string;
-  guardianType: string;
-  guardianName: string;
-  phoneNo: string;
-  patientAddress: string;
-  bodyWeightKg: number;
-  bodyHeightCm: number;
-  literacy: string;
-  occupation: string;
-  doctorName: string;
-  isDelivery?: boolean;
 };
 
-export const createAdmission = async (data: AdmissionInput) => {
-  return prisma.admission.create({ data });
+export const createAdmissionService = async (data: AdmissionInput) => {
+  const hospitalAdmissionId = await generateHospitalId({
+    prefix: "ADM",
+    model: "admission",
+    field: "hospitalAdmissionId",
+  });
+
+  return prisma.admission.create({
+    data: {
+      ...data,
+      hospitalAdmissionId,
+      status: "ADMITTED",
+    },
+  });
+};
+
+export const findActiveAdmissionByPatient = async (patientId: number) => {
+  return prisma.admission.findFirst({
+    where: {
+      patientId,
+      status: "ADMITTED",
+    },
+  });
 };
 
 export const getAllAdmissionsService = async (
@@ -45,10 +48,37 @@ export const getAllAdmissionsService = async (
       cursorField: "id",
       limit: limit || 50,
       cacheExpiry: 600,
+
+      select: {
+        id: true,
+        hospitalAdmissionId: true,
+        admissionDate: true,
+        dischargeDate: true,
+    
+
+        patient: {
+          select: {
+            id: true,
+            fullName: true,
+            gender: true,
+            mobileNumber: true,
+            aadhaarNumber: true,  
+          },
+        },
+
+        doctor: {
+          select: {
+            id: true,
+            fullName: true,
+          },
+        },
+      },
     },
     cursor ? Number(cursor) : undefined
   );
 };
+
+
 
 export const getAdmissionById = async (id: number) => {
   return prisma.admission.findUnique({ where: { id } });
@@ -68,8 +98,8 @@ export const deleteAdmission = async (id: number) => {
   return prisma.admission.delete({ where: { id } });
 };
 
-const commonSearchFields = ["patientName", "gsRsRegNo", "phoneNo"];
- 
+const commonSearchFields = ["hospitalAdmissionId"];
+
 export const searchAdmissions = createSearchService(prisma, {
   tableName: "Admission",
   cacheKeyPrefix: "admission",
@@ -80,19 +110,18 @@ export const searchAdmissions = createSearchService(prisma, {
 
 export const filterAdmissionsService = async (filters: {
   fromDate?: Date;
-  toDate?: Date;  
-  patientSex?: string;
-  bloodGroup?: string;
+  toDate?: Date;
+  gender?: string;
   cursor?: string | number;
   limit?: number;
 }) => {
-  const { fromDate, toDate, patientSex, bloodGroup, cursor, limit } = filters;
+  const { fromDate, toDate, gender, cursor, limit } = filters;
 
   // Build filter object
   const filterObj: Record<string, any> = {};
 
-  if (patientSex) filterObj.patientSex = { equals: patientSex, mode: "insensitive" };
-  if (bloodGroup) filterObj.bloodGroup = bloodGroup;
+  if (gender)
+    filterObj.gender = { equals: gender, mode: "insensitive" };
   if (fromDate || toDate)
     filterObj.admissionDate = {
       gte: fromDate ? new Date(fromDate) : undefined,
@@ -100,16 +129,14 @@ export const filterAdmissionsService = async (filters: {
     };
 
   // Call filterPaginate
-  return filterPaginate(prisma, {
-    model: "admission",
-    cursorField: "id",      
-    limit: limit || 50,
-    filters: filterObj,
-  }, cursor);
-};     
-
-
-
-
-
-
+  return filterPaginate(
+    prisma,
+    {
+      model: "admission",
+      cursorField: "id",
+      limit: limit || 50,
+      filters: filterObj,
+    },
+    cursor
+  );
+};

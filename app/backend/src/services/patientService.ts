@@ -1,34 +1,44 @@
 import { prisma } from "../lib/prisma";
 import { applyCommonFields } from "../utils/applyCommonFields";
 import { filterPaginate } from "../utils/filterPaginate";
+import { generateHospitalId } from "../utils/generateHospitalId";
 import { createSearchService } from "../utils/searchCache";
 
 export type PatientInput = {
   fullName: string;
-  age: number;
-  mobileNumber: string;
+  dateOfBirth: Date;
   gender: string;
-  bedNumber: string;
-  aadhaarNumber: string;
+  mobileNumber?: string;
+  aadhaarNumber?: string;
   address: string;
-  medicalHistory: string;
 };
 
 export const createPatient = async (data: PatientInput) => {
-  return prisma.patient.create({ data });
+  const hospitalPatientId = await generateHospitalId({
+    prefix: "PAT",
+    model: "patient",
+    field: "hospitalPatientId",
+  });
+
+  return prisma.patient.create({
+    data: {
+      ...data,
+      hospitalPatientId,
+    },
+  });
 };
 
 export const getAllPatients = async () => {
-  return prisma.patient.findMany({ orderBy: { createdAt: "desc" } });
+  return prisma.patient.findMany({
+    orderBy: { createdAt: "desc" },
+  });
 };
 
 export const getPatientById = async (id: number) => {
-  return prisma.patient.findUnique({ where: { id } });
+  return prisma.patient.findUnique({
+    where: { id },
+  });
 };
-
-// export const getPatientByAadhaar = async (aadhaarNumber: string) => {
-//   return prisma.patient.findUnique({ where: { aadhaarNumber } });
-// };
 
 export const updatePatient = async (
   id: number,
@@ -41,22 +51,29 @@ export const updatePatient = async (
 };
 
 export const deletePatient = async (id: number) => {
-  return prisma.patient.delete({ where: { id } });
+  return prisma.patient.delete({
+    where: { id },
+  });
 };
 
-const commonSearchFields = ["fullName", "mobileNumber", "aadhaarNumber"];
+const commonSearchFields = [
+  "fullName",
+  "mobileNumber",
+  "aadhaarNumber",
+  "hospitalPatientId",
+];
 
 export const searchPatient = createSearchService(prisma, {
-  tableName: "Patient",
+  tableName: "Patient",                      
   cacheKeyPrefix: "patient",
   ...applyCommonFields(commonSearchFields),
-});
+}); 
 
 export const filterPatientsService = async (filters: {
   fromDate?: Date;
-  toDate?: Date;
-  gender?: string;
-  cursor?: string | number;
+  toDate?: Date; 
+  gender?: string;      
+  cursor?: string | number;   
   limit?: number;
 }) => {
   const { fromDate, toDate, gender, cursor, limit } = filters;
@@ -65,11 +82,12 @@ export const filterPatientsService = async (filters: {
 
   if (gender) filterObj.gender = { equals: gender, mode: "insensitive" };
 
-  if (fromDate || toDate)
+  if (fromDate || toDate) {
     filterObj.createdAt = {
-      gte: fromDate ? new Date(fromDate) : undefined,
-      lte: toDate ? new Date(toDate) : undefined,
+      gte: fromDate,
+      lte: toDate,
     };
+  }
 
   return filterPaginate(
     prisma,
@@ -82,5 +100,3 @@ export const filterPatientsService = async (filters: {
     cursor
   );
 };
-
-

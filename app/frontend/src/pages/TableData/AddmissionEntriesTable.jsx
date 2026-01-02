@@ -9,12 +9,11 @@ import {
 } from "../../feature/hooks/useAdmisson";
 
 const filterLabels = {
-  patientSex: "Patient Sex",
+  gender: "Gender",
   bloodGroup: "Blood Group",
   fromDate: "From Date",
   toDate: "To Date",
 };
-
 
 const AdmissionEntriesTable = () => {
   const [currentCursor, setCurrentCursor] = useState(null);
@@ -67,20 +66,14 @@ const AdmissionEntriesTable = () => {
 
   const columns = useMemo(
     () => [
-      { accessorKey: "patientName", header: "Name" },
-      {
-        accessorKey: "patientAge",
-        header: "Age",
-        cell: (info) => `${info.getValue()} yrs`,
-      },
-      { accessorKey: "patientSex", header: "Sex" },
-      { accessorKey: "bloodGroup", header: "Blood" },
-      { accessorKey: "gsRsRegNo", header: "Registration No." },
-      { accessorKey: "phoneNo", header: "Phone No." },
+      { accessorKey: "patient.fullName", header: "Name" },
+      { accessorKey: "hospitalAdmissionId", header: "Admission ID" },
+      { accessorKey: "patient.aadhaarNumber", header: "Aadhaar Number" },
 
-      { accessorKey: "wardNo", header: "Ward" },
-      { accessorKey: "bedNo", header: "Bed" },
-      { accessorKey: "doctorName", header: "Doctor" },
+      { accessorKey: "patient.gender", header: "Sex" },
+      { accessorKey: "patient.mobileNumber", header: "Phone No." },
+      { accessorKey: "doctor.fullName", header: "Doctor Name" },
+
       {
         accessorKey: "admissionDate",
         header: "Admission Date",
@@ -95,7 +88,6 @@ const AdmissionEntriesTable = () => {
               });
         },
       },
-      { accessorKey: "admissionTime", header: "Time" },
       {
         accessorKey: "dischargeDate",
         header: "Discharge",
@@ -169,17 +161,12 @@ const AdmissionEntriesTable = () => {
         }}
         filtersConfig={[
           {
-            key: "patientSex",
+            key: "gender",
             label: "Gender",
             type: "select",
             options: ["Male", "Female", "Other"],
           },
-          {
-            key: "bloodGroup",
-            label: "Blood Group",
-            type: "select",
-            options: ["A+", "A-", "B+", "B-", "O+", "O-", "AB+", "AB-"],
-          },
+          
           {
             key: "fromDate",
             label: "From Date",
@@ -190,7 +177,6 @@ const AdmissionEntriesTable = () => {
             label: "To Date",
             type: "date",
           },
-        
         ]}
         pagination={{
           hasPrevious: cursorHistory.length > 0 && mode !== "search",
@@ -204,7 +190,7 @@ const AdmissionEntriesTable = () => {
         onApplyFilters={handleApplyFilters}
         onClearFilters={handleClearFilters}
         activeFilters={filters}
-         filterLabels={filterLabels}
+        filterLabels={filterLabels}
       />
     </div>
   );

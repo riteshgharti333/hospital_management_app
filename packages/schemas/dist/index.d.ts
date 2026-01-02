@@ -60,68 +60,23 @@ export declare const bedSchema: z.ZodObject<{
     description?: string | undefined;
 }>;
 export declare const admissionSchema: z.ZodObject<{
+    patientId: z.ZodNumber;
+    doctorId: z.ZodNumber;
     admissionDate: z.ZodDate;
-    admissionTime: z.ZodString;
     dischargeDate: z.ZodEffects<z.ZodOptional<z.ZodDate>, Date | undefined, unknown>;
-    wardNo: z.ZodString;
-    bedNo: z.ZodString;
-    bloodGroup: z.ZodString;
-    aadhaarNo: z.ZodEffects<z.ZodOptional<z.ZodString>, string | undefined, string | undefined>;
-    patientName: z.ZodString;
-    patientAge: z.ZodNumber;
-    patientSex: z.ZodString;
-    guardianType: z.ZodString;
-    guardianName: z.ZodString;
-    phoneNo: z.ZodString;
-    patientAddress: z.ZodString;
-    bodyWeightKg: z.ZodNumber;
-    bodyHeightCm: z.ZodNumber;
-    literacy: z.ZodString;
-    occupation: z.ZodString;
-    doctorName: z.ZodString;
-    isDelivery: z.ZodEffects<z.ZodDefault<z.ZodBoolean>, boolean, unknown>;
+    status: z.ZodDefault<z.ZodString>;
 }, "strip", z.ZodTypeAny, {
+    status: string;
+    patientId: number;
+    doctorId: number;
     admissionDate: Date;
-    admissionTime: string;
-    wardNo: string;
-    bedNo: string;
-    bloodGroup: string;
-    patientName: string;
-    patientAge: number;
-    patientSex: string;
-    guardianType: string;
-    guardianName: string;
-    phoneNo: string;
-    patientAddress: string;
-    bodyWeightKg: number;
-    bodyHeightCm: number;
-    literacy: string;
-    occupation: string;
-    doctorName: string;
-    isDelivery: boolean;
     dischargeDate?: Date | undefined;
-    aadhaarNo?: string | undefined;
 }, {
+    patientId: number;
+    doctorId: number;
     admissionDate: Date;
-    admissionTime: string;
-    wardNo: string;
-    bedNo: string;
-    bloodGroup: string;
-    patientName: string;
-    patientAge: number;
-    patientSex: string;
-    guardianType: string;
-    guardianName: string;
-    phoneNo: string;
-    patientAddress: string;
-    bodyWeightKg: number;
-    bodyHeightCm: number;
-    literacy: string;
-    occupation: string;
-    doctorName: string;
+    status?: string | undefined;
     dischargeDate?: unknown;
-    aadhaarNo?: string | undefined;
-    isDelivery?: unknown;
 }>;
 export declare const ambulanceSchema: z.ZodObject<{
     modelName: z.ZodString;
@@ -151,13 +106,13 @@ export declare const appointmentSchema: z.ZodObject<{
     department: z.ZodString;
     appointmentTime: z.ZodString;
 }, "strip", z.ZodTypeAny, {
-    doctorName: string;
     appointmentDate: Date;
+    doctorName: string;
     department: string;
     appointmentTime: string;
 }, {
-    doctorName: string;
     appointmentDate: string;
+    doctorName: string;
     department: string;
     appointmentTime: string;
 }>;
@@ -174,16 +129,16 @@ export declare const bedAssignmentSchema: z.ZodObject<{
     status: "Active" | "Discharged" | "Transferred";
     bedNumber: string;
     wardNumber: string;
-    patientName: string;
     bedType: string;
+    patientName: string;
     allocateDate: Date;
     dischargeDate?: Date | undefined;
     notes?: string | undefined;
 }, {
     bedNumber: string;
     wardNumber: string;
-    patientName: string;
     bedType: string;
+    patientName: string;
     allocateDate: string;
     status?: "Active" | "Discharged" | "Transferred" | undefined;
     dischargeDate?: unknown;
@@ -303,31 +258,25 @@ export declare const nurseSchema: z.ZodObject<{
 }>;
 export declare const patientSchema: z.ZodObject<{
     fullName: z.ZodString;
-    age: z.ZodNumber;
-    mobileNumber: z.ZodString;
+    dateOfBirth: z.ZodDate;
     gender: z.ZodString;
-    bedNumber: z.ZodString;
-    aadhaarNumber: z.ZodString;
+    mobileNumber: z.ZodOptional<z.ZodString>;
+    aadhaarNumber: z.ZodOptional<z.ZodString>;
     address: z.ZodString;
-    medicalHistory: z.ZodString;
 }, "strip", z.ZodTypeAny, {
-    bedNumber: string;
-    mobileNumber: string;
     fullName: string;
     address: string;
-    age: number;
+    dateOfBirth: Date;
     gender: string;
-    aadhaarNumber: string;
-    medicalHistory: string;
+    mobileNumber?: string | undefined;
+    aadhaarNumber?: string | undefined;
 }, {
-    bedNumber: string;
-    mobileNumber: string;
     fullName: string;
     address: string;
-    age: number;
+    dateOfBirth: Date;
     gender: string;
-    aadhaarNumber: string;
-    medicalHistory: string;
+    mobileNumber?: string | undefined;
+    aadhaarNumber?: string | undefined;
 }>;
 export declare const pharmacistSchema: z.ZodObject<{
     fullName: z.ZodString;
@@ -362,11 +311,10 @@ export declare const medicineSchema: z.ZodObject<{
     medicineName: string;
 }>;
 export declare const prescriptionSchema: z.ZodObject<{
-    prescriptionDate: z.ZodDate;
+    admissionId: z.ZodNumber;
     doctorId: z.ZodNumber;
-    patientId: z.ZodNumber;
+    prescriptionDate: z.ZodDate;
     prescriptionDoc: z.ZodOptional<z.ZodString>;
-    status: z.ZodDefault<z.ZodOptional<z.ZodString>>;
     medicines: z.ZodArray<z.ZodObject<{
         medicineName: z.ZodString;
         description: z.ZodString;
@@ -378,24 +326,22 @@ export declare const prescriptionSchema: z.ZodObject<{
         medicineName: string;
     }>, "many">;
 }, "strip", z.ZodTypeAny, {
-    status: string;
-    prescriptionDate: Date;
     doctorId: number;
-    patientId: number;
+    admissionId: number;
+    prescriptionDate: Date;
     medicines: {
         description: string;
         medicineName: string;
     }[];
     prescriptionDoc?: string | undefined;
 }, {
-    prescriptionDate: Date;
     doctorId: number;
-    patientId: number;
+    admissionId: number;
+    prescriptionDate: Date;
     medicines: {
         description: string;
         medicineName: string;
     }[];
-    status?: string | undefined;
     prescriptionDoc?: string | undefined;
 }>;
 export declare const xrayReportSchema: z.ZodObject<{
@@ -416,12 +362,12 @@ export declare const xrayReportSchema: z.ZodObject<{
     commissionPercent: z.ZodNumber;
     doctorEarning: z.ZodNumber;
 }, "strip", z.ZodTypeAny, {
-    patientName: string;
-    patientSex: "Male" | "Female" | "Other";
     department: string;
-    age: number;
+    patientName: string;
     billDate: Date;
     patientMobile: string;
+    patientSex: "Male" | "Female" | "Other";
+    age: number;
     referredDoctor: string;
     testDate: Date;
     reportDate: Date;
@@ -433,12 +379,12 @@ export declare const xrayReportSchema: z.ZodObject<{
     doctorEarning: number;
     patientAddress?: string | undefined;
 }, {
-    patientName: string;
-    patientSex: "Male" | "Female" | "Other";
     department: string;
-    age: number;
+    patientName: string;
     billDate: Date;
     patientMobile: string;
+    patientSex: "Male" | "Female" | "Other";
+    age: number;
     referredDoctor: string;
     testDate: Date;
     reportDate: string;
@@ -505,14 +451,14 @@ export declare const billSchema: z.ZodObject<{
     status: "Pending" | "PartiallyPaid" | "Paid" | "Cancelled" | "Refunded";
     admissionDate: Date;
     patientName: string;
-    patientAge: number;
-    patientSex: "Male" | "Female" | "Other";
     address: string;
     billDate: Date;
+    patientSex: "Male" | "Female" | "Other";
     totalAmount: number;
     billType: string;
     mobile: string;
     admissionNo: string;
+    patientAge: number;
     billItems: {
         company: string;
         itemOrService: string;
@@ -524,14 +470,14 @@ export declare const billSchema: z.ZodObject<{
 }, {
     admissionDate: string;
     patientName: string;
-    patientAge: number;
-    patientSex: "Male" | "Female" | "Other";
     address: string;
     billDate: Date;
+    patientSex: "Male" | "Female" | "Other";
     totalAmount: number;
     billType: string;
     mobile: string;
     admissionNo: string;
+    patientAge: number;
     billItems: {
         company: string;
         itemOrService: string;
@@ -559,30 +505,30 @@ export declare const employeeSchema: z.ZodObject<{
 }, "strip", z.ZodTypeAny, {
     department: string;
     fathersName: string;
+    dateOfBirth: Date;
     gender: "Male" | "Female" | "Other";
     employeeName: string;
     dateOfRegistration: Date;
     contactNo: string;
-    dateOfBirth: Date;
     maritalStatus: "Married" | "Unmarried";
     email?: string | undefined;
-    bloodGroup?: "A+" | "A-" | "B+" | "B-" | "AB+" | "AB-" | "O+" | "O-" | undefined;
     aadharNo?: string | undefined;
     voterId?: string | undefined;
+    bloodGroup?: "A+" | "A-" | "B+" | "B-" | "AB+" | "AB-" | "O+" | "O-" | undefined;
     photoUrl?: string | undefined;
 }, {
     department: string;
     fathersName: string;
+    dateOfBirth: string;
     gender: "Male" | "Female" | "Other";
     employeeName: string;
     dateOfRegistration: string;
     contactNo: string;
-    dateOfBirth: string;
     maritalStatus: "Married" | "Unmarried";
     email?: string | undefined;
-    bloodGroup?: "A+" | "A-" | "B+" | "B-" | "AB+" | "AB-" | "O+" | "O-" | undefined;
     aadharNo?: string | undefined;
     voterId?: string | undefined;
+    bloodGroup?: "A+" | "A-" | "B+" | "B-" | "AB+" | "AB-" | "O+" | "O-" | undefined;
     photoUrl?: string | undefined;
 }>;
 export declare const moneyReceiptSchema: z.ZodObject<{
@@ -1052,22 +998,19 @@ export declare const supplierLedgerSchema: z.ZodObject<{
     attachBill?: string | null | undefined;
 }>;
 export declare const admissionFilterSchema: z.ZodObject<{
-    patientSex: z.ZodOptional<z.ZodEnum<["Male", "Female", "Other"]>>;
-    bloodGroup: z.ZodEffects<z.ZodOptional<z.ZodEnum<["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"]>>, string | undefined, "A+" | "A-" | "B+" | "B-" | "AB+" | "AB-" | "O+" | "O-" | undefined>;
+    gender: z.ZodOptional<z.ZodEnum<["Male", "Female", "Other"]>>;
     fromDate: z.ZodOptional<z.ZodDate>;
     toDate: z.ZodOptional<z.ZodDate>;
     limit: z.ZodDefault<z.ZodNumber>;
     cursor: z.ZodOptional<z.ZodNumber>;
 }, "strip", z.ZodTypeAny, {
     limit: number;
-    bloodGroup?: string | undefined;
-    patientSex?: "Male" | "Female" | "Other" | undefined;
+    gender?: "Male" | "Female" | "Other" | undefined;
     fromDate?: Date | undefined;
     toDate?: Date | undefined;
     cursor?: number | undefined;
 }, {
-    bloodGroup?: "A+" | "A-" | "B+" | "B-" | "AB+" | "AB-" | "O+" | "O-" | undefined;
-    patientSex?: "Male" | "Female" | "Other" | undefined;
+    gender?: "Male" | "Female" | "Other" | undefined;
     fromDate?: Date | undefined;
     toDate?: Date | undefined;
     limit?: number | undefined;

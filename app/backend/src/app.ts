@@ -25,9 +25,9 @@ import xrayRoutes from "./routes/xrayRoute";
 import adminRoutes from "./routes/adminRoutes";
   
 // Password Reset
-import passwordRoutes from "./routes/passwordRoutes"; 
+import passwordRoutes from "./routes/passwordRoutes";              
  
-// ledger
+// ledger  
 import patientLedgerRoutes from "./routes/ledgerRoutes/patientLedgerRoute";
 import bankLedgerRoutes from "./routes/ledgerRoutes/bankLedgerRoute";
 import cashLedgerRoutes from "./routes/ledgerRoutes/cashLedgerRoute";

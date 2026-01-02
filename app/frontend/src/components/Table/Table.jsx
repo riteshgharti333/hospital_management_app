@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   useReactTable,
@@ -35,6 +35,7 @@ const Table = ({
   const navigate = useNavigate();
   const [showFilter, setShowFilter] = useState(false);
   const [localFilters, setLocalFilters] = useState(activeFilters);
+  const [filtersChanged, setFiltersChanged] = useState(false);
 
   const table = useReactTable({
     data: data || [],
@@ -48,26 +49,67 @@ const Table = ({
     },
   });
 
+  // Reset local filters when activeFilters change
+  useEffect(() => {
+    setLocalFilters(activeFilters);
+    setFiltersChanged(false);
+  }, [activeFilters]);
+
   const handleRowClick = (id) => {
     if (path) navigate(`/${path}/${id}`);
   };
 
   const handleFilterChange = (key, value) => {
-    setLocalFilters((prev) => ({ ...prev, [key]: value }));
+    setLocalFilters((prev) => {
+      const newFilters = { ...prev };
+      if (value === "" || value === "All") {
+        // Remove the filter when "All" is selected
+        delete newFilters[key];
+      } else {
+        newFilters[key] = value;
+      }
+      return newFilters;
+    });
+    setFiltersChanged(true);
   };
 
   const handleApplyFilters = () => {
-    onApplyFilters?.(localFilters);
+    // Clean up empty filters before applying
+    const cleanedFilters = { ...localFilters };
+    Object.keys(cleanedFilters).forEach((key) => {
+      if (cleanedFilters[key] === "" || cleanedFilters[key] === "All") {
+        delete cleanedFilters[key];
+      }
+    });
+
+    onApplyFilters?.(cleanedFilters);
     setShowFilter(false);
+    setFiltersChanged(false);
   };
 
   const handleClearAllFilters = () => {
     setLocalFilters({});
-    onClearFilters?.();
-    setShowFilter(false);
+    setFiltersChanged(true);
   };
 
-  const hasActiveFilters = Object.keys(activeFilters).length > 0;
+  const handleCancelFilters = () => {
+    setLocalFilters(activeFilters);
+    setShowFilter(false);
+    setFiltersChanged(false);
+  };
+
+  // Clean active filters to remove empty values
+  const cleanedActiveFilters = Object.entries(activeFilters).reduce(
+    (acc, [key, value]) => {
+      if (value !== "" && value !== "All" && value != null) {
+        acc[key] = value;
+      }
+      return acc;
+    },
+    {}
+  );
+
+  const hasActiveFilters = Object.keys(cleanedActiveFilters).length > 0;
 
   return (
     <div className="mt-5 max-w-[1050px] m-auto flex flex-col rounded-xl border border-gray-200 bg-white shadow-sm">
@@ -90,7 +132,7 @@ const Table = ({
           {/* Active Filters Badges */}
           {hasActiveFilters && (
             <div className="flex flex-wrap gap-1">
-              {Object.entries(activeFilters).map(([key, value]) => (
+              {Object.entries(cleanedActiveFilters).map(([key, value]) => (
                 <span
                   key={key}
                   className="inline-flex items-center px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded-full"
@@ -128,7 +170,7 @@ const Table = ({
                 <FiFilter /> Filter
                 {hasActiveFilters && (
                   <span className="bg-blue-600 text-white text-xs rounded-full h-4 w-4 flex items-center justify-center">
-                    {Object.keys(activeFilters).length}
+                    {Object.keys(cleanedActiveFilters).length}
                   </span>
                 )}
               </button>
@@ -197,14 +239,19 @@ const Table = ({
                   {/* Actions */}
                   <div className="flex justify-end gap-2">
                     <button
-                      onClick={() => setShowFilter(false)}
+                      onClick={handleCancelFilters}
                       className="px-3 py-1.5 text-sm text-gray-600 hover:text-gray-800"
                     >
                       Cancel
                     </button>
                     <button
                       onClick={handleApplyFilters}
-                      className="px-4 py-1.5 text-sm text-white bg-blue-600 rounded-lg hover:bg-blue-700"
+                      disabled={!filtersChanged}
+                      className={`px-4 py-1.5 text-sm text-white rounded-lg ${
+                        filtersChanged
+                          ? "bg-blue-600 hover:bg-blue-700"
+                          : "bg-gray-300 cursor-not-allowed"
+                      }`}
                     >
                       Apply
                     </button>

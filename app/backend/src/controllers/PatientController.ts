@@ -145,5 +145,3 @@ export const filterPatients = catchAsyncError(async (req, res) => {
     },
   });
 });
-
-

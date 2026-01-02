@@ -12,6 +12,7 @@ import {
   FaSave,
   FaTrash,
 } from "react-icons/fa";
+import { MdDateRange } from "react-icons/md";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import BackButton from "../../components/BackButton/BackButton";
@@ -46,12 +47,12 @@ const formFields = [
         icon: <FaUser className="text-gray-400" />,
       },
       {
-        label: "Age",
-        type: "number",
-        name: "age",
-        placeholder: "Enter age",
-        min: 0,
-        max: 120,
+        label: "Patient ID",
+        type: "text",
+        name: "hospitalPatientId",
+        placeholder: "Enter patient's ID",
+        icon: <FaUser className="text-gray-400" />,
+        disabledAlways: true,
       },
       {
         label: "Mobile Number",
@@ -66,19 +67,7 @@ const formFields = [
         name: "gender",
         placeholder: "Select gender",
         options: ["Male", "Female", "Other"],
-      },
-    ],
-  },
-  {
-    section: "Additional Details",
-    icon: <FaBed className="text-blue-500" />,
-    fields: [
-      {
-        label: "Bed Number",
-        type: "text",
-        name: "bedNumber",
-        placeholder: "Enter bed number",
-        icon: <FaBed className="text-gray-400" />,
+        icon: <FaVenusMars className="text-gray-400" />,
       },
       {
         label: "Aadhaar Number",
@@ -89,18 +78,17 @@ const formFields = [
         maxLength: 12,
       },
       {
+        label: "Date Of Birth",
+        type: "date",
+        name: "dateOfBirth",
+        icon: <MdDateRange className="text-gray-400" />,
+      },
+      {
         label: "Address",
         type: "textarea",
         name: "address",
         placeholder: "Enter full address",
         icon: <FaHome className="text-gray-400" />,
-      },
-      {
-        label: "Medical History",
-        type: "textarea",
-        name: "medicalHistory",
-        placeholder: "Enter any known medical conditions or history",
-        icon: <FaNotesMedical className="text-gray-400" />,
       },
     ],
   },
@@ -153,7 +141,7 @@ const EditPatients = () => {
         setEditMode(false);
       }
     } catch (error) {
-      console.log(error)
+      console.log(error);
     }
   };
 
@@ -170,7 +158,7 @@ const EditPatients = () => {
         navigate("/patients-entries");
       }
     } catch (error) {
-      console.log(error)
+      console.log(error);
     } finally {
       setShowDeleteModal(false);
     }
@@ -224,7 +212,7 @@ const EditPatients = () => {
               {section.fields.map((field, fieldIndex) => {
                 const error = errors[field.name];
                 const fieldValue = patientData[field.name];
-
+                const isDisabled = field.disabledAlways || !editMode;
                 return (
                   <div
                     key={fieldIndex}
@@ -241,10 +229,10 @@ const EditPatients = () => {
                       <div className="relative">
                         <select
                           {...register(field.name)}
-                          disabled={!editMode}
+                          disabled={isDisabled}
                           className={`block w-full px-4 py-2 border rounded-lg focus:ring-blue-500 focus:border-blue-500 appearance-none pr-8 ${
                             error ? "border-red-500" : "border-gray-300"
-                          } ${getDisabledStyles(!editMode)}`}
+                          } ${getDisabledStyles(isDisabled)}`}
                           aria-invalid={error ? "true" : "false"}
                         >
                           <option value="" disabled hidden>
@@ -283,7 +271,7 @@ const EditPatients = () => {
                     ) : field.type === "textarea" ? (
                       <textarea
                         {...register(field.name)}
-                        disabled={!editMode}
+                        disabled={isDisabled}
                         rows={3}
                         placeholder={field.placeholder}
                         defaultValue={fieldValue}
@@ -291,7 +279,7 @@ const EditPatients = () => {
                           field.icon ? "pl-10" : ""
                         } ${
                           error ? "border-red-500" : "border-gray-300"
-                        } ${getDisabledStyles(!editMode)}`}
+                        } ${getDisabledStyles(isDisabled)}`}
                         aria-invalid={error ? "true" : "false"}
                       />
                     ) : (
@@ -301,7 +289,7 @@ const EditPatients = () => {
                           {...register(field.name, {
                             valueAsNumber: field.type === "number",
                           })}
-                          disabled={!editMode}
+                          disabled={isDisabled}
                           placeholder={field.placeholder}
                           defaultValue={fieldValue}
                           min={field.min}
@@ -311,7 +299,7 @@ const EditPatients = () => {
                             field.icon ? "pl-10" : ""
                           } ${
                             error ? "border-red-500" : "border-gray-300"
-                          } ${getDisabledStyles(!editMode)}`}
+                          } ${getDisabledStyles(isDisabled)}`}
                           aria-invalid={error ? "true" : "false"}
                         />
                         {field.icon && (

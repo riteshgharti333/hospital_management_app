@@ -65,38 +65,53 @@ enum Role {
 
 
 /////////////////
-model Admission {
-  id              Int      @id @default(autoincrement())
-  admissionDate   DateTime
-  admissionTime   String
-  dischargeDate   DateTime?
-  gsRsRegNo       String  @unique
-  wardNo          String
-  bedNo           String
-  bloodGroup      String
-  aadhaarNo       String? 
-  urnNo           String  @unique
-  patientName     String
-  patientAge      Int
-  patientSex      String
-  guardianType    String
-  guardianName    String
-  phoneNo         String
-  patientAddress  String
-  bodyWeightKg    Float
-  bodyHeightCm    Float
-  literacy        String
-  occupation      String
-  doctorName      String
-  isDelivery      Boolean  @default(false)
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+model Patient {
+  id                 Int      @id @default(autoincrement())
+  hospitalPatientId  String   @unique
+  fullName           String
+  dateOfBirth        DateTime
+  gender             String
+  mobileNumber       String?
+  aadhaarNumber      String?  @unique
+  address            String
 
-  @@index([admissionDate, bloodGroup, patientSex])
-  @@index([bloodGroup, patientSex])
-  @@index([admissionDate])
-  @@index([admissionDate, patientSex])
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+
+  admissions         Admission[]
 }
+
+
+
+
+/////////////////
+
+model Admission {
+  id                   Int      @id @default(autoincrement())
+  hospitalAdmissionId  String   @unique
+
+  patientId            Int
+  doctorId             Int
+
+  admissionDate        DateTime
+  dischargeDate        DateTime?
+  status               String   @default("ADMITTED")
+
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
+
+  patient              Patient  @relation(fields: [patientId], references: [id])
+  doctor               Doctor   @relation(fields: [doctorId], references: [id])
+
+  prescriptions        Prescription[]   // 👈 inverse relation
+
+  @@index([patientId])
+  @@index([doctorId])
+  @@index([admissionDate])
+}
+
+
+
 
 
 ////////////////////
@@ -125,22 +140,7 @@ model Birth {
 }
 
 
-/////////////////
 
-model Patient {
-  id            Int      @id @default(autoincrement())
-  fullName      String
-  age           Int
-  mobileNumber  String
-  gender        String
-  bedNumber     String
-  aadhaarNumber String 
-  address       String
-  medicalHistory String
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
-  prescriptions  Prescription[]
-}
 
 //////////////////
 
@@ -270,6 +270,7 @@ model Doctor {
   status         String   @default("Active")
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
+  admissions      Admission[] 
 
   prescriptions  Prescription[]
 
@@ -310,19 +311,22 @@ model Pharmacist {
 
 
 model Prescription {
-  id               Int           @id @default(autoincrement())
-  prescriptionDate DateTime
+  id               Int      @id @default(autoincrement())
+  admissionId      Int      // 👈 CORRECT foreign key
   doctorId         Int
-  patientId        Int
-  prescriptionDoc  String?      
-  status           String        @default("Active")
-  createdAt        DateTime      @default(now())
-  updatedAt        DateTime      @updatedAt
-  
+
+  prescriptionDate DateTime
+  prescriptionDoc  String?
+
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  admission        Admission @relation(fields: [admissionId], references: [id])
+  doctor           Doctor    @relation(fields: [doctorId], references: [id])
+
   medicines        Medicine[]
-  doctor           Doctor        @relation(fields: [doctorId], references: [id])
-  patient          Patient       @relation(fields: [patientId], references: [id])
 }
+
 
 model Medicine {
   id             Int          @id @default(autoincrement())
