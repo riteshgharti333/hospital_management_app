@@ -9,26 +9,43 @@ import {
   searchBankLedgerResults,
   filterBankLedger,
 } from "../../controllers/ledger/BankLedgerController";
-import { isAuthenticated } from "../../middlewares/isAuthenticated";
-import { isAdmin } from "../../middlewares/isAdmin";
+
+// 🔥 extra ../ for deep folder
+import { authenticateUser } from "../../middlewares/authenticate";
+import { authorizeRoles } from "../../middlewares/authorize";
 
 const router = express.Router();
 
+// CREATE + LIST
 router
   .route("/")
-  .post(isAuthenticated, isAdmin, createBankLedgerRecord)
+  .post(
+    authenticateUser,
+    authorizeRoles("ADMIN"),
+    createBankLedgerRecord
+  )
   .get(getAllBankLedgerRecords);
 
-router.route("/balance").get(getBankBalanceRecord);
+// BALANCE (read-only)
+router.get("/balance", getBankBalanceRecord);
 
+// SEARCH & FILTER
 router.get("/search", searchBankLedgerResults);
-
 router.get("/filter", filterBankLedger);
- 
+
+// GET / UPDATE / DELETE
 router
   .route("/:id")
   .get(getBankLedgerRecordById)
-  .patch(isAuthenticated, isAdmin, updateBankLedgerRecord)
-  .delete(isAuthenticated, isAdmin, deleteBankLedgerRecord);
+  .put(
+    authenticateUser,
+    authorizeRoles("ADMIN"),
+    updateBankLedgerRecord
+  )
+  .delete(
+    authenticateUser,
+    authorizeRoles("ADMIN"),
+    deleteBankLedgerRecord
+  );
 
 export default router;

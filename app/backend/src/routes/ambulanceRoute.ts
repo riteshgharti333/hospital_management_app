@@ -7,22 +7,38 @@ import {
   deleteAmbulanceRecord,
   searchAmbulanceResults,
 } from "../controllers/AmbulanceController";
-import { isAuthenticated } from "../middlewares/isAuthenticated";
-import { isAdmin } from "../middlewares/isAdmin";
+
+import { authenticateUser } from "../middlewares/authenticate";
+import { authorizeRoles } from "../middlewares/authorize";
 
 const router = express.Router();
 
+// CREATE + LIST
 router
   .route("/")
-  .post(isAuthenticated, isAdmin, createAmbulanceRecord)
+  .post(
+    authenticateUser,
+    authorizeRoles("ADMIN"),
+    createAmbulanceRecord
+  )
   .get(getAllAmbulanceRecords);
 
+// SEARCH
 router.get("/search", searchAmbulanceResults);
 
+// GET / UPDATE / DELETE BY ID
 router
   .route("/:id")
   .get(getAmbulanceRecordById)
-  .patch(isAuthenticated, isAdmin, updateAmbulanceRecord)
-  .delete(isAuthenticated, isAdmin, deleteAmbulanceRecord);
+  .put(
+    authenticateUser,
+    authorizeRoles("ADMIN"),
+    updateAmbulanceRecord
+  )
+  .delete(
+    authenticateUser,
+    authorizeRoles("ADMIN"),
+    deleteAmbulanceRecord
+  );
 
 export default router;

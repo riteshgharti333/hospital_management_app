@@ -8,25 +8,39 @@ import {
   searchDepartmentResults,
   filterDepartments,
 } from "../controllers/DepartmentController";
-import { isAuthenticated } from "../middlewares/isAuthenticated";
-import { isAdmin } from "../middlewares/isAdmin";
+
+import { authenticateUser } from "../middlewares/authenticate";
+import { authorizeRoles } from "../middlewares/authorize";
 
 const router = express.Router();
 
+// CREATE + LIST
 router
   .route("/")
-  .post(isAuthenticated, isAdmin, createDepartmentRecord)
+  .post(
+    authenticateUser,
+    authorizeRoles("ADMIN"),
+    createDepartmentRecord
+  )
   .get(getAllDepartmentRecords);
 
+// SEARCH & FILTER
 router.get("/search", searchDepartmentResults);
-
 router.get("/filter", filterDepartments);
 
-
+// GET / UPDATE / DELETE
 router
   .route("/:id")
   .get(getDepartmentRecordById)
-  .put(isAuthenticated, isAdmin, updateDepartmentRecord)
-  .delete(isAuthenticated, isAdmin, deleteDepartmentRecord);
+  .put(
+    authenticateUser,
+    authorizeRoles("ADMIN"),
+    updateDepartmentRecord
+  )
+  .delete(
+    authenticateUser,
+    authorizeRoles("ADMIN"),
+    deleteDepartmentRecord
+  );
 
 export default router;

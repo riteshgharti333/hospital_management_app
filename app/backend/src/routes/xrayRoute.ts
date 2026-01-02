@@ -8,28 +8,52 @@ import {
   updateXrayReportRecord,
   deleteXrayReportRecord,
 } from "../controllers/XrayController";
-import { isAuthenticated } from "../middlewares/isAuthenticated";
-import { isAdmin } from "../middlewares/isAdmin";
+
+import { authenticateUser } from "../middlewares/authenticate";
+import { authorizeRoles } from "../middlewares/authorize";
 
 const router = express.Router();
 
+// CREATE + LIST
 router
   .route("/")
-  .post(isAuthenticated, isAdmin, createXrayReportRecord)
+  .post(
+    authenticateUser,
+    authorizeRoles("ADMIN"),
+    createXrayReportRecord
+  )
   .get(getAllXrayReportRecords);
 
+// SUMMARY REPORTS (ADMIN ONLY)
 router
   .route("/summary/financial")
-  .get(isAuthenticated, isAdmin, getFinancialSummaryReport);
+  .get(
+    authenticateUser,
+    authorizeRoles("ADMIN"),
+    getFinancialSummaryReport
+  );
 
 router
   .route("/summary/doctor-wise")
-  .get(isAuthenticated, isAdmin, getDoctorWiseSummaryReport);
+  .get(
+    authenticateUser,
+    authorizeRoles("ADMIN"),
+    getDoctorWiseSummaryReport
+  );
 
+// GET / UPDATE / DELETE
 router
   .route("/:id")
   .get(getXrayReportRecordById)
-  .patch(isAuthenticated, isAdmin, updateXrayReportRecord)
-  .delete(isAuthenticated, isAdmin, deleteXrayReportRecord);
+  .put(
+    authenticateUser,
+    authorizeRoles("ADMIN"),
+    updateXrayReportRecord
+  )
+  .delete(
+    authenticateUser,
+    authorizeRoles("ADMIN"),
+    deleteXrayReportRecord
+  );
 
 export default router;

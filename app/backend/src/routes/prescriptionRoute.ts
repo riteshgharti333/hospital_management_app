@@ -8,35 +8,42 @@ import {
   searchPrescriptionsResults,
   filterPrescriptions,
 } from "../controllers/PrescriptionController";
+
 import { uploadMiddleware } from "../middlewares/multer.middleware";
-import { isAuthenticated } from "../middlewares/isAuthenticated";
-import { isAdmin } from "../middlewares/isAdmin";
+import { authenticateUser } from "../middlewares/authenticate";
+import { authorizeRoles } from "../middlewares/authorize";
 
 const router = express.Router();
 
+// CREATE + LIST
 router
   .route("/")
   .post(
-    isAuthenticated,
-    isAdmin,
+    authenticateUser,
+    authorizeRoles("ADMIN"),
     uploadMiddleware.single("file"),
     createPrescriptionRecord
   )
   .get(getAllPrescriptionRecords);
 
+// SEARCH & FILTER
 router.get("/search", searchPrescriptionsResults);
-
 router.get("/filter", filterPrescriptions);
 
+// GET / UPDATE / DELETE
 router
   .route("/:id")
   .get(getPrescriptionRecordById)
-  .patch(
-    isAuthenticated,
-    isAdmin,
+  .put(
+    authenticateUser,
+    authorizeRoles("ADMIN"),
     uploadMiddleware.single("file"),
     updatePrescriptionRecord
   )
-  .delete(isAuthenticated, isAdmin, deletePrescriptionRecord);
+  .delete(
+    authenticateUser,
+    authorizeRoles("ADMIN"),
+    deletePrescriptionRecord
+  );
 
 export default router;

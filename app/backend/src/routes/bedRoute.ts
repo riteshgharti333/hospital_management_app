@@ -7,22 +7,38 @@ import {
   deleteBedRecord,
   searchBedResults,
 } from "../controllers/BedController";
-import { isAuthenticated } from "../middlewares/isAuthenticated";
-import { isAdmin } from "../middlewares/isAdmin";
+
+import { authenticateUser } from "../middlewares/authenticate";
+import { authorizeRoles } from "../middlewares/authorize";
 
 const router = express.Router();
 
+// CREATE + LIST
 router
   .route("/")
-  .post(isAuthenticated, isAdmin, createBedRecord)
+  .post(
+    authenticateUser,
+    authorizeRoles("ADMIN"),
+    createBedRecord
+  )
   .get(getAllBedRecords);
 
+// SEARCH
 router.get("/search", searchBedResults);
 
+// GET / UPDATE / DELETE
 router
   .route("/:id")
   .get(getBedRecordById)
-  .put(isAuthenticated, isAdmin, updateBedRecord)
-  .delete(isAuthenticated, isAdmin, deleteBedRecord);
+  .put(
+    authenticateUser,
+    authorizeRoles("ADMIN"),
+    updateBedRecord
+  )
+  .delete(
+    authenticateUser,
+    authorizeRoles("ADMIN"),
+    deleteBedRecord
+  );
 
 export default router;

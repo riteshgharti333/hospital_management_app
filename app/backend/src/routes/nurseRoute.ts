@@ -6,27 +6,41 @@ import {
   updateNurseRecord,
   deleteNurseRecord,
   searchNurseResults,
-  filterNurses
+  filterNurses,
 } from "../controllers/NurseController";
-import { isAdmin } from "../middlewares/isAdmin";
+
 import { authenticateUser } from "../middlewares/authenticate";
+import { authorizeRoles } from "../middlewares/authorize";
 
 const router = express.Router();
 
+// CREATE + LIST
 router
   .route("/")
-  .post(authenticateUser, createNurseRecord)
+  .post(
+    authenticateUser,
+    authorizeRoles("ADMIN"),
+    createNurseRecord
+  )
   .get(getAllNurseRecords);
 
+// SEARCH & FILTER
 router.get("/search", searchNurseResults);
-
 router.get("/filter", filterNurses);
 
-
+// GET / UPDATE / DELETE
 router
   .route("/:id")
   .get(getNurseRecordById)
-  .patch(authenticateUser, isAdmin, updateNurseRecord)
-  .delete(authenticateUser, isAdmin, deleteNurseRecord);
+  .put(
+    authenticateUser,
+    authorizeRoles("ADMIN"),
+    updateNurseRecord
+  )
+  .delete(
+    authenticateUser,
+    authorizeRoles("ADMIN"),
+    deleteNurseRecord
+  );
 
 export default router;

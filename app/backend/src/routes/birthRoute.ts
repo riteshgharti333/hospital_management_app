@@ -8,24 +8,39 @@ import {
   getAllBirth,
   filterBirths,
 } from "../controllers/BirthController";
-import { isAuthenticated } from "../middlewares/isAuthenticated";
-import { isAdmin } from "../middlewares/isAdmin";
+
+import { authenticateUser } from "../middlewares/authenticate";
+import { authorizeRoles } from "../middlewares/authorize";
 
 const router = express.Router();
 
+// CREATE + LIST
 router
   .route("/")
-  .post(isAuthenticated, isAdmin, createBirthRecord)
+  .post(
+    authenticateUser,
+    authorizeRoles("ADMIN"),
+    createBirthRecord
+  )
   .get(getAllBirth);
 
+// SEARCH & FILTER
 router.get("/search", searchBirthResults);
-
 router.get("/filter", filterBirths);
 
+// GET / UPDATE / DELETE
 router
   .route("/:id")
   .get(getBirthRecordById)
-  .put(isAuthenticated, isAdmin, updateBirthRecord)
-  .delete(isAuthenticated, isAdmin, deleteBirthRecord);
+  .put(
+    authenticateUser,
+    authorizeRoles("ADMIN"),
+    updateBirthRecord
+  )
+  .delete(
+    authenticateUser,
+    authorizeRoles("ADMIN"),
+    deleteBirthRecord
+  );
 
 export default router;

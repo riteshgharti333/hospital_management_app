@@ -8,23 +8,40 @@ import {
   searchBillsResults,
   filterBills,
 } from "../../controllers/transection/BillController";
-import { isAuthenticated } from "../../middlewares/isAuthenticated";
-import { isAdmin } from "../../middlewares/isAdmin";
+
+// 🔥 extra ../ added here
+import { authenticateUser } from "../../middlewares/authenticate";
+import { authorizeRoles } from "../../middlewares/authorize";
 
 const router = express.Router();
 
+// CREATE + LIST
 router
   .route("/")
-  .post(isAuthenticated, isAdmin, createBillRecord)
+  .post(
+    authenticateUser,
+    authorizeRoles("ADMIN"),
+    createBillRecord
+  )
   .get(getAllBillRecords);
 
+// SEARCH & FILTER
 router.get("/search", searchBillsResults);
 router.get("/filter", filterBills);
 
+// GET / UPDATE / DELETE
 router
   .route("/:id")
   .get(getBillRecordById)
-  .patch(isAuthenticated, isAdmin, updateBillRecord)
-  .delete(isAuthenticated, isAdmin, deleteBillRecord);
+  .put(
+    authenticateUser,
+    authorizeRoles("ADMIN"),
+    updateBillRecord
+  )
+  .delete(
+    authenticateUser,
+    authorizeRoles("ADMIN"),
+    deleteBillRecord
+  );
 
 export default router;

@@ -8,28 +8,45 @@ import {
   deleteBedAssignmentRecord,
   searchBedAssignmentResults,
 } from "../controllers/BedAssignController";
-import { isAuthenticated } from "../middlewares/isAuthenticated";
-import { isAdmin } from "../middlewares/isAdmin";
+
+import { authenticateUser } from "../middlewares/authenticate";
+import { authorizeRoles } from "../middlewares/authorize";
 
 const router = express.Router();
 
+// CREATE + LIST
 router
   .route("/")
-  .post(isAuthenticated, isAdmin, createBedAssignmentRecord)
+  .post(
+    authenticateUser,
+    authorizeRoles("ADMIN"),
+    createBedAssignmentRecord
+  )
   .get(getAllBedAssignmentRecords);
 
+// SEARCH
 router.get("/search", searchBedAssignmentResults);
 
+// GET / UPDATE / DELETE
 router
   .route("/:id")
   .get(getBedAssignmentRecordById)
-  .put(isAuthenticated, isAdmin, updateBedAssignmentRecord)
-  .delete(isAuthenticated, isAdmin, deleteBedAssignmentRecord);
+  .put(
+    authenticateUser,
+    authorizeRoles("ADMIN"),
+    updateBedAssignmentRecord
+  )
+  .delete(
+    authenticateUser,
+    authorizeRoles("ADMIN"),
+    deleteBedAssignmentRecord
+  );
 
+// DISCHARGE PATIENT
 router.post(
   "/:id/discharge",
-  isAuthenticated,
-  isAdmin,
+  authenticateUser,
+  authorizeRoles("ADMIN"),
   dischargePatientFromBed
 );
 

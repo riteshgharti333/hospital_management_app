@@ -8,31 +8,40 @@ import {
   searchDoctorResults,
   filterDoctors,
 } from "../controllers/DoctorController";
-import { isAuthenticated } from "../middlewares/isAuthenticated";
-import { isAdmin } from "../middlewares/isAdmin";
-import { authorizeRoles } from "../middlewares/authorize";
+
 import { authenticateUser } from "../middlewares/authenticate";
+import { authorizeRoles } from "../middlewares/authorize";
 
 const router = express.Router();
 
+// CREATE
 router.post(
-  "/create", 
+  "/create",
   authenticateUser,
-  authorizeRoles("ADMIN"), 
+  authorizeRoles("ADMIN"),
   createDoctorRecord
 );
 
-// GET request to: /api/doctors/list
+// LIST
 router.get("/", getAllDoctorRecords);
 
+// SEARCH & FILTER
 router.get("/search", searchDoctorResults);
-
 router.get("/filter", filterDoctors);
 
+// GET / UPDATE / DELETE
 router
   .route("/:id")
   .get(getDoctorRecordById)
-  .patch(isAuthenticated, isAdmin, updateDoctorRecord)
-  .delete(isAuthenticated, isAdmin, deleteDoctorRecord);
+  .put(
+    authenticateUser,
+    authorizeRoles("ADMIN"),
+    updateDoctorRecord
+  )
+  .delete(
+    authenticateUser,
+    authorizeRoles("ADMIN"),
+    deleteDoctorRecord
+  );
 
 export default router;

@@ -7,27 +7,41 @@ import {
   updateAppointmentRecord,
   deleteAppointmentRecord,
   searchAppointmentResults,
-  filterAppointments
+  filterAppointments,
 } from "../controllers/AppointmentController";
-import { isAuthenticated } from "../middlewares/isAuthenticated";
-import { isAdmin } from "../middlewares/isAdmin";
+
+import { authenticateUser } from "../middlewares/authenticate";
+import { authorizeRoles } from "../middlewares/authorize";
 
 const router = express.Router();
 
+// CREATE + LIST
 router
   .route("/")
-  .post(isAuthenticated, isAdmin, createAppointmentRecord)
+  .post(
+    authenticateUser,
+    authorizeRoles("ADMIN"),
+    createAppointmentRecord
+  )
   .get(getAllAppointmentRecords);
 
+// SEARCH & FILTER
 router.get("/search", searchAppointmentResults);
-
 router.get("/filter", filterAppointments);
 
-
+// GET / UPDATE / DELETE BY ID
 router
   .route("/:id")
   .get(getAppointmentRecordById)
-  .patch(isAuthenticated, isAdmin, updateAppointmentRecord)
-  .delete(isAuthenticated, isAdmin, deleteAppointmentRecord);
+  .put(
+    authenticateUser,
+    authorizeRoles("ADMIN"),
+    updateAppointmentRecord
+  )
+  .delete(
+    authenticateUser,
+    authorizeRoles("ADMIN"),
+    deleteAppointmentRecord
+  );
 
 export default router;

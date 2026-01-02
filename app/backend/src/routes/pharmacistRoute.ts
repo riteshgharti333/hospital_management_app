@@ -7,22 +7,38 @@ import {
   deletePharmacistRecord,
   searchPharmacistResults,
 } from "../controllers/PharmacistController";
-import { isAuthenticated } from "../middlewares/isAuthenticated";
-import { isAdmin } from "../middlewares/isAdmin";
+
+import { authenticateUser } from "../middlewares/authenticate";
+import { authorizeRoles } from "../middlewares/authorize";
 
 const router = express.Router();
 
+// CREATE + LIST
 router
   .route("/")
-  .post(isAuthenticated, isAdmin, createPharmacistRecord)
+  .post(
+    authenticateUser,
+    authorizeRoles("ADMIN"),
+    createPharmacistRecord
+  )
   .get(getAllPharmacistRecords);
 
+// SEARCH
 router.get("/search", searchPharmacistResults);
 
+// GET / UPDATE / DELETE
 router
   .route("/:id")
   .get(getPharmacistRecordById)
-  .patch(isAuthenticated, isAdmin, updatePharmacistRecord)
-  .delete(isAuthenticated, isAdmin, deletePharmacistRecord);
+  .put(
+    authenticateUser,
+    authorizeRoles("ADMIN"),
+    updatePharmacistRecord
+  )
+  .delete(
+    authenticateUser,
+    authorizeRoles("ADMIN"),
+    deletePharmacistRecord
+  );
 
 export default router;

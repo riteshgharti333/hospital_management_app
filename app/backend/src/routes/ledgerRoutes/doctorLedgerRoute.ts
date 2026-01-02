@@ -9,26 +9,43 @@ import {
   searchDoctorLedgerResults,
   filterDoctorLedger,
 } from "../../controllers/ledger/DoctorLedgerController";
-import { isAuthenticated } from "../../middlewares/isAuthenticated";
-import { isAdmin } from "../../middlewares/isAdmin";
+
+// 🔥 extra ../ for deep folder
+import { authenticateUser } from "../../middlewares/authenticate";
+import { authorizeRoles } from "../../middlewares/authorize";
 
 const router = express.Router();
 
+// CREATE + LIST
 router
   .route("/")
-  .post(isAuthenticated, isAdmin, createDoctorLedgerRecord)
+  .post(
+    authenticateUser,
+    authorizeRoles("ADMIN"),
+    createDoctorLedgerRecord
+  )
   .get(getAllDoctorLedgerRecords);
 
-router.route("/balance").get(getDoctorBalanceRecord);
+// BALANCE (read-only)
+router.get("/balance", getDoctorBalanceRecord);
 
+// SEARCH & FILTER
 router.get("/search", searchDoctorLedgerResults);
-
 router.get("/filter", filterDoctorLedger);
 
+// GET / UPDATE / DELETE
 router
   .route("/:id")
   .get(getDoctorLedgerRecordById)
-  .patch(isAuthenticated, isAdmin, updateDoctorLedgerRecord)
-  .delete(isAuthenticated, isAdmin, deleteDoctorLedgerRecord);
+  .put(
+    authenticateUser,
+    authorizeRoles("ADMIN"),
+    updateDoctorLedgerRecord
+  )
+  .delete(
+    authenticateUser,
+    authorizeRoles("ADMIN"),
+    deleteDoctorLedgerRecord
+  );
 
 export default router;
