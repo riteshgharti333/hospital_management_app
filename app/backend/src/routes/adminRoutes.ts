@@ -3,7 +3,9 @@ import { authenticateUser } from "../middlewares/authenticate";
 import { authorizeRoles } from "../middlewares/authorize";
 import {
   createStaffAccess,
+  deleteUserRecord,
   getAllUsers,
+  regenerateStaffTempPassword,
   toggleStaffAccess,
 } from "../controllers/AdminUserController";
 
@@ -23,13 +25,22 @@ router.post(
   toggleStaffAccess
 );
 
-
-router.get(
-  "/staff",
+router.post(
+  "/staff/regenerate-temp-password",
   authenticateUser,
   authorizeRoles("ADMIN"),
-  getAllUsers
+  regenerateStaffTempPassword
+);
+
+router.delete(
+  "/staff/:regId",
+  authenticateUser,
+  authorizeRoles("ADMIN"),
+  deleteUserRecord
 );
 
 
+
 export default router;
+
+router.get("/staff", authenticateUser, authorizeRoles("ADMIN"), getAllUsers);

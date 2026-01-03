@@ -10,7 +10,7 @@ export const getBillByIdAPI = (id) =>
   axiosInstance.get(`/transection/bill/${id}`);
 
 export const updateBillAPI = (id, data) =>
-  axiosInstance.patch(`/transection/bill/${id}`, data);
+  axiosInstance.put(`/transection/bill/${id}`, data);
 
 export const deleteBillAPI = (id) =>
   axiosInstance.delete(`/transection/bill/${id}`);

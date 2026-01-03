@@ -174,6 +174,7 @@ const DoctorLedger = () => {
         data={data?.data || []}
         columns={columns}
         path="doctor-ledger"
+        ledger={true}
         loading={isLoading}
         searchConfig={{
           placeholder: "Search doctor ledger...",

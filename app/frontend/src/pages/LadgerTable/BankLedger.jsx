@@ -31,12 +31,11 @@ const BankLedger = () => {
     useSearchBankLedger(searchTerm);
 
   // Filter results
-  const { data: filterData, isLoading: filterLoading } =
-    useFilterBankLedger({
-      ...filters,
-      cursor: currentCursor,
-      limit: 50,
-    });
+  const { data: filterData, isLoading: filterLoading } = useFilterBankLedger({
+    ...filters,
+    cursor: currentCursor,
+    limit: 50,
+  });
 
   // Decide active dataset
   const getCurrentData = () => {
@@ -69,7 +68,10 @@ const BankLedger = () => {
   const columns = useMemo(
     () => [
       { accessorKey: "bankName", header: "Bank Name" },
-      { accessorKey: "date", header: "Date", cell: (info) => {
+      {
+        accessorKey: "date",
+        header: "Date",
+        cell: (info) => {
           const date = new Date(info.getValue());
           return isNaN(date)
             ? info.getValue()
@@ -78,7 +80,8 @@ const BankLedger = () => {
                 month: "short",
                 year: "numeric",
               });
-        }, },
+        },
+      },
       { accessorKey: "description", header: "Description" },
       {
         accessorKey: "amountType",
@@ -91,7 +94,9 @@ const BankLedger = () => {
               : "bg-green-100 text-green-700";
 
           return (
-            <span className={`px-2 py-1 rounded text-xs font-medium ${classes}`}>
+            <span
+              className={`px-2 py-1 rounded text-xs font-medium ${classes}`}
+            >
               {value}
             </span>
           );
@@ -150,6 +155,7 @@ const BankLedger = () => {
         data={data?.data || []}
         columns={columns}
         path="bank-ledger"
+        ledger={true}
         loading={isLoading}
         searchConfig={{
           placeholder: "Search by bank name...",

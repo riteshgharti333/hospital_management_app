@@ -32,12 +32,13 @@ const PatientLedger = () => {
     useSearchPatientLedger(searchTerm);
 
   // Filter ledger
-  const { data: filterData, isLoading: filterLoading } =
-    useFilterPatientLedger({
+  const { data: filterData, isLoading: filterLoading } = useFilterPatientLedger(
+    {
       ...filters,
       cursor: currentCursor,
       limit: 50,
-    });
+    }
+  );
 
   // Decide which dataset to show
   const getCurrentData = () => {
@@ -70,7 +71,10 @@ const PatientLedger = () => {
   const columns = useMemo(
     () => [
       { accessorKey: "patientName", header: "Patient Name" },
-      { accessorKey: "date", header: "Date", cell: (info) => {
+      {
+        accessorKey: "date",
+        header: "Date",
+        cell: (info) => {
           const date = new Date(info.getValue());
           return isNaN(date)
             ? info.getValue()
@@ -79,7 +83,8 @@ const PatientLedger = () => {
                 month: "short",
                 year: "numeric",
               });
-        }, },
+        },
+      },
       { accessorKey: "description", header: "Description" },
       {
         accessorKey: "amountType",
@@ -94,7 +99,9 @@ const PatientLedger = () => {
               : "bg-gray-100 text-gray-800";
 
           return (
-            <span className={`px-2 py-1 rounded text-xs font-medium ${classes}`}>
+            <span
+              className={`px-2 py-1 rounded text-xs font-medium ${classes}`}
+            >
               {value}
             </span>
           );
@@ -118,7 +125,9 @@ const PatientLedger = () => {
               : "bg-gray-100 text-gray-800";
 
           return (
-            <span className={`px-2 py-1 rounded text-xs font-medium ${classes}`}>
+            <span
+              className={`px-2 py-1 rounded text-xs font-medium ${classes}`}
+            >
               {value}
             </span>
           );
@@ -177,6 +186,7 @@ const PatientLedger = () => {
         columns={columns}
         path="patient-ledger"
         loading={isLoading}
+        ledger={true}
         searchConfig={{
           placeholder: "Search by patient name...",
           searchTerm,

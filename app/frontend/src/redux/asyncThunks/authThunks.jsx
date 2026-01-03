@@ -12,6 +12,8 @@ import {
   toggleStaffAccess,
   updateProfileApi,
   verifyOtpAPI,
+  regenerateTempPasswordAPI,
+  deleteUserAPI
 } from "../api/authAPI";
 
 // LOGIN ASYNC THUNK
@@ -117,7 +119,6 @@ export const updateUserProfile = createAsyncThunk(
   async (updateData, { rejectWithValue }) => {
     try {
       const { data } = await updateProfileApi(updateData);
-
       return data.data;
     } catch (err) {
       return rejectWithValue(
@@ -176,6 +177,36 @@ export const changePasswordThunk = createAsyncThunk(
     } catch (err) {
       return rejectWithValue(
         err.response?.data?.message || "Failed to change password"
+      );
+    }
+  }
+);
+
+
+export const regenerateTempPasswordThunk = createAsyncThunk(
+  "users/regenerateTempPassword",
+  async (payload, { rejectWithValue }) => {
+    try {
+      const res = await regenerateTempPasswordAPI(payload);
+      return res.data;
+    } catch (err) {
+      return rejectWithValue(
+        err.response?.data?.message || "Failed to regenerate temp password"
+      );
+    }
+  }
+);
+
+
+export const deleteUserThunk = createAsyncThunk(
+  "users/deleteUser",
+  async (regId, { rejectWithValue }) => {
+    try {
+      const res = await deleteUserAPI(regId);
+      return { regId, data: res.data };
+    } catch (err) {
+      return rejectWithValue(
+        err.response?.data?.message || "Failed to delete user"
       );
     }
   }

@@ -65,13 +65,68 @@ export const getDoctorsByDepartment = async (department: string) => {
   });
 };
 
-export const updateDoctor = async (id: number, data: Partial<DoctorInput>) => {
-  return prisma.doctor.update({ where: { id }, data });
+export const updateDoctor = async (
+  id: number,
+  data: Partial<DoctorInput>
+) => {
+  return prisma.$transaction(async (tx) => {
+    // 1️⃣ Update Doctor
+    const updatedDoctor = await tx.doctor.update({
+      where: { id },
+      data,
+    });
+
+    // 2️⃣ Sync ONLY identity fields to User
+    const userUpdateData: any = {};
+
+    if (data.fullName) {
+      userUpdateData.name = data.fullName;
+    }
+
+    if (data.email) {
+      userUpdateData.email = data.email;
+    }
+
+    // Update User only if identity fields changed
+    if (Object.keys(userUpdateData).length > 0) {
+      await tx.user.update({
+        where: { regId: updatedDoctor.registrationNo },
+        data: userUpdateData,
+      });
+    }
+
+    return updatedDoctor;
+  });
 };
 
+
+
 export const deleteDoctor = async (id: number) => {
-  return prisma.doctor.delete({ where: { id } });
+  return prisma.$transaction(async (tx) => {
+    // 1️⃣ Find doctor first (to get registrationNo)
+    const doctor = await tx.doctor.findUnique({
+      where: { id },
+      select: { registrationNo: true },
+    });
+
+    if (!doctor) {
+      return null;
+    }
+
+    // 2️⃣ Delete doctor
+    const deletedDoctor = await tx.doctor.delete({
+      where: { id },
+    });
+
+    // 3️⃣ Delete linked user (mirror cleanup)
+    await tx.user.delete({
+      where: { regId: doctor.registrationNo },
+    });
+
+    return deletedDoctor;
+  });
 };
+
 
 const commonSearchFields = ["fullName", "mobileNumber", "registrationNo"];
 

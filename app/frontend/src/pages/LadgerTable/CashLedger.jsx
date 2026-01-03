@@ -153,6 +153,7 @@ const CashLedger = () => {
         data={data?.data || []}
         columns={columns}
         path="cash-ledger"
+        ledger={true}
         loading={isLoading}
         searchConfig={{
           placeholder: "Search by purpose...",

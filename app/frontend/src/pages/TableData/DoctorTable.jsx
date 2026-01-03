@@ -27,6 +27,8 @@ const DoctorTable = () => {
     50
   );
 
+  console.log(doctorData)
+
   // Search dataset
   const { data: searchData, isLoading: loadingSearch } =
     useSearchDoctors(searchTerm);

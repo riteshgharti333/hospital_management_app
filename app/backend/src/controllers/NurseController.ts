@@ -91,6 +91,7 @@ export const getNurseRecordById = catchAsyncError(
 export const updateNurseRecord = catchAsyncError(
   async (req: Request, res: Response, next: NextFunction) => {
     const id = Number(req.params.id);
+
     if (isNaN(id)) {
       return next(new ErrorHandler("Invalid ID", StatusCodes.BAD_REQUEST));
     }
@@ -98,7 +99,7 @@ export const updateNurseRecord = catchAsyncError(
     const partialSchema = nurseSchema.partial();
     const validatedData = partialSchema.parse(req.body);
 
-    // 🔍 Email uniqueness check
+    // 🔍 Email uniqueness check (Nurse table)
     if (validatedData.email) {
       const existingEmail = await getNurseByEmail(validatedData.email);
 
@@ -130,11 +131,13 @@ export const updateNurseRecord = catchAsyncError(
 export const deleteNurseRecord = catchAsyncError(
   async (req: Request, res: Response, next: NextFunction) => {
     const id = Number(req.params.id);
+
     if (isNaN(id)) {
       return next(new ErrorHandler("Invalid ID", StatusCodes.BAD_REQUEST));
     }
 
     const deletedNurse = await deleteNurse(id);
+
     if (!deletedNurse) {
       return next(new ErrorHandler("Nurse not found", StatusCodes.NOT_FOUND));
     }
@@ -142,7 +145,7 @@ export const deleteNurseRecord = catchAsyncError(
     sendResponse(res, {
       success: true,
       statusCode: StatusCodes.OK,
-      message: "Nurse deleted successfully",
+      message: "Nurse and access deleted successfully",
       data: deletedNurse,
     });
   }

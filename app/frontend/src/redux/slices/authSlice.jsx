@@ -13,6 +13,8 @@ import {
   getUsers,
   refreshTokenThunk,
   changePasswordThunk,
+  regenerateTempPasswordThunk,
+  deleteUserThunk,
 } from "../asyncThunks/authThunks";
 
 const initialState = {
@@ -42,6 +44,8 @@ const initialState = {
   otpVerified: false,
   resetUserId: null,
   resetToken: null,
+
+  regeneratedPassword: null,
 };
 
 const authSlice = createSlice({
@@ -231,6 +235,34 @@ const authSlice = createSlice({
         state.lastAction = "PASSWORD_CHANGED";
       })
       .addCase(changePasswordThunk.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload;
+      });
+
+    builder
+      .addCase(regenerateTempPasswordThunk.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+        state.regeneratedPassword = null;
+      })
+      .addCase(regenerateTempPasswordThunk.fulfilled, (state, action) => {
+        state.loading = false;
+        state.regeneratedPassword = action.payload.data.tempPassword;
+      })
+      .addCase(regenerateTempPasswordThunk.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload;
+      });
+
+    builder
+      .addCase(deleteUserThunk.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(deleteUserThunk.fulfilled, (state) => {
+        state.loading = false;
+      })
+      .addCase(deleteUserThunk.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload;
       });

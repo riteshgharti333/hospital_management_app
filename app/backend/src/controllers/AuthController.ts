@@ -138,14 +138,14 @@ export const setNewPasswordController = catchAsyncError(
       message: "Password updated successfully. You can now log in.",
     });
   }
-);
+);              
 
 // ===============================
 // GET PROFILE
 // ===============================
 export const getProfile = catchAsyncError(
-  async (req: Request, res: Response, next: NextFunction) => {
-    const userId = req.user?.id;
+  async (req: Request, res: Response, next: NextFunction) => {   
+    const userId = req.user?.id;  
 
     if (!userId) {
       return next(new ErrorHandler("Unauthorized", StatusCodes.UNAUTHORIZED));
@@ -174,16 +174,32 @@ export const getProfile = catchAsyncError(
 export const updateProfile = catchAsyncError(
   async (req: Request, res: Response, next: NextFunction) => {
     const userId = req.user?.id;
-    const { name, email } = req.body;
 
     if (!userId) {
       return next(new ErrorHandler("Unauthorized", StatusCodes.UNAUTHORIZED));
     }
 
+    // 🛡️ Defensive check (extra safety)
+    if (req.user?.role !== "ADMIN") {
+      return next(
+        new ErrorHandler("Only admin can update profile", StatusCodes.FORBIDDEN)
+      );
+    }
+
+    const { name, email } = req.body;
+
     const updated = await prisma.user.update({
       where: { id: userId },
-      data: { name, email },
-      select: { name: true, email: true },
+      data: {
+        ...(name && { name }),
+        ...(email && { email }),
+      },
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        role: true,
+      },
     });
 
     return sendResponse(res, {
@@ -194,6 +210,7 @@ export const updateProfile = catchAsyncError(
     });
   }
 );
+
 
 // ===============================
 // LOGOUT

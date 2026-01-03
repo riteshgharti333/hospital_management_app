@@ -91,14 +91,17 @@ export const getDoctorRecordById = catchAsyncError(
 export const updateDoctorRecord = catchAsyncError(
   async (req: Request, res: Response, next: NextFunction) => {
     const id = Number(req.params.id);
+
     if (isNaN(id)) {
-      return next(new ErrorHandler("Invalid ID", StatusCodes.BAD_REQUEST));
+      return next(
+        new ErrorHandler("Invalid ID", StatusCodes.BAD_REQUEST)
+      );
     }
 
     const partialSchema = doctorSchema.partial();
     const validatedData = partialSchema.parse(req.body);
 
-    // 🔍 Email uniqueness check (only if email is being changed)
+    // 🔍 Email uniqueness check (Doctor table)
     if (validatedData.email) {
       const existingDoctor = await getDoctorByEmail(validatedData.email);
 
@@ -114,10 +117,6 @@ export const updateDoctorRecord = catchAsyncError(
 
     const updatedDoctor = await updateDoctor(id, validatedData);
 
-    if (!updatedDoctor) {
-      return next(new ErrorHandler("Doctor not found", StatusCodes.NOT_FOUND));
-    }
-
     sendResponse(res, {
       success: true,
       statusCode: StatusCodes.OK,
@@ -127,11 +126,15 @@ export const updateDoctorRecord = catchAsyncError(
   }
 );
 
+
 export const deleteDoctorRecord = catchAsyncError(
   async (req: Request, res: Response, next: NextFunction) => {
     const id = Number(req.params.id);
+
     if (isNaN(id)) {
-      return next(new ErrorHandler("Invalid ID", StatusCodes.BAD_REQUEST));
+      return next(
+        new ErrorHandler("Invalid ID", StatusCodes.BAD_REQUEST)
+      );
     }
 
     try {
@@ -146,18 +149,17 @@ export const deleteDoctorRecord = catchAsyncError(
       sendResponse(res, {
         success: true,
         statusCode: StatusCodes.OK,
-        message: "Doctor deleted successfully",
+        message: "Doctor and access deleted successfully",
         data: deletedDoctor,
       });
-    } catch (error) {
-      // Handle foreign key constraint violation
+    } catch (error: any) {
       if (
         error instanceof PrismaClientKnownRequestError &&
         error.code === "P2003"
       ) {
         return next(
           new ErrorHandler(
-            "Cannot delete doctor: Prescriptions linked to this doctor exist.",
+            "Cannot delete doctor: Prescriptions or admissions linked to this doctor exist.",
             StatusCodes.CONFLICT
           )
         );
@@ -172,6 +174,8 @@ export const deleteDoctorRecord = catchAsyncError(
     }
   }
 );
+
+
 
 export const searchDoctorResults = catchAsyncError(
   async (req: Request, res: Response, next: NextFunction) => {

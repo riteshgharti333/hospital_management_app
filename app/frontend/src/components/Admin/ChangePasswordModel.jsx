@@ -149,7 +149,7 @@ const ChangePasswordModel = () => {
         <button
           type="submit"
           disabled={loading}
-          className={`w-full py-2.5 bg-blue-600 text-white rounded-lg ${
+          className={`w-full py-2.5 bg-blue-600 cursor-pointer text-white rounded-lg ${
             loading ? "opacity-50 cursor-not-allowed" : "hover:bg-blue-700"
           }`}
         >

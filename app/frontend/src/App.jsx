@@ -144,6 +144,7 @@ function App() {
 
               {/* Ledger */}
               <Route path="/new-ledger" element={<NewLedger />} />
+              
               <Route path="/ledger/:ledgerName/:id" element={<EditLedger />} />
 
               {/* Ledger Tables */}

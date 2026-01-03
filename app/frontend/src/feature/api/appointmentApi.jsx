@@ -19,7 +19,7 @@ export const getAppointmentByIdAPI = (id) =>
   axiosInstance.get(`/appointment/${id}`);
 
 export const updateAppointmentAPI = (id, data) =>
-  axiosInstance.patch(`/appointment/${id}`, data);
+  axiosInstance.put(`/appointment/${id}`, data);
 
 export const deleteAppointmentAPI = (id) =>
   axiosInstance.delete(`/appointment/${id}`);

@@ -20,6 +20,7 @@ import {
 import { motion } from "framer-motion";
 import { toast } from "sonner";
 import { Link, useNavigate } from "react-router-dom";
+import BackButton from "../../components/BackButton/BackButton";
 
 // ====== NEW: Redux imports (profile + update) ======
 import { useDispatch, useSelector } from "react-redux";
@@ -29,6 +30,144 @@ import {
   updateUserProfile,
 } from "../../redux/asyncThunks/authThunks";
 import ChangePasswordModel from "../../components/Admin/ChangePasswordModel";
+
+// ====== PROFILE SKELETON LOADER ======
+const ProfileSkeleton = () => {
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50 p-4 animate-pulse">
+      <div className="max-w-6xl mx-auto">
+        {/* Header Skeleton */}
+        <div className="mb-8">
+          <div className="flex items-center justify-between mb-6">
+            <div className="flex items-center space-x-4">
+              <div className="p-2 bg-gray-200 rounded-lg w-10 h-10"></div>
+              <div className="flex items-center space-x-3">
+                <div className="p-2 bg-gray-200 rounded-xl w-12 h-12"></div>
+                <div>
+                  <div className="h-7 w-32 bg-gray-300 rounded mb-2"></div>
+                  <div className="h-4 w-48 bg-gray-200 rounded"></div>
+                </div>
+              </div>
+            </div>
+            <div className="hidden md:block h-10 w-48 bg-gray-200 rounded-lg"></div>
+          </div>
+
+          {/* Stats Cards Skeleton */}
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
+            {[1, 2, 3, 4].map((i) => (
+              <div
+                key={i}
+                className="bg-white rounded-xl p-4 shadow-sm border border-gray-200"
+              >
+                <div className="flex items-center justify-between">
+                  <div>
+                    <div className="h-4 w-20 bg-gray-200 rounded mb-3"></div>
+                    <div className="h-6 w-16 bg-gray-300 rounded mb-2"></div>
+                  </div>
+                  <div className="p-2 bg-gray-100 rounded-lg w-10 h-10"></div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* Left Column - Profile Overview Skeleton */}
+          <div className="lg:col-span-2">
+            <div className="bg-white rounded-2xl shadow-lg border border-gray-200 overflow-hidden">
+              {/* Profile Header Skeleton */}
+              <div className="bg-gradient-to-r from-gray-200 to-gray-300 p-6">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center space-x-4">
+                    <div className="w-20 h-20 rounded-full bg-gray-300 border-4 border-white/30"></div>
+                    <div>
+                      <div className="h-6 w-40 bg-gray-400 rounded mb-3"></div>
+                      <div className="flex space-x-2">
+                        <div className="h-6 w-20 bg-gray-400/50 rounded-full"></div>
+                        <div className="h-6 w-24 bg-gray-400/50 rounded-full"></div>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="hidden md:flex items-center space-x-2 bg-gray-400/30 px-4 py-2 rounded-lg w-32 h-10"></div>
+                </div>
+              </div>
+
+              {/* Profile Form Skeleton */}
+              <div className="p-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  {/* Personal Information Skeleton */}
+                  <div className="space-y-4">
+                    <div className="h-6 w-40 bg-gray-300 rounded mb-2"></div>
+                    
+                    <div>
+                      <div className="h-4 w-20 bg-gray-200 rounded mb-2"></div>
+                      <div className="h-12 bg-gray-100 rounded-lg"></div>
+                    </div>
+                    
+                    <div>
+                      <div className="h-4 w-20 bg-gray-200 rounded mb-2"></div>
+                      <div className="h-12 bg-gray-100 rounded-lg"></div>
+                    </div>
+                  </div>
+
+                  {/* Professional Information Skeleton */}
+                  <div className="space-y-4">
+                    <div className="h-6 w-40 bg-gray-300 rounded mb-2"></div>
+                    
+                    <div>
+                      <div className="h-4 w-20 bg-gray-200 rounded mb-2"></div>
+                      <div className="h-12 bg-gray-100 rounded-lg"></div>
+                    </div>
+                    
+                    <div>
+                      <div className="h-4 w-20 bg-gray-200 rounded mb-2"></div>
+                      <div className="h-12 bg-gray-100 rounded-lg"></div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Action Buttons Skeleton */}
+                <div className="flex justify-end space-x-3 mt-8 pt-6 border-t border-gray-200">
+                  <div className="h-10 w-20 bg-gray-200 rounded-lg"></div>
+                  <div className="h-10 w-32 bg-gray-300 rounded-lg"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Right Column - Security Settings Skeleton */}
+          <div className="space-y-6">
+            <div className="bg-white rounded-2xl shadow-lg border border-gray-200 p-6">
+              <div className="flex items-center justify-between mb-6">
+                <div className="flex items-center space-x-3">
+                  <div className="p-2 bg-gray-100 rounded-lg w-10 h-10"></div>
+                  <div className="h-6 w-32 bg-gray-300 rounded"></div>
+                </div>
+                <div className="h-5 w-24 bg-gray-200 rounded"></div>
+              </div>
+              
+              <div className="space-y-4">
+                <div className="h-20 bg-gray-100 rounded-lg"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Footer Skeleton */}
+        <div className="mt-8 pt-6 border-t border-gray-200">
+          <div className="flex flex-col md:flex-row md:items-center justify-between">
+            <div className="h-4 w-48 bg-gray-200 rounded"></div>
+            <div className="flex items-center space-x-4 mt-2 md:mt-0">
+              <div className="h-4 w-24 bg-gray-200 rounded"></div>
+              <div className="h-4 w-32 bg-gray-200 rounded"></div>
+              <div className="h-4 w-20 bg-gray-200 rounded"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
 
 const Profile = () => {
   const navigate = useNavigate();
@@ -50,19 +189,12 @@ const Profile = () => {
 
   const [isEditingProfile, setIsEditingProfile] = useState(false);
   const [isEditingPassword, setIsEditingPassword] = useState(false);
-  const [showPasswords, setShowPasswords] = useState({
-    current: false,
-    new: false,
-    confirm: false,
-  });
-  const [passwords, setPasswords] = useState({
-    current: "",
-    new: "",
-    confirm: "",
-  });
   const [loading, setLoading] = useState(false);
 
   const { profile, status } = useSelector((state) => state.auth);
+
+  // Check loading state from Redux
+  const isLoading = status === "loading" || status === "idle";
 
   useEffect(() => {
     if (status !== "idle") return;
@@ -97,6 +229,11 @@ const Profile = () => {
   }, [profile]);
 
   // -------------------------
+  // Check if user is admin
+  // -------------------------
+  const isAdmin = profile?.role?.toLowerCase() === "admin";
+
+  // -------------------------
   // Handlers (unchanged behavior / UI)
   // -------------------------
   const handleProfileChange = (e) => {
@@ -106,6 +243,14 @@ const Profile = () => {
 
   const handleProfileSubmit = async (e) => {
     e.preventDefault();
+
+    // Only allow submission if user is admin
+    if (!isAdmin) {
+      toast.error("You don't have permission to update profile");
+      setIsEditingProfile(false);
+      return;
+    }
+
     setLoading(true);
 
     try {
@@ -121,11 +266,15 @@ const Profile = () => {
       toast.success("Profile updated successfully!");
       setIsEditingProfile(false);
     } catch (err) {
-      toast.error(err?.message || "Failed to update profile");
+      console.log(err);
+      toast.error(err || "Failed to update profile");
     } finally {
       setLoading(false);
     }
   };
+
+  // Show skeleton while loading
+  if (isLoading) return <ProfileSkeleton />;
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50 p-4">
@@ -138,12 +287,7 @@ const Profile = () => {
         >
           <div className="flex items-center justify-between mb-6">
             <div className="flex items-center space-x-4">
-              <button
-                onClick={() => navigate(-1)}
-                className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
-              >
-                <MdArrowBack className="w-5 h-5 text-gray-600" />
-              </button>
+              <BackButton />
               <div className="flex items-center space-x-3">
                 <div className="p-2 bg-gradient-to-r from-blue-600 to-indigo-600 rounded-xl">
                   <MdPerson className="text-white text-2xl" />
@@ -181,7 +325,9 @@ const Profile = () => {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm text-gray-500">Role</p>
-                  <p className="text-lg font-bold text-blue-600">{profile?.role}</p>
+                  <p className="text-lg font-bold text-blue-600">
+                    {profile?.role}
+                  </p>
                 </div>
                 <div className="p-2 bg-blue-50 rounded-lg">
                   <MdBadge className="text-blue-500 text-xl" />
@@ -230,22 +376,25 @@ const Profile = () => {
                       </div>
                     </div>
                   </div>
-                  <button
-                    onClick={() => setIsEditingProfile(!isEditingProfile)}
-                    className="hidden md:flex items-center space-x-2 bg-white/20 hover:bg-white/30 text-white px-4 py-2 rounded-lg backdrop-blur-sm transition-colors"
-                  >
-                    {isEditingProfile ? (
-                      <>
-                        <MdSave className="w-4 h-4" />
-                        <span>Save Changes</span>
-                      </>
-                    ) : (
-                      <>
-                        <MdEdit className="w-4 h-4" />
-                        <span>Edit Profile</span>
-                      </>
-                    )}
-                  </button>
+                  {/* Only show edit profile button for admin users */}
+                  {isAdmin && (
+                    <button
+                      onClick={() => setIsEditingProfile(!isEditingProfile)}
+                      className="hidden md:flex items-center space-x-2 bg-white/20 hover:bg-white/30 text-white px-4 py-2 rounded-lg backdrop-blur-sm transition-colors"
+                    >
+                      {isEditingProfile ? (
+                        <div className="cursor-pointer flex items-center space-x-2">
+                          <MdSave className="w-4 h-4" />
+                          <span>Save Changes</span>
+                        </div>
+                      ) : (
+                        <div className="cursor-pointer flex items-center space-x-2">
+                          <MdEdit className="w-4 h-4" />
+                          <span>Edit Profile</span>
+                        </div>
+                      )}
+                    </button>
+                  )}
                 </div>
               </div>
 
@@ -272,7 +421,7 @@ const Profile = () => {
                             name="name"
                             value={user?.name}
                             onChange={handleProfileChange}
-                            disabled={!isEditingProfile}
+                            disabled={!isEditingProfile || !isAdmin}
                             className="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none disabled:bg-gray-50 disabled:text-gray-500"
                           />
                         </div>
@@ -291,7 +440,7 @@ const Profile = () => {
                             name="email"
                             value={user?.email}
                             onChange={handleProfileChange}
-                            disabled={!isEditingProfile}
+                            disabled={!isEditingProfile || !isAdmin}
                             className="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none disabled:bg-gray-50 disabled:text-gray-500"
                           />
                         </div>
@@ -329,53 +478,50 @@ const Profile = () => {
                           <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                             <MdPerson className="text-gray-400" />
                           </div>
-                          <select
-                            name="role"
+                          <input
+                            type="text"
                             value={user?.role}
-                            onChange={handleProfileChange}
-                            disabled={!isEditingProfile}
-                            className="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none disabled:bg-gray-50 disabled:text-gray-500 appearance-none"
-                          >
-                            <option value="Doctor">Doctor</option>
-                            <option value="Nurse">Nurse</option>
-                            <option value="Admin">Admin</option>
-                          </select>
+                            disabled
+                            className="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-lg bg-gray-50 text-gray-500"
+                          />
                         </div>
                       </div>
                     </div>
                   </div>
 
-                  {/* Action Buttons */}
-                  <div className="flex justify-end space-x-3 mt-8 pt-6 border-t border-gray-200">
-                    <button
-                      type="button"
-                      onClick={() => setIsEditingProfile(false)}
-                      className="px-4 py-2.5 border border-gray-300 rounded-lg font-medium text-gray-700 hover:bg-gray-50 transition-colors"
-                    >
-                      Cancel
-                    </button>
-                    <button
-                      type="submit"
-                      disabled={!isEditingProfile || loading}
-                      className={`px-4 py-2.5 bg-blue-600 hover:bg-blue-700 rounded-lg font-medium text-white transition-colors flex items-center space-x-2 ${
-                        !isEditingProfile || loading
-                          ? "opacity-50 cursor-not-allowed"
-                          : ""
-                      }`}
-                    >
-                      {loading ? (
-                        <>
-                          <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                          <span>Saving...</span>
-                        </>
-                      ) : (
-                        <>
-                          <MdSave className="w-4 h-4" />
-                          <span>Save Changes</span>
-                        </>
-                      )}
-                    </button>
-                  </div>
+                  {/* Only show action buttons for admin users */}
+                  {isAdmin && (
+                    <div className="flex justify-end space-x-3 mt-8 pt-6 border-t border-gray-200">
+                      <button
+                        type="button"
+                        onClick={() => setIsEditingProfile(false)}
+                        className="px-4 py-2.5 border border-gray-300 rounded-lg font-medium text-gray-700 hover:bg-gray-50 transition-colors cursor-pointer"
+                      >
+                        Cancel
+                      </button>
+                      <button
+                        type="submit"
+                        disabled={!isEditingProfile || loading}
+                        className={`px-4 py-2.5 bg-blue-600 hover:bg-blue-700 rounded-lg font-medium text-white transition-colors flex items-center space-x-2 ${
+                          !isEditingProfile || loading
+                            ? "opacity-50 cursor-not-allowed"
+                            : ""
+                        }`}
+                      >
+                        {loading ? (
+                          <>
+                            <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                            <span>Saving...</span>
+                          </>
+                        ) : (
+                          <div className="cursor-pointer flex items-center space-x-2">
+                            <MdSave className="w-4 h-4" />
+                            <span>Save Changes</span>
+                          </div>
+                        )}
+                      </button>
+                    </div>
+                  )}
                 </form>
               </div>
             </motion.div>
@@ -401,7 +547,7 @@ const Profile = () => {
                 </div>
                 <button
                   onClick={() => setIsEditingPassword(!isEditingPassword)}
-                  className="text-sm text-blue-600 hover:text-blue-800 font-medium"
+                  className="text-sm text-blue-600 hover:text-blue-800 font-medium cursor-pointer"
                 >
                   {isEditingPassword ? "Cancel" : "Change Password"}
                 </button>
@@ -411,11 +557,6 @@ const Profile = () => {
                 <ChangePasswordModel />
               ) : (
                 <div className="space-y-4">
-                  {/* <div className="p-4 bg-gray-50 rounded-lg">
-                    <p className="text-sm text-gray-600">
-                      Last password change: 3 months ago
-                    </p>
-                  </div> */}
                   <div className="p-4 bg-blue-50 rounded-lg">
                     <p className="text-sm text-blue-700">
                       For security reasons, it's recommended to change your

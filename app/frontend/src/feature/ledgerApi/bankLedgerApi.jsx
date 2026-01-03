@@ -15,7 +15,7 @@ export const getBankBalanceAPI = () =>
   axiosInstance.get("/ledger/bank-ledger/balance");
 
 export const updateBankLedgerEntryAPI = (id, data) =>
-  axiosInstance.patch(`/ledger/bank-ledger/${id}`, data);
+  axiosInstance.put(`/ledger/bank-ledger/${id}`, data);
 
 export const deleteBankLedgerEntryAPI = (id) =>
   axiosInstance.delete(`/ledger/bank-ledger/${id}`);

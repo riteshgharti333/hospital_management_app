@@ -15,7 +15,7 @@ export const getPatientBalanceAPI = () =>
   axiosInstance.get("/ledger/patient-ledger/balance");
 
 export const updatePatientLedgerEntryAPI = (id, data) =>
-  axiosInstance.patch(`/ledger/patient-ledger/${id}`, data);
+  axiosInstance.put(`/ledger/patient-ledger/${id}`, data);
 
 export const deletePatientLedgerEntryAPI = (id) =>
   axiosInstance.delete(`/ledger/patient-ledger/${id}`);

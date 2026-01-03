@@ -17,7 +17,7 @@ export const filterNurseAPI = (filters) =>
 export const getNurseByIdAPI = (id) => axiosInstance.get(`/nurse/${id}`);
 
 export const updateNurseAPI = (id, data) =>
-  axiosInstance.patch(`/nurse/${id}`, data);
+  axiosInstance.put(`/nurse/${id}`, data);
 
 export const deleteNurseAPI = (id) => axiosInstance.delete(`/nurse/${id}`);
 

@@ -1,4 +1,5 @@
 import { prisma } from "../lib/prisma";
+import bcrypt from "bcrypt";
 
 export type CreateUserInput = {
   regId: string;
@@ -9,26 +10,28 @@ export type CreateUserInput = {
 };
 
 export const createUserLogin = async (data: CreateUserInput) => {
-  return prisma.user.create({ 
-      data: {
+  return prisma.user.create({
+    data: {
       ...data,
-      isActive: false,     
+      isActive: false,
       mustChangePassword: true,
-    }
-   });
+    },
+  });
 };
 
 export const getUserByRegId = async (regId: string) => {
   return prisma.user.findUnique({ where: { regId } });
 };
 
-
+export type StaffRole = "DOCTOR" | "NURSE";
 
 export type GetAllUsersParams = {
-  role?: "ADMIN" | "DOCTOR" | "NURSE";
+  role?: StaffRole;
   skip?: number;
   take?: number;
 };
+
+const STAFF_ROLES: StaffRole[] = ["DOCTOR", "NURSE"];
 
 const sanitizeUser = (u: any) => ({
   id: u.id,
@@ -46,10 +49,14 @@ const sanitizeUser = (u: any) => ({
 export const getUsersAggregated = async (params: GetAllUsersParams) => {
   const { role, skip = 0, take = 25 } = params;
 
-  const where: any = {};
-  if (role) where.role = role;
+  const where: any = {
+    role: { in: STAFF_ROLES },
+  };
 
-  // Fetch paginated ALL users
+  if (role && STAFF_ROLES.includes(role)) {
+    where.role = role;
+  }
+
   const [allUsers, totalUsers] = await Promise.all([
     prisma.user.findMany({
       where,
@@ -60,43 +67,104 @@ export const getUsersAggregated = async (params: GetAllUsersParams) => {
     prisma.user.count({ where }),
   ]);
 
-  // Count active/disabled users
   const [activeAccess, deniedAccess] = await Promise.all([
     prisma.user.count({ where: { ...where, isActive: true } }),
     prisma.user.count({ where: { ...where, isActive: false } }),
   ]);
 
-  // Fetch grouped lists (no pagination)
-  const roles: Array<"ADMIN" | "DOCTOR" | "NURSE"> = ["ADMIN", "DOCTOR", "NURSE"];
-
   const groupData = await Promise.all(
-    roles.map(async (r) => {
+    STAFF_ROLES.map(async (r) => {
       const users = await prisma.user.findMany({
         where: { role: r },
         orderBy: { name: "asc" },
       });
-      return { role: r, count: users.length, users };
+
+      return {
+        role: r,
+        count: users.length,
+        users: users.map(sanitizeUser),
+      };
     })
   );
 
-  const grouped: any = {};
-  groupData.forEach((g) => {
-    grouped[g.role.toLowerCase()] = {
-      count: g.count,
-      users: g.users.map(sanitizeUser),
-    };
-  });
+  const grouped = {
+    doctor: groupData.find((g) => g.role === "DOCTOR") ?? {
+      count: 0,
+      users: [],
+    },
+    nurse: groupData.find((g) => g.role === "NURSE") ?? {
+      count: 0,
+      users: [],
+    },
+  };
 
   return {
     all: {
       users: allUsers.map(sanitizeUser),
       total: totalUsers,
     },
-    admin: grouped.admin,
-    doctor: grouped.doctor,
-    nurse: grouped.nurse,
+    staff: grouped,
     totalUsers,
     activeAccess,
     deniedAccess,
+  };
+};
+
+export const regenerateTempPassword = async (regId: string) => {
+  const user = await prisma.user.findUnique({
+    where: { regId },
+  });
+
+  if (!user) {
+    return null;
+  }
+
+  if (!["DOCTOR", "NURSE"].includes(user.role)) {
+    throw new Error("Temp password allowed only for staff users");
+  }
+
+  // 🔐 Generate new temp password
+  const prefix = user.role === "DOCTOR" ? "Doc@" : "Nur@";
+  const tempPassword = prefix + Math.floor(100000 + Math.random() * 900000);
+
+  const hashed = await bcrypt.hash(tempPassword, 12);
+
+  // 🔄 Update user credentials
+  await prisma.user.update({
+    where: { regId },
+    data: {
+      password: hashed,
+      tempPasswordHash: hashed,
+      mustChangePassword: true,
+    },
+  });
+
+  return {
+    regId: user.regId,
+    tempPassword,
+  };
+};
+
+export const deleteUserByRegId = async (regId: string) => {
+  const user = await prisma.user.findUnique({
+    where: { regId },
+  });
+
+  if (!user) {
+    return null;
+  }
+
+  if (user.role === "ADMIN") {
+    throw new Error("ADMIN_DELETE_NOT_ALLOWED");
+  }
+
+  await prisma.user.delete({
+    where: { regId },
+  });
+
+  return {
+    regId: user.regId,
+    role: user.role,
+    name: user.name,
   };
 };

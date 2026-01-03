@@ -12,7 +12,7 @@ import {
   FaFileMedical,
   FaCalendarAlt,
   FaEdit,
-  FaTrash,
+FaTrash,
   FaSave,
 } from "react-icons/fa";
 import { useForm } from "react-hook-form";
@@ -525,11 +525,9 @@ const EditLedger = () => {
 
   const cleanLedgerType = ledgerType.replace("-ledger", "");
 
-  console.log(cleanLedgerType);
 
   // --- Dynamically select the correct configuration ---
   const currentLedger = ledgerMappings[cleanLedgerType];
-  console.log(currentLedger);
 
   const formConfig = allFormConfigs[cleanLedgerType];
 

@@ -21,13 +21,13 @@ import prescriptionRoutes from "./routes/prescriptionRoute";
 import ambulanceRoutes from "./routes/ambulanceRoute";
 import xrayRoutes from "./routes/xrayRoute";
 
-// Admin
+// Admin 
 import adminRoutes from "./routes/adminRoutes";
-  
+
 // Password Reset
-import passwordRoutes from "./routes/passwordRoutes";              
- 
-// ledger  
+import passwordRoutes from "./routes/passwordRoutes";
+
+// ledger
 import patientLedgerRoutes from "./routes/ledgerRoutes/patientLedgerRoute";
 import bankLedgerRoutes from "./routes/ledgerRoutes/bankLedgerRoute";
 import cashLedgerRoutes from "./routes/ledgerRoutes/cashLedgerRoute";
@@ -46,10 +46,10 @@ import serviceChargesRoutes from "./routes/itemRoutes/ServiceChargesRoute";
 
 // transection
 import billRoutes from "./routes/transectionRoutes/billRoute";
-import employeeRoutes from "./routes/transectionRoutes/employeeRoute";
-import voucherRoutes from "./routes/transectionRoutes/voucherRoutes";
+// import employeeRoutes from "./routes/transectionRoutes/employeeRoute";
+// import voucherRoutes from "./routes/transectionRoutes/voucherRoutes";
 import moneyReceiptRoutes from "./routes/transectionRoutes/moneyReceiptRoute";
-import { ErrorHandler } from "./middlewares/errorHandler"; 
+import { ErrorHandler } from "./middlewares/errorHandler";
 
 //
 import dashboardRoutes from "./routes/dashboardRoute";
@@ -89,19 +89,19 @@ app.use("/api/v1/password", passwordRoutes);
 
 // dashboard route
 app.use("/api/v1/dashboard", dashboardRoutes);
- 
+
 app.use("/api/v1/admission", admissionRoutes);
 app.use("/api/v1/birth", birthRoutes);
 app.use("/api/v1/patient", patientRoutes);
 app.use("/api/v1/department", departmentRoutes);
 app.use("/api/v1/bed", bedRoutes);
-app.use("/api/v1/bed-assign", bedAssignRoutes); 
+app.use("/api/v1/bed-assign", bedAssignRoutes);
 app.use("/api/v1/appointment", appointmentRoutes);
-app.use("/api/v1/nurse", nurseRoutes);  
+app.use("/api/v1/nurse", nurseRoutes);
 app.use("/api/v1/doctor", doctorRoutes);
 app.use("/api/v1/pharmacist", pharmacistRoutes);
 app.use("/api/v1/prescription", prescriptionRoutes);
-app.use("/api/v1/ambulance", ambulanceRoutes);  
+app.use("/api/v1/ambulance", ambulanceRoutes);
 app.use("/api/v1/xray", xrayRoutes);
 
 // ledger
@@ -123,9 +123,9 @@ app.use("/api/v1/service-charges", serviceChargesRoutes);
 
 // transection
 app.use("/api/v1/transection/bill", billRoutes);
-app.use("/api/v1/transection/voucher", voucherRoutes);
+// app.use("/api/v1/transection/voucher", voucherRoutes);
 app.use("/api/v1/transection/money-receipt", moneyReceiptRoutes);
-app.use("/api/v1/transection/employee", employeeRoutes);
+// app.use("/api/v1/transection/employee", employeeRoutes);
 
 // Sample Route
 app.get("/", (_req, res) => {

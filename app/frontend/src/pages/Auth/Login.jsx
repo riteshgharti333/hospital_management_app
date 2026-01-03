@@ -236,7 +236,7 @@ const Login = () => {
                 <button
                   type="submit"
                   disabled={isSubmitting}
-                  className="w-full py-3.5 px-4 bg-gradient-to-r from-blue-500 to-indigo-600 text-white font-medium rounded-xl
+                  className="w-full py-3.5  cursor-pointer px-4 bg-gradient-to-r from-blue-500 to-indigo-600 text-white font-medium rounded-xl
                     hover:from-blue-600 hover:to-indigo-700 transition-all duration-300
                     focus:outline-none focus:ring-2 focus:ring-blue-500/40 focus:ring-offset-2 focus:ring-offset-slate-900
                     disabled:opacity-50 disabled:cursor-not-allowed
@@ -263,16 +263,7 @@ const Login = () => {
 
             {/* Support & Footer */}
             <div className="mt-8 pt-6 border-t border-white/10">
-              <p className="text-sm text-white/70 text-center mb-4">
-                Need assistance?{" "}
-                <Link
-                  to="/support"
-                  className="text-blue-300 hover:text-blue-200 font-medium hover:underline transition-colors"
-                >
-                  Contact support
-                </Link>
-              </p>
-
+             
               <div className="text-center">
                 <p className="text-xs text-white/40 tracking-wide">
                   © {new Date().getFullYear()} MediCare Hospital System

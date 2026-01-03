@@ -177,7 +177,7 @@ const UserFormModal = ({
 
                 <button
                   onClick={onClose}
-                  className="text-gray-400 hover:text-gray-600 transition-colors p-1"
+                  className="text-gray-400 hover:text-gray-600 transition-colors p-1 cursor-pointer"
                 >
                   <MdClear className="w-5 h-5" />
                 </button>
@@ -200,7 +200,7 @@ const UserFormModal = ({
                       <button
                         type="button"
                         onClick={handleClearSearch}
-                        className="text-xs text-blue-600 hover:text-blue-800"
+                        className="text-xs text-blue-600 hover:text-blue-800 cursor-pointer"
                       >
                         Clear search
                       </button>
@@ -212,7 +212,7 @@ const UserFormModal = ({
                     <button
                       type="button"
                       onClick={() => handleSearchTypeChange("doctor")}
-                      className={`flex items-center px-4 py-2 rounded-lg border transition-colors ${
+                      className={`flex items-center px-4 py-2 rounded-lg border  cursor-pointer not-target:transition-colors ${
                         searchType === "doctor"
                           ? "bg-red-50 border-red-300 text-red-700"
                           : "bg-white border-gray-300 text-gray-700 hover:bg-gray-50"
@@ -236,7 +236,7 @@ const UserFormModal = ({
                     <button
                       type="button"
                       onClick={() => handleSearchTypeChange("nurse")}
-                      className={`flex items-center px-4 py-2 rounded-lg border transition-colors ${
+                      className={`flex items-center px-4 py-2 rounded-lg border  cursor-pointer transition-colors ${
                         searchType === "nurse"
                           ? "bg-green-50 border-green-300 text-green-700"
                           : "bg-white border-gray-300 text-gray-700 hover:bg-gray-50"
@@ -459,7 +459,7 @@ const UserFormModal = ({
                         <button
                           type="button"
                           onClick={handleClearSearch}
-                          className="text-green-600 hover:text-green-800 ml-2"
+                          className="text-green-600 hover:text-green-800 ml-2 cursor-pointer transition-colors"
                         >
                           <MdClear className="w-5 h-5" />
                         </button>
@@ -557,7 +557,7 @@ const UserFormModal = ({
                   <button
                     type="button"
                     onClick={onClose}
-                    className="flex-1 py-3 px-4 border border-gray-300 rounded-lg font-medium text-gray-700 hover:bg-gray-50 transition-colors"
+                    className="flex-1 py-3 px-4 border border-gray-300 rounded-lg font-medium text-gray-700 hover:bg-gray-50 transition-colors cursor-pointer"
                   >
                     Cancel
                   </button>
@@ -565,7 +565,7 @@ const UserFormModal = ({
                   <button
                     type="submit"
                     disabled={loadingLocal || !selectedUser}
-                    className={`flex-1 py-3 px-4 rounded-lg font-medium text-white transition-colors ${
+                    className={`flex-1 py-3 px-4 rounded-lg font-medium cursor-pointer text-white transition-colors ${
                       !selectedUser
                         ? "bg-gray-400 cursor-not-allowed"
                         : "bg-blue-600 hover:bg-blue-700"

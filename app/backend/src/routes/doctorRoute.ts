@@ -16,7 +16,7 @@ const router = express.Router();
 
 // CREATE
 router.post(
-  "/create",
+  "/",
   authenticateUser,
   authorizeRoles("ADMIN"),
   createDoctorRecord
@@ -40,7 +40,7 @@ router
   )
   .delete(
     authenticateUser,
-    authorizeRoles("ADMIN"),
+    authorizeRoles("ADMIN"), 
     deleteDoctorRecord
   );
 

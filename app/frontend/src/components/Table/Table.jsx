@@ -31,6 +31,7 @@ const Table = ({
   onClearFilters,
   activeFilters = {},
   filterLabels = {},
+  ledger,
 }) => {
   const navigate = useNavigate();
   const [showFilter, setShowFilter] = useState(false);
@@ -56,7 +57,7 @@ const Table = ({
   }, [activeFilters]);
 
   const handleRowClick = (id) => {
-    if (path) navigate(`/${path}/${id}`);
+    ledger ? navigate(`/ledger/${path}/${id}`) : navigate(`/${path}/${id}`);
   };
 
   const handleFilterChange = (key, value) => {

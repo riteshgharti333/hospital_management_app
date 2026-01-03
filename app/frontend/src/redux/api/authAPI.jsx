@@ -89,3 +89,21 @@ export const changePasswordAPI = (data) => {
     { withCredentials: true }
   );
 };
+
+
+export const regenerateTempPasswordAPI = (data) => {
+  return axios.post(
+    `${baseUrl}/admin/staff/regenerate-temp-password`,
+    data,
+    { withCredentials: true }
+  );
+};
+
+
+
+export const deleteUserAPI = (regId) => {
+  return axios.delete(
+    `${baseUrl}/admin/staff/${regId}`,
+    { withCredentials: true }
+  );
+};

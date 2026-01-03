@@ -6,8 +6,10 @@ import { StatusCodes } from "../constants/statusCodes";
 import { prisma } from "../lib/prisma";
 import {
   createUserLogin,
+  deleteUserByRegId,
   getUserByRegId,
   getUsersAggregated,
+  regenerateTempPassword,
 } from "../services/userService";
 import { sendResponse } from "../utils/sendResponse";
 
@@ -35,22 +37,18 @@ export const createStaffAccess = catchAsyncError(
     let staff: StaffBase | null = null;
     let role: StaffRole;
 
-    // Detect Type + Fetch Typed Staff
+    // Detect staff type
     if (regId.startsWith("DOC-")) {
-      const doctor = await prisma.doctor.findUnique({
+      staff = await prisma.doctor.findUnique({
         where: { registrationNo: regId },
         select: { fullName: true, email: true, registrationNo: true },
       });
-
-      staff = doctor;
       role = "DOCTOR";
     } else if (regId.startsWith("NUR-")) {
-      const nurse = await prisma.nurse.findUnique({
+      staff = await prisma.nurse.findUnique({
         where: { registrationNo: regId },
         select: { fullName: true, email: true, registrationNo: true },
       });
-
-      staff = nurse;
       role = "NURSE";
     } else {
       return next(
@@ -62,7 +60,6 @@ export const createStaffAccess = catchAsyncError(
       return next(new ErrorHandler("Staff not found", StatusCodes.NOT_FOUND));
     }
 
-    // Check if login already exists
     const existing = await getUserByRegId(regId);
     if (existing) {
       return next(
@@ -73,20 +70,24 @@ export const createStaffAccess = catchAsyncError(
       );
     }
 
-    // Generate temporary password
+    // 🔐 Generate temp password
     const tempPassword =
       (role === "DOCTOR" ? "Doc@" : "Nur@") +
       Math.floor(100000 + Math.random() * 900000);
 
     const hashed = await bcrypt.hash(tempPassword, 12);
 
-    // Create user login
-    const newUser = await createUserLogin({
-      regId,
-      name: staff.fullName,
-      email: staff.email,
-      role,
-      password: hashed,
+    // ✅ Store hashed password + tempPasswordHash
+    const newUser = await prisma.user.create({
+      data: {
+        regId,
+        name: staff.fullName,
+        email: staff.email,
+        role,
+        password: hashed,
+        mustChangePassword: true,
+        isActive: false,
+      },
     });
 
     return sendResponse(res, {
@@ -157,16 +158,20 @@ export const getAllUsers = catchAsyncError(
     const page = Math.max(1, Number(req.query.page || 1));
     const limit = Math.max(1, Number(req.query.limit || 25));
 
-    const allowedRoles = ["ADMIN", "DOCTOR", "NURSE"];
-    let role: "ADMIN" | "DOCTOR" | "NURSE" | undefined = undefined;
+    // ❌ ADMIN removed
+    const allowedRoles = ["DOCTOR", "NURSE"];
+    let role: "DOCTOR" | "NURSE" | undefined = undefined;
 
     if (rawRole) {
-      if (!allowedRoles.includes(rawRole.toUpperCase())) {
+      const upperRole = rawRole.toUpperCase();
+
+      if (!allowedRoles.includes(upperRole)) {
         return next(
           new ErrorHandler("Invalid role query", StatusCodes.BAD_REQUEST)
         );
       }
-      role = rawRole.toUpperCase() as "ADMIN" | "DOCTOR" | "NURSE";
+
+      role = upperRole as "DOCTOR" | "NURSE";
     }
 
     const offset = (page - 1) * limit;
@@ -187,5 +192,73 @@ export const getAllUsers = catchAsyncError(
         ...data,
       },
     });
+  }
+);
+
+export const regenerateStaffTempPassword = catchAsyncError(
+  async (req: Request, res: Response, next: NextFunction) => {
+    const { regId } = req.body;
+
+    if (!regId) {
+      return next(
+        new ErrorHandler("regId is required", StatusCodes.BAD_REQUEST)
+      );
+    }
+
+    const result = await regenerateTempPassword(regId);
+
+    if (!result) {
+      return next(new ErrorHandler("User not found", StatusCodes.NOT_FOUND));
+    }
+
+    return sendResponse(res, {
+      success: true,
+      statusCode: StatusCodes.OK,
+      message: "Temporary password regenerated successfully",
+      data: {
+        regId: result.regId,
+        tempPassword: result.tempPassword,
+      },
+    });
+  }
+);
+
+export const deleteUserRecord = catchAsyncError(
+  async (req: Request, res: Response, next: NextFunction) => {
+    const { regId } = req.params;
+
+    if (!regId) {
+      return next(
+        new ErrorHandler("regId is required", StatusCodes.BAD_REQUEST)
+      );
+    }
+
+    try {
+      const deletedUser = await deleteUserByRegId(regId);
+
+      if (!deletedUser) {
+        return next(new ErrorHandler("User not found", StatusCodes.NOT_FOUND));
+      }
+
+      return sendResponse(res, {
+        success: true,
+        statusCode: StatusCodes.OK,
+        message: "User deleted successfully",
+        data: deletedUser,
+      });
+    } catch (error: any) {
+      if (error.message === "ADMIN_DELETE_NOT_ALLOWED") {
+        return next(
+          new ErrorHandler(
+            "Admin users cannot be deleted",
+            StatusCodes.FORBIDDEN
+          )
+        );
+      }
+
+      return next(
+        new ErrorHandler("Failed to delete user", StatusCodes.INTERNAL_ERROR)
+      );
+    }
   }
 );

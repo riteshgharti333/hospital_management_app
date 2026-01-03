@@ -365,7 +365,7 @@ const ForgotPassword = () => {
                         type="submit"
                         disabled={loading}
                         className={`
-                          w-full group relative
+                          w-full group relative cursor-pointer
                           py-3 px-6
                           bg-gradient-to-r from-blue-600 to-indigo-700
                           hover:from-blue-700 hover:to-indigo-800
@@ -504,7 +504,7 @@ const ForgotPassword = () => {
                       <button
                         type="button"
                         onClick={() => setStep(1)}
-                        className="flex-1 py-3 px-6 border-2 border-gray-300 hover:border-gray-400 rounded-xl font-semibold text-gray-700 hover:text-gray-900 transition-all duration-300 hover:shadow-lg"
+                        className="flex-1 py-3 px-6 border-2 border-gray-300 hover:border-gray-400 rounded-xl font-semibold text-gray-700 hover:text-gray-900 transition-all duration-300 hover:shadow-lg cursor-pointer"
                       >
                         Back
                       </button>
@@ -513,7 +513,7 @@ const ForgotPassword = () => {
                         type="submit"
                         disabled={loading}
                         className={`
-                          flex-1 group relative
+                          flex-1 group relative cursor-pointer
                           py-3 px-6
                           bg-gradient-to-r from-blue-600 to-indigo-700
                           hover:from-blue-700 hover:to-indigo-800
