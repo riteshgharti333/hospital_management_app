@@ -139,7 +139,6 @@ export const resetPassword = catchAsyncError(
   }
 );
 
-
 export const changePasswordLoggedIn = catchAsyncError(
   async (req: Request, res: Response, next: NextFunction) => {
     const userId = (req as any).user.id;
@@ -147,7 +146,10 @@ export const changePasswordLoggedIn = catchAsyncError(
 
     if (!oldPassword || !newPassword) {
       return next(
-        new ErrorHandler("Old password and new password are required", StatusCodes.BAD_REQUEST)
+        new ErrorHandler(
+          "Old password and new password are required",
+          StatusCodes.BAD_REQUEST
+        )
       );
     }
 

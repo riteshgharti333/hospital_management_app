@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import {
   MdEmail,
   MdLock,
@@ -28,6 +28,7 @@ const ForgotPassword = () => {
   const [otpSent, setOtpSent] = useState(false);
   const [countdown, setCountdown] = useState(0);
   const [loading, setLoading] = useState(false);
+  const otpRefs = useRef([]);
 
   const dispatch = useDispatch();
   const { resetToken } = useSelector((state) => state.auth);
@@ -46,6 +47,7 @@ const ForgotPassword = () => {
     handleSubmit: handleSubmitOtp,
     formState: { errors: otpErrors },
     setValue: setOtpValue,
+    getValues: getOtpValues,
   } = useForm();
 
   // Reset password form
@@ -63,8 +65,15 @@ const ForgotPassword = () => {
     setLoading(true);
     try {
       const res = await dispatch(forgotPasswordThunk(data.email)).unwrap();
+      
+      // Fix for issue 1: Remove hardcoded time
+      // Check if response has success property (indicating error from API)
+      if (res && typeof res === 'object' && !res.success) {
+        // This is an error response from API
+        throw new Error(res.message || "Email not found");
+      }
 
-      toast.success(res.message);
+      toast.success("Verification code sent successfully!");
 
       setEmail(data.email);
       setOtpSent(true);
@@ -81,7 +90,16 @@ const ForgotPassword = () => {
         });
       }, 1000);
     } catch (err) {
-      toast.error(err);
+      // Fix for issue 2: Handle API error properly
+      let errorMessage = "An error occurred";
+      if (err instanceof Error) {
+        errorMessage = err.message;
+      } else if (typeof err === 'string') {
+        errorMessage = err;
+      } else if (err && err.message) {
+        errorMessage = err.message;
+      }
+      toast.error(errorMessage);
     } finally {
       setLoading(false);
     }
@@ -100,11 +118,23 @@ const ForgotPassword = () => {
       ].join("");
 
       const res = await dispatch(verifyOtpThunk({ email, otp })).unwrap();
+      
+      if (res && typeof res === 'object' && !res.success) {
+        throw new Error(res.message || "Invalid OTP");
+      }
 
-      toast.success(res.message);
+      toast.success("OTP verified successfully!");
       setStep(3);
     } catch (err) {
-      toast.error(err);
+      let errorMessage = "Invalid OTP";
+      if (err instanceof Error) {
+        errorMessage = err.message;
+      } else if (typeof err === 'string') {
+        errorMessage = err;
+      } else if (err && err.message) {
+        errorMessage = err.message;
+      }
+      toast.error(errorMessage);
     } finally {
       setLoading(false);
     }
@@ -120,7 +150,11 @@ const ForgotPassword = () => {
         })
       ).unwrap();
 
-      toast.success(res.message);
+      if (res && typeof res === 'object' && !res.success) {
+        throw new Error(res.message || "Failed to reset password");
+      }
+
+      toast.success("Password reset successfully!");
       toast.info("Please login with your new password");
 
       resetForm();
@@ -129,24 +163,35 @@ const ForgotPassword = () => {
         navigate("/login");
       }, 1500);
     } catch (err) {
-      toast.error(err);
+      let errorMessage = "Failed to reset password";
+      if (err instanceof Error) {
+        errorMessage = err.message;
+      } else if (typeof err === 'string') {
+        errorMessage = err;
+      } else if (err && err.message) {
+        errorMessage = err.message;
+      }
+      toast.error(errorMessage);
     } finally {
       setLoading(false);
     }
   };
 
   // Resend OTP
-  const handleResendOtp = () => {
+  const handleResendOtp = async () => {
     if (countdown > 0) return;
 
     setLoading(true);
-    // Simulate API call
-    setTimeout(() => {
+    try {
+      const res = await dispatch(forgotPasswordThunk(email)).unwrap();
+      
+      if (res && typeof res === 'object' && !res.success) {
+        throw new Error(res.message || "Failed to resend OTP");
+      }
+
       setCountdown(60);
-      setLoading(false);
       toast.success("New verification code sent!");
 
-      // Start countdown
       const timer = setInterval(() => {
         setCountdown((prev) => {
           if (prev <= 1) {
@@ -156,23 +201,101 @@ const ForgotPassword = () => {
           return prev - 1;
         });
       }, 1000);
-    }, 1000);
+    } catch (err) {
+      let errorMessage = "Failed to resend OTP";
+      if (err instanceof Error) {
+        errorMessage = err.message;
+      } else if (typeof err === 'string') {
+        errorMessage = err;
+      } else if (err && err.message) {
+        errorMessage = err.message;
+      }
+      toast.error(errorMessage);
+    } finally {
+      setLoading(false);
+    }
   };
 
   // Handle OTP input change
   const handleOtpChange = (e, index) => {
     const value = e.target.value;
-    if (value.length > 1) {
-      e.target.value = value[0];
+    
+    // Fix for issue 4: Clear current input if value is empty
+    if (value === "") {
+      setOtpValue(`otp${index}`, "");
+      
+      // Move to previous input if deleting
+      if (index > 0) {
+        document.getElementById(`otp-${index - 1}`)?.focus();
+      }
+      return;
     }
+    
+    // Allow only numbers
+    const numericValue = value.replace(/[^0-9]/g, "");
+    if (numericValue === "") return;
+    
+    // Take only first character if multiple characters pasted
+    const singleValue = numericValue.charAt(0);
+    e.target.value = singleValue;
+    setOtpValue(`otp${index}`, singleValue);
 
-    setOtpValue(`otp${index}`, value);
-
-    // Auto-focus next input
-    if (value && index < 5) {
+    // Auto-focus next input if value entered
+    if (singleValue && index < 5) {
       document.getElementById(`otp-${index + 1}`)?.focus();
     }
   };
+
+  // Fix for issue 3 & 4: Handle paste in OTP fields
+  const handleOtpPaste = (e, startIndex) => {
+    e.preventDefault();
+    const pastedData = e.clipboardData.getData('text/plain').replace(/[^0-9]/g, '');
+    
+    // Fill OTP fields with pasted data
+    for (let i = 0; i < Math.min(6, pastedData.length); i++) {
+      const value = pastedData.charAt(i);
+      setOtpValue(`otp${startIndex + i}`, value);
+      
+      // Update input field value
+      const input = document.getElementById(`otp-${startIndex + i}`);
+      if (input) {
+        input.value = value;
+      }
+    }
+    
+    // Focus the next empty field or last filled field
+    const nextEmptyIndex = Math.min(startIndex + pastedData.length, 5);
+    document.getElementById(`otp-${nextEmptyIndex}`)?.focus();
+  };
+
+  // Fix for issue 4: Handle key down for backspace navigation
+  const handleOtpKeyDown = (e, index) => {
+    if (e.key === 'Backspace') {
+      e.preventDefault();
+      
+      const currentValue = e.target.value;
+      if (currentValue === "") {
+        // If empty, delete previous and move to it
+        if (index > 0) {
+          setOtpValue(`otp${index - 1}`, "");
+          const prevInput = document.getElementById(`otp-${index - 1}`);
+          if (prevInput) {
+            prevInput.value = "";
+            prevInput.focus();
+          }
+        }
+      } else {
+        // If has value, clear current and stay
+        e.target.value = "";
+        setOtpValue(`otp${index}`, "");
+      }
+    }
+  };
+
+  // Initialize OTP refs
+  useEffect(() => {
+    otpRefs.current = otpRefs.current.slice(0, 6);
+  }, []);
 
   const steps = [
     { number: 1, title: "Verify Email", icon: <MdEmail /> },
@@ -181,7 +304,7 @@ const ForgotPassword = () => {
   ];
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 p-4">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 p-4 overflow-hidden"> {/* Fix for issue 5 */}
       {/* Background decorative elements */}
       <div className="absolute top-10 left-10 w-72 h-72 bg-blue-300 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-blob"></div>
       <div className="absolute bottom-10 right-10 w-72 h-72 bg-indigo-300 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-blob animation-delay-2000"></div>
@@ -445,6 +568,7 @@ const ForgotPassword = () => {
                             <input
                               key={index}
                               id={`otp-${index}`}
+                              ref={el => otpRefs.current[index] = el}
                               type="text"
                               maxLength="1"
                               inputMode="numeric"
@@ -454,6 +578,8 @@ const ForgotPassword = () => {
                                 pattern: /^[0-9]$/,
                               })}
                               onChange={(e) => handleOtpChange(e, index)}
+                              onKeyDown={(e) => handleOtpKeyDown(e, index)}
+                              onPaste={(e) => handleOtpPaste(e, index)}
                               className={`
                                 w-14 h-14
                                 text-center text-2xl font-bold
@@ -471,7 +597,7 @@ const ForgotPassword = () => {
                           ))}
                         </div>
 
-                        <div className="mt-4 text-center">
+                        {/* <div className="mt-4 text-center">
                           {countdown > 0 ? (
                             <p className="text-gray-500 text-sm">
                               Resend code in{" "}
@@ -496,7 +622,7 @@ const ForgotPassword = () => {
                               <span>Resend Verification Code</span>
                             </button>
                           )}
-                        </div>
+                        </div> */}
                       </div>
                     </div>
 
@@ -706,10 +832,10 @@ const ForgotPassword = () => {
                               <span>Resetting Password...</span>
                             </>
                           ) : (
-                            <>
+                            <div className="flex items-center space-x-3 cursor-pointer">
                               <span>Reset Password</span>
                               <MdCheckCircle className="w-5 h-5 group-hover:scale-110 transition-transform" />
-                            </>
+                            </div>
                           )}
                         </div>
                       </button>
@@ -762,6 +888,27 @@ const ForgotPassword = () => {
         }
         .animation-delay-4000 {
           animation-delay: 4s;
+        }
+        
+        /* Fix for issue 5: Remove scrollbar on overlay */
+        input[type="number"]::-webkit-outer-spin-button,
+        input[type="number"]::-webkit-inner-spin-button {
+          -webkit-appearance: none;
+          margin: 0;
+        }
+        
+        input[type="number"] {
+          -moz-appearance: textfield;
+        }
+        
+        /* Hide scrollbar for all elements */
+        * {
+          scrollbar-width: none; /* Firefox */
+          -ms-overflow-style: none; /* IE and Edge */
+        }
+        
+        *::-webkit-scrollbar {
+          display: none; /* Chrome, Safari, Opera*/
         }
       `}</style>
     </div>
