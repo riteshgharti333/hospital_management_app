@@ -16,6 +16,7 @@ import {
 import { patientFilterSchema, patientSchema } from "@hospital/schemas";
 import { validateSearchQuery } from "../utils/queryValidation";
 
+
 export const createPatientRecord = catchAsyncError(
   async (req: Request, res: Response, next: NextFunction) => {
     const validated = patientSchema.parse(req.body);
@@ -30,15 +31,30 @@ export const createPatientRecord = catchAsyncError(
   }
 );
 
-export const getAllPatientRecords = catchAsyncError(async (_req, res) => {
-  const patients = await getAllPatients();
-  sendResponse(res, {
-    success: true,
-    statusCode: StatusCodes.OK,
-    message: "All patient records fetched",
-    data: patients,
-  });
-});
+export const getAllPatientRecords  = catchAsyncError(
+  async (req: Request, res: Response) => {
+    const { cursor, limit } = req.query as {
+      cursor?: string;
+      limit?: string;
+    };
+
+    const { data: doctor, nextCursor } = await getAllPatients(
+      cursor,
+      limit ? Number(limit) : undefined
+    );
+
+    sendResponse(res, {
+      success: true,
+      statusCode: StatusCodes.OK,
+      message: "Patient records fetched",
+      data: doctor,
+      pagination: {
+        nextCursor: nextCursor !== null ? String(nextCursor) : undefined,
+        limit: limit ? Number(limit) : 50,
+      },
+    });
+  }
+);
 
 export const getPatientRecordById = catchAsyncError(
   async (req: Request, res: Response, next: NextFunction) => {

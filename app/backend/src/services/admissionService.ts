@@ -6,7 +6,7 @@ import { cursorPaginate } from "../utils/pagination";
 import { createSearchService } from "../utils/searchCache";
 
 export type AdmissionInput = {
-  patientId: number;
+  patientId: number; 
   doctorId: number;
   admissionDate: Date;
   dischargeDate?: Date;

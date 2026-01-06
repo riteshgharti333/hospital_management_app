@@ -26,6 +26,7 @@ const PatientsEntriesTable = () => {
     currentCursor,
     50
   );
+  console.log(patientData)
 
   // Search dataset
   const { data: searchData, isLoading: loadingSearch } =

@@ -8,7 +8,7 @@ import {
   createDoctorLedgerEntry,
   getDoctorLedgerEntryById,
   getDoctorBalance,
-  updateDoctorLedgerEntry,
+  updateDoctorLedgerEntry, 
   deleteDoctorLedgerEntry,
   searchDoctorLedger,
   filterDoctorLedgerService,

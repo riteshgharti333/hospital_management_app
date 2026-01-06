@@ -4,15 +4,23 @@ import { filterPaginate } from "../../utils/filterPaginate";
 import { cursorPaginate } from "../../utils/pagination";
 import { createSearchService } from "../../utils/searchCache";
 
-export const createBankLedgerEntry = async (data: {
+type AmountType = "CREDIT" | "DEBIT";
+
+type BankLedgerCreateInput = {
   bankName: string;
-  date: Date;
+  transactionDate: Date;
   description: string;
-  amountType: string;
+  amountType: AmountType;
   amount: number;
   transactionId?: string;
   remarks?: string;
-}) => {
+};
+
+type BankLedgerUpdateInput = Partial<BankLedgerCreateInput>;
+
+export const createBankLedgerEntry = async (
+  data: BankLedgerCreateInput
+) => {
   return prisma.bankLedger.create({ data });
 };
 
@@ -44,21 +52,15 @@ export const getBankBalance = async (bankName: string) => {
 
   return entries.reduce((balance, entry) => {
     const amount = entry.amount.toNumber();
-    return entry.amountType === "Credit" ? balance + amount : balance - amount;
+    return entry.amountType === "CREDIT"
+      ? balance + amount
+      : balance - amount;
   }, 0);
 };
 
 export const updateBankLedgerEntry = async (
   id: number,
-  data: {
-    bankName?: string;
-    date?: Date;
-    description?: string;
-    amountType?: string;
-    amount?: number;
-    transactionId?: string;
-    remarks?: string;
-  }
+  data: BankLedgerUpdateInput
 ) => {
   return prisma.bankLedger.update({
     where: { id },
@@ -79,7 +81,7 @@ export const searchBankLedger = createSearchService(prisma, {
 });
 
 export const filterBankLedgerService = async (filters: {
-  amountType?: string;
+  amountType?: AmountType;
   fromDate?: Date;
   toDate?: Date;
   cursor?: string | number;
@@ -87,15 +89,14 @@ export const filterBankLedgerService = async (filters: {
 }) => {
   const { amountType, fromDate, toDate, cursor, limit } = filters;
 
-  const filterObj: any = {};
+  const filterObj: Record<string, any> = {};
 
-  if (amountType)
-    filterObj.amountType = { equals: amountType, mode: "insensitive" };
+  if (amountType) filterObj.amountType = amountType;
 
   if (fromDate || toDate) {
-    filterObj.date = {
-      gte: fromDate ? new Date(fromDate) : undefined,
-      lte: toDate ? new Date(toDate) : undefined,
+    filterObj.transactionDate = {
+      gte: fromDate,
+      lte: toDate,
     };
   }
 

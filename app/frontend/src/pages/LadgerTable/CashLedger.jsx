@@ -68,8 +68,8 @@ const CashLedger = () => {
   const columns = useMemo(
     () => [
       {
-        accessorKey: "date",
-        header: "Date",
+        accessorKey: "transactionDate",
+        header: "Transaction Date",
         cell: (info) => {
           const date = new Date(info.getValue());
           return isNaN(date)

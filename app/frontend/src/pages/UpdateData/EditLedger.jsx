@@ -3,20 +3,13 @@ import { useLocation, useNavigate, useParams } from "react-router-dom";
 import {
   FaUser,
   FaUserMd,
-  FaTruck,
-  FaPills,
-  FaFlask,
   FaMoneyBillAlt,
   FaBuilding,
-  FaFileInvoice,
-  FaFileMedical,
   FaCalendarAlt,
-  FaEdit,
-FaTrash,
-  FaSave,
 } from "react-icons/fa";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
 import { toast } from "sonner";
 
 import BackButton from "../../components/BackButton/BackButton";
@@ -41,53 +34,78 @@ import {
   useDeleteCashLedgerEntry,
 } from "../../feature/ledgerHook/useCashLedger";
 import {
-  useGetDiagnosticsLedgerEntryById,
-  useUpdateDiagnosticsLedgerEntry,
-  useDeleteDiagnosticsLedgerEntry,
-} from "../../feature/ledgerHook/useDiagnosticsLedger";
-import {
   useGetDoctorLedgerEntryById,
   useUpdateDoctorLedgerEntry,
   useDeleteDoctorLedgerEntry,
 } from "../../feature/ledgerHook/useDoctorLedger";
 import {
-  useGetExpenseEntryById,
-  useUpdateExpenseEntry,
-  useDeleteExpenseEntry,
-} from "../../feature/ledgerHook/useExpenseLedger";
-import {
-  useGetInsuranceLedgerEntryById,
-  useUpdateInsuranceLedgerEntry,
-  useDeleteInsuranceLedgerEntry,
-} from "../../feature/ledgerHook/useInsuranceLedger";
-import {
   useGetPatientLedgerEntryById,
   useUpdatePatientLedgerEntry,
   useDeletePatientLedgerEntry,
 } from "../../feature/ledgerHook/usePatientLedger";
-import {
-  useGetPharmacyLedgerEntryById,
-  useUpdatePharmacyLedgerEntry,
-  useDeletePharmacyLedgerEntry,
-} from "../../feature/ledgerHook/usePharmacyLedger";
-import {
-  useGetSupplierLedgerEntryById,
-  useUpdateSupplierLedgerEntry,
-  useDeleteSupplierLedgerEntry,
-} from "../../feature/ledgerHook/useSupplierLedger";
 
-// --- Import all your schemas ---
-import {
-  bankLedgerSchema,
-  cashLedgerSchema,
-  diagnosticsLedgerSchema,
-  doctorLedgerSchema,
-  expenseLedgerSchema,
-  insuranceLedgerSchema,
-  patientLedgerSchema,
-  pharmacyLedgerSchema,
-  supplierLedgerSchema,
-} from "@hospital/schemas";
+// --- Updated Schemas ---
+const AmountTypeEnum = z.enum(["CREDIT", "DEBIT"]);
+const CashAmountTypeEnum = z.enum(["INCOME", "EXPENSE"]);
+const PaymentModeEnum = z.enum([
+  "CASH",
+  "CARD",
+  "UPI",
+  "BANK_TRANSFER",
+  "CHEQUE",
+]);
+const requiredDate = z.preprocess(
+  (val) => {
+    if (val === undefined || val === null || val === "") {
+      return undefined;
+    }
+    return new Date(val);
+  },
+  z.date({
+    required_error: "Date is required",
+    invalid_type_error: "Date is required",
+  })
+);
+
+export const bankLedgerSchema = z.object({
+  bankName: z.string().min(1, "Bank name is required"),
+  transactionDate: requiredDate,
+  description: z.string().min(1, "Description is required"),
+  amountType: AmountTypeEnum,
+  amount: z.number().positive("Amount must be positive"),
+  transactionId: z.string().optional(),
+  remarks: z.string().optional(),
+});
+
+export const cashLedgerSchema = z.object({
+  transactionDate: requiredDate,
+  purpose: z.string().min(1, "Purpose is required"),
+  amountType: CashAmountTypeEnum,
+  amount: z.number().positive("Amount must be positive"),
+  remarks: z.string().optional(),
+});
+
+export const doctorLedgerSchema = z.object({
+  doctorName: z.string().min(1, "Doctor name is required"),
+  transactionDate: requiredDate,
+  description: z.string().min(1, "Description is required"),
+  amountType: AmountTypeEnum,
+  amount: z.number().positive("Amount must be positive"),
+  paymentMode: PaymentModeEnum,
+  transactionId: z.string().optional(),
+  remarks: z.string().optional(),
+});
+
+export const patientLedgerSchema = z.object({
+  patientName: z.string().min(1, "Patient name is required"),
+  transactionDate: requiredDate,
+  description: z.string().min(1, "Description is required"),
+  amountType: AmountTypeEnum,
+  amount: z.number().positive("Amount must be positive"),
+  paymentMode: PaymentModeEnum,
+  transactionId: z.string().optional(),
+  remarks: z.string().optional(),
+});
 
 // --- Mappings for dynamic hook and config selection ---
 const ledgerMappings = {
@@ -96,9 +114,7 @@ const ledgerMappings = {
     getHook: useGetPatientLedgerEntryById,
     updateHook: useUpdatePatientLedgerEntry,
     deleteHook: useDeletePatientLedgerEntry,
-    config: {
-      /* Patient Form Config */
-    },
+    config: "patient",
     title: "Patient Ledger",
     icon: <FaUser />,
     navPath: "/ledger/patient-ledger",
@@ -108,57 +124,17 @@ const ledgerMappings = {
     getHook: useGetDoctorLedgerEntryById,
     updateHook: useUpdateDoctorLedgerEntry,
     deleteHook: useDeleteDoctorLedgerEntry,
-    config: {
-      /* Doctor Form Config */
-    },
+    config: "doctor",
     title: "Doctor Ledger",
     icon: <FaUserMd />,
     navPath: "/ledger/doctor-ledger",
-  },
-  supplier: {
-    schema: supplierLedgerSchema,
-    getHook: useGetSupplierLedgerEntryById,
-    updateHook: useUpdateSupplierLedgerEntry,
-    deleteHook: useDeleteSupplierLedgerEntry,
-    config: {
-      /* Supplier Form Config */
-    },
-    title: "Supplier Ledger",
-    icon: <FaTruck />,
-    navPath: "/ledger/supplier-ledger",
-  },
-  pharmacy: {
-    schema: pharmacyLedgerSchema,
-    getHook: useGetPharmacyLedgerEntryById,
-    updateHook: useUpdatePharmacyLedgerEntry,
-    deleteHook: useDeletePharmacyLedgerEntry,
-    config: {
-      /* Pharmacy Form Config */
-    },
-    title: "Pharmacy Ledger",
-    icon: <FaPills />,
-    navPath: "/ledger/pharmacy-ledger",
-  },
-  lab: {
-    schema: diagnosticsLedgerSchema,
-    getHook: useGetDiagnosticsLedgerEntryById,
-    updateHook: useUpdateDiagnosticsLedgerEntry,
-    deleteHook: useDeleteDiagnosticsLedgerEntry,
-    config: {
-      /* Lab Form Config */
-    },
-    title: "Lab Ledger",
-    icon: <FaFlask />,
-    navPath: "/ledger/diagnostics-ledger",
   },
   cash: {
     schema: cashLedgerSchema,
     getHook: useGetCashLedgerEntryById,
     updateHook: useUpdateCashLedgerEntry,
     deleteHook: useDeleteCashLedgerEntry,
-    config: {
-      /* Cash Form Config */
-    },
+    config: "cash",
     title: "Cash Ledger",
     icon: <FaMoneyBillAlt />,
     navPath: "/ledger/cash-ledger",
@@ -168,36 +144,10 @@ const ledgerMappings = {
     getHook: useGetBankLedgerEntryById,
     updateHook: useUpdateBankLedgerEntry,
     deleteHook: useDeleteBankLedgerEntry,
-    config: {
-      /* Bank Form Config */
-    },
+    config: "bank",
     title: "Bank Ledger",
     icon: <FaBuilding />,
     navPath: "/ledger/bank-ledger",
-  },
-  insurance: {
-    schema: insuranceLedgerSchema,
-    getHook: useGetInsuranceLedgerEntryById,
-    updateHook: useUpdateInsuranceLedgerEntry,
-    deleteHook: useDeleteInsuranceLedgerEntry,
-    config: {
-      /* Insurance Form Config */
-    },
-    title: "Insurance Ledger",
-    icon: <FaFileMedical />,
-    navPath: "/ledger/insurance-ledger",
-  },
-  expense: {
-    schema: expenseLedgerSchema,
-    getHook: useGetExpenseEntryById,
-    updateHook: useUpdateExpenseEntry,
-    deleteHook: useDeleteExpenseEntry,
-    config: {
-      /* Expense Form Config */
-    },
-    title: "Expense Ledger",
-    icon: <FaFileInvoice />,
-    navPath: "/ledger/expense-ledger",
   },
 };
 
@@ -212,7 +162,7 @@ const allFormConfigs = {
         required: true,
       },
       {
-        name: "date",
+        name: "transactionDate",
         label: "Date",
         type: "date",
         icon: <FaCalendarAlt />,
@@ -229,7 +179,7 @@ const allFormConfigs = {
         name: "amountType",
         label: "Amount Type",
         type: "select",
-        options: ["Debit", "Credit"],
+        options: ["CREDIT", "DEBIT"],
         required: true,
       },
       { name: "amount", label: "Amount", type: "number", required: true },
@@ -237,7 +187,7 @@ const allFormConfigs = {
         name: "paymentMode",
         label: "Payment Mode",
         type: "select",
-        options: ["Cash", "Card", "UPI", "Insurance"],
+        options: ["CASH", "CARD", "UPI", "BANK_TRANSFER", "CHEQUE"],
         required: true,
       },
       { name: "transactionId", label: "Transaction ID", type: "text" },
@@ -253,7 +203,12 @@ const allFormConfigs = {
         icon: <FaUserMd />,
         required: true,
       },
-      { name: "date", label: "Date", type: "date", required: true },
+      {
+        name: "transactionDate",
+        label: "Date",
+        type: "date",
+        required: true,
+      },
       {
         name: "description",
         label: "Description",
@@ -265,7 +220,7 @@ const allFormConfigs = {
         name: "amountType",
         label: "Amount Type",
         type: "select",
-        options: ["Debit", "Credit"],
+        options: ["CREDIT", "DEBIT"],
         required: true,
       },
       { name: "amount", label: "Amount", type: "number", required: true },
@@ -273,125 +228,21 @@ const allFormConfigs = {
         name: "paymentMode",
         label: "Payment Mode",
         type: "select",
-        options: ["Bank", "UPI", "Cash"],
+        options: ["CASH", "CARD", "UPI", "BANK_TRANSFER", "CHEQUE"],
         required: true,
       },
       { name: "transactionId", label: "Transaction ID", type: "text" },
-      { name: "remarks", label: "Remarks", type: "textarea" },
-    ],
-  },
-  supplier: {
-    fields: [
-      {
-        name: "supplierName",
-        label: "Supplier Name",
-        type: "text",
-        icon: <FaTruck />,
-        required: true,
-      },
-      { name: "date", label: "Date", type: "date", required: true },
-      { name: "invoiceNo", label: "Invoice No.", type: "text", required: true },
-      {
-        name: "description",
-        label: "Description",
-        type: "text",
-        placeholder: "Gloves order, Medicine refund etc.",
-        required: true,
-      },
-      {
-        name: "amountType",
-        label: "Amount Type",
-        type: "select",
-        options: ["Debit", "Credit"],
-        required: true,
-      },
-      { name: "amount", label: "Amount", type: "number", required: true },
-      {
-        name: "paymentMode",
-        label: "Payment Mode",
-        type: "select",
-        options: ["Bank", "UPI", "Cheque", "Cash"],
-      },
-      { name: "transactionId", label: "Transaction ID", type: "text" },
-      { name: "attachBill", label: "Attach Bill", type: "file" },
-      { name: "remarks", label: "Remarks", type: "textarea" },
-    ],
-  },
-  pharmacy: {
-    fields: [
-      { name: "date", label: "Date", type: "date", required: true },
-      {
-        name: "medicineName",
-        label: "Medicine Name",
-        type: "text",
-        icon: <FaPills />,
-        required: true,
-      },
-      {
-        name: "category",
-        label: "Category",
-        type: "text",
-        placeholder: "e.g., Antibiotics, Analgesics",
-        required: true,
-      },
-      {
-        name: "description",
-        label: "Description",
-        type: "text",
-        placeholder: "Patient sale, Restocking etc.",
-        required: true,
-      },
-      {
-        name: "amountType",
-        label: "Amount Type",
-        type: "select",
-        options: ["Income", "Expense"],
-        required: true,
-      },
-      { name: "amount", label: "Amount", type: "number", required: true },
-      {
-        name: "paymentMode",
-        label: "Payment Mode",
-        type: "select",
-        options: ["Cash", "Card", "UPI"],
-        required: true,
-      },
-      { name: "remarks", label: "Remarks", type: "textarea" },
-    ],
-  },
-  lab: {
-    fields: [
-      {
-        name: "patientName",
-        label: "Patient Name",
-        type: "text",
-        icon: <FaUser />,
-        required: true,
-      },
-      { name: "date", label: "Date", type: "date", required: true },
-      { name: "testName", label: "Test Name", type: "text", required: true },
-      {
-        name: "description",
-        label: "Description",
-        type: "text",
-        placeholder: "MRI, X-Ray, Blood test etc.",
-        required: true,
-      },
-      { name: "amount", label: "Amount", type: "number", required: true },
-      {
-        name: "paymentMode",
-        label: "Payment Mode",
-        type: "select",
-        options: ["Cash", "Card", "UPI", "Insurance"],
-        required: true,
-      },
-      { name: "attachReport", label: "Attach Report", type: "file" },
       { name: "remarks", label: "Remarks", type: "textarea" },
     ],
   },
   cash: {
     fields: [
-      { name: "date", label: "Date", type: "date", required: true },
+      {
+        name: "transactionDate",
+        label: "Date",
+        type: "date",
+        required: true,
+      },
       {
         name: "purpose",
         label: "Purpose",
@@ -403,7 +254,7 @@ const allFormConfigs = {
         name: "amountType",
         label: "Amount Type",
         type: "select",
-        options: ["Income", "Expense"],
+        options: ["INCOME", "EXPENSE"],
         required: true,
       },
       { name: "amount", label: "Amount", type: "number", required: true },
@@ -413,7 +264,12 @@ const allFormConfigs = {
   bank: {
     fields: [
       { name: "bankName", label: "Bank Name", type: "text", required: true },
-      { name: "date", label: "Date", type: "date", required: true },
+      {
+        name: "transactionDate",
+        label: "Date",
+        type: "date",
+        required: true,
+      },
       {
         name: "description",
         label: "Description",
@@ -425,89 +281,10 @@ const allFormConfigs = {
         name: "amountType",
         label: "Amount Type",
         type: "select",
-        options: ["Debit", "Credit"],
+        options: ["CREDIT", "DEBIT"],
         required: true,
       },
       { name: "amount", label: "Amount", type: "number", required: true },
-      { name: "transactionId", label: "Transaction ID", type: "text" },
-      { name: "remarks", label: "Remarks", type: "textarea" },
-    ],
-  },
-  insurance: {
-    fields: [
-      {
-        name: "patientName",
-        label: "Patient Name",
-        type: "text",
-        icon: <FaUser />,
-        required: true,
-      },
-      {
-        name: "tpaInsuranceCompany",
-        label: "TPA/Insurance Company",
-        type: "text",
-        required: true,
-      },
-      { name: "claimDate", label: "Claim Date", type: "date", required: true },
-      {
-        name: "claimAmount",
-        label: "Claim Amount",
-        type: "number",
-        required: true,
-      },
-      { name: "approvedAmount", label: "Approved Amount", type: "number" },
-      { name: "settledAmount", label: "Settled Amount", type: "number" },
-      {
-        name: "status",
-        label: "Status",
-        type: "select",
-        options: [
-          "Pending",
-          "Approved",
-          "Rejected",
-          "Partially Approved",
-          "Settled",
-        ],
-        required: true,
-      },
-      { name: "approvalDate", label: "Approval Date", type: "date" },
-      { name: "settlementDate", label: "Settlement Date", type: "date" },
-      { name: "remarks", label: "Remarks", type: "textarea" },
-    ],
-  },
-  expense: {
-    fields: [
-      {
-        name: "expenseCategory",
-        label: "Expense Category",
-        type: "select",
-        options: [
-          "Utilities",
-          "Salaries",
-          "Maintenance",
-          "Office Supplies",
-          "Medical Supplies",
-          "Rent",
-          "Others",
-        ],
-        required: true,
-      },
-      { name: "date", label: "Date", type: "date", required: true },
-      {
-        name: "description",
-        label: "Description",
-        type: "text",
-        placeholder: "Electricity bill for May etc.",
-        required: true,
-      },
-      { name: "amount", label: "Amount", type: "number", required: true },
-      {
-        name: "paymentMode",
-        label: "Payment Mode",
-        type: "select",
-        options: ["Cash", "Bank", "UPI", "Cheque"],
-        required: true,
-      },
       { name: "transactionId", label: "Transaction ID", type: "text" },
       { name: "remarks", label: "Remarks", type: "textarea" },
     ],
@@ -525,10 +302,8 @@ const EditLedger = () => {
 
   const cleanLedgerType = ledgerType.replace("-ledger", "");
 
-
   // --- Dynamically select the correct configuration ---
   const currentLedger = ledgerMappings[cleanLedgerType];
-
   const formConfig = allFormConfigs[cleanLedgerType];
 
   const [editMode, setEditMode] = useState(false);
@@ -551,6 +326,7 @@ const EditLedger = () => {
     formState: { errors },
   } = useForm({
     resolver: zodResolver(currentLedger.schema),
+    defaultValues: {}, // Add default values
   });
 
   const getDisabledStyles = (isDisabled) =>
@@ -558,31 +334,93 @@ const EditLedger = () => {
 
   useEffect(() => {
     if (ledgerData) {
-      // Format date fields before resetting the form
+      // Format data before resetting the form
       const formattedData = { ...ledgerData };
+      
       formConfig.fields.forEach((field) => {
-        if (field.type === "date" && formattedData[field.name]) {
-          formattedData[field.name] = formattedData[field.name].split("T")[0];
+        const value = formattedData[field.name];
+        
+        // Handle date fields
+        if (field.type === "date" && value) {
+          formattedData[field.name] = new Date(value).toISOString().split("T")[0];
+        }
+        
+        // Handle number fields - convert string to number
+        if (field.type === "number" && value !== undefined && value !== null) {
+          formattedData[field.name] = Number(value);
+        }
+        
+        // Handle optional fields - convert null to empty string
+        if (field.name === "transactionId" || field.name === "remarks") {
+          formattedData[field.name] = value === null ? "" : value;
         }
       });
+      
       reset(formattedData);
     }
   }, [ledgerData, reset, formConfig.fields]);
 
   const onSubmit = async (formData) => {
     try {
-      const response = await updateLedgerEntry({ id, data: formData });
+      // Convert date string to Date object for schema validation
+      const processedData = {
+        ...formData,
+        ...(formData.transactionDate && {
+          transactionDate: new Date(formData.transactionDate),
+        }),
+      };
+
+      // Convert amount to number if it's a string
+      if (typeof processedData.amount === 'string') {
+        processedData.amount = Number(processedData.amount);
+      }
+
+      // Clean empty values - convert empty strings to undefined for optional fields
+      Object.keys(processedData).forEach((key) => {
+        if (processedData[key] === undefined || processedData[key] === "") {
+          // For optional fields, set to undefined instead of deleting
+          if (key === "transactionId" || key === "remarks") {
+            processedData[key] = undefined;
+          } else {
+            delete processedData[key];
+          }
+        }
+      });
+
+      console.log("Submitting data:", processedData); // Debug log
+      
+      const response = await updateLedgerEntry({ id, data: processedData });
       if (response?.data?.success) {
         toast.success(response.data.message);
         setEditMode(false);
       }
     } catch (error) {
-      console.log(error);
+      console.log("Error submitting:", error);
+      toast.error("Failed to update ledger entry");
     }
   };
 
   const handleCancel = () => {
-    reset(ledgerData);
+    if (ledgerData) {
+      // Reset with properly formatted data
+      const formattedData = { ...ledgerData };
+      formConfig.fields.forEach((field) => {
+        const value = formattedData[field.name];
+        
+        if (field.type === "date" && value) {
+          formattedData[field.name] = new Date(value).toISOString().split("T")[0];
+        }
+        
+        if (field.type === "number" && value !== undefined && value !== null) {
+          formattedData[field.name] = Number(value);
+        }
+        
+        if (field.name === "transactionId" || field.name === "remarks") {
+          formattedData[field.name] = value === null ? "" : value;
+        }
+      });
+      reset(formattedData);
+    }
     setEditMode(false);
   };
 
@@ -595,6 +433,7 @@ const EditLedger = () => {
       }
     } catch (error) {
       console.log(error);
+      toast.error("Failed to delete ledger entry");
     } finally {
       setShowDeleteModal(false);
     }
@@ -673,13 +512,35 @@ const EditLedger = () => {
                       errors[field.name] ? "border-red-500" : "border-gray-300"
                     } ${getDisabledStyles(!editMode)}`}
                   />
+                ) : field.type === "number" ? (
+                  <div className="relative">
+                    <input
+                      type="number"
+                      step="0.01"
+                      {...register(field.name, {
+                        valueAsNumber: true, // This tells react-hook-form to parse as number
+                      })}
+                      disabled={!editMode}
+                      placeholder={field.placeholder}
+                      className={`block w-full px-4 py-2 border rounded-lg focus:ring-blue-500 focus:border-blue-500 ${
+                        field.icon ? "pl-10" : ""
+                      } ${
+                        errors[field.name]
+                          ? "border-red-500"
+                          : "border-gray-300"
+                      } ${getDisabledStyles(!editMode)}`}
+                    />
+                    {field.icon && (
+                      <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400">
+                        {field.icon}
+                      </div>
+                    )}
+                  </div>
                 ) : (
                   <div className="relative">
                     <input
                       type={field.type}
-                      {...register(field.name, {
-                        valueAsNumber: field.type === "number",
-                      })}
+                      {...register(field.name)}
                       disabled={!editMode}
                       placeholder={field.placeholder}
                       className={`block w-full px-4 py-2 border rounded-lg focus:ring-blue-500 focus:border-blue-500 ${

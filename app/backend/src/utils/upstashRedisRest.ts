@@ -15,7 +15,7 @@ async function withRetry<T>(
   for (let i = 0; i < retries; i++) {
     try {
       return await fn();
-    } catch (err) {
+    } catch (err) { 
       lastErr = err;
       await new Promise((r) => setTimeout(r, 100 * (i + 1)));
     }

@@ -1,5 +1,6 @@
 import { PrismaClient } from "@prisma/client";
 import { upstashGet, upstashSet } from "./upstashRedisRest";
+import { getCacheVersion } from "./cacheVersion";
 
 interface SearchConfig {
   tableName: string;
@@ -18,7 +19,7 @@ export const createSearchService = (
   config: SearchConfig
 ) => {
   const memoryCache = new Map<string, { data: any[]; timestamp: number }>();
-  const MEMORY_CACHE_TTL = 15000;
+  const MEMORY_CACHE_TTL = 5000;
   const MAX_MEMORY_CACHE = 500;
 
   return async (searchTerm: string): Promise<any[]> => {
@@ -26,20 +27,25 @@ export const createSearchService = (
     const normalizedTerm = searchTerm.trim().toLowerCase();
     if (normalizedTerm.length < 2) return [];
 
-    const cacheKey = `${config.cacheKeyPrefix}:${normalizedTerm}`;
+    // 🔥 NEW: domain version (same as pagination)
+    const version = await getCacheVersion(config.cacheKeyPrefix);
 
-    // 1. memory cache
+    // 🔥 NEW: versioned cache key
+    const cacheKey = `${config.cacheKeyPrefix}:v${version}:search:${normalizedTerm}`;
+
+    // 1️⃣ Memory cache
     const memoryEntry = memoryCache.get(cacheKey);
     if (memoryEntry && Date.now() - memoryEntry.timestamp < MEMORY_CACHE_TTL) {
       return memoryEntry.data;
     }
 
-    // 2. redis cache (short timeout)
+    // 2️⃣ Redis cache
     try {
       const redisResult = await Promise.race([
         upstashGet(cacheKey),
         new Promise((resolve) => setTimeout(() => resolve(null), 5)),
       ]);
+
       if (typeof redisResult === "string") {
         const data = JSON.parse(redisResult);
         memoryCache.set(cacheKey, { data, timestamp: Date.now() });
@@ -49,101 +55,70 @@ export const createSearchService = (
       console.error("Redis cache check failed:", error);
     }
 
-    // 3. Build a dynamic, reusable ranked query using config
-    // We'll always pass 3 params for simplicity:
-    //  $1 -> normalizedTerm (exact)
-    //  $2 -> normalizedTerm% (prefix)
-    //  $3 -> normalizedTerm (similarity)
+    // 3️⃣ Build ranked SQL query (UNCHANGED)
     const values: any[] = [
       normalizedTerm,
       `${normalizedTerm}%`,
       normalizedTerm,
     ];
 
-    // Build pieces conditionally based on provided fields
-    const escapeField = (f: string) => `"${f}"`; // minimal quoting; keep consistent with your schema
+    const escapeField = (f: string) => `"${f}"`;
 
-    // Exact conditions (LOWER(field) = $1)
-    const exactConditions =
-      config.exactFields && config.exactFields.length > 0
-        ? config.exactFields
-            .map((f) => `LOWER(${escapeField(f)}) = $1`)
-            .join(" OR ")
-        : "";
+    const exactConditions = config.exactFields.length
+      ? config.exactFields
+          .map((f) => `LOWER(${escapeField(f)}) = $1`)
+          .join(" OR ")
+      : "";
 
-    // Prefix conditions (LOWER(field) LIKE $2)
-    const prefixConditions =
-      config.prefixFields && config.prefixFields.length > 0
-        ? config.prefixFields
-            .map((f) => `LOWER(${escapeField(f)}) LIKE $2`)
-            .join(" OR ")
-        : "";
+    const prefixConditions = config.prefixFields.length
+      ? config.prefixFields
+          .map((f) => `LOWER(${escapeField(f)}) LIKE $2`)
+          .join(" OR ")
+      : "";
 
-    // Similar/fuzzy conditions using pg_trgm % operator (LOWER(field) % $3)
-    const similarConditions =
-      config.similarFields && config.similarFields.length > 0
-        ? config.similarFields
-            .map((f) => `LOWER(${escapeField(f)}) % $3`)
-            .join(" OR ")
-        : "";
+    const similarConditions = config.similarFields.length
+      ? config.similarFields
+          .map((f) => `LOWER(${escapeField(f)}) % $3`)
+          .join(" OR ")
+      : "";
 
-    // Compose WHERE clause from available parts
     const whereParts: string[] = [];
     if (exactConditions) whereParts.push(`(${exactConditions})`);
     if (prefixConditions) whereParts.push(`(${prefixConditions})`);
     if (similarConditions) whereParts.push(`(${similarConditions})`);
 
-    // If nothing provided in config, return empty (avoid full table scans)
-    if (whereParts.length === 0) {
-      return [];
-    }
+    if (whereParts.length === 0) return [];
+
     const whereClause = whereParts.join(" OR ");
 
-    // Build CASE ranking: exact -> prefix -> similar
     const caseWhen: string[] = [];
     if (exactConditions) caseWhen.push(`WHEN ${exactConditions} THEN 1`);
     if (prefixConditions) caseWhen.push(`WHEN ${prefixConditions} THEN 2`);
     if (similarConditions) caseWhen.push(`WHEN ${similarConditions} THEN 3`);
-    caseWhen.push(`ELSE 4`); // fallback
+    caseWhen.push(`ELSE 4`);
 
     const caseExpr = `CASE ${caseWhen.join(" ")} END AS priority`;
 
-    // Build rank_score using GREATEST(similarity(...), ...)
-    // Use similarity only for fields listed in similarFields. If none, fallback to 0.
-    const similarityExpr =
-      config.similarFields && config.similarFields.length > 0
-        ? `GREATEST(${config.similarFields
-            .map((f) => `similarity(LOWER(${escapeField(f)}), $3)`)
-            .join(", ")}) AS rank_score`
-        : `0 AS rank_score`;
+    const similarityExpr = config.similarFields.length
+      ? `GREATEST(${config.similarFields
+          .map((f) => `similarity(LOWER(${escapeField(f)}), $3)`)
+          .join(", ")}) AS rank_score`
+      : `0 AS rank_score`;
 
-    // Final query
     const query = `
-  SELECT *, ${caseExpr}, ${similarityExpr}
-  FROM "${config.tableName}"
-  WHERE (${whereClause})
-  ORDER BY priority ASC, rank_score DESC, "${
-    config.sortField || "createdAt"
-  }" DESC
-  LIMIT ${config.maxResults || 50}                -- Always limit result set
-`;
+      SELECT *, ${caseExpr}, ${similarityExpr}
+      FROM "${config.tableName}"
+      WHERE (${whereClause})
+      ORDER BY priority ASC, rank_score DESC, "${
+        config.sortField || "createdAt"
+      }" DESC
+      LIMIT ${config.maxResults || 50}
+    `;
 
-    // 4. Execute
-    let results: any[] = [];
-    try {
-      results = await prisma.$queryRawUnsafe<any[]>(query, ...values);
-    } catch (error) {
-      console.error("Database query failed:", error);
-      throw error;
-    }
+    // 4️⃣ Execute DB query
+    const results = await prisma.$queryRawUnsafe<any[]>(query, ...values);
 
-    // 5. logging
-    const duration = performance.now() - start;
-    if (duration > 100) {
-      console.log(`Search "${normalizedTerm}" took ${duration.toFixed(2)}ms`);
-    }
-
-    // 6. caching
+    // 5️⃣ Cache results
     if (results.length > 0) {
       if (memoryCache.size >= MAX_MEMORY_CACHE) {
         const oldestKey = [...memoryCache.entries()].reduce((a, b) =>
@@ -151,9 +126,15 @@ export const createSearchService = (
         )[0];
         memoryCache.delete(oldestKey);
       }
+
       memoryCache.set(cacheKey, { data: results, timestamp: Date.now() });
-      upstashSet(cacheKey, JSON.stringify(results), 300).catch((e) =>
-        console.error("Redis update failed:", e)
+      upstashSet(cacheKey, JSON.stringify(results), 300).catch(console.error);
+    }
+
+    const duration = performance.now() - start;
+    if (duration > 100) {
+      console.log(
+        `Search "${normalizedTerm}" (v${version}) took ${duration.toFixed(2)}ms`
       );
     }
 

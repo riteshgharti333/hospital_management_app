@@ -4,16 +4,31 @@ import { filterPaginate } from "../../utils/filterPaginate";
 import { cursorPaginate } from "../../utils/pagination";
 import { createSearchService } from "../../utils/searchCache";
 
-export const createDoctorLedgerEntry = async (data: {
+type AmountType = "CREDIT" | "DEBIT";
+
+type PaymentMode =
+  | "CASH"
+  | "CARD"
+  | "UPI"
+  | "BANK_TRANSFER"
+  | "CHEQUE";
+
+type DoctorLedgerCreateInput = {
   doctorName: string;
-  date: Date;
+  transactionDate: Date;
   description: string;
-  amountType: string;
+  amountType: AmountType;
   amount: number;
-  paymentMode: string;
+  paymentMode: PaymentMode;
   transactionId?: string;
   remarks?: string;
-}) => {
+};
+
+type DoctorLedgerUpdateInput = Partial<DoctorLedgerCreateInput>;
+
+export const createDoctorLedgerEntry = async (
+  data: DoctorLedgerCreateInput
+) => {
   return prisma.doctorLedger.create({ data });
 };
 
@@ -33,7 +48,6 @@ export const getAllDoctorLedgerService = async (
   );
 };
 
-
 export const getDoctorLedgerEntryById = async (id: number) => {
   return prisma.doctorLedger.findUnique({ where: { id } });
 };
@@ -46,22 +60,15 @@ export const getDoctorBalance = async (doctorName: string) => {
 
   return entries.reduce((balance, entry) => {
     const amount = entry.amount.toNumber();
-    return entry.amountType === "Credit" ? balance + amount : balance - amount;
+    return entry.amountType === "CREDIT"
+      ? balance + amount
+      : balance - amount;
   }, 0);
 };
 
 export const updateDoctorLedgerEntry = async (
   id: number,
-  data: {
-    doctorName?: string;
-    date?: Date;
-    description?: string;
-    amountType?: string;
-    amount?: number;
-    paymentMode?: string;
-    transactionId?: string;
-    remarks?: string;
-  }
+  data: DoctorLedgerUpdateInput
 ) => {
   return prisma.doctorLedger.update({
     where: { id },
@@ -73,7 +80,6 @@ export const deleteDoctorLedgerEntry = async (id: number) => {
   return prisma.doctorLedger.delete({ where: { id } });
 };
 
-
 const commonSearchFields = ["doctorName"];
 
 export const searchDoctorLedger = createSearchService(prisma, {
@@ -82,10 +88,9 @@ export const searchDoctorLedger = createSearchService(prisma, {
   ...applyCommonFields(commonSearchFields),
 });
 
-
 export const filterDoctorLedgerService = async (filters: {
-  amountType?: string;
-  paymentMode?: string;
+  amountType?: AmountType;
+  paymentMode?: PaymentMode;
   fromDate?: Date;
   toDate?: Date;
   cursor?: string | number;
@@ -93,18 +98,15 @@ export const filterDoctorLedgerService = async (filters: {
 }) => {
   const { amountType, paymentMode, fromDate, toDate, cursor, limit } = filters;
 
-  const filterObj: any = {};
+  const filterObj: Record<string, any> = {};
 
-  if (amountType)
-    filterObj.amountType = { equals: amountType, mode: "insensitive" };
-
-  if (paymentMode)
-    filterObj.paymentMode = { equals: paymentMode, mode: "insensitive" };
+  if (amountType) filterObj.amountType = amountType;
+  if (paymentMode) filterObj.paymentMode = paymentMode;
 
   if (fromDate || toDate) {
-    filterObj.date = {
-      gte: fromDate ? new Date(fromDate) : undefined,
-      lte: toDate ? new Date(toDate) : undefined,
+    filterObj.transactionDate = {
+      gte: fromDate,
+      lte: toDate,
     };
   }
 

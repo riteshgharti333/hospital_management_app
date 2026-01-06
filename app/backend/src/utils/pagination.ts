@@ -1,5 +1,6 @@
 import { PrismaClient } from "@prisma/client";
 import { upstashGet, upstashSet } from "./upstashRedisRest";
+import { getCacheVersion } from "./cacheVersion";
 
 const memoryCache = new Map<
   string,
@@ -11,7 +12,6 @@ const memoryCache = new Map<
 >();
 const MEMORY_CACHE_TTL = 30000; // 30 seconds
 const MAX_MEMORY_ENTRIES = 1000;
-
 
 type PaginationOptions<T extends keyof PrismaClient> = {
   model: T;
@@ -37,7 +37,9 @@ export async function cursorPaginate<T extends keyof PrismaClient, R = any>(
     include,
   } = options;
 
-  const cacheKey = `p:${String(model).slice(0, 3)}:c:${
+  const version = await getCacheVersion(String(model));
+
+  const cacheKey = `p:${String(model).slice(0, 3)}:v:${version}:c:${
     cursor || "0"
   }:l:${limit}`;
 

@@ -72,8 +72,8 @@ const PatientLedger = () => {
     () => [
       { accessorKey: "patientName", header: "Patient Name" },
       {
-        accessorKey: "date",
-        header: "Date",
+        accessorKey: "transactionDate",
+        header: "Transaction Date",
         cell: (info) => {
           const date = new Date(info.getValue());
           return isNaN(date)

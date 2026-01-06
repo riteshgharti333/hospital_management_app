@@ -70,7 +70,7 @@ const DoctorLedger = () => {
   const columns = useMemo(
     () => [
       { accessorKey: "doctorName", header: "Doctor Name" },
-      { accessorKey: "date", header: "Date", cell: (info) => {
+      { accessorKey: "transactionDate", header: "Transaction Date", cell: (info) => {
           const date = new Date(info.getValue());
           return isNaN(date)
             ? info.getValue()

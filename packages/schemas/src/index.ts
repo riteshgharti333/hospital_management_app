@@ -1,11 +1,8 @@
 import { z } from "zod";
 
-
 export const changePasswordSchema = z
   .object({
-    currentPassword: z
-      .string()
-      .min(1, "Current password is required"),
+    currentPassword: z.string().min(1, "Current password is required"),
 
     newPassword: z
       .string()
@@ -17,17 +14,14 @@ export const changePasswordSchema = z
       .regex(
         /[^a-zA-Z0-9]/,
         "Password must contain at least one special character"
-      ),  
+      ),
 
-    confirmPassword: z
-      .string()
-      .min(1, "Confirm password is required"),
+    confirmPassword: z.string().min(1, "Confirm password is required"),
   })
   .refine((data) => data.newPassword === data.confirmPassword, {
     path: ["confirmPassword"],
     message: "Passwords do not match",
   });
-
 
 export const registerSchema = z.object({
   name: z.string().min(3, "Name is too short").max(50).optional(),
@@ -207,7 +201,6 @@ export const patientSchema = z.object({
   address: z.string().min(1, "Address is required").trim(),
 });
 
-
 //////////////
 
 export const pharmacistSchema = z.object({
@@ -239,7 +232,6 @@ export const prescriptionSchema = z.object({
     .array(medicineSchema)
     .min(1, "At least one medicine is required"),
 });
- 
 
 ////////////////
 
@@ -440,42 +432,64 @@ export const serviceChargeSchema = z.object({
 
 ////////////// ledger
 
+const AmountTypeEnum = z.enum(["CREDIT", "DEBIT"]);
+const CashAmountTypeEnum = z.enum(["INCOME", "EXPENSE"]);
+const PaymentModeEnum = z.enum([
+  "CASH",
+  "CARD",
+  "UPI",
+  "BANK_TRANSFER",
+  "CHEQUE",
+]);
+const requiredDate = z.preprocess(
+  (val) => {
+    if (val === undefined || val === null || val === "") {
+      return undefined;
+    }
+    return new Date(val as string);
+  },
+  z.date({
+    required_error: "Date is required",
+    invalid_type_error: "Date is required",
+  })
+);
+
 export const bankLedgerSchema = z.object({
   bankName: z.string().min(1, "Bank name is required"),
-  date: z.coerce.date(),
+  transactionDate: requiredDate,
   description: z.string().min(1, "Description is required"),
-  amountType: z.enum(["Credit", "Debit"]),
+  amountType: AmountTypeEnum,
   amount: z.number().positive("Amount must be positive"),
   transactionId: z.string().optional(),
   remarks: z.string().optional(),
 });
 
 export const cashLedgerSchema = z.object({
-  date: z.coerce.date(),
+  transactionDate: requiredDate,
   purpose: z.string().min(1, "Purpose is required"),
-  amountType: z.enum(["Income", "Expense"]),
+  amountType: CashAmountTypeEnum,
   amount: z.number().positive("Amount must be positive"),
   remarks: z.string().optional(),
 });
 
 export const doctorLedgerSchema = z.object({
   doctorName: z.string().min(1, "Doctor name is required"),
-  date: z.coerce.date(),
+  transactionDate: requiredDate,
   description: z.string().min(1, "Description is required"),
-  amountType: z.enum(["Credit", "Debit"]),
+  amountType: AmountTypeEnum,
   amount: z.number().positive("Amount must be positive"),
-  paymentMode: z.string().min(1, "Payment mode is required"),
+  paymentMode: PaymentModeEnum,
   transactionId: z.string().optional(),
   remarks: z.string().optional(),
 });
 
 export const patientLedgerSchema = z.object({
   patientName: z.string().min(1, "Patient name is required"),
-  date: z.coerce.date(),
+  transactionDate: requiredDate,
   description: z.string().min(1, "Description is required"),
-  amountType: z.enum(["Credit", "Debit"]),
+  amountType: AmountTypeEnum,
   amount: z.number().positive("Amount must be positive"),
-  paymentMode: z.string().min(1, "Payment mode is required"),
+  paymentMode: PaymentModeEnum,
   transactionId: z.string().optional(),
   remarks: z.string().optional(),
 });
@@ -587,7 +601,7 @@ export const patientFilterSchema = z.object({
   fromDate: z.coerce.date().optional(),
   toDate: z.coerce.date().optional(),
 
-  limit: z.coerce.number().default(50), 
+  limit: z.coerce.number().default(50),
   cursor: z.coerce.number().optional(),
 });
 
@@ -666,42 +680,64 @@ export type PrescriptionFilterInput = z.infer<typeof prescriptionFilterSchema>;
 ///////////////// Filter Ledger
 
 export const patientLedgerFilterSchema = z.object({
-  amountType: z.enum(["Credit", "Debit"]).optional(),
-  paymentMode: z.enum(["Cash", "Card", "UPI", "Insurance"]).optional(),
+  amountType: z.enum(["CREDIT", "DEBIT"]).optional(),
+
+  paymentMode: z
+    .enum(["CASH", "CARD", "UPI", "BANK_TRANSFER", "CHEQUE"])
+    .optional(),
+
   fromDate: z.coerce.date().optional(),
+
   toDate: z.coerce.date().optional(),
-  limit: z.coerce.number().default(50),
+
+  limit: z.coerce.number().min(1).max(100).default(50),
+
   cursor: z.coerce.number().optional(),
 });
 
 // Bank
 
 export const bankLedgerFilterSchema = z.object({
-  amountType: z.enum(["Credit", "Debit"]).optional(),
+  amountType: z.enum(["CREDIT", "DEBIT"]).optional(),
+
   fromDate: z.coerce.date().optional(),
+
   toDate: z.coerce.date().optional(),
-  limit: z.coerce.number().default(50),
+
+  limit: z.coerce.number().min(1).max(100).default(50),
+
   cursor: z.coerce.number().optional(),
 });
 
 // cash
 
 export const cashLedgerFilterSchema = z.object({
-  amountType: z.enum(["Income", "Expense"]).optional(),
+  amountType: z.enum(["INCOME", "EXPENSE"]).optional(),
+
   fromDate: z.coerce.date().optional(),
+
   toDate: z.coerce.date().optional(),
-  limit: z.coerce.number().default(50),
+
+  limit: z.coerce.number().min(1).max(100).default(50),
+
   cursor: z.coerce.number().optional(),
 });
 
 // doctor
 
 export const doctorLedgerFilterSchema = z.object({
-  amountType: z.enum(["Credit", "Debit"]).optional(),
-  paymentMode: z.enum(["Cash", "UPI", "Bank"]).optional(),
+  amountType: z.enum(["CREDIT", "DEBIT"]).optional(),
+
+  paymentMode: z
+    .enum(["CASH", "CARD", "UPI", "BANK_TRANSFER", "CHEQUE"])
+    .optional(),
+
   fromDate: z.coerce.date().optional(),
+
   toDate: z.coerce.date().optional(),
-  limit: z.coerce.number().default(50),
+
+  limit: z.coerce.number().min(1).max(100).default(50),
+
   cursor: z.coerce.number().optional(),
 });
 

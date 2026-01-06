@@ -30,56 +30,104 @@ import { useCreatePatientLedgerEntry } from "../../feature/ledgerHook/usePatient
 import { useCreatePharmacyLedgerEntry } from "../../feature/ledgerHook/usePharmacyLedger";
 import { useCreateSupplierLedgerEntry } from "../../feature/ledgerHook/useSupplierLedger";
 
-// --- Schemas (assuming they are in a separate file as provided) ---
-// (Your schema code goes here or is imported from @hospital/schemas)
+// --- Updated Schemas ---
+const AmountTypeEnum = z.enum(["CREDIT", "DEBIT"]);
+const CashAmountTypeEnum = z.enum(["INCOME", "EXPENSE"]);
+const PaymentModeEnum = z.enum([
+  "CASH",
+  "CARD",
+  "UPI",
+  "BANK_TRANSFER",
+  "CHEQUE",
+]);
+const requiredDate = z.preprocess(
+  (val) => {
+    if (val === undefined || val === null || val === "") {
+      return undefined;
+    }
+    return new Date(val);
+  },
+  z.date({
+    required_error: "Date is required",
+    invalid_type_error: "Date is required",
+  })
+);
 
-// Example Schemas (Make sure these match your actual schema definitions)
-// NOTE: I've corrected these schemas based on your form fields and common sense.
-import { bankLedgerSchema } from "@hospital/schemas";
-import { cashLedgerSchema } from "@hospital/schemas";
-import { diagnosticsLedgerSchema } from "@hospital/schemas";
-import { doctorLedgerSchema } from "@hospital/schemas";
-import { expenseLedgerSchema } from "@hospital/schemas";
-import { insuranceLedgerSchema } from "@hospital/schemas";
-import { patientLedgerSchema } from "@hospital/schemas";
-import { pharmacyLedgerSchema } from "@hospital/schemas";
-import { supplierLedgerSchema } from "@hospital/schemas";
+export const bankLedgerSchema = z.object({
+  bankName: z.string().min(1, "Bank name is required"),
+  transactionDate: requiredDate,
+  description: z.string().min(1, "Description is required"),
+  amountType: AmountTypeEnum,
+  amount: z.number().positive("Amount must be positive"),
+  transactionId: z.string().optional(),
+  remarks: z.string().optional(),
+});
+
+export const cashLedgerSchema = z.object({
+  transactionDate: requiredDate,
+  purpose: z.string().min(1, "Purpose is required"),
+  amountType: CashAmountTypeEnum,
+  amount: z.number().positive("Amount must be positive"),
+  remarks: z.string().optional(),
+});
+
+export const doctorLedgerSchema = z.object({
+  doctorName: z.string().min(1, "Doctor name is required"),
+  transactionDate: requiredDate,
+  description: z.string().min(1, "Description is required"),
+  amountType: AmountTypeEnum,
+  amount: z.number().positive("Amount must be positive"),
+  paymentMode: PaymentModeEnum,
+  transactionId: z.string().optional(),
+  remarks: z.string().optional(),
+});
+
+export const patientLedgerSchema = z.object({
+  patientName: z.string().min(1, "Patient name is required"),
+  transactionDate: requiredDate,
+  description: z.string().min(1, "Description is required"),
+  amountType: AmountTypeEnum,
+  amount: z.number().positive("Amount must be positive"),
+  paymentMode: PaymentModeEnum,
+  transactionId: z.string().optional(),
+  remarks: z.string().optional(),
+});
 
 // --- Mappings for schemas, hooks, and navigation paths ---
 const schemas = {
   Patient: patientLedgerSchema,
   Doctor: doctorLedgerSchema,
-  Supplier: supplierLedgerSchema,
-  Pharmacy: pharmacyLedgerSchema,
-  Lab: diagnosticsLedgerSchema,
+  // Supplier: supplierLedgerSchema,
+  // Pharmacy: pharmacyLedgerSchema,
+  // Lab: diagnosticsLedgerSchema,
   Cash: cashLedgerSchema,
   Bank: bankLedgerSchema,
-  Insurance: insuranceLedgerSchema,
-  Expense: expenseLedgerSchema,
+  // Insurance: insuranceLedgerSchema,
+  // Expense: expenseLedgerSchema,
 };
 
 const mutationHooks = {
   Patient: useCreatePatientLedgerEntry,
   Doctor: useCreateDoctorLedgerEntry,
-  Supplier: useCreateSupplierLedgerEntry,
-  Pharmacy: useCreatePharmacyLedgerEntry,
-  Lab: useCreateDiagnosticsLedgerEntry,
+  // Supplier: useCreateSupplierLedgerEntry,
+  // Pharmacy: useCreatePharmacyLedgerEntry,
+  // Lab: useCreateDiagnosticsLedgerEntry,
   Cash: useCreateCashLedgerEntry,
   Bank: useCreateBankLedgerEntry,
-  Insurance: useCreateInsuranceLedgerEntry,
-  Expense: useCreateExpenseEntry,
+  // Insurance: useCreateInsuranceLedgerEntry,
+  // Expense: useCreateExpenseEntry,
 };
 
 const navigationPaths = {
   Patient: "/ledger/patient-ledger",
   Doctor: "/ledger/doctor-ledger",
-  Supplier: "/ledger/supplier-ledger",
-  Pharmacy: "/ledger/pharmacy-ledger",
-  Lab: "/ledger/lab-ledger",
+  // Supplier: "/ledger/supplier-ledger",
+  // Pharmacy: "/ledger/pharmacy-ledger",
+  // Lab: "/ledger/lab-ledger",
   Cash: "/ledger/cash-ledger",
   Bank: "/ledger/bank-ledger",
-  Insurance: "/ledger/insurance-ledger",
-  Expense: "/ledger/expense-ledger",
+  // Insurance: "/ledger/insurance-ledger",
+  // Expense: "/ledger/expense-ledger",
 };
 
 // --- Main Component ---
@@ -111,26 +159,11 @@ const NewLedger = () => {
       case "Doctor":
         formConfig = doctorFormConfig;
         break;
-      case "Supplier":
-        formConfig = supplierFormConfig;
-        break;
-      case "Pharmacy":
-        formConfig = pharmacyFormConfig;
-        break;
-      case "Lab":
-        formConfig = labFormConfig;
-        break;
       case "Cash":
         formConfig = cashFormConfig;
         break;
       case "Bank":
         formConfig = bankFormConfig;
-        break;
-      case "Insurance":
-        formConfig = insuranceFormConfig;
-        break;
-      case "Expense":
-        formConfig = expenseFormConfig;
         break;
       default:
         return null;
@@ -190,7 +223,7 @@ const NewLedger = () => {
   );
 };
 
-// --- Form Configurations (FIXED to match schemas) ---
+// --- Updated Form Configurations to match new schemas ---
 
 const patientFormConfig = {
   formTitle: "Patient Ledger",
@@ -204,7 +237,7 @@ const patientFormConfig = {
       required: true,
     },
     {
-      name: "date",
+      name: "transactionDate",
       label: "Date",
       type: "date",
       icon: <FaCalendarAlt />,
@@ -221,7 +254,7 @@ const patientFormConfig = {
       name: "amountType",
       label: "Amount Type",
       type: "select",
-      options: ["Debit", "Credit"],
+      options: ["CREDIT", "DEBIT"],
       required: true,
     },
     { name: "amount", label: "Amount", type: "number", required: true },
@@ -229,7 +262,7 @@ const patientFormConfig = {
       name: "paymentMode",
       label: "Payment Mode",
       type: "select",
-      options: ["Cash", "Card", "UPI", "Insurance"],
+      options: ["CASH", "CARD", "UPI", "BANK_TRANSFER", "CHEQUE"],
       required: true,
     },
     { name: "transactionId", label: "Transaction ID", type: "text" },
@@ -237,11 +270,11 @@ const patientFormConfig = {
   ],
   defaultValues: {
     patientName: "",
-    date: new Date().toISOString().split("T")[0],
+    transactionDate: new Date().toISOString().split("T")[0],
     description: "",
-    amountType: "Debit",
+    amountType: "DEBIT",
     amount: 0,
-    paymentMode: "Cash",
+    paymentMode: "CASH",
     transactionId: "",
     remarks: "",
   },
@@ -258,7 +291,7 @@ const doctorFormConfig = {
       icon: <FaUserMd />,
       required: true,
     },
-    { name: "date", label: "Date", type: "date", required: true },
+    { name: "transactionDate", label: "Date", type: "date", required: true },
     {
       name: "description",
       label: "Description",
@@ -270,7 +303,7 @@ const doctorFormConfig = {
       name: "amountType",
       label: "Amount Type",
       type: "select",
-      options: ["Debit", "Credit"],
+      options: ["CREDIT", "DEBIT"],
       required: true,
     },
     { name: "amount", label: "Amount", type: "number", required: true },
@@ -278,7 +311,7 @@ const doctorFormConfig = {
       name: "paymentMode",
       label: "Payment Mode",
       type: "select",
-      options: ["Bank", "UPI", "Cash"],
+      options: ["CASH", "CARD", "UPI", "BANK_TRANSFER", "CHEQUE"],
       required: true,
     },
     { name: "transactionId", label: "Transaction ID", type: "text" },
@@ -286,162 +319,12 @@ const doctorFormConfig = {
   ],
   defaultValues: {
     doctorName: "",
-    date: new Date().toISOString().split("T")[0],
+    transactionDate: new Date().toISOString().split("T")[0],
     description: "",
-    amountType: "Debit",
+    amountType: "DEBIT",
     amount: 0,
-    paymentMode: "Bank",
+    paymentMode: "BANK_TRANSFER",
     transactionId: "",
-    remarks: "",
-  },
-};
-
-const supplierFormConfig = {
-  formTitle: "Supplier Ledger",
-  formIcon: <FaTruck />,
-  fields: [
-    {
-      name: "supplierName",
-      label: "Supplier Name",
-      type: "text",
-      icon: <FaTruck />,
-      required: true,
-    },
-    { name: "date", label: "Date", type: "date", required: true },
-    { name: "invoiceNo", label: "Invoice No.", type: "text", required: true },
-    {
-      name: "description",
-      label: "Description",
-      type: "text",
-      placeholder: "Gloves order, Medicine refund etc.",
-      required: true,
-    },
-    {
-      name: "amountType",
-      label: "Amount Type",
-      type: "select",
-      options: ["Debit", "Credit"],
-      required: true,
-    },
-    { name: "amount", label: "Amount", type: "number", required: true },
-    {
-      name: "paymentMode",
-      label: "Payment Mode",
-      type: "select",
-      options: ["Bank", "UPI", "Cheque", "Cash"],
-    },
-    { name: "transactionId", label: "Transaction ID", type: "text" },
-    { name: "attachBill", label: "Attach Bill", type: "file" },
-    { name: "remarks", label: "Remarks", type: "textarea" },
-  ],
-  defaultValues: {
-    supplierName: "",
-    date: new Date().toISOString().split("T")[0],
-    invoiceNo: "",
-    description: "",
-    amountType: "Debit",
-    amount: 0,
-    paymentMode: "Bank",
-    transactionId: "",
-    attachBill: null,
-    remarks: "",
-  },
-};
-
-const pharmacyFormConfig = {
-  formTitle: "Pharmacy Ledger",
-  formIcon: <FaPills />,
-  fields: [
-    { name: "date", label: "Date", type: "date", required: true },
-    {
-      name: "medicineName",
-      label: "Medicine Name",
-      type: "text",
-      icon: <FaPills />,
-      required: true,
-    },
-    {
-      name: "category",
-      label: "Category",
-      type: "text",
-      placeholder: "e.g., Antibiotics, Analgesics",
-      required: true,
-    },
-    {
-      name: "description",
-      label: "Description",
-      type: "text",
-      placeholder: "Patient sale, Restocking etc.",
-      required: true,
-    },
-    {
-      name: "amountType",
-      label: "Amount Type",
-      type: "select",
-      options: ["Income", "Expense"],
-      required: true,
-    },
-    { name: "amount", label: "Amount", type: "number", required: true },
-    {
-      name: "paymentMode",
-      label: "Payment Mode",
-      type: "select",
-      options: ["Cash", "Card", "UPI"],
-      required: true,
-    },
-    { name: "remarks", label: "Remarks", type: "textarea" },
-  ],
-  defaultValues: {
-    date: new Date().toISOString().split("T")[0],
-    medicineName: "",
-    category: "",
-    description: "",
-    amountType: "Income",
-    amount: 0,
-    paymentMode: "Cash",
-    remarks: "",
-  },
-};
-
-const labFormConfig = {
-  formTitle: "Lab/Diagnostics Ledger",
-  formIcon: <FaFlask />,
-  fields: [
-    {
-      name: "patientName",
-      label: "Patient Name",
-      type: "text",
-      icon: <FaUser />,
-      required: true,
-    },
-    { name: "date", label: "Date", type: "date", required: true },
-    { name: "testName", label: "Test Name", type: "text", required: true },
-    {
-      name: "description",
-      label: "Description",
-      type: "text",
-      placeholder: "MRI, X-Ray, Blood test etc.",
-      required: true,
-    },
-    { name: "amount", label: "Amount", type: "number", required: true },
-    {
-      name: "paymentMode",
-      label: "Payment Mode",
-      type: "select",
-      options: ["Cash", "Card", "UPI", "Insurance"],
-      required: true,
-    },
-    { name: "attachReport", label: "Attach Report", type: "file" },
-    { name: "remarks", label: "Remarks", type: "textarea" },
-  ],
-  defaultValues: {
-    patientName: "",
-    date: new Date().toISOString().split("T")[0],
-    testName: "",
-    description: "",
-    amount: 0,
-    paymentMode: "Cash",
-    attachReport: null,
     remarks: "",
   },
 };
@@ -450,7 +333,7 @@ const cashFormConfig = {
   formTitle: "Cash Ledger",
   formIcon: <FaMoneyBillAlt />,
   fields: [
-    { name: "date", label: "Date", type: "date", required: true },
+    { name: "transactionDate", label: "Date", type: "date", required: true },
     {
       name: "purpose",
       label: "Purpose",
@@ -462,16 +345,16 @@ const cashFormConfig = {
       name: "amountType",
       label: "Amount Type",
       type: "select",
-      options: ["Income", "Expense"],
+      options: ["INCOME", "EXPENSE"],
       required: true,
     },
     { name: "amount", label: "Amount", type: "number", required: true },
     { name: "remarks", label: "Remarks", type: "textarea" },
   ],
   defaultValues: {
-    date: new Date().toISOString().split("T")[0],
+    transactionDate: new Date().toISOString().split("T")[0],
     purpose: "",
-    amountType: "Income",
+    amountType: "INCOME",
     amount: 0,
     remarks: "",
   },
@@ -482,7 +365,7 @@ const bankFormConfig = {
   formIcon: <FaBuilding />,
   fields: [
     { name: "bankName", label: "Bank Name", type: "text", required: true },
-    { name: "date", label: "Date", type: "date", required: true },
+    { name: "transactionDate", label: "Date", type: "date", required: true },
     {
       name: "description",
       label: "Description",
@@ -494,7 +377,7 @@ const bankFormConfig = {
       name: "amountType",
       label: "Amount Type",
       type: "select",
-      options: ["Debit", "Credit"],
+      options: ["CREDIT", "DEBIT"],
       required: true,
     },
     { name: "amount", label: "Amount", type: "number", required: true },
@@ -503,116 +386,10 @@ const bankFormConfig = {
   ],
   defaultValues: {
     bankName: "",
-    date: new Date().toISOString().split("T")[0],
+    transactionDate: new Date().toISOString().split("T")[0],
     description: "",
-    amountType: "Debit",
+    amountType: "DEBIT",
     amount: 0,
-    transactionId: "",
-    remarks: "",
-  },
-};
-
-const insuranceFormConfig = {
-  formTitle: "Insurance/TPA Ledger",
-  formIcon: <FaFileMedical />,
-  fields: [
-    {
-      name: "patientName",
-      label: "Patient Name",
-      type: "text",
-      icon: <FaUser />,
-      required: true,
-    },
-    {
-      name: "tpaInsuranceCompany",
-      label: "TPA/Insurance Company",
-      type: "text",
-      required: true,
-    },
-    { name: "claimDate", label: "Claim Date", type: "date", required: true },
-    {
-      name: "claimAmount",
-      label: "Claim Amount",
-      type: "number",
-      required: true,
-    },
-    { name: "approvedAmount", label: "Approved Amount", type: "number" },
-    { name: "settledAmount", label: "Settled Amount", type: "number" },
-    {
-      name: "status",
-      label: "Status",
-      type: "select",
-      options: [
-        "Pending",
-        "Approved",
-        "Rejected",
-        "Partially Approved",
-        "Settled",
-      ],
-      required: true,
-    },
-    { name: "approvalDate", label: "Approval Date", type: "date" },
-    { name: "settlementDate", label: "Settlement Date", type: "date" },
-    { name: "remarks", label: "Remarks", type: "textarea" },
-  ],
-  defaultValues: {
-    patientName: "",
-    tpaInsuranceCompany: "",
-    claimDate: new Date().toISOString().split("T")[0],
-    claimAmount: 0,
-    approvedAmount: 0,
-    settledAmount: 0,
-    status: "Pending",
-    remarks: "",
-    approvalDate: "",
-    settlementDate: "",
-  },
-};
-
-const expenseFormConfig = {
-  formTitle: "General Expense Ledger",
-  formIcon: <FaFileInvoice />,
-  fields: [
-    {
-      name: "expenseCategory",
-      label: "Expense Category",
-      type: "select",
-      options: [
-        "Utilities",
-        "Salaries",
-        "Maintenance",
-        "Office Supplies",
-        "Medical Supplies",
-        "Rent",
-        "Others",
-      ],
-      required: true,
-    },
-    { name: "date", label: "Date", type: "date", required: true },
-    {
-      name: "description",
-      label: "Description",
-      type: "text",
-      placeholder: "Electricity bill for May etc.",
-      required: true,
-    },
-    { name: "amount", label: "Amount", type: "number", required: true },
-    {
-      name: "paymentMode",
-      label: "Payment Mode",
-      type: "select",
-      options: ["Cash", "Bank", "UPI", "Cheque"],
-      required: true,
-    },
-    { name: "transactionId", label: "Transaction ID", type: "text" },
-    { name: "remarks", label: "Remarks", type: "textarea" },
-  ],
-  defaultValues: {
-    expenseCategory: "",
-    date: new Date().toISOString().split("T")[0],
-    description: "",
-    amount: 0,
-    paymentMode: "Cash",
     transactionId: "",
     remarks: "",
   },
@@ -636,45 +413,24 @@ const BaseLedgerForm = ({ ledgerType, schema, formConfig }) => {
   });
 
   const onSubmit = async (data) => {
-    // Handle date fields safely
+    // Convert date strings to Date objects for schema validation
     const processedData = {
       ...data,
-      // Convert only valid dates to ISO strings
-      ...(data.date && { date: new Date(data.date).toISOString() }),
-      // Special handling for insurance ledger dates
-      ...(ledgerType === "Insurance" && {
-        ...(data.claimDate && {
-          claimDate: new Date(data.claimDate).toISOString(),
-        }),
-        ...(data.approvalDate && {
-          approvalDate: new Date(data.approvalDate).toISOString(),
-        }),
-        ...(data.settlementDate && {
-          settlementDate: new Date(data.settlementDate).toISOString(),
-        }),
-      }),
-    };
-
-    // Handle file attachments
-    const cleanedData = {
-      ...processedData,
-      ...(data.attachBill && {
-        attachBill: "https://example.com/dummy-bill.pdf",
-      }),
-      ...(data.attachReport && {
-        attachReport: "https://example.com/dummy-report.pdf",
+      // Convert all date fields to Date objects
+      ...(data.transactionDate && {
+        transactionDate: new Date(data.transactionDate),
       }),
     };
 
     // Clean empty values
-    Object.keys(cleanedData).forEach((key) => {
-      if (cleanedData[key] === undefined || cleanedData[key] === "") {
-        delete cleanedData[key];
+    Object.keys(processedData).forEach((key) => {
+      if (processedData[key] === undefined || processedData[key] === "") {
+        delete processedData[key];
       }
     });
 
     try {
-      const response = await mutateAsync(cleanedData);
+      const response = await mutateAsync(processedData);
       if (response?.data?.success) {
         navigate(`${navigationPaths[ledgerType]}/${response.data.data.id}`);
       }
@@ -682,6 +438,7 @@ const BaseLedgerForm = ({ ledgerType, schema, formConfig }) => {
       console.error("Error:", error);
     }
   };
+
   const handleCancel = () => {
     reset(formConfig.defaultValues);
     toast.info("Form reset.");
@@ -696,7 +453,7 @@ const BaseLedgerForm = ({ ledgerType, schema, formConfig }) => {
       errors={errors}
       onSubmit={handleSubmit(onSubmit)}
       onCancel={handleCancel}
-      isSubmitting={isPending} // Use isPending from the mutation
+      isSubmitting={isPending}
     />
   );
 };
@@ -752,10 +509,9 @@ const LedgerFormUI = ({
                   {...register(field.name)}
                   className={`${getInputClass(field.name)}  bg-white pr-8`}
                 >
-                  <option disabled selected hidden>
+                  <option disabled value="">
                     Select {field.label}
                   </option>
-
                   {field.options.map((option) => (
                     <option key={option} value={option}>
                       {option}

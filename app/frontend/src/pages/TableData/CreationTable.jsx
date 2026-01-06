@@ -59,7 +59,7 @@ const CreationTable = () => {
 
   return (
     <div className="">
-      <div className="flex justify-between items-center">
+    <div className="flex justify-between items-center">
         <h2 className="text-2xl font-bold text-gray-800 flex items-center">
           Companies
         </h2>

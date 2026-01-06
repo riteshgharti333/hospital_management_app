@@ -6,8 +6,10 @@ const memoryCache = new Map<
   string,
   { data: any[]; nextCursor: string | number | null; timestamp: number }
 >();
-const MEMORY_CACHE_TTL = 30_000; // 30s
+
+const MEMORY_CACHE_TTL = 10_000;
 const MAX_MEMORY_ENTRIES = 1_000;
+
 
 // 🔧 Cache helper functions (inline for reuse)
 async function getFromCache(cacheKey: string) {
@@ -74,7 +76,7 @@ export async function filterPaginate<T extends keyof PrismaClient, R = any>(
     model,
     cursorField = "id",
     limit = 50,
-    cacheExpiry = 3600,
+    cacheExpiry = 10,
     select,
     filters = {},
   } = options;

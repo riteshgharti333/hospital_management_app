@@ -352,73 +352,102 @@ model Ambulance {
 
 /////////// Ledgers 
 
+enum AmountType {
+  CREDIT
+  DEBIT
+}
+
+enum CashAmountType {
+  INCOME
+  EXPENSE
+}
+
+enum PaymentMode {
+  CASH
+  CARD
+  UPI
+  BANK_TRANSFER
+  CHEQUE
+}
+
+
 model PatientLedger {
-  id            Int      @id @default(autoincrement())
-  patientName   String
-  date          DateTime
-  description   String
-  amountType    String   // Credit or Debit
-  amount        Decimal
-  paymentMode   String   // Cash, Card, UPI, etc.
-  transactionId String?
-  remarks       String?
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+  id              Int        @id @default(autoincrement())
+  patientName     String
+  transactionDate DateTime
+  description     String
+  amountType      AmountType
+  amount          Decimal
+  paymentMode     PaymentMode
+  transactionId   String?
+  referenceType   String?
+  referenceId     String?
+  remarks         String?
+  createdAt       DateTime   @default(now())
+  updatedAt       DateTime   @updatedAt
 
   @@index([patientName])
-  @@index([date])
+  @@index([transactionDate])
   @@index([amountType])
 }
 
 
 model BankLedger {
-  id            Int      @id @default(autoincrement())
-  bankName      String
-  date          DateTime
-  description   String
-  amountType    String   // "Credit" or "Debit"
-  amount        Decimal
-  transactionId String?
-  remarks       String?
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+  id              Int        @id @default(autoincrement())
+  bankName        String
+  transactionDate DateTime
+  description     String
+  amountType      AmountType
+  amount          Decimal
+  transactionId   String?
+  referenceType   String?
+  referenceId     String?
+  remarks         String?
+  createdAt       DateTime   @default(now())
+  updatedAt       DateTime   @updatedAt
 
   @@index([bankName])
-  @@index([date])
+  @@index([transactionDate])
   @@index([amountType])
 }
+
 
 
 model CashLedger {
-  id          Int      @id @default(autoincrement())
-  date        DateTime
-  purpose     String
-  amountType  String   // "Income" or "Expense"
-  amount      Decimal
-  remarks     String?
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id              Int             @id @default(autoincrement())
+  transactionDate DateTime
+  purpose         String
+  amountType      CashAmountType
+  amount          Decimal
+  referenceType   String?
+  referenceId     String?
+  remarks         String?
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
 
-  @@index([date])
+  @@index([transactionDate])
   @@index([amountType])
 }
 
 
+
 model DoctorLedger {
-  id            Int      @id @default(autoincrement())
-  doctorName    String
-  date          DateTime
-  description   String
-  amountType    String   // "Credit" or "Debit"
-  amount        Decimal
-  paymentMode   String   // Cash, Bank Transfer, UPI, etc.
-  transactionId String?
-  remarks       String?
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+  id              Int        @id @default(autoincrement())
+  doctorName      String
+  transactionDate DateTime
+  description     String
+  amountType      AmountType
+  amount          Decimal
+  paymentMode     PaymentMode
+  transactionId   String?
+  referenceType   String?
+  referenceId     String?
+  remarks         String?
+  createdAt       DateTime   @default(now())
+  updatedAt       DateTime   @updatedAt
 
   @@index([doctorName])
-  @@index([date])
+  @@index([transactionDate])
   @@index([amountType])
 }
 

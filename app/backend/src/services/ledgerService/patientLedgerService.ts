@@ -4,16 +4,31 @@ import { filterPaginate } from "../../utils/filterPaginate";
 import { cursorPaginate } from "../../utils/pagination";
 import { createSearchService } from "../../utils/searchCache";
 
-export const createLedgerEntry = async (data: {
+type AmountType = "CREDIT" | "DEBIT";
+
+type PaymentMode =
+  | "CASH"
+  | "CARD"
+  | "UPI"
+  | "BANK_TRANSFER"
+  | "CHEQUE";
+
+type PatientLedgerCreateInput = {
   patientName: string;
-  date: Date;
+  transactionDate: Date;
   description: string;
-  amountType: string;
+  amountType: AmountType;
   amount: number;
-  paymentMode: string;
+  paymentMode: PaymentMode;
   transactionId?: string;
   remarks?: string;
-}) => {
+};
+
+type PatientLedgerUpdateInput = Partial<PatientLedgerCreateInput>;
+
+export const createLedgerEntry = async (
+  data: PatientLedgerCreateInput
+) => {
   return prisma.patientLedger.create({ data });
 };
 
@@ -45,22 +60,15 @@ export const getPatientBalance = async (patientName: string) => {
 
   return entries.reduce((balance, entry) => {
     const amount = entry.amount.toNumber();
-    return entry.amountType === "Credit" ? balance + amount : balance - amount;
+    return entry.amountType === "CREDIT"
+      ? balance + amount
+      : balance - amount;
   }, 0);
 };
 
 export const updateLedgerEntry = async (
   id: number,
-  data: {
-    patientName?: string;
-    date?: Date;
-    description?: string;
-    amountType?: string;
-    amount?: number;
-    paymentMode?: string;
-    transactionId?: string;
-    remarks?: string;
-  }
+  data: PatientLedgerUpdateInput
 ) => {
   return prisma.patientLedger.update({
     where: { id },
@@ -81,8 +89,8 @@ export const searchPatientLedger = createSearchService(prisma, {
 });
 
 export const filterPatientLedgerService = async (filters: {
-  amountType?: string;
-  paymentMode?: string;
+  amountType?: AmountType;
+  paymentMode?: PaymentMode;
   fromDate?: Date;
   toDate?: Date;
   cursor?: string | number;
@@ -92,17 +100,15 @@ export const filterPatientLedgerService = async (filters: {
 
   const filterObj: Record<string, any> = {};
 
-  if (amountType)
-    filterObj.amountType = { equals: amountType, mode: "insensitive" };
+  if (amountType) filterObj.amountType = amountType;
+  if (paymentMode) filterObj.paymentMode = paymentMode;
 
-  if (paymentMode)
-    filterObj.paymentMode = { equals: paymentMode, mode: "insensitive" };
-
-  if (fromDate || toDate)
-    filterObj.date = {
-      gte: fromDate ? new Date(fromDate) : undefined,
-      lte: toDate ? new Date(toDate) : undefined,
+  if (fromDate || toDate) {
+    filterObj.transactionDate = {
+      gte: fromDate,
+      lte: toDate,
     };
+  }
 
   return filterPaginate(
     prisma,
@@ -115,6 +121,3 @@ export const filterPatientLedgerService = async (filters: {
     cursor
   );
 };
-
-
-
