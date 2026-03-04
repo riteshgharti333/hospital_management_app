@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.getBillsByStatus = exports.getMonthlyBillingVsReceiptRecord = exports.getBillStatusAnalyticsRecord = exports.filterBills = exports.searchBillsResults = exports.deleteBillRecord = exports.updateBillRecord = exports.getBillRecordById = exports.getAllBillRecords = exports.createBillRecord = void 0;
+exports.filterBills = exports.searchBillsResults = exports.deleteBillRecord = exports.updateBillRecord = exports.getBillRecordById = exports.getAllBillRecords = exports.createBillRecord = void 0;
 const catchAsyncError_1 = require("../../middlewares/catchAsyncError");
 const errorHandler_1 = require("../../middlewares/errorHandler");
 const sendResponse_1 = require("../../utils/sendResponse");
@@ -112,32 +112,5 @@ exports.filterBills = (0, catchAsyncError_1.catchAsyncError)(async (req, res) =>
             nextCursor: nextCursor !== null ? String(nextCursor) : undefined,
             limit: validated.limit || 50,
         },
-    });
-});
-exports.getBillStatusAnalyticsRecord = (0, catchAsyncError_1.catchAsyncError)(async (req, res) => {
-    const data = await (0, billService_1.getBillStatusAnalytics)();
-    (0, sendResponse_1.sendResponse)(res, {
-        success: true,
-        statusCode: 200,
-        message: "Bill status analytics fetched successfully",
-        data,
-    });
-});
-exports.getMonthlyBillingVsReceiptRecord = (0, catchAsyncError_1.catchAsyncError)(async (_req, res) => {
-    const data = await (0, billService_1.getMonthlyBillingVsReceipt)();
-    (0, sendResponse_1.sendResponse)(res, {
-        success: true,
-        statusCode: 200,
-        message: "Monthly billing vs receipt fetched successfully",
-        data,
-    });
-});
-exports.getBillsByStatus = (0, catchAsyncError_1.catchAsyncError)(async (_req, res) => {
-    const result = await (0, billService_1.getBillsByStatusAnalytics)();
-    (0, sendResponse_1.sendResponse)(res, {
-        success: true,
-        statusCode: 200,
-        message: "Bills by status analytics fetched successfully",
-        data: result,
     });
 });

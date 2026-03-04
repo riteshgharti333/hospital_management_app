@@ -436,11 +436,10 @@ export const getPatientAnalytics = () =>
 export const getPatientAgeDistribution = () =>
   withDashboardCache({
     key: "dashboard:patient-age-distribution",
-    ttlSeconds: 30 * 60, // 30 minutes cache since this doesn't change often
+    ttlSeconds: 30 * 60,
     fetcher: async () => {
-      // Fetch only required fields for speed
       const patients = await prisma.patient.findMany({
-        select: { age: true },
+        select: { dateOfBirth: true },
       });
 
       const groups = {
@@ -456,16 +455,32 @@ export const getPatientAgeDistribution = () =>
 
       let totalAge = 0;
 
-      patients.forEach((p) => {
-        totalAge += p.age;
+      const today = new Date();
 
-        if (p.age <= 10) groups["0-10"]++;
-        else if (p.age <= 20) groups["11-20"]++;
-        else if (p.age <= 30) groups["21-30"]++;
-        else if (p.age <= 40) groups["31-40"]++;
-        else if (p.age <= 50) groups["41-50"]++;
-        else if (p.age <= 60) groups["51-60"]++;
-        else if (p.age <= 70) groups["61-70"]++;
+      patients.forEach((p) => {
+        if (!p.dateOfBirth) return;
+
+        const dob = new Date(p.dateOfBirth);
+
+        let age = today.getFullYear() - dob.getFullYear();
+        const monthDiff = today.getMonth() - dob.getMonth();
+
+        if (
+          monthDiff < 0 ||
+          (monthDiff === 0 && today.getDate() < dob.getDate())
+        ) {
+          age--;
+        }
+
+        totalAge += age;
+
+        if (age <= 10) groups["0-10"]++;
+        else if (age <= 20) groups["11-20"]++;
+        else if (age <= 30) groups["21-30"]++;
+        else if (age <= 40) groups["31-40"]++;
+        else if (age <= 50) groups["41-50"]++;
+        else if (age <= 60) groups["51-60"]++;
+        else if (age <= 70) groups["61-70"]++;
         else groups["71+"]++;
       });
 
@@ -474,7 +489,6 @@ export const getPatientAgeDistribution = () =>
           ? 0
           : Number((totalAge / patients.length).toFixed(1));
 
-      // determine which age group is the mode (highest count)
       let modeGroup = "";
       let highest = 0;
 
@@ -486,9 +500,9 @@ export const getPatientAgeDistribution = () =>
       }
 
       return {
-        groups, // counts for chart
-        averageAge, // bottom text
-        modeGroup, // "Most: 31-40 yrs"
+        groups,
+        averageAge,
+        modeGroup,
         modeCount: highest,
       };
     },
@@ -593,23 +607,32 @@ export const getAdmissionGenderAnalytics = () =>
     key: "dashboard:admission-gender",
     ttlSeconds: 10 * 60,
     fetcher: async () => {
-      // Count for all time admissions
       const totalAdmissions = await prisma.admission.count();
 
-      // Count by gender
       const maleCount = await prisma.admission.count({
-        where: { patientSex: "Male" },
+        where: {
+          patient: {
+            gender: "Male",
+          },
+        },
       });
 
       const femaleCount = await prisma.admission.count({
-        where: { patientSex: "Female" },
+        where: {
+          patient: {
+            gender: "Female",
+          },
+        },
       });
 
       const otherCount = await prisma.admission.count({
-        where: { patientSex: "Other" },
+        where: {
+          patient: {
+            gender: "Other",
+          },
+        },
       });
 
-      // Avoid division by zero
       const percent = (part: number) =>
         totalAdmissions === 0
           ? 0
@@ -632,7 +655,6 @@ export const getAdmissionGenderAnalytics = () =>
       };
     },
   });
-
 /* ======================================================
    ADMISSION ANALYTICS
 ====================================================== */

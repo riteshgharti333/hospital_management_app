@@ -38,7 +38,7 @@ router
     updateAdmission
   )
   .delete(
-    authenticateUser, 
+    authenticateUser,  
     authorizeRoles("ADMIN"),
     deleteAdmission
   );

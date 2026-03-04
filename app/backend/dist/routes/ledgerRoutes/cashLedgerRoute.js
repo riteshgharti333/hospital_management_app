@@ -5,19 +5,24 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 const express_1 = __importDefault(require("express"));
 const CashLedgerController_1 = require("../../controllers/ledger/CashLedgerController");
-const isAuthenticated_1 = require("../../middlewares/isAuthenticated");
-const isAdmin_1 = require("../../middlewares/isAdmin");
+// 🔥 extra ../ for deep folder
+const authenticate_1 = require("../../middlewares/authenticate");
+const authorize_1 = require("../../middlewares/authorize");
 const router = express_1.default.Router();
+// CREATE + LIST
 router
     .route("/")
-    .post(isAuthenticated_1.isAuthenticated, isAdmin_1.isAdmin, CashLedgerController_1.createCashLedgerRecord)
+    .post(authenticate_1.authenticateUser, (0, authorize_1.authorizeRoles)("ADMIN"), CashLedgerController_1.createCashLedgerRecord)
     .get(CashLedgerController_1.getAllCashLedgerRecords);
-router.route("/balance").get(CashLedgerController_1.getCashBalanceRecord);
+// BALANCE (read-only)
+router.get("/balance", CashLedgerController_1.getCashBalanceRecord);
+// SEARCH & FILTER
 router.get("/search", CashLedgerController_1.searchCashLedgerResults);
 router.get("/filter", CashLedgerController_1.filterCashLedger);
+// GET / UPDATE / DELETE
 router
     .route("/:id")
     .get(CashLedgerController_1.getCashLedgerRecordById)
-    .patch(isAuthenticated_1.isAuthenticated, isAdmin_1.isAdmin, CashLedgerController_1.updateCashLedgerRecord)
-    .delete(isAuthenticated_1.isAuthenticated, isAdmin_1.isAdmin, CashLedgerController_1.deleteCashLedgerRecord);
+    .put(authenticate_1.authenticateUser, (0, authorize_1.authorizeRoles)("ADMIN"), CashLedgerController_1.updateCashLedgerRecord)
+    .delete(authenticate_1.authenticateUser, (0, authorize_1.authorizeRoles)("ADMIN"), CashLedgerController_1.deleteCashLedgerRecord);
 exports.default = router;

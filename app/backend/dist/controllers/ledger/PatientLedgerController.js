@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.getLedgerFlowSummaryController = exports.filterPatientLedger = exports.searchPatientLedgerResults = exports.deleteLedgerEntryRecord = exports.updateLedgerEntryRecord = exports.getPatientBalanceRecord = exports.getLedgerEntryRecordById = exports.getAllPatientLedgerEntryRecords = exports.createLedgerEntryRecord = void 0;
+exports.filterPatientLedger = exports.searchPatientLedgerResults = exports.deleteLedgerEntryRecord = exports.updateLedgerEntryRecord = exports.getPatientBalanceRecord = exports.getLedgerEntryRecordById = exports.getAllPatientLedgerEntryRecords = exports.createLedgerEntryRecord = void 0;
 const catchAsyncError_1 = require("../../middlewares/catchAsyncError");
 const errorHandler_1 = require("../../middlewares/errorHandler");
 const sendResponse_1 = require("../../utils/sendResponse");
@@ -126,14 +126,5 @@ exports.filterPatientLedger = (0, catchAsyncError_1.catchAsyncError)(async (req,
             nextCursor: nextCursor !== null ? String(nextCursor) : undefined,
             limit: validated.limit,
         },
-    });
-});
-exports.getLedgerFlowSummaryController = (0, catchAsyncError_1.catchAsyncError)(async (_req, res) => {
-    const data = await (0, patientLedgerService_1.getLedgerFlowSummary)();
-    (0, sendResponse_1.sendResponse)(res, {
-        success: true,
-        statusCode: statusCodes_1.StatusCodes.OK,
-        message: "Ledger flow summary fetched successfully",
-        data,
     });
 });

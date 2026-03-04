@@ -5,17 +5,21 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 const express_1 = __importDefault(require("express"));
 const AdmissionController_1 = require("../controllers/AdmissionController");
-const isAuthenticated_1 = require("../middlewares/isAuthenticated");
-const isAdmin_1 = require("../middlewares/isAdmin");
+const authenticate_1 = require("../middlewares/authenticate");
+const authorize_1 = require("../middlewares/authorize");
 const router = express_1.default.Router();
-router.post("/", isAuthenticated_1.isAuthenticated, isAdmin_1.isAdmin, AdmissionController_1.createAdmission);
-router.get("/", AdmissionController_1.getAllAdmissions);
+// CREATE + LIST
+router
+    .route("/")
+    .post(authenticate_1.authenticateUser, (0, authorize_1.authorizeRoles)("ADMIN"), AdmissionController_1.createAdmission)
+    .get(AdmissionController_1.getAllAdmissions);
+// SEARCH & FILTER
 router.get("/search", AdmissionController_1.searchAdmissionsResults);
 router.get("/filter", AdmissionController_1.filterAdmissions);
-router.get("/analytics", AdmissionController_1.getAdmissionAnalyticsRecord);
-router.get("/analytics/monthly-trend", AdmissionController_1.getMonthlyAdmissionTrendRecord);
-router.get("/analytics/gender-distribution", AdmissionController_1.getAdmissionGenderAnalyticsRecord);
-router.get("/:id", AdmissionController_1.getAdmissionById);
-router.put("/:id", isAuthenticated_1.isAuthenticated, isAdmin_1.isAdmin, AdmissionController_1.updateAdmission);
-router.delete("/:id", isAuthenticated_1.isAuthenticated, isAdmin_1.isAdmin, AdmissionController_1.deleteAdmission);
+// GET / UPDATE / DELETE BY ID
+router
+    .route("/:id")
+    .get(AdmissionController_1.getAdmissionById)
+    .put(authenticate_1.authenticateUser, (0, authorize_1.authorizeRoles)("ADMIN"), AdmissionController_1.updateAdmission)
+    .delete(authenticate_1.authenticateUser, (0, authorize_1.authorizeRoles)("ADMIN"), AdmissionController_1.deleteAdmission);
 exports.default = router;

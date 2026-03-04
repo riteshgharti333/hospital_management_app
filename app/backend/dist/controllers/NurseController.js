@@ -60,7 +60,7 @@ exports.updateNurseRecord = (0, catchAsyncError_1.catchAsyncError)(async (req, r
     }
     const partialSchema = schemas_1.nurseSchema.partial();
     const validatedData = partialSchema.parse(req.body);
-    // 🔍 Email uniqueness check
+    // 🔍 Email uniqueness check (Nurse table)
     if (validatedData.email) {
         const existingEmail = await (0, nurseService_1.getNurseByEmail)(validatedData.email);
         if (existingEmail && existingEmail.id !== id) {
@@ -90,7 +90,7 @@ exports.deleteNurseRecord = (0, catchAsyncError_1.catchAsyncError)(async (req, r
     (0, sendResponse_1.sendResponse)(res, {
         success: true,
         statusCode: statusCodes_1.StatusCodes.OK,
-        message: "Nurse deleted successfully",
+        message: "Nurse and access deleted successfully",
         data: deletedNurse,
     });
 });

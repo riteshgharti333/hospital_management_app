@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.getPaymentModeBreakdown = exports.getRevenueAnalyticsData = exports.filterMoneyReceipts = exports.searchMoneyReceiptResults = exports.deleteMoneyReceiptRecord = exports.updateMoneyReceiptRecord = exports.getMoneyReceiptRecordById = exports.getAllMoneyReceiptRecords = exports.createMoneyReceiptRecord = void 0;
+exports.filterMoneyReceipts = exports.searchMoneyReceiptResults = exports.deleteMoneyReceiptRecord = exports.updateMoneyReceiptRecord = exports.getMoneyReceiptRecordById = exports.getAllMoneyReceiptRecords = exports.createMoneyReceiptRecord = void 0;
 const catchAsyncError_1 = require("../../middlewares/catchAsyncError");
 const errorHandler_1 = require("../../middlewares/errorHandler");
 const sendResponse_1 = require("../../utils/sendResponse");
@@ -107,23 +107,5 @@ exports.filterMoneyReceipts = (0, catchAsyncError_1.catchAsyncError)(async (req,
             nextCursor: nextCursor !== null ? String(nextCursor) : undefined,
             limit: validated.limit || 50,
         },
-    });
-});
-exports.getRevenueAnalyticsData = (0, catchAsyncError_1.catchAsyncError)(async (req, res) => {
-    const revenue = await (0, moneyReceiptService_1.getRevenueAnalytics)();
-    (0, sendResponse_1.sendResponse)(res, {
-        success: true,
-        statusCode: 200,
-        message: "Revenue analytics fetched successfully",
-        data: revenue,
-    });
-});
-exports.getPaymentModeBreakdown = (0, catchAsyncError_1.catchAsyncError)(async (_req, res) => {
-    const data = await (0, moneyReceiptService_1.getPaymentModeBreakdownAnalytics)();
-    (0, sendResponse_1.sendResponse)(res, {
-        success: true,
-        statusCode: 200,
-        message: "Payment mode breakdown fetched successfully",
-        data,
     });
 });

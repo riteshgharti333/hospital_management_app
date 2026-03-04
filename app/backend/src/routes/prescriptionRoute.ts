@@ -2,10 +2,10 @@ import express from "express";
 import {
   createPrescriptionRecord,
   getAllPrescriptionRecords,
-  getPrescriptionRecordById,
-  updatePrescriptionRecord,
-  deletePrescriptionRecord,
-  searchPrescriptionsResults,
+  // getPrescriptionRecordById,
+  // updatePrescriptionRecord,
+  // deletePrescriptionRecord,
+  // searchPrescriptionsResults,
   filterPrescriptions,
 } from "../controllers/PrescriptionController";
 
@@ -27,23 +27,23 @@ router
   .get(getAllPrescriptionRecords);
 
 // SEARCH & FILTER
-router.get("/search", searchPrescriptionsResults);
+// router.get("/search", searchPrescriptionsResults);
 router.get("/filter", filterPrescriptions);
 
 // GET / UPDATE / DELETE
 router
   .route("/:id")
-  .get(getPrescriptionRecordById)
+  // .get(getPrescriptionRecordById)
   .put(
     authenticateUser,
     authorizeRoles("ADMIN"),
     uploadMiddleware.single("file"),
-    updatePrescriptionRecord
+    // updatePrescriptionRecord
   )
   .delete(
     authenticateUser,
     authorizeRoles("ADMIN"),
-    deletePrescriptionRecord
+    // deletePrescriptionRecord
   );
 
 export default router;

@@ -38,12 +38,12 @@ export const searchPrescriptions = async (searchTerm: string) => {
   const results = await prisma.prescription.findMany({
     where: {
       OR: [
-        { patient: { fullName: { contains: normalizedTerm, mode: 'insensitive' } } },
+        // { patient: { fullName: { contains: normalizedTerm, mode: 'insensitive' } } },
         { doctor: { fullName: { contains: normalizedTerm, mode: 'insensitive' } } }
       ]
-    },
+    }, 
     include: {
-      patient: true,
+      admission: true,
       doctor: true,
       medicines: true
     },

@@ -61,7 +61,7 @@ export const getAllAdmissionsService = async (
             id: true,
             fullName: true,
             gender: true,
-            mobileNumber: true,
+            mobileNumber: true, 
             aadhaarNumber: true,  
           },
         },

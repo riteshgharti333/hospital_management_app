@@ -30,7 +30,9 @@ const getDoctorBalance = async (doctorName) => {
     });
     return entries.reduce((balance, entry) => {
         const amount = entry.amount.toNumber();
-        return entry.amountType === "Credit" ? balance + amount : balance - amount;
+        return entry.amountType === "CREDIT"
+            ? balance + amount
+            : balance - amount;
     }, 0);
 };
 exports.getDoctorBalance = getDoctorBalance;
@@ -55,13 +57,13 @@ const filterDoctorLedgerService = async (filters) => {
     const { amountType, paymentMode, fromDate, toDate, cursor, limit } = filters;
     const filterObj = {};
     if (amountType)
-        filterObj.amountType = { equals: amountType, mode: "insensitive" };
+        filterObj.amountType = amountType;
     if (paymentMode)
-        filterObj.paymentMode = { equals: paymentMode, mode: "insensitive" };
+        filterObj.paymentMode = paymentMode;
     if (fromDate || toDate) {
-        filterObj.date = {
-            gte: fromDate ? new Date(fromDate) : undefined,
-            lte: toDate ? new Date(toDate) : undefined,
+        filterObj.transactionDate = {
+            gte: fromDate,
+            lte: toDate,
         };
     }
     return (0, filterPaginate_1.filterPaginate)(prisma_1.prisma, {

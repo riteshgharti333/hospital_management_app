@@ -23,6 +23,10 @@ const pharmacistRoute_1 = __importDefault(require("./routes/pharmacistRoute"));
 const prescriptionRoute_1 = __importDefault(require("./routes/prescriptionRoute"));
 const ambulanceRoute_1 = __importDefault(require("./routes/ambulanceRoute"));
 const xrayRoute_1 = __importDefault(require("./routes/xrayRoute"));
+// Admin 
+const adminRoutes_1 = __importDefault(require("./routes/adminRoutes"));
+// Password Reset
+const passwordRoutes_1 = __importDefault(require("./routes/passwordRoutes"));
 // ledger
 const patientLedgerRoute_1 = __importDefault(require("./routes/ledgerRoutes/patientLedgerRoute"));
 const bankLedgerRoute_1 = __importDefault(require("./routes/ledgerRoutes/bankLedgerRoute"));
@@ -40,10 +44,12 @@ const productRoute_1 = __importDefault(require("./routes/itemRoutes/productRoute
 const ServiceChargesRoute_1 = __importDefault(require("./routes/itemRoutes/ServiceChargesRoute"));
 // transection
 const billRoute_1 = __importDefault(require("./routes/transectionRoutes/billRoute"));
-const employeeRoute_1 = __importDefault(require("./routes/transectionRoutes/employeeRoute"));
-const voucherRoutes_1 = __importDefault(require("./routes/transectionRoutes/voucherRoutes"));
+// import employeeRoutes from "./routes/transectionRoutes/employeeRoute";
+// import voucherRoutes from "./routes/transectionRoutes/voucherRoutes";
 const moneyReceiptRoute_1 = __importDefault(require("./routes/transectionRoutes/moneyReceiptRoute"));
 const errorHandler_1 = require("./middlewares/errorHandler");
+//
+const dashboardRoute_1 = __importDefault(require("./routes/dashboardRoute"));
 dotenv_1.default.config();
 const app = (0, express_1.default)();
 const allowedOrigins = ["http://localhost:5173", process.env.FRONTEND_URL];
@@ -65,6 +71,12 @@ app.use((0, cookie_parser_1.default)());
 app.use(express_1.default.json());
 app.use((0, morgan_1.default)("dev"));
 app.use("/api/v1/auth", authRoute_1.default);
+// admin routes
+app.use("/api/v1/admin", adminRoutes_1.default);
+// password reset routes
+app.use("/api/v1/password", passwordRoutes_1.default);
+// dashboard route
+app.use("/api/v1/dashboard", dashboardRoute_1.default);
 app.use("/api/v1/admission", admissionRoute_1.default);
 app.use("/api/v1/birth", birthRoute_1.default);
 app.use("/api/v1/patient", patientRoute_1.default);
@@ -78,7 +90,7 @@ app.use("/api/v1/pharmacist", pharmacistRoute_1.default);
 app.use("/api/v1/prescription", prescriptionRoute_1.default);
 app.use("/api/v1/ambulance", ambulanceRoute_1.default);
 app.use("/api/v1/xray", xrayRoute_1.default);
-// ledger             
+// ledger
 app.use("/api/v1/ledger/patient-ledger", patientLedgerRoute_1.default);
 app.use("/api/v1/ledger/bank-ledger", bankLedgerRoute_1.default);
 app.use("/api/v1/ledger/cash-ledger", cashLedgerRoute_1.default);
@@ -95,9 +107,9 @@ app.use("/api/v1/product", productRoute_1.default);
 app.use("/api/v1/service-charges", ServiceChargesRoute_1.default);
 // transection
 app.use("/api/v1/transection/bill", billRoute_1.default);
-app.use("/api/v1/transection/voucher", voucherRoutes_1.default);
+// app.use("/api/v1/transection/voucher", voucherRoutes);
 app.use("/api/v1/transection/money-receipt", moneyReceiptRoute_1.default);
-app.use("/api/v1/transection/employee", employeeRoute_1.default);
+// app.use("/api/v1/transection/employee", employeeRoutes);
 // Sample Route
 app.get("/", (_req, res) => {
     res.send("Welcome 🚀");

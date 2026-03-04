@@ -4,7 +4,7 @@ exports.filterPaginate = filterPaginate;
 const upstashRedisRest_1 = require("./upstashRedisRest"); // include delete here
 // 🧠 Memory cache setup
 const memoryCache = new Map();
-const MEMORY_CACHE_TTL = 30000; // 30s
+const MEMORY_CACHE_TTL = 10000;
 const MAX_MEMORY_ENTRIES = 1000;
 // 🔧 Cache helper functions (inline for reuse)
 async function getFromCache(cacheKey) {
@@ -45,7 +45,7 @@ async function saveToCache(cacheKey, data, nextCursor, expiry) {
     ]).catch((e) => console.error("Cache write failed:", e));
 }
 async function filterPaginate(prisma, options, cursor) {
-    const { model, cursorField = "id", limit = 50, cacheExpiry = 3600, select, filters = {}, } = options;
+    const { model, cursorField = "id", limit = 50, cacheExpiry = 10, select, filters = {}, } = options;
     // 🔑 Build unique cache key
     const filterKeyPart = Object.entries(filters)
         .map(([k, v]) => `${k}:${typeof v === "object" ? JSON.stringify(v) : v ?? ""}`)

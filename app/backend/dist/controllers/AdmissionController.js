@@ -1,47 +1,39 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.getAdmissionGenderAnalyticsRecord = exports.getMonthlyAdmissionTrendRecord = exports.getAdmissionAnalyticsRecord = exports.filterAdmissions = exports.searchAdmissionsResults = exports.deleteAdmission = exports.updateAdmission = exports.getAdmissionById = exports.getAllAdmissions = exports.createAdmission = void 0;
+exports.filterAdmissions = exports.searchAdmissionsResults = exports.deleteAdmission = exports.updateAdmission = exports.getAdmissionById = exports.getAllAdmissions = exports.createAdmission = void 0;
 const client_1 = require("@prisma/client");
 const catchAsyncError_1 = require("../middlewares/catchAsyncError");
 const errorHandler_1 = require("../middlewares/errorHandler");
 const sendResponse_1 = require("../utils/sendResponse");
 const statusCodes_1 = require("../constants/statusCodes");
 const admissionService_1 = require("../services/admissionService");
+const patientService_1 = require("../services/patientService");
 const prisma = new client_1.PrismaClient();
 const schemas_1 = require("@hospital/schemas");
 const queryValidation_1 = require("../utils/queryValidation");
+const patientService_2 = require("../services/patientService");
 // CREATE
 exports.createAdmission = (0, catchAsyncError_1.catchAsyncError)(async (req, res, next) => {
-    try {
-        const validated = schemas_1.admissionSchema.parse(req.body);
-        // Generate numbers BEFORE creating admission
-        const year = new Date().getFullYear();
-        const month = (new Date().getMonth() + 1).toString().padStart(2, "0");
-        // Get the next available ID
-        const lastAdmission = await prisma.admission.findFirst({
-            orderBy: { id: "desc" },
-        });
-        const nextId = (lastAdmission?.id || 0) + 1;
-        const gsRsRegNo = `GS${year}/${nextId.toString().padStart(4, "0")}`;
-        const urnNo = `URN${year}${month}${nextId.toString().padStart(3, "0")}`;
-        // Create admission with all data at once
-        const admission = await prisma.admission.create({
-            data: {
-                ...validated,
-                gsRsRegNo,
-                urnNo,
-            },
-        });
-        (0, sendResponse_1.sendResponse)(res, {
-            success: true,
-            statusCode: statusCodes_1.StatusCodes.CREATED,
-            message: "Admission created successfully",
-            data: admission,
-        });
-    }
-    catch (error) {
-        next(error);
-    }
+    // 1️⃣ Validate body
+    const validated = schemas_1.admissionSchema.parse(req.body);
+    // 2️⃣ Business rule (controller responsibility)
+    const activeAdmission = await (0, admissionService_1.findActiveAdmissionByPatient)(validated.patientId);
+    // if (activeAdmission) {
+    //   return sendResponse(res, {
+    //     success: false,
+    //     statusCode: StatusCodes.BAD_REQUEST,
+    //     message: "Patient already has an active admission",
+    //   });
+    // }
+    // 3️⃣ Create admission (DB + ID handled in service)
+    const admission = await (0, admissionService_1.createAdmissionService)(validated);
+    // 4️⃣ Send response
+    (0, sendResponse_1.sendResponse)(res, {
+        success: true,
+        statusCode: statusCodes_1.StatusCodes.CREATED,
+        message: "Admission created successfully",
+        data: admission,
+    });
 });
 // GET ALL
 exports.getAllAdmissions = (0, catchAsyncError_1.catchAsyncError)(async (req, res) => {
@@ -115,56 +107,119 @@ exports.searchAdmissionsResults = (0, catchAsyncError_1.catchAsyncError)(async (
     const searchTerm = (0, queryValidation_1.validateSearchQuery)(query, next);
     if (!searchTerm)
         return;
-    const admissions = await (0, admissionService_1.searchAdmissions)(searchTerm);
+    // 1️⃣ Direct admission search (admissionId etc.)
+    const admissionsDirect = await (0, admissionService_1.searchAdmissions)(searchTerm);
+    // 2️⃣ Patient search
+    const patients = await (0, patientService_2.searchPatient)(searchTerm);
+    const patientIds = patients.map((p) => p.id);
+    // 3️⃣ Admissions via patients
+    const admissionsViaPatients = patientIds.length
+        ? await prisma.admission.findMany({
+            where: {
+                patientId: { in: patientIds },
+            },
+            include: {
+                patient: {
+                    select: {
+                        hospitalPatientId: true,
+                        fullName: true,
+                        gender: true,
+                        mobileNumber: true,
+                        aadhaarNumber: true,
+                    },
+                },
+                doctor: {
+                    select: {
+                        fullName: true,
+                    },
+                },
+            },
+            orderBy: { createdAt: "desc" },
+        })
+        : [];
+    // 4️⃣ Merge + deduplicate by admission.id
+    const mergedMap = new Map();
+    admissionsDirect.forEach((a) => mergedMap.set(a.id, a));
+    admissionsViaPatients.forEach((a) => mergedMap.set(a.id, a));
+    const mergedResults = Array.from(mergedMap.values());
+    // 5️⃣ Send response
     (0, sendResponse_1.sendResponse)(res, {
         success: true,
         statusCode: statusCodes_1.StatusCodes.OK,
-        message: "Search results fetched successfully",
-        data: admissions,
+        message: "Admission search results fetched successfully",
+        data: mergedResults,
     });
 });
 ///////////
-exports.filterAdmissions = (0, catchAsyncError_1.catchAsyncError)(async (req, res) => {
-    // Validate query params
+exports.filterAdmissions = (0, catchAsyncError_1.catchAsyncError)(async (req, res, next) => {
     const validated = schemas_1.admissionFilterSchema.parse(req.query);
-    // Get filtered results
-    const { data, nextCursor } = await (0, admissionService_1.filterAdmissionsService)(validated);
-    // Send response
+    const { fromDate, toDate, gender, cursor, limit, } = validated;
+    let admissions = [];
+    // 🟢 CASE 1: gender filter exists
+    if (gender) {
+        // 1️⃣ Filter patients by gender
+        const { data: patients } = await (0, patientService_1.filterPatientsService)({ gender });
+        const patientIds = patients.map((p) => p.id);
+        if (patientIds.length === 0) {
+            return (0, sendResponse_1.sendResponse)(res, {
+                success: true,
+                statusCode: statusCodes_1.StatusCodes.OK,
+                message: "Filtered admissions fetched",
+                data: [],
+                pagination: { limit: limit || 50 },
+            });
+        }
+        // 2️⃣ Fetch admissions by patientIds + optional date
+        admissions = await prisma.admission.findMany({
+            where: {
+                patientId: { in: patientIds },
+                ...(fromDate || toDate
+                    ? {
+                        admissionDate: {
+                            gte: fromDate,
+                            lte: toDate,
+                        },
+                    }
+                    : {}),
+            },
+            include: {
+                patient: {
+                    select: {
+                        hospitalPatientId: true,
+                        fullName: true,
+                        gender: true,
+                        mobileNumber: true,
+                        aadhaarNumber: true
+                    },
+                },
+                doctor: {
+                    select: {
+                        fullName: true,
+                    },
+                },
+            },
+            orderBy: { createdAt: "desc" },
+            take: limit || 50,
+        });
+    }
+    // 🟢 CASE 2: NO gender filter → admission-only filter
+    else {
+        const { data } = await (0, admissionService_1.filterAdmissionsService)({
+            fromDate,
+            toDate,
+            cursor,
+            limit,
+        });
+        admissions = data;
+    }
+    // 3️⃣ Send response
     (0, sendResponse_1.sendResponse)(res, {
         success: true,
         statusCode: statusCodes_1.StatusCodes.OK,
         message: "Filtered admissions fetched",
-        data,
+        data: admissions,
         pagination: {
-            nextCursor: nextCursor !== null ? String(nextCursor) : undefined,
-            limit: validated.limit || 50,
+            limit: limit || 50,
         },
-    });
-});
-exports.getAdmissionAnalyticsRecord = (0, catchAsyncError_1.catchAsyncError)(async (_req, res) => {
-    const result = await (0, admissionService_1.getAdmissionAnalytics)();
-    (0, sendResponse_1.sendResponse)(res, {
-        success: true,
-        statusCode: 200,
-        message: "Admission analytics fetched successfully",
-        data: result,
-    });
-});
-exports.getMonthlyAdmissionTrendRecord = (0, catchAsyncError_1.catchAsyncError)(async (_req, res) => {
-    const result = await (0, admissionService_1.getMonthlyAdmissionTrend)();
-    (0, sendResponse_1.sendResponse)(res, {
-        success: true,
-        statusCode: 200,
-        message: "Monthly admission trend fetched successfully",
-        data: result,
-    });
-});
-exports.getAdmissionGenderAnalyticsRecord = (0, catchAsyncError_1.catchAsyncError)(async (_req, res) => {
-    const result = await (0, admissionService_1.getAdmissionGenderAnalytics)();
-    (0, sendResponse_1.sendResponse)(res, {
-        success: true,
-        statusCode: 200,
-        message: "Admission gender analytics fetched successfully",
-        data: result,
     });
 });

@@ -2,13 +2,15 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.cursorPaginate = cursorPaginate;
 const upstashRedisRest_1 = require("./upstashRedisRest");
+const cacheVersion_1 = require("./cacheVersion");
 const memoryCache = new Map();
 const MEMORY_CACHE_TTL = 30000; // 30 seconds
 const MAX_MEMORY_ENTRIES = 1000;
 async function cursorPaginate(prisma, options, cursor, extraWhere // ✅ separate where for filters
 ) {
-    const { model, cursorField = "id", limit = 50, cacheExpiry = 3600, select, } = options;
-    const cacheKey = `p:${String(model).slice(0, 3)}:c:${cursor || "0"}:l:${limit}`;
+    const { model, cursorField = "id", limit = 50, cacheExpiry = 3600, select, include, } = options;
+    const version = await (0, cacheVersion_1.getCacheVersion)(String(model));
+    const cacheKey = `p:${String(model).slice(0, 3)}:v:${version}:c:${cursor || "0"}:l:${limit}`;
     // Memory cache
     const memoryHit = memoryCache.get(cacheKey);
     if (memoryHit && Date.now() - memoryHit.timestamp < MEMORY_CACHE_TTL) {
@@ -22,6 +24,7 @@ async function cursorPaginate(prisma, options, cursor, extraWhere // ✅ separat
         return parsed;
     }
     // DB query
+    console.log("🔥 HITTING PRISMA DB QUERY");
     const data = await prisma[model].findMany({
         where: {
             ...(extraWhere || {}),
@@ -29,7 +32,8 @@ async function cursorPaginate(prisma, options, cursor, extraWhere // ✅ separat
         },
         take: limit + 1,
         orderBy: { [cursorField]: "asc" },
-        select,
+        ...(select ? { select } : {}),
+        ...(include ? { include } : {}),
     });
     const hasMore = data.length > limit;
     const results = hasMore ? data.slice(0, -1) : data;

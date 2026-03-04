@@ -60,7 +60,7 @@ exports.updateDoctorRecord = (0, catchAsyncError_1.catchAsyncError)(async (req, 
     }
     const partialSchema = schemas_1.doctorSchema.partial();
     const validatedData = partialSchema.parse(req.body);
-    // 🔍 Email uniqueness check (only if email is being changed)
+    // 🔍 Email uniqueness check (Doctor table)
     if (validatedData.email) {
         const existingDoctor = await (0, doctorService_1.getDoctorByEmail)(validatedData.email);
         if (existingDoctor && existingDoctor.id !== id) {
@@ -68,9 +68,6 @@ exports.updateDoctorRecord = (0, catchAsyncError_1.catchAsyncError)(async (req, 
         }
     }
     const updatedDoctor = await (0, doctorService_1.updateDoctor)(id, validatedData);
-    if (!updatedDoctor) {
-        return next(new errorHandler_1.ErrorHandler("Doctor not found", statusCodes_1.StatusCodes.NOT_FOUND));
-    }
     (0, sendResponse_1.sendResponse)(res, {
         success: true,
         statusCode: statusCodes_1.StatusCodes.OK,
@@ -91,15 +88,14 @@ exports.deleteDoctorRecord = (0, catchAsyncError_1.catchAsyncError)(async (req, 
         (0, sendResponse_1.sendResponse)(res, {
             success: true,
             statusCode: statusCodes_1.StatusCodes.OK,
-            message: "Doctor deleted successfully",
+            message: "Doctor and access deleted successfully",
             data: deletedDoctor,
         });
     }
     catch (error) {
-        // Handle foreign key constraint violation
         if (error instanceof library_1.PrismaClientKnownRequestError &&
             error.code === "P2003") {
-            return next(new errorHandler_1.ErrorHandler("Cannot delete doctor: Prescriptions linked to this doctor exist.", statusCodes_1.StatusCodes.CONFLICT));
+            return next(new errorHandler_1.ErrorHandler("Cannot delete doctor: Prescriptions or admissions linked to this doctor exist.", statusCodes_1.StatusCodes.CONFLICT));
         }
         return next(new errorHandler_1.ErrorHandler("An error occurred while deleting doctor", statusCodes_1.StatusCodes.INTERNAL_ERROR));
     }

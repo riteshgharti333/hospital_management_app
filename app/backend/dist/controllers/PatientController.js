@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.getPatientAgeDistributionRecord = exports.getPatientAnalyticsRecord = exports.filterPatients = exports.searchPatientResults = exports.deletePatientRecord = exports.updatePatientRecord = exports.getPatientRecordById = exports.getAllPatientRecords = exports.createPatientRecord = void 0;
+exports.filterPatients = exports.searchPatientResults = exports.deletePatientRecord = exports.updatePatientRecord = exports.getPatientRecordById = exports.getAllPatientRecords = exports.createPatientRecord = void 0;
 const catchAsyncError_1 = require("../middlewares/catchAsyncError");
 const errorHandler_1 = require("../middlewares/errorHandler");
 const sendResponse_1 = require("../utils/sendResponse");
@@ -18,13 +18,18 @@ exports.createPatientRecord = (0, catchAsyncError_1.catchAsyncError)(async (req,
         data: patient,
     });
 });
-exports.getAllPatientRecords = (0, catchAsyncError_1.catchAsyncError)(async (_req, res) => {
-    const patients = await (0, patientService_1.getAllPatients)();
+exports.getAllPatientRecords = (0, catchAsyncError_1.catchAsyncError)(async (req, res) => {
+    const { cursor, limit } = req.query;
+    const { data: doctor, nextCursor } = await (0, patientService_1.getAllPatients)(cursor, limit ? Number(limit) : undefined);
     (0, sendResponse_1.sendResponse)(res, {
         success: true,
         statusCode: statusCodes_1.StatusCodes.OK,
-        message: "All patient records fetched",
-        data: patients,
+        message: "Patient records fetched",
+        data: doctor,
+        pagination: {
+            nextCursor: nextCursor !== null ? String(nextCursor) : undefined,
+            limit: limit ? Number(limit) : 50,
+        },
     });
 });
 exports.getPatientRecordById = (0, catchAsyncError_1.catchAsyncError)(async (req, res, next) => {
@@ -106,23 +111,5 @@ exports.filterPatients = (0, catchAsyncError_1.catchAsyncError)(async (req, res)
             nextCursor: nextCursor !== null ? String(nextCursor) : undefined,
             limit: validated.limit || 50,
         },
-    });
-});
-exports.getPatientAnalyticsRecord = (0, catchAsyncError_1.catchAsyncError)(async (_req, res) => {
-    const result = await (0, patientService_1.getPatientAnalytics)();
-    (0, sendResponse_1.sendResponse)(res, {
-        success: true,
-        statusCode: statusCodes_1.StatusCodes.OK,
-        message: "Patient analytics fetched successfully",
-        data: result,
-    });
-});
-exports.getPatientAgeDistributionRecord = (0, catchAsyncError_1.catchAsyncError)(async (_req, res) => {
-    const result = await (0, patientService_1.getPatientAgeDistribution)();
-    (0, sendResponse_1.sendResponse)(res, {
-        success: true,
-        statusCode: 200,
-        message: "Patient age distribution fetched successfully",
-        data: result,
     });
 });

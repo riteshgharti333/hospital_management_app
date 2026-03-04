@@ -223,7 +223,7 @@ export const prescriptionSchema = z.object({
   admissionId: z.number().int().positive("Admission ID is required"),
 
   doctorId: z.number().int().positive("Doctor ID is required"),
-
+ 
   prescriptionDate: z.coerce.date(),
 
   prescriptionDoc: z.string().url().optional(),

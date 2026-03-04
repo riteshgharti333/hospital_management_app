@@ -10,11 +10,10 @@ export type MedicineInput = {
 };
 
 export type PrescriptionInput = {
+  admissionId: number;
   prescriptionDate: Date;
   doctorId: number;
-  patientId: number;
   prescriptionDoc?: string | null;
-  status?: string;
   medicines: MedicineInput[];
 };
 
@@ -36,7 +35,7 @@ export const createPrescription = async (data: PrescriptionInput) => {
     include: {
       medicines: true,
       doctor: true,
-      patient: true,
+      admission: true,
     },
   });
 };
@@ -49,37 +48,36 @@ export const getAllPrescriptions = async (cursor?: string, limit?: number) => {
       cursorField: "id",
       limit: limit || 50,
       cacheExpiry: 600,
-    
     },
-    cursor ? Number(cursor) : undefined
+    cursor ? Number(cursor) : undefined,
   );
 };
 
-export const getPrescriptionById = async (id: number) => {
-  return prisma.prescription.findUnique({
-    where: { id },
-    include: {
-      medicines: true,
-      doctor: true,
-      patient: true,
-    },
-  });
-};
+// export const getPrescriptionById = async (id: number) => {
+//   return prisma.prescription.findUnique({
+//     where: { id },
+//     include: {
+//       medicines: true,
+//       doctor: true,
+//       patient: true,
+//     },
+//   });
+// };
 
-export const getPrescriptionsByPatient = async (patientId: number) => {
-  return prisma.prescription.findMany({
-    where: { patientId },
-    orderBy: { prescriptionDate: "desc" },
-    include: {
-      medicines: true,
-      doctor: true,
-    },
-  });
-};
+// export const getPrescriptionsByPatient = async (patientId: number) => {
+//   return prisma.prescription.findMany({
+//     where: { patientId },
+//     orderBy: { prescriptionDate: "desc" },
+//     include: {
+//       medicines: true,
+//       doctor: true,
+//     },
+//   });
+// };
 
 export const updatePrescription = async (
   id: number,
-  data: UpdatePrescriptionInput
+  data: UpdatePrescriptionInput,
 ) => {
   // First update main prescription
   const updatedPrescription = await prisma.prescription.update({
@@ -87,9 +85,7 @@ export const updatePrescription = async (
     data: {
       prescriptionDate: data.prescriptionDate,
       doctorId: data.doctorId,
-      patientId: data.patientId,
       prescriptionDoc: data.prescriptionDoc ?? null,
-      status: data.status,
     },
     include: {
       medicines: true,
@@ -116,7 +112,7 @@ export const updatePrescription = async (
     include: {
       medicines: true,
       doctor: true,
-      patient: true,
+      admission: true,
     },
   });
 };
@@ -167,6 +163,6 @@ export const filterPrescriptionsService = async (filters: {
       limit: limit || 50,
       filters: filterObj,
     },
-    cursor
+    cursor,
   );
 };
