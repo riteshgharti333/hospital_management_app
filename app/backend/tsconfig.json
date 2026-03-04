@@ -7,9 +7,9 @@
     "rootDir": "src",
     "strict": true,
     "esModuleInterop": true,
-    "skipLibCheck": false,       // ❗ IMPORTANT
+    "skipLibCheck": false,    
     "forceConsistentCasingInFileNames": true,
-    "types": ["node", "jsonwebtoken"],  // ❗ FORCE TypeScript to use correct sign()
+    "types": ["node", "jsonwebtoken"], 
     "allowSyntheticDefaultImports": true
   },
   "include": ["src", "**/*.d.ts"],
