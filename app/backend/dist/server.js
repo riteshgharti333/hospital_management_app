@@ -24,7 +24,7 @@ async function warmAdmissionCache() {
         await warmAdmissionCache();
         app_1.default.listen(PORT, () => {
             console.log(`✅ Server running on http://localhost:${PORT}`);
-        });
+        }); 
     }
     catch (err) {
         console.error("❌ Failed to start server:", err);

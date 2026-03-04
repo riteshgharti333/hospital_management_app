@@ -67,9 +67,9 @@ export const createStaffAccess = catchAsyncError(
           "Login already created for this user",
           StatusCodes.CONFLICT
         )
-      );
-    }
-
+      );       
+    }   
+    
     // 🔐 Generate temp password
     const tempPassword =
       (role === "DOCTOR" ? "Doc@" : "Nur@") +

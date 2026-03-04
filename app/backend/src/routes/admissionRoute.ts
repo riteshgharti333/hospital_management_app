@@ -26,21 +26,22 @@ router
 
 // SEARCH & FILTER
 router.get("/search", searchAdmissionsResults);
-router.get("/filter", filterAdmissions);
-
+router.get("/filter", filterAdmissions);   
+ 
 // GET / UPDATE / DELETE BY ID
 router
   .route("/:id")
-  .get(getAdmissionById)
+  .get(getAdmissionById) 
   .put(
     authenticateUser,
     authorizeRoles("ADMIN"),
     updateAdmission
   )
   .delete(
-    authenticateUser,
+    authenticateUser, 
     authorizeRoles("ADMIN"),
     deleteAdmission
   );
 
-export default router;
+export default router;   
+       

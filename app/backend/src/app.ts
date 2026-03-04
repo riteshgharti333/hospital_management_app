@@ -6,12 +6,12 @@ import cookieParser from "cookie-parser";
 import { errorMiddleware } from "./middlewares/errorMiddleware";
 
 import authRoutes from "./routes/authRoute";
-
+        
 import departmentRoutes from "./routes/departmentRoute";
 import admissionRoutes from "./routes/admissionRoute";
 import birthRoutes from "./routes/birthRoute";
 import patientRoutes from "./routes/patientRoute";
-import bedRoutes from "./routes/bedRoute";
+import bedRoutes  from "./routes/bedRoute";
 import bedAssignRoutes from "./routes/bedAssignRoute";
 import appointmentRoutes from "./routes/appointmentRoute";
 import nurseRoutes from "./routes/nurseRoute";
