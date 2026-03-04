@@ -4,18 +4,16 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const express_1 = __importDefault(require("express"));
-const ProductController_1 = require("../../controllers/items/ProductController");
-const multer_middleware_1 = require("../../middlewares/multer.middleware");
-const isAuthenticated_1 = require("../../middlewares/isAuthenticated");
-const isAdmin_1 = require("../../middlewares/isAdmin");
+// import { isAuthenticated } from "../../middlewares/isAuthenticated";
+// import { isAdmin } from "../../middlewares/isAdmin";
 const router = express_1.default.Router();
-router
-    .route("/")
-    .post(isAuthenticated_1.isAuthenticated, isAdmin_1.isAdmin, multer_middleware_1.uploadMiddleware.single("file"), ProductController_1.createProductRecord)
-    .get(ProductController_1.getAllProductRecords);
-router
-    .route("/:id")
-    .get(ProductController_1.getProductRecordById)
-    .patch(isAuthenticated_1.isAuthenticated, isAdmin_1.isAdmin, multer_middleware_1.uploadMiddleware.single("file"), ProductController_1.updateProductRecord)
-    .delete(isAuthenticated_1.isAuthenticated, isAdmin_1.isAdmin, ProductController_1.deleteProductRecord);
+// router
+//   .route("/")
+//   .post(isAuthenticated, isAdmin, uploadMiddleware.single("file"), createProductRecord)
+//   .get(getAllProductRecords);
+// router
+//   .route("/:id")
+//   .get(getProductRecordById)
+//   .patch(isAuthenticated, isAdmin, uploadMiddleware.single("file"), updateProductRecord)
+//   .delete(isAuthenticated, isAdmin, deleteProductRecord);
 exports.default = router;

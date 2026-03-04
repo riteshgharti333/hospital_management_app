@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.filterPrescriptionsService = exports.searchPrescription = exports.deletePrescription = exports.updatePrescription = exports.getPrescriptionsByPatient = exports.getPrescriptionById = exports.getAllPrescriptions = exports.createPrescription = void 0;
+exports.filterPrescriptionsService = exports.searchPrescription = exports.deletePrescription = exports.updatePrescription = exports.getAllPrescriptions = exports.createPrescription = void 0;
 const prisma_1 = require("../lib/prisma");
 const applyCommonFields_1 = require("../utils/applyCommonFields");
 const pagination_1 = require("../utils/pagination");
@@ -18,7 +18,7 @@ const createPrescription = async (data) => {
         include: {
             medicines: true,
             doctor: true,
-            patient: true,
+            admission: true,
         },
     });
 };
@@ -32,28 +32,26 @@ const getAllPrescriptions = async (cursor, limit) => {
     }, cursor ? Number(cursor) : undefined);
 };
 exports.getAllPrescriptions = getAllPrescriptions;
-const getPrescriptionById = async (id) => {
-    return prisma_1.prisma.prescription.findUnique({
-        where: { id },
-        include: {
-            medicines: true,
-            doctor: true,
-            patient: true,
-        },
-    });
-};
-exports.getPrescriptionById = getPrescriptionById;
-const getPrescriptionsByPatient = async (patientId) => {
-    return prisma_1.prisma.prescription.findMany({
-        where: { patientId },
-        orderBy: { prescriptionDate: "desc" },
-        include: {
-            medicines: true,
-            doctor: true,
-        },
-    });
-};
-exports.getPrescriptionsByPatient = getPrescriptionsByPatient;
+// export const getPrescriptionById = async (id: number) => {
+//   return prisma.prescription.findUnique({
+//     where: { id },
+//     include: {
+//       medicines: true,
+//       doctor: true,
+//       patient: true,
+//     },
+//   });
+// };
+// export const getPrescriptionsByPatient = async (patientId: number) => {
+//   return prisma.prescription.findMany({
+//     where: { patientId },
+//     orderBy: { prescriptionDate: "desc" },
+//     include: {
+//       medicines: true,
+//       doctor: true,
+//     },
+//   });
+// };
 const updatePrescription = async (id, data) => {
     // First update main prescription
     const updatedPrescription = await prisma_1.prisma.prescription.update({
@@ -61,9 +59,7 @@ const updatePrescription = async (id, data) => {
         data: {
             prescriptionDate: data.prescriptionDate,
             doctorId: data.doctorId,
-            patientId: data.patientId,
             prescriptionDoc: data.prescriptionDoc ?? null,
-            status: data.status,
         },
         include: {
             medicines: true,
@@ -88,7 +84,7 @@ const updatePrescription = async (id, data) => {
         include: {
             medicines: true,
             doctor: true,
-            patient: true,
+            admission: true,
         },
     });
 };

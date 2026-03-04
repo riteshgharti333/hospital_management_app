@@ -5,17 +5,17 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 const express_1 = __importDefault(require("express"));
 const DiagnosticsLedgerController_1 = require("../../controllers/ledger/DiagnosticsLedgerController");
-const isAuthenticated_1 = require("../../middlewares/isAuthenticated");
-const isAdmin_1 = require("../../middlewares/isAdmin");
+// import { isAuthenticated } from "../../middlewares/isAuthenticated";
+// import { isAdmin } from "../../middlewares/isAdmin";
 const router = express_1.default.Router();
-router
-    .route("/")
-    .post(isAuthenticated_1.isAuthenticated, isAdmin_1.isAdmin, DiagnosticsLedgerController_1.createDiagnosticsRecord)
-    .get(DiagnosticsLedgerController_1.getAllDiagnosticsRecords);
+// router
+//   .route("/")
+//   .post(isAuthenticated, isAdmin, createDiagnosticsRecord)
+//   .get(getAllDiagnosticsRecords);
 router.route("/total").get(DiagnosticsLedgerController_1.getPatientDiagnosticsTotalRecord);
-router
-    .route("/:id")
-    .get(DiagnosticsLedgerController_1.getDiagnosticsRecordById)
-    .patch(isAuthenticated_1.isAuthenticated, isAdmin_1.isAdmin, DiagnosticsLedgerController_1.updateDiagnosticsRecord)
-    .delete(isAuthenticated_1.isAuthenticated, isAdmin_1.isAdmin, DiagnosticsLedgerController_1.deleteDiagnosticsRecord);
+// router
+//   .route("/:id")
+//   .get(getDiagnosticsRecordById)
+//   .patch(isAuthenticated, isAdmin, updateDiagnosticsRecord)
+//   .delete(isAuthenticated, isAdmin, deleteDiagnosticsRecord);
 exports.default = router;

@@ -15,12 +15,12 @@ router
     .post(authenticate_1.authenticateUser, (0, authorize_1.authorizeRoles)("ADMIN"), multer_middleware_1.uploadMiddleware.single("file"), PrescriptionController_1.createPrescriptionRecord)
     .get(PrescriptionController_1.getAllPrescriptionRecords);
 // SEARCH & FILTER
-router.get("/search", PrescriptionController_1.searchPrescriptionsResults);
+// router.get("/search", searchPrescriptionsResults);
 router.get("/filter", PrescriptionController_1.filterPrescriptions);
 // GET / UPDATE / DELETE
 router
     .route("/:id")
-    .get(PrescriptionController_1.getPrescriptionRecordById)
-    .put(authenticate_1.authenticateUser, (0, authorize_1.authorizeRoles)("ADMIN"), multer_middleware_1.uploadMiddleware.single("file"), PrescriptionController_1.updatePrescriptionRecord)
-    .delete(authenticate_1.authenticateUser, (0, authorize_1.authorizeRoles)("ADMIN"), PrescriptionController_1.deletePrescriptionRecord);
+    // .get(getPrescriptionRecordById)
+    .put(authenticate_1.authenticateUser, (0, authorize_1.authorizeRoles)("ADMIN"), multer_middleware_1.uploadMiddleware.single("file"))
+    .delete(authenticate_1.authenticateUser, (0, authorize_1.authorizeRoles)("ADMIN"));
 exports.default = router;

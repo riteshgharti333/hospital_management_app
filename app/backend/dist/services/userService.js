@@ -97,22 +97,21 @@ const regenerateTempPassword = async (regId) => {
     if (!["DOCTOR", "NURSE"].includes(user.role)) {
         throw new Error("Temp password allowed only for staff users");
     }
-    // 🔐 Generate new temp password
+    // Generate temp password
     const prefix = user.role === "DOCTOR" ? "Doc@" : "Nur@";
     const tempPassword = prefix + Math.floor(100000 + Math.random() * 900000);
     const hashed = await bcrypt_1.default.hash(tempPassword, 12);
-    // 🔄 Update user credentials
+    // Update only password
     await prisma_1.prisma.user.update({
         where: { regId },
         data: {
             password: hashed,
-            tempPasswordHash: hashed,
             mustChangePassword: true,
         },
     });
     return {
         regId: user.regId,
-        tempPassword,
+        tempPassword, // returned once to admin
     };
 };
 exports.regenerateTempPassword = regenerateTempPassword;
