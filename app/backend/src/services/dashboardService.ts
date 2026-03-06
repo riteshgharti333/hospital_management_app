@@ -763,26 +763,26 @@ export const getLedgerFlowSummary = () =>
       // Ledger calculations
       const patientLedger = await calcLedgerFlow(
         prisma.patientLedger,
-        "Credit",
-        "Debit"
+        "CREDIT",
+        "DEBIT"
       );
 
       const doctorLedger = await calcLedgerFlow(
         prisma.doctorLedger,
-        "Credit",
-        "Debit"
+        "CREDIT",
+        "DEBIT"
       );
 
       const bankLedger = await calcLedgerFlow(
         prisma.bankLedger,
-        "Credit",
-        "Debit"
+        "CREDIT",
+        "DEBIT"
       );
 
       const cashLedger = await calcLedgerFlow(
         prisma.cashLedger,
-        "Income",
-        "Expense"
+        "INCOME",
+        "EXPENSE"
       );
 
       // Totals
@@ -820,7 +820,7 @@ export const getLedgerFlowSummary = () =>
 export const getDashboardStatsSummary = () =>
   withDashboardCache({
     key: "dashboard:summary",
-    ttlSeconds: 2 * 60, // 2 minutes cache for the combined dashboard
+    ttlSeconds: 2 * 60, 
     fetcher: async () => {
       const [
         revenue,
