@@ -15,31 +15,29 @@ router.post(
   "/staff/create-access",
   authenticateUser,
   authorizeRoles("ADMIN"),
-  createStaffAccess
+  createStaffAccess,
 );
 
 router.post(
   "/staff/toggle-access",
   authenticateUser,
   authorizeRoles("ADMIN"),
-  toggleStaffAccess
+  toggleStaffAccess,
 );
 
 router.post(
   "/staff/regenerate-temp-password",
   authenticateUser,
   authorizeRoles("ADMIN"),
-  regenerateStaffTempPassword
+  regenerateStaffTempPassword,
 );
 
 router.delete(
   "/staff/:regId",
   authenticateUser,
   authorizeRoles("ADMIN"),
-  deleteUserRecord
+  deleteUserRecord,
 );
-
-
 
 export default router;
 
