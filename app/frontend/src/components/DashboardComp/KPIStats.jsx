@@ -59,7 +59,6 @@ const KPIStats = () => {
     isPatientStatsLoading ||
     isAdmissionStatsLoading;
 
-  // FIXED: Moved useEffect before any conditional returns
   // -----------------------------------------------
   // POPUP CLOSE LOGIC
   // -----------------------------------------------
@@ -70,7 +69,6 @@ const KPIStats = () => {
       }
     };
 
-    // Only add event listener if there's an active popup
     if (activePopup) {
       document.addEventListener("mousedown", closePopup);
     }
@@ -78,7 +76,7 @@ const KPIStats = () => {
     return () => {
       document.removeEventListener("mousedown", closePopup);
     };
-  }, [activePopup]); // Dependency on activePopup
+  }, [activePopup]);
 
   if (isLoading) return <KPISkeleton />;
 
@@ -94,6 +92,57 @@ const KPIStats = () => {
   };
 
   // -----------------------------------------------
+  //   TREND ICON COMPONENT (FIXED)
+  // -----------------------------------------------
+  const TrendIcon = ({ trend, change }) => {
+    const isUp = trend === "up" || change >= 0;
+
+    return (
+      <svg
+        className={`w-4 h-4 mr-1 ${isUp ? "text-green-600" : "text-red-600"}`}
+        fill="none"
+        stroke="currentColor"
+        viewBox="0 0 24 24"
+      >
+        {isUp ? (
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth="2"
+            d="M5 15l7-7 7 7"
+          />
+        ) : (
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth="2"
+            d="M19 9l-7 7-7-7"
+          />
+        )}
+      </svg>
+    );
+  };
+
+  // -----------------------------------------------
+  //   THREE DOTS ICON
+  // -----------------------------------------------
+  const ThreeDotsIcon = () => (
+    <svg
+      className="w-5 h-5"
+      fill="none"
+      stroke="currentColor"
+      viewBox="0 0 24 24"
+    >
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth="2"
+        d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z"
+      />
+    </svg>
+  );
+
+  // -----------------------------------------------
   //   KPIs CONFIG ARRAY
   // -----------------------------------------------
   const stats = [
@@ -101,7 +150,7 @@ const KPIStats = () => {
       id: "revenue",
       baseTitle: "Revenue",
       value: formatCurrency(revenue?.threeMonths),
-      change: `${revenue?.percentChange || 0}%`,
+      change: revenue?.percentChange || 0,
       trend: (revenue?.percentChange || 0) >= 0 ? "up" : "down",
       icon: (
         <svg
@@ -123,12 +172,11 @@ const KPIStats = () => {
       popupOptions: ["3 months", "6 months", "1 year", "Total"],
       currentOption: timeRange,
     },
-
     {
       id: "bills",
       baseTitle: "Bills",
       value: billByStatus?.Pending || 0,
-      change: `${billByStatus?.PendingChange || 0}%`,
+      change: billByStatus?.PendingChange || 0,
       trend: (billByStatus?.PendingChange || 0) >= 0 ? "up" : "down",
       icon: (
         <svg
@@ -156,7 +204,6 @@ const KPIStats = () => {
       ],
       currentOption: billStatus,
     },
-
     {
       id: "patients",
       baseTitle: "Active Patients",
@@ -183,12 +230,11 @@ const KPIStats = () => {
       popupOptions: ["3 months", "6 months", "1 year", "Total"],
       currentOption: activePatientsRange,
     },
-
     {
       id: "admissions",
       baseTitle: "Admissions",
       value: admissionStats?.threeMonths || 0,
-      change: `${admissionStats?.percentChange || 0}%`,
+      change: admissionStats?.percentChange || 0,
       trend: (admissionStats?.percentChange || 0) >= 0 ? "up" : "down",
       icon: (
         <svg
@@ -226,7 +272,6 @@ const KPIStats = () => {
     setActivePopup(null);
   };
 
-  // Toggle popup function (missing in your original code)
   const togglePopup = (statId) => {
     setActivePopup(activePopup === statId ? null : statId);
   };
@@ -234,132 +279,117 @@ const KPIStats = () => {
   const getDisplayValue = (stat) => {
     switch (stat.id) {
       case "revenue":
-        return (
-          {
-            "3months": {
-              value: formatCurrency(revenue?.threeMonths),
-              change: revenue?.percentChange || 0,
-              title: "3 Months Revenue",
-            },
-            "6months": {
-              value: formatCurrency(revenue?.sixMonths),
-              change: revenue?.percentChange || 0,
-              title: "6 Months Revenue",
-            },
-            "1year": {
-              value: formatCurrency(revenue?.oneYear),
-              change: revenue?.percentChange || 0,
-              title: "Yearly Revenue",
-            },
-            total: {
-              value: formatCurrency(revenue?.total),
-              change: revenue?.percentChange || 0,
-              title: "Total Revenue",
-            },
-          }[stat.currentOption] || {
-            value: "₹0",
-            change: 0,
-            title: stat.baseTitle,
-          }
-        );
+        const revenueMap = {
+          "3months": {
+            value: formatCurrency(revenue?.threeMonths),
+            change: revenue?.percentChange || 0,
+            title: "3 Months Revenue",
+          },
+          "6months": {
+            value: formatCurrency(revenue?.sixMonths),
+            change: revenue?.percentChange || 0,
+            title: "6 Months Revenue",
+          },
+          "1year": {
+            value: formatCurrency(revenue?.oneYear),
+            change: revenue?.percentChange || 0,
+            title: "Yearly Revenue",
+          },
+          total: {
+            value: formatCurrency(revenue?.total),
+            change: revenue?.percentChange || 0,
+            title: "Total Revenue",
+          },
+        };
+        return revenueMap[stat.currentOption] || revenueMap["3months"];
 
       case "bills":
-        return (
-          {
-            pending: {
-              value: billByStatus?.Pending || 0,
-              change: billByStatus?.PendingChange || 0,
-              title: "Pending Bills",
-            },
-            partiallypaid: {
-              value: billByStatus?.PartiallyPaid || 0,
-              change: billByStatus?.PartiallyPaidChange || 0,
-              title: "Partially Paid Bills",
-            },
-            paid: {
-              value: billByStatus?.Paid || 0,
-              change: billByStatus?.PaidChange || 0,
-              title: "Paid Bills",
-            },
-            cancelled: {
-              value: billByStatus?.Cancelled || 0,
-              change: billByStatus?.CancelledChange || 0,
-              title: "Cancelled Bills",
-            },
-            refunded: {
-              value: billByStatus?.Refunded || 0,
-              change: billByStatus?.RefundedChange || 0,
-              title: "Refunded Bills",
-            },
-          }[stat.currentOption] || {
-            value: 0,
-            change: 0,
-            title: stat.baseTitle,
-          }
-        );
+        const billsMap = {
+          pending: {
+            value: billByStatus?.Pending || 0,
+            change: billByStatus?.PendingChange || 0,
+            title: "Pending Bills",
+          },
+          partiallypaid: {
+            value: billByStatus?.PartiallyPaid || 0,
+            change: billByStatus?.PartiallyPaidChange || 0,
+            title: "Partially Paid Bills",
+          },
+          paid: {
+            value: billByStatus?.Paid || 0,
+            change: billByStatus?.PaidChange || 0,
+            title: "Paid Bills",
+          },
+          cancelled: {
+            value: billByStatus?.Cancelled || 0,
+            change: billByStatus?.CancelledChange || 0,
+            title: "Cancelled Bills",
+          },
+          refunded: {
+            value: billByStatus?.Refunded || 0,
+            change: billByStatus?.RefundedChange || 0,
+            title: "Refunded Bills",
+          },
+        };
+        return billsMap[stat.currentOption] || billsMap["pending"];
 
       case "patients":
-        return (
-          {
-            "3months": {
-              value: patientStats?.threeMonths || 0,
-              change: patientStats?.percentChange || 0,
-              title: "3 Months Active Patients",
-            },
-            "6months": {
-              value: patientStats?.sixMonths || 0,
-              change: patientStats?.percentChange || 0,
-              title: "6 Months Active Patients",
-            },
-            "1year": {
-              value: patientStats?.oneYear || 0,
-              change: patientStats?.percentChange || 0,
-              title: "Yearly Active Patients",
-            },
-            total: {
-              value: patientStats?.total || 0,
-              change: patientStats?.percentChange || 0,
-              title: "Total Active Patients",
-            },
-          }[stat.currentOption] || {
-            value: 0,
-            change: 0,
-            title: stat.baseTitle,
-          }
-        );
+        const patientsMap = {
+          "3months": {
+            value: patientStats?.threeMonths || 0,
+            change: patientStats?.percentChange || 0,
+            title: "3 Months Active Patients",
+          },
+          "6months": {
+            value: patientStats?.sixMonths || 0,
+            change: patientStats?.percentChange || 0,
+            title: "6 Months Active Patients",
+          },
+          "1year": {
+            value: patientStats?.oneYear || 0,
+            change: patientStats?.percentChange || 0,
+            title: "Yearly Active Patients",
+          },
+          total: {
+            value: patientStats?.total || 0,
+            change: patientStats?.percentChange || 0,
+            title: "Total Active Patients",
+          },
+        };
+        return patientsMap[stat.currentOption] || patientsMap["3months"];
 
       case "admissions":
-        return (
-          {
-            "3months": {
-              value: admissionStats?.threeMonths || 0,
-              change: admissionStats?.percentChange || 0,
-              title: "3 Months Admissions",
-            },
-            "6months": {
-              value: admissionStats?.sixMonths || 0,
-              change: admissionStats?.percentChange || 0,
-              title: "6 Months Admissions",
-            },
-            "1year": {
-              value: admissionStats?.oneYear || 0,
-              change: admissionStats?.percentChange || 0,
-              title: "Yearly Admissions",
-            },
-            total: {
-              value: admissionStats?.total || 0,
-              change: admissionStats?.percentChange || 0,
-              title: "Total Admissions",
-            },
-          }[stat.currentOption] || {
-            value: 0,
-            change: 0,
-            title: stat.baseTitle,
-          }
-        );
+        const admissionsMap = {
+          "3months": {
+            value: admissionStats?.threeMonths || 0,
+            change: admissionStats?.percentChange || 0,
+            title: "3 Months Admissions",
+          },
+          "6months": {
+            value: admissionStats?.sixMonths || 0,
+            change: admissionStats?.percentChange || 0,
+            title: "6 Months Admissions",
+          },
+          "1year": {
+            value: admissionStats?.oneYear || 0,
+            change: admissionStats?.percentChange || 0,
+            title: "Yearly Admissions",
+          },
+          total: {
+            value: admissionStats?.total || 0,
+            change: admissionStats?.percentChange || 0,
+            title: "Total Admissions",
+          },
+        };
+        return admissionsMap[stat.currentOption] || admissionsMap["3months"];
 
       default:
-        return stat;
+        return {
+          ...stat,
+          value: stat.value,
+          change: stat.change,
+          title: stat.baseTitle,
+        };
     }
   };
 
@@ -375,25 +405,26 @@ const KPIStats = () => {
       stat.currentOption === option.toLowerCase().replace(" ", "");
 
     return (
-      <div className="absolute right-0 top-full mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 z-50 popup-container">
-        <div className="py-1">
+      <div className="absolute right-0 -bottom-5  mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 z-50 popup-container">
+        <div className="">
           {stat.popupOptions.map((option, index) => (
             <button
               key={index}
               onClick={() => handleOptionSelect(stat.id, option)}
-              className={`w-full text-left px-4 py-2 text-sm hover:bg-gray-50 flex justify-between
+              className={`w-full text-left px-4 py-2 text-sm hover:bg-gray-50 flex justify-between items-center
                 ${
                   isActive(option)
                     ? "text-blue-600 bg-blue-50 font-medium"
                     : "text-gray-700"
                 }`}
             >
-              {option}
+              <span>{option}</span>
               {isActive(option) && (
                 <svg
                   className="w-4 h-4 text-blue-600"
                   fill="none"
                   stroke="currentColor"
+                  viewBox="0 0 24 24"
                 >
                   <path
                     strokeLinecap="round"
@@ -414,11 +445,11 @@ const KPIStats = () => {
   // FINAL UI
   // -----------------------------------------------
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 relative">
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
       {displayStats.map((stat) => (
         <div
           key={stat.id}
-          className={`${stat.bgColor} ${stat.borderColor} border rounded-xl p-4 hover:shadow-md transition-shadow relative group`}
+          className={`${stat.bgColor} ${stat.borderColor} border rounded-xl p-4 hover:shadow-md transition-shadow relative`}
         >
           <div className="flex items-start justify-between">
             <div className="flex-1">
@@ -426,19 +457,11 @@ const KPIStats = () => {
                 <p className="text-sm text-gray-600 font-medium">
                   {stat.title}
                 </p>
-
                 <button
                   onClick={() => togglePopup(stat.id)}
-                  className="text-gray-400 hover:text-gray-600 p-1 rounded-full hover:bg-white"
+                  className="text-gray-400 hover:text-gray-600 p-1 rounded-full hover:bg-white/50 transition-colors"
                 >
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor">
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth="2"
-                      d="M12 5v.01M12 12v.01M12 19v.01"
-                    />
-                  </svg>
+                  <ThreeDotsIcon />
                 </button>
               </div>
 
@@ -446,28 +469,16 @@ const KPIStats = () => {
                 {stat.value}
               </p>
 
-              <div
-                className={`flex items-center text-[13px] 
-                ${stat.trend === "up" ? "text-green-600" : "text-red-600"}`}
-              >
-                {stat.trend === "up" ? (
-                  <svg className="w-4 h-4 mr-1" fill="currentColor">
-                    <path
-                      fillRule="evenodd"
-                      d="M5.293 9.707a1 1 010-1.414l4-4a1 1 011.414 0l4 4a1 1 01-1.414 1.414L11 7.414V15a1 1 11-2 0V7.414L6.707 9.707a1 1 01-1.414 0z"
-                      clipRule="evenodd"
-                    />
-                  </svg>
-                ) : (
-                  <svg className="w-4 h-4 mr-1" fill="currentColor">
-                    <path
-                      fillRule="evenodd"
-                      d="M14.707 10.293a1 1 010 1.414l-4 4a1 1 01-1.414 0l-4-4a1 1 111.414-1.414L9 12.586V5a1 1 112 0v7.586l2.293-2.293a1 1 011.414 0z"
-                      clipRule="evenodd"
-                    />
-                  </svg>
-                )}
-                {stat.change}% from previous month
+              <div className="flex items-center text-[13px]">
+                <TrendIcon trend={stat.trend} change={stat.change} />
+                <span
+                  className={
+                    stat.trend === "up" ? "text-green-600" : "text-red-600"
+                  }
+                >
+                  {Math.abs(stat.change)}%
+                </span>
+                <span className="text-gray-500 ml-1">from previous month</span>
               </div>
             </div>
 
@@ -477,7 +488,7 @@ const KPIStats = () => {
           </div>
 
           {/* Popup Menu */}
-          <div className="absolute top-0 right-0">{renderPopup(stat)}</div>
+          <div className="relative">{renderPopup(stat)}</div>
         </div>
       ))}
     </div>

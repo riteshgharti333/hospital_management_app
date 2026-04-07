@@ -20,13 +20,14 @@ type PaginationOptions<T extends keyof PrismaClient> = {
   cacheExpiry?: number;
   select?: Record<string, any>;
   include?: Record<string, any>;
+  orderBy?: any;
 };
 
 export async function cursorPaginate<T extends keyof PrismaClient, R = any>(
   prisma: PrismaClient,
   options: PaginationOptions<T>,
   cursor?: string | number,
-  extraWhere?: any // ✅ separate where for filters
+  extraWhere?: any 
 ): Promise<{ data: R[]; nextCursor: string | number | null }> {
   const {
     model,
@@ -35,6 +36,7 @@ export async function cursorPaginate<T extends keyof PrismaClient, R = any>(
     cacheExpiry = 3600,
     select,
     include,
+    orderBy,
   } = options;
 
   const version = await getCacheVersion(String(model));
@@ -67,7 +69,7 @@ export async function cursorPaginate<T extends keyof PrismaClient, R = any>(
       ...(cursor ? { [cursorField]: { gt: cursor } } : {}),
     },
     take: limit + 1,
-    orderBy: { [cursorField]: "asc" },
+    orderBy: orderBy || { [cursorField]: "desc" },
 
     ...(select ? { select } : {}),
     ...(include ? { include } : {}),

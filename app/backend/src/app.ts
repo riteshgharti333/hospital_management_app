@@ -104,7 +104,7 @@ app.use("/api/v1/prescription", prescriptionRoutes);
 app.use("/api/v1/ambulance", ambulanceRoutes);
 app.use("/api/v1/xray", xrayRoutes);
 
-// ledger
+// ledger 
 app.use("/api/v1/ledger/patient-ledger", patientLedgerRoutes);
 app.use("/api/v1/ledger/bank-ledger", bankLedgerRoutes);
 app.use("/api/v1/ledger/cash-ledger", cashLedgerRoutes);

@@ -24,9 +24,9 @@ const PatientsEntriesTable = () => {
   // Normal dataset
   const { data: patientData, isLoading: loadingPatients } = useGetPatients(
     currentCursor,
-    50
+    50,
   );
-  console.log(patientData)
+  console.log(patientData);
 
   // Search dataset
   const { data: searchData, isLoading: loadingSearch } =
@@ -75,8 +75,22 @@ const PatientsEntriesTable = () => {
 
       { accessorKey: "gender", header: "Gender" },
       { accessorKey: "aadhaarNumber", header: "Aadhaar" },
+      {
+        accessorKey: "createdAt",
+        header: "Date",
+        cell: (info) => {
+          const date = new Date(info.getValue());
+          return isNaN(date)
+            ? info.getValue()
+            : date.toLocaleDateString("en-GB", {
+                day: "2-digit",
+                month: "short",
+                year: "numeric",
+              });
+        },
+      },
     ],
-    []
+    [],
   );
 
   const handleNextPage = () => {

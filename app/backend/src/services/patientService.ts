@@ -6,10 +6,10 @@ import { generateHospitalId } from "../utils/generateHospitalId";
 import { cursorPaginate } from "../utils/pagination";
 import { createSearchService } from "../utils/searchCache";
 
-export type PatientInput = {
+export type PatientInput = { 
   fullName: string;
   dateOfBirth: Date;
-  gender: string;
+  gender: string; 
   mobileNumber?: string;
   aadhaarNumber?: string;
   address: string;
@@ -42,6 +42,10 @@ export const getAllPatients = async (cursor?: string, limit?: number) => {
       cursorField: "id",
       limit: limit || 50,
       cacheExpiry: 600,
+      orderBy: [
+      { createdAt: "desc" },
+      { id: "desc" }
+    ]
     },
     cursor ? Number(cursor) : undefined
   );
