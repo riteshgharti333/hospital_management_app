@@ -1,5 +1,4 @@
 import { Request, Response, NextFunction } from "express";
-import { PrismaClient } from "@prisma/client";
 import { catchAsyncError } from "../middlewares/catchAsyncError";
 import { ErrorHandler } from "../middlewares/errorHandler";
 import { sendResponse } from "../utils/sendResponse";
@@ -14,11 +13,10 @@ import {
 
 import {filterPatientsService} from "../services/patientService";
 
-const prisma = new PrismaClient();
-
 import { admissionFilterSchema, admissionSchema } from "@hospital/schemas";
 import { validateSearchQuery } from "../utils/queryValidation";
 import { searchPatient } from "../services/patientService";
+import { prisma } from "../lib/prisma";
 
 // CREATE
 

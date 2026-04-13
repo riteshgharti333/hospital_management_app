@@ -1,6 +1,4 @@
-import { PrismaClient } from "@prisma/client";
 
-const prisma = new PrismaClient();
 
 /**
  * Universal Registration Number Generator

@@ -21,7 +21,7 @@ export const createDoctor = async (data: DoctorInput) => {
   const registrationNo = await generateRegistrationNumber(
     prisma.doctor,
     "DOC",
-    "registrationNo"
+    "registrationNo",
   );
 
   return prisma.doctor.create({
@@ -36,7 +36,6 @@ export const getDoctorByEmail = async (email: string) => {
   return prisma.doctor.findUnique({ where: { email } });
 };
 
-
 export const getAllDoctors = async (cursor?: string, limit?: number) => {
   return cursorPaginate(
     prisma,
@@ -45,8 +44,9 @@ export const getAllDoctors = async (cursor?: string, limit?: number) => {
       cursorField: "id",
       limit: limit || 50,
       cacheExpiry: 600,
+      orderBy: [{ createdAt: "desc" }, { id: "desc" }],
     },
-    cursor ? Number(cursor) : undefined
+    cursor ? Number(cursor) : undefined,
   );
 };
 
@@ -65,10 +65,7 @@ export const getDoctorsByDepartment = async (department: string) => {
   });
 };
 
-export const updateDoctor = async (
-  id: number,
-  data: Partial<DoctorInput>
-) => {
+export const updateDoctor = async (id: number, data: Partial<DoctorInput>) => {
   return prisma.$transaction(async (tx) => {
     // 1️⃣ Update Doctor
     const updatedDoctor = await tx.doctor.update({
@@ -99,8 +96,6 @@ export const updateDoctor = async (
   });
 };
 
-
-
 export const deleteDoctor = async (id: number) => {
   return prisma.$transaction(async (tx) => {
     // 1️⃣ Find doctor first (to get registrationNo)
@@ -126,7 +121,6 @@ export const deleteDoctor = async (id: number) => {
     return deletedDoctor;
   });
 };
-
 
 const commonSearchFields = ["fullName", "mobileNumber", "registrationNo"];
 
@@ -163,6 +157,6 @@ export const filterDoctorsService = async (filters: {
       limit: limit || 50,
       filters: filterObj,
     },
-    cursor
+    cursor,
   );
 };

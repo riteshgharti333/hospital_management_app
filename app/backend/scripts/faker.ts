@@ -3,41 +3,62 @@ import { faker } from "@faker-js/faker";
 
 const prisma = new PrismaClient();
 
-const genders = ["Male", "Female", "Other"];
+const departments = [
+  "Cardiology",
+  "Neurology",
+  "Pediatrics",
+  "Orthopedics",
+  "General Medicine",
+];
 
-const START_DATE = new Date("2025-04-01");
-const END_DATE = new Date("2026-04-01");
+const statuses = ["Active", "Inactive", "On Leave"];
 
-const generateDOB = () =>
-  faker.date.birthdate({ min: 1, max: 90, mode: "age" });
+const qualifications = ["MBBS", "MD", "MS", "DM", "MCh"];
 
-const generateMobile = () => faker.string.numeric(10);
-const generateAadhaar = () => faker.string.numeric(12);
+const designations = [
+  "Junior Doctor",
+  "Senior Resident",
+  "Consultant",
+  "Senior Consultant",
+];
 
-async function seedPatients(count: number) {
+const specializations = [
+  "Heart Specialist",
+  "Brain Specialist",
+  "Child Specialist",
+  "Bone Specialist",
+  "General Physician",
+];
+
+async function seedDoctors(count: number = 100) {
   const year = new Date().getFullYear();
-  const batchSize = 1000;
+  const batchSize = 50;
 
   // 🔥 Get last sequence ONCE
-  const last = await prisma.patient.findFirst({
+  const last = await prisma.doctor.findFirst({
     where: {
-      hospitalPatientId: {
-        startsWith: `PAT-${year}`,
+      registrationNo: {
+        startsWith: `DOC-${year}`,
       },
     },
     orderBy: {
-      hospitalPatientId: "desc",
+      registrationNo: "desc",
     },
     select: {
-      hospitalPatientId: true,
+      registrationNo: true,
     },
   });
 
   let seq = last
-    ? Number(last.hospitalPatientId.split("-")[2])
+    ? Number(last.registrationNo.split("-")[2])
     : 0;
 
-  console.time("Seeding");
+  // 🔥 Time control (monotonic increasing)
+  const baseDate = new Date("2025-01-01").getTime();
+  const step = 1000 * 60; // 1 minute gap
+  let globalIndex = 0;
+
+  console.time("Doctor Seeding");
 
   for (let i = 0; i < count; i += batchSize) {
     const batch = [];
@@ -45,48 +66,48 @@ async function seedPatients(count: number) {
     for (let j = 0; j < batchSize && i + j < count; j++) {
       seq++;
 
-      const createdAt = faker.date.between({
-        from: START_DATE,
-        to: END_DATE,
-      });
-
-      const updatedAt = faker.date.between({
-        from: createdAt,
-        to: END_DATE,
-      });
+      // ✅ Always increasing timestamp
+      const createdAt = new Date(baseDate + globalIndex * step);
+      const updatedAt = createdAt;
+      globalIndex++;
 
       batch.push({
         fullName: faker.person.fullName(),
-        dateOfBirth: generateDOB(),
-        gender: faker.helpers.arrayElement(genders),
-        mobileNumber: generateMobile(),
-        aadhaarNumber: generateAadhaar(),
-        address: faker.location.streetAddress(),
-        hospitalPatientId: `PAT-${year}-${String(seq).padStart(6, "0")}`,
+        mobileNumber: faker.string.numeric(10),
+        email: faker.internet.email(),
+
+        qualification: faker.helpers.arrayElement(qualifications),
+        designation: faker.helpers.arrayElement(designations),
+        department: faker.helpers.arrayElement(departments),
+        specialization: faker.helpers.arrayElement(specializations),
+        status: faker.helpers.arrayElement(statuses),
+
+        registrationNo: `DOC-${year}-${String(seq).padStart(4, "0")}`,
+
         createdAt,
         updatedAt,
       });
     }
 
-    await prisma.patient.createMany({
+    await prisma.doctor.createMany({
       data: batch,
-      skipDuplicates: true, // safety
+      skipDuplicates: true,
     });
 
     console.log(`Inserted ${i + batch.length}/${count}`);
   }
 
-  console.timeEnd("Seeding");
+  console.timeEnd("Doctor Seeding");
 }
 
-// 🔥 CHANGE THIS TO 1_000_000
-seedPatients(1_000_000)
+// Run Seeder
+seedDoctors(100)
   .then(async () => {
-    console.log("✅ Done seeding 1M patients");
+    console.log("✅ Done seeding doctors");
     await prisma.$disconnect();
   })
   .catch(async (err) => {
     console.error(err);
     await prisma.$disconnect();
     process.exit(1);
-  });
+  });    
