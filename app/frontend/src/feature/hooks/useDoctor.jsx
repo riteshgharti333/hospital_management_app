@@ -19,8 +19,9 @@ export const useGetDoctors = (cursor = null, limit = 50) => {
       const { data } = await getAllDoctorsAPI(cursor, limit);
       return data || { data: [], pagination: {} };
     },
+    keepPreviousData: false,
+    staleTime: 0,          
     retry: 1,
-    onError: (error) => toast.error(getErrorMessage(error)),
   });
 };
 

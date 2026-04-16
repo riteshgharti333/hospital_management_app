@@ -5,7 +5,10 @@ export const createDoctorAPI = (data) => axiosInstance.post("/doctor", data);
 // Normal doctor list
 export const getAllDoctorsAPI = (cursor, limit) =>
   axiosInstance.get("/doctor", {
-    params: { cursor, limit },
+    params: {
+      cursor: cursor ? encodeURIComponent(cursor) : undefined,
+      limit,
+    },
   });
 
 // Filter doctor list

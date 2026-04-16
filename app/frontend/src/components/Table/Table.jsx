@@ -37,6 +37,7 @@ const Table = ({
   const [showFilter, setShowFilter] = useState(false);
   const [localFilters, setLocalFilters] = useState(activeFilters);
   const [filtersChanged, setFiltersChanged] = useState(false);
+  const [debouncedTerm, setDebouncedTerm] = useState(searchConfig?.searchTerm || "");
 
   const table = useReactTable({
     data: data || [],
@@ -50,11 +51,29 @@ const Table = ({
     },
   });
 
+  // Debounce search to avoid too many API calls
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (debouncedTerm.length >= 2 || debouncedTerm.length === 0) {
+        searchConfig?.onSearchChange?.(debouncedTerm);
+      }
+    }, 500);
+
+    return () => clearTimeout(timer);
+  }, [debouncedTerm, searchConfig]);
+
   // Reset local filters when activeFilters change
   useEffect(() => {
     setLocalFilters(activeFilters);
     setFiltersChanged(false);
   }, [activeFilters]);
+
+  // Sync debounced term with searchConfig searchTerm
+  useEffect(() => {
+    if (searchConfig?.searchTerm !== debouncedTerm) {
+      setDebouncedTerm(searchConfig?.searchTerm || "");
+    }
+  }, [searchConfig?.searchTerm]);
 
   const handleRowClick = (id) => {
     ledger ? navigate(`/ledger/${path}/${id}`) : navigate(`/${path}/${id}`);
@@ -64,7 +83,6 @@ const Table = ({
     setLocalFilters((prev) => {
       const newFilters = { ...prev };
       if (value === "" || value === "All") {
-        // Remove the filter when "All" is selected
         delete newFilters[key];
       } else {
         newFilters[key] = value;
@@ -75,7 +93,6 @@ const Table = ({
   };
 
   const handleApplyFilters = () => {
-    // Clean up empty filters before applying
     const cleanedFilters = { ...localFilters };
     Object.keys(cleanedFilters).forEach((key) => {
       if (cleanedFilters[key] === "" || cleanedFilters[key] === "All") {
@@ -99,7 +116,6 @@ const Table = ({
     setFiltersChanged(false);
   };
 
-  // Clean active filters to remove empty values
   const cleanedActiveFilters = Object.entries(activeFilters).reduce(
     (acc, [key, value]) => {
       if (value !== "" && value !== "All" && value != null) {
@@ -115,17 +131,22 @@ const Table = ({
   return (
     <div className="mt-5 max-w-[1050px] m-auto flex flex-col rounded-xl border border-gray-200 bg-white shadow-sm">
       {/* Header with Search and Filters */}
-      <div className="flex flex-col sm:flex-row items-center justify-between p-4 border-b border-gray-200 gap-3 ">
-        {/* Search Input */}
-        <div className="relative w-full sm:w-64  z-1">
+      <div className="flex flex-col sm:flex-row items-center justify-between p-4 border-b border-gray-200 gap-3">
+        {/* Search Input with Min 2 Characters */}
+        <div className="relative w-full sm:w-64 z-1">
           <FiSearch className="absolute left-3 top-2.5 text-gray-400" />
           <input
             type="text"
-            placeholder={searchConfig?.placeholder || "Search records..."}
-            value={searchConfig?.searchTerm || ""}
-            onChange={(e) => searchConfig?.onSearchChange?.(e.target.value)}
+            placeholder={searchConfig?.placeholder || "Search records... (min. 2 characters)"}
+            value={debouncedTerm}
+            onChange={(e) => setDebouncedTerm(e.target.value)}
             className="block w-full pl-10 pr-3 py-2 border border-gray-300 outline-none rounded-lg focus:ring-1 focus:ring-blue-500 focus:border-blue-500 text-[12px]"
           />
+          {debouncedTerm.length === 1 && (
+            <p className="text-xs text-amber-600 mt-1 absolute">
+              Type at least 2 characters to search
+            </p>
+          )}
         </div>
 
         {/* Filter Section */}
@@ -381,7 +402,7 @@ const Table = ({
                   {pagination.mode === "search" ? "Search" : "Filter"} results:{" "}
                   <span className="font-medium">{data.length}</span> records
                   found
-                  {searchConfig?.searchTerm && (
+                  {searchConfig?.searchTerm && searchConfig.searchTerm.length >= 2 && (
                     <span>
                       {" "}
                       for "
