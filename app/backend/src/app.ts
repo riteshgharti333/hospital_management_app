@@ -74,6 +74,8 @@ app.use(cookieParser());
 app.use(express.json());
 app.use(morgan("dev"));
 
+
+
 app.use("/api/v1/auth", authRoutes);
 
 // admin routes

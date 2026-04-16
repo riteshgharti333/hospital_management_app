@@ -87,23 +87,21 @@ export const updateNurse = async (id: number, data: Partial<NurseInput>) => {
 
 export const deleteNurse = async (id: number) => {
   return prisma.$transaction(async (tx) => {
-    // 1️⃣ Find nurse first to get registrationNo
+    // 1️⃣ Find nurse
     const nurse = await tx.nurse.findUnique({
       where: { id },
       select: { registrationNo: true },
     });
 
-    if (!nurse) {
-      return null;
-    }
+    if (!nurse) return null;
 
     // 2️⃣ Delete nurse
     const deletedNurse = await tx.nurse.delete({
       where: { id },
     });
 
-    // 3️⃣ Delete linked user (mirror cleanup)
-    await tx.user.delete({
+    // 3️⃣ Safe user cleanup
+    await tx.user.deleteMany({
       where: { regId: nurse.registrationNo },
     });
 

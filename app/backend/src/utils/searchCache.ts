@@ -1,69 +1,108 @@
 import { PrismaClient } from "@prisma/client";
-import { upstashGet, upstashSet } from "./upstashRedisRest";
-import { getCacheVersion } from "./cacheVersion";
 
 interface SearchConfig {
   tableName: string;
   exactFields: string[];
   prefixFields: string[];
   similarFields: string[];
-  cacheKeyPrefix: string;
   sortField?: string;
   maxResults?: number;
-  relations?: Record<string, string[]>;
-  include?: Record<string, boolean>;
+  selectFields?: string[];
 }
 
 export const createSearchService = (
   prisma: PrismaClient,
   config: SearchConfig
 ) => {
-  const memoryCache = new Map<string, { data: any[]; timestamp: number }>();
-  const MEMORY_CACHE_TTL = 5000;
-  const MAX_MEMORY_CACHE = 500;
-
   return async (searchTerm: string): Promise<any[]> => {
     const start = performance.now();
-    const normalizedTerm = searchTerm.trim().toLowerCase();
+
+    // =========================
+    // 1️⃣ Normalize input (improved)
+    // =========================
+    const normalizedTerm = searchTerm
+      .trim()
+      .toLowerCase()
+      .replace(/\s+/g, " "); // remove extra spaces
+
+    // =========================
+    // 2️⃣ Min length guard (strict)
+    // =========================
     if (normalizedTerm.length < 2) return [];
 
-    // 🔥 NEW: domain version (same as pagination)
-    const version = await getCacheVersion(config.cacheKeyPrefix);
+    // =========================
+    // Split multi-word queries
+    // =========================
+    const searchWords = normalizedTerm.split(/\s+/);
+    const isMultiWord = searchWords.length > 1;
 
-    // 🔥 NEW: versioned cache key
-    const cacheKey = `${config.cacheKeyPrefix}:v${version}:search:${normalizedTerm}`;
-
-    // 1️⃣ Memory cache
-    const memoryEntry = memoryCache.get(cacheKey);
-    if (memoryEntry && Date.now() - memoryEntry.timestamp < MEMORY_CACHE_TTL) {
-      return memoryEntry.data;
-    }
-
-    // 2️⃣ Redis cache
-    try {
-      const redisResult = await Promise.race([
-        upstashGet(cacheKey),
-        new Promise((resolve) => setTimeout(() => resolve(null), 5)),
-      ]);
-
-      if (typeof redisResult === "string") {
-        const data = JSON.parse(redisResult);
-        memoryCache.set(cacheKey, { data, timestamp: Date.now() });
-        return data;
-      }
-    } catch (error) {
-      console.error("Redis cache check failed:", error);
-    }
-
-    // 3️⃣ Build ranked SQL query (UNCHANGED)
-    const values: any[] = [
-      normalizedTerm,
-      `${normalizedTerm}%`,
-      normalizedTerm,
-    ];
+    // =========================
+    // 3️⃣ Disable similarity for short input
+    // =========================
+    const useSimilarity = normalizedTerm.length >= 3;
 
     const escapeField = (f: string) => `"${f}"`;
 
+    // =========================
+    // MULTI-WORD SEARCH
+    // =========================
+    if (isMultiWord) {
+      const wordConditions = searchWords.map(word => {
+        const exactChecks = config.exactFields.length
+          ? config.exactFields.map(f => `LOWER(${escapeField(f)}) = '${word}'`).join(" OR ")
+          : "";
+        
+        const prefixChecks = config.prefixFields.length
+          ? config.prefixFields.map(f => `LOWER(${escapeField(f)}) LIKE '${word}%'`).join(" OR ")
+          : "";
+        
+        const similarChecks = (useSimilarity && config.similarFields.length)
+          ? config.similarFields.map(f => `LOWER(${escapeField(f)}) % '${word}'`).join(" OR ")
+          : "";
+        
+        const allChecks = [exactChecks, prefixChecks, similarChecks].filter(Boolean).join(" OR ");
+        
+        return `(${allChecks})`;
+      }).join(" AND ");
+
+      const selectFields = config.selectFields?.length
+        ? config.selectFields.map(f => `"${f}"`).join(", ")
+        : "*";
+
+      const limit = Math.min(config.maxResults || 50, 100);
+
+      const query = `
+        SELECT ${selectFields}
+        FROM "${config.tableName}"
+        WHERE ${wordConditions}
+        ORDER BY "${config.sortField || "createdAt"}" DESC
+        LIMIT ${limit}
+      `;
+
+      const results = await prisma.$queryRawUnsafe<any[]>(query);
+      
+      const duration = performance.now() - start;
+      if (duration > 100) {
+        console.log(
+          `[SEARCH] ${config.tableName} "${normalizedTerm}" → ${duration.toFixed(2)}ms (multi-word)`
+        );
+      }
+      
+      return results;
+    }
+
+    // =========================
+    // SINGLE WORD SEARCH (original logic)
+    // =========================
+    const values: any[] = [
+      normalizedTerm,         // $1 exact
+      `${normalizedTerm}%`,   // $2 prefix
+      normalizedTerm,         // $3 similarity
+    ];
+
+    // =========================
+    // CONDITIONS
+    // =========================
     const exactConditions = config.exactFields.length
       ? config.exactFields
           .map((f) => `LOWER(${escapeField(f)}) = $1`)
@@ -76,11 +115,12 @@ export const createSearchService = (
           .join(" OR ")
       : "";
 
-    const similarConditions = config.similarFields.length
-      ? config.similarFields
-          .map((f) => `LOWER(${escapeField(f)}) % $3`)
-          .join(" OR ")
-      : "";
+    const similarConditions =
+      useSimilarity && config.similarFields.length
+        ? config.similarFields
+            .map((f) => `LOWER(${escapeField(f)}) % $3`)
+            .join(" OR ")
+        : "";
 
     const whereParts: string[] = [];
     if (exactConditions) whereParts.push(`(${exactConditions})`);
@@ -91,6 +131,9 @@ export const createSearchService = (
 
     const whereClause = whereParts.join(" OR ");
 
+    // =========================
+    // 4️⃣ Ranking logic
+    // =========================
     const caseWhen: string[] = [];
     if (exactConditions) caseWhen.push(`WHEN ${exactConditions} THEN 1`);
     if (prefixConditions) caseWhen.push(`WHEN ${prefixConditions} THEN 2`);
@@ -99,42 +142,47 @@ export const createSearchService = (
 
     const caseExpr = `CASE ${caseWhen.join(" ")} END AS priority`;
 
-    const similarityExpr = config.similarFields.length
-      ? `GREATEST(${config.similarFields
-          .map((f) => `similarity(LOWER(${escapeField(f)}), $3)`)
-          .join(", ")}) AS rank_score`
-      : `0 AS rank_score`;
+    // =========================
+    // 5️⃣ Similarity score (safe)
+    // =========================
+    const similarityExpr =
+      useSimilarity && config.similarFields.length
+        ? `GREATEST(${config.similarFields
+            .map((f) => `similarity(LOWER(${escapeField(f)}), $3)`)
+            .join(", ")}) AS rank_score`
+        : `0 AS rank_score`;
+
+    // =========================
+    // 6️⃣ Select fields (safe)
+    // =========================
+    const selectFields = config.selectFields?.length
+      ? config.selectFields.map((f) => `"${f}"`).join(", ")
+      : "*"; 
+
+    // =========================
+    // 7️⃣ Limit guard (MAX safety)
+    // =========================
+    const limit = Math.min(config.maxResults || 50, 100);
 
     const query = `
-      SELECT *, ${caseExpr}, ${similarityExpr}
+      SELECT ${selectFields},
+             ${caseExpr},
+             ${similarityExpr}
       FROM "${config.tableName}"
       WHERE (${whereClause})
-      ORDER BY priority ASC, rank_score DESC, "${
-        config.sortField || "createdAt"
-      }" DESC
-      LIMIT ${config.maxResults || 50}
+      ORDER BY priority ASC, rank_score DESC, "${config.sortField || "createdAt"}" DESC
+      LIMIT ${limit}
     `;
 
-    // 4️⃣ Execute DB query
     const results = await prisma.$queryRawUnsafe<any[]>(query, ...values);
 
-    // 5️⃣ Cache results
-    if (results.length > 0) {
-      if (memoryCache.size >= MAX_MEMORY_CACHE) {
-        const oldestKey = [...memoryCache.entries()].reduce((a, b) =>
-          a[1].timestamp < b[1].timestamp ? a : b
-        )[0];
-        memoryCache.delete(oldestKey);
-      }
-
-      memoryCache.set(cacheKey, { data: results, timestamp: Date.now() });
-      upstashSet(cacheKey, JSON.stringify(results), 300).catch(console.error);
-    }
-
+    // =========================
+    // Performance logging
+    // =========================
     const duration = performance.now() - start;
     if (duration > 100) {
       console.log(
-        `Search "${normalizedTerm}" (v${version}) took ${duration.toFixed(2)}ms`
+        `[SEARCH] ${config.tableName} "${normalizedTerm}" → ${duration.toFixed(2)}ms`
       );
     }
 

@@ -129,3 +129,37 @@ export async function upstashDelete(key: string): Promise<void> {
     await handleFailure(error, "DELETE");
   }
 }
+
+
+
+/** Redis INCR (atomic increment) */
+export async function upstashIncr(key: string): Promise<number | null> {
+  if (!isRedisAvailable() || typeof key !== "string" || key.length === 0)
+    return null;
+
+  try {
+    const url = `${process.env.UPSTASH_REDIS_REST_URL}/incr/${encodeURIComponent(
+      key
+    )}`;
+
+    const response = await withRetry(() =>
+      fetch(url, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${process.env.UPSTASH_REDIS_REST_TOKEN}`,
+          "Content-Type": "application/json",
+          Connection: "keep-alive",
+        },
+      })
+    );
+
+    if (!response.ok)
+      throw new Error(`Redis INCR failed with status ${response.status}`);
+
+    const data = await response.json();
+    return data?.result ?? null;
+  } catch (error) {
+    await handleFailure(error, "INCR");
+    return null;
+  }
+}

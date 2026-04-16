@@ -283,6 +283,7 @@ model Doctor {
   @@index([department])
   @@index([status])
   @@index([createdAt])
+  @@index([createdAt, id])
 }
 
 

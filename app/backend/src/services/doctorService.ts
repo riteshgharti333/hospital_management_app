@@ -4,6 +4,7 @@ import { cursorPaginate } from "../utils/pagination";
 import { filterPaginate } from "../utils/filterPaginate";
 import { createSearchService } from "../utils/searchCache";
 import { generateRegistrationNumber } from "../utils/registrationGenerator";
+import { bumpCacheVersion } from "../utils/cacheVersion";
 
 export type DoctorInput = {
   fullName: string;
@@ -17,37 +18,30 @@ export type DoctorInput = {
 };
 
 export const createDoctor = async (data: DoctorInput) => {
-  // Auto-generate registration number
   const registrationNo = await generateRegistrationNumber(
     prisma.doctor,
     "DOC",
     "registrationNo",
   );
 
-  return prisma.doctor.create({
+  const result = await prisma.doctor.create({
     data: {
       ...data,
       registrationNo,
     },
   });
+
+  await bumpCacheVersion("doctor");
+
+  return result;
 };
 
 export const getDoctorByEmail = async (email: string) => {
   return prisma.doctor.findUnique({ where: { email } });
 };
 
-export const getAllDoctors = async (cursor?: string, limit?: number) => {
-  return cursorPaginate(
-    prisma,
-    {
-      model: "doctor",
-      cursorField: "id",
-      limit: limit || 50,
-      cacheExpiry: 600,
-      orderBy: [{ createdAt: "desc" }, { id: "desc" }],
-    },
-    cursor ? Number(cursor) : undefined,
-  );
+export const getAllDoctors = async (cursor?: string) => {
+  return cursorPaginate(prisma, { model: "doctor" }, cursor);
 };
 
 export const getDoctorById = async (id: number) => {
@@ -67,13 +61,13 @@ export const getDoctorsByDepartment = async (department: string) => {
 
 export const updateDoctor = async (id: number, data: Partial<DoctorInput>) => {
   return prisma.$transaction(async (tx) => {
-    // 1️⃣ Update Doctor
+    // 1️⃣ Update doctor
     const updatedDoctor = await tx.doctor.update({
       where: { id },
       data,
     });
 
-    // 2️⃣ Sync ONLY identity fields to User
+    // 2️⃣ Prepare user update data
     const userUpdateData: any = {};
 
     if (data.fullName) {
@@ -84,79 +78,103 @@ export const updateDoctor = async (id: number, data: Partial<DoctorInput>) => {
       userUpdateData.email = data.email;
     }
 
-    // Update User only if identity fields changed
+    // 3️⃣ Safe user update
     if (Object.keys(userUpdateData).length > 0) {
-      await tx.user.update({
+      await tx.user.updateMany({
         where: { regId: updatedDoctor.registrationNo },
         data: userUpdateData,
       });
     }
+
+    await bumpCacheVersion("doctor");
 
     return updatedDoctor;
   });
 };
 
 export const deleteDoctor = async (id: number) => {
-  return prisma.$transaction(async (tx) => {
-    // 1️⃣ Find doctor first (to get registrationNo)
+  const deletedDoctor = await prisma.$transaction(async (tx) => {
     const doctor = await tx.doctor.findUnique({
       where: { id },
       select: { registrationNo: true },
     });
 
-    if (!doctor) {
-      return null;
-    }
+    if (!doctor) return null;
 
-    // 2️⃣ Delete doctor
-    const deletedDoctor = await tx.doctor.delete({
+    const deleted = await tx.doctor.delete({
       where: { id },
     });
 
-    // 3️⃣ Delete linked user (mirror cleanup)
-    await tx.user.delete({
+    await tx.user.deleteMany({
       where: { regId: doctor.registrationNo },
     });
 
-    return deletedDoctor;
+    return deleted;
   });
-};
 
-const commonSearchFields = ["fullName", "mobileNumber", "registrationNo"];
+  // ✅ Fire-and-forget (non-blocking)
+  bumpCacheVersion("doctor");
+
+  return deletedDoctor;
+};
 
 export const searchDoctor = createSearchService(prisma, {
   tableName: "Doctor",
-  cacheKeyPrefix: "doctor",
-  ...applyCommonFields(commonSearchFields),
+  exactFields: ["fullName", "mobileNumber", "registrationNo"],
+  prefixFields: ["fullName"],
+  similarFields: ["fullName"],
+  selectFields: [
+    "id",
+    "fullName",
+    "mobileNumber",
+    "registrationNo",
+    "qualification",
+    "specialization",
+    "status",
+    "createdAt",   
+  ],
 });
 
-export const filterDoctorsService = async (filters: {
+
+type FilterDoctorParams = {
   fromDate?: Date;
   toDate?: Date;
   status?: string;
-  cursor?: string | number;
+  cursor?: string;
   limit?: number;
-}) => {
-  const { fromDate, toDate, status, cursor, limit } = filters;
+};
 
-  const filterObj: Record<string, any> = {};
+export const filterDoctorsService = async (
+  params: FilterDoctorParams
+) => {
+  const { fromDate, toDate, status, cursor, limit } = params;
 
-  if (status) filterObj.status = { equals: status, mode: "insensitive" };
+  const where: Record<string, any> = {};
 
-  if (fromDate || toDate)
-    filterObj.createdAt = {
-      gte: fromDate ? new Date(fromDate) : undefined,
-      lte: toDate ? new Date(toDate) : undefined,
+  // ✅ Status filter
+  if (status) {
+    where.status = {
+      equals: status,
+      mode: "insensitive",
     };
+  }
 
+  // ✅ Date range filter
+  if (fromDate || toDate) {
+    where.createdAt = {
+      ...(fromDate && { gte: fromDate }),
+      ...(toDate && { lte: toDate }),
+    };
+  }
+
+  // ✅ Call centralized pagination
   return filterPaginate(
     prisma,
     {
       model: "doctor",
-      cursorField: "id",
-      limit: limit || 50,
-      filters: filterObj,
+      limit, 
     },
     cursor,
+    where
   );
 };

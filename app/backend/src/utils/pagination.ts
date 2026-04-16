@@ -6,17 +6,21 @@ const memoryCache = new Map<
   string,
   {
     data: any[];
-    nextCursor: string | number | null;
+    pagination: { nextCursor: string | null; hasMore: boolean };
     timestamp: number;
   }
 >();
 
+console.log(process.env.UPSTASH_REDIS_REST_URL);
+
 const MEMORY_CACHE_TTL = 30000;
 const MAX_MEMORY_ENTRIES = 1000;
 
+const DEFAULT_LIMIT = 50;
+const MAX_LIMIT = 100; // ✅ prevent abuse
+
 type PaginationOptions<T extends keyof PrismaClient> = {
   model: T;
-  cursorField?: string;
   limit?: number;
   cacheExpiry?: number;
   select?: Record<string, any>;
@@ -27,87 +31,110 @@ type PaginationOptions<T extends keyof PrismaClient> = {
 export async function cursorPaginate<T extends keyof PrismaClient, R = any>(
   prisma: PrismaClient,
   options: PaginationOptions<T>,
-  cursor?: string | number,
+  rawCursor?: unknown, // ✅ safer input
   extraWhere?: any
-): Promise<{ data: R[]; nextCursor: string | number | null }> {
+): Promise<{
+  data: R[];
+  pagination: { nextCursor: string | null; hasMore: boolean };
+}> {
   const {
     model,
-    limit = 50,
     cacheExpiry = 3600,
     select,
     include,
-    orderBy,
+    orderBy = [{ createdAt: "desc" }, { id: "desc" }],
   } = options;
+
+  // ✅ LIMIT CONTROL
+  let limit = options.limit ?? DEFAULT_LIMIT;
+  if (limit > MAX_LIMIT) limit = MAX_LIMIT;
 
   const version = await getCacheVersion(String(model));
 
-  const cacheKey = `p:${String(model).slice(0, 3)}:v:${version}:c:${
-    cursor || "0"
-  }:l:${limit}`;
+  // ✅ SAFE CURSOR
+  const cursor =
+    typeof rawCursor === "string" && rawCursor.includes("|")
+      ? rawCursor
+      : undefined;
 
-  // ✅ Memory cache
+  const safeCursor = cursor ? encodeURIComponent(cursor) : "0";
+
+  // ✅ IMPROVED CACHE KEY (includes orderBy)
+  const cacheKey = `p:${String(model)}:v:${version}:c:${safeCursor}:l:${limit}:o:${encodeURIComponent(
+    JSON.stringify(orderBy)
+  )}`;
+
+  // ✅ MEMORY CACHE
   const memoryHit = memoryCache.get(cacheKey);
   if (memoryHit && Date.now() - memoryHit.timestamp < MEMORY_CACHE_TTL) {
     return memoryHit;
   }
 
-  // ✅ Redis cache
-  const redisData = await upstashGet(cacheKey);
-  if (redisData) {
-    const parsed = JSON.parse(redisData);
-    memoryCache.set(cacheKey, { ...parsed, timestamp: Date.now() });
-    return parsed;
+  // ✅ REDIS CACHE
+  try {
+    const redisData = await upstashGet(cacheKey);
+    if (redisData) {
+      const parsed = JSON.parse(redisData);
+      memoryCache.set(cacheKey, { ...parsed, timestamp: Date.now() });
+      return parsed;
+    }
+  } catch (e) {
+    console.warn("Redis GET failed (safe fallback)");
   }
 
-  console.log("🔥 HITTING PRISMA DB QUERY");
+  if (process.env.NODE_ENV !== "production") {
+    console.log("🔥 DB QUERY:", String(model));
+  }
 
-  // ✅ Decode composite cursor
+  // ✅ SAFE CURSOR PARSING
   let cursorDate: Date | null = null;
   let cursorId: number | null = null;
 
   if (cursor) {
-    const [date, id] = String(cursor).split("|");
-    if (date && id) {
-      cursorDate = new Date(date);
-      cursorId = Number(id);
+    const [date, id] = cursor.split("|");
+
+    const parsedDate = new Date(date);
+    const parsedId = Number(id);
+
+    if (!isNaN(parsedDate.getTime()) && !isNaN(parsedId)) {
+      cursorDate = parsedDate;
+      cursorId = parsedId;
+    } else {
+      // invalid cursor → ignore safely
+      cursorDate = null;
+      cursorId = null;
     }
   }
 
-  // ✅ DB query with composite cursor
+  // ✅ WHERE CONDITION
+  const whereCondition = {
+    ...(extraWhere || {}),
+    ...(cursorDate !== null && cursorId !== null
+      ? {
+          OR: [
+            { createdAt: { lt: cursorDate } },
+            {
+              AND: [
+                { createdAt: cursorDate },
+                { id: { lt: cursorId } },
+              ],
+            },
+          ],
+        }
+      : {}),
+  };
+
   const data = await (prisma[model] as any).findMany({
-    where: {
-      ...(extraWhere || {}),
-      ...(cursorDate && cursorId
-        ? {
-            OR: [
-              { createdAt: { lt: cursorDate } },
-              {
-                AND: [
-                  { createdAt: cursorDate },
-                  { id: { lt: cursorId } },
-                ],
-              },
-            ],
-          }
-        : {}),
-    },
-
-    orderBy: orderBy || [
-      { createdAt: "desc" },
-      { id: "desc" },
-    ],
-
+    where: whereCondition,
+    orderBy,
     take: limit + 1,
-
     ...(select ? { select } : {}),
     ...(include ? { include } : {}),
   });
 
-  // ✅ Pagination logic
   const hasMore = data.length > limit;
   const results = hasMore ? data.slice(0, limit) : data;
 
-  // ✅ Composite nextCursor
   let nextCursor: string | null = null;
 
   if (hasMore && results.length > 0) {
@@ -115,15 +142,22 @@ export async function cursorPaginate<T extends keyof PrismaClient, R = any>(
     nextCursor = `${lastItem.createdAt.toISOString()}|${lastItem.id}`;
   }
 
-  // ✅ Cache
-  const cachePayload = JSON.stringify({ data: results, nextCursor });
+  const response = {
+    data: results,
+    pagination: {
+      nextCursor,
+      hasMore,
+    },
+  };
 
+  const cachePayload = JSON.stringify(response);
+
+  // ✅ SAFE CACHE WRITE
   Promise.all([
-    upstashSet(cacheKey, cachePayload, cacheExpiry),
+    upstashSet(cacheKey, cachePayload, cacheExpiry).catch(() => {}),
     new Promise<void>((resolve) => {
       memoryCache.set(cacheKey, {
-        data: results,
-        nextCursor,
+        ...response,
         timestamp: Date.now(),
       });
 
@@ -134,7 +168,7 @@ export async function cursorPaginate<T extends keyof PrismaClient, R = any>(
 
       resolve();
     }),
-  ]).catch((e) => console.error("Caching failed:", e));
+  ]).catch(() => {});
 
-  return { data: results, nextCursor };
+  return response;
 }

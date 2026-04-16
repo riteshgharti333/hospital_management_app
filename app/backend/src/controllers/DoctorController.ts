@@ -26,8 +26,8 @@ export const createDoctorRecord = catchAsyncError(
       return next(
         new ErrorHandler(
           "Doctor with this email already exists",
-          StatusCodes.CONFLICT
-        )
+          StatusCodes.CONFLICT,
+        ),
       );
     }
 
@@ -39,32 +39,23 @@ export const createDoctorRecord = catchAsyncError(
       message: "Doctor created successfully",
       data: doctor,
     });
-  }
+  },
 );
 
 export const getAllDoctorRecords = catchAsyncError(
   async (req: Request, res: Response) => {
-    const { cursor, limit } = req.query as {
-      cursor?: string;
-      limit?: string;
-    };
+    const { cursor } = req.query as { cursor?: string };
 
-    const { data: doctor, nextCursor } = await getAllDoctors(
-      cursor,
-      limit ? Number(limit) : undefined
-    );
+    const result = await getAllDoctors(cursor);
 
     sendResponse(res, {
       success: true,
       statusCode: StatusCodes.OK,
       message: "Doctor records fetched",
-      data: doctor,
-      pagination: {
-        nextCursor: nextCursor !== null ? String(nextCursor) : undefined,
-        limit: limit ? Number(limit) : 50,
-      },
+      data: result.data,
+      pagination: result.pagination,
     });
-  }
+  },
 );
 
 export const getDoctorRecordById = catchAsyncError(
@@ -85,7 +76,7 @@ export const getDoctorRecordById = catchAsyncError(
       message: "Doctor details fetched",
       data: doctor,
     });
-  }
+  },
 );
 
 export const updateDoctorRecord = catchAsyncError(
@@ -93,9 +84,7 @@ export const updateDoctorRecord = catchAsyncError(
     const id = Number(req.params.id);
 
     if (isNaN(id)) {
-      return next(
-        new ErrorHandler("Invalid ID", StatusCodes.BAD_REQUEST)
-      );
+      return next(new ErrorHandler("Invalid ID", StatusCodes.BAD_REQUEST));
     }
 
     const partialSchema = doctorSchema.partial();
@@ -109,8 +98,8 @@ export const updateDoctorRecord = catchAsyncError(
         return next(
           new ErrorHandler(
             "Another doctor with this email already exists",
-            StatusCodes.CONFLICT
-          )
+            StatusCodes.CONFLICT,
+          ),
         );
       }
     }
@@ -123,18 +112,15 @@ export const updateDoctorRecord = catchAsyncError(
       message: "Doctor updated successfully",
       data: updatedDoctor,
     });
-  }
+  },
 );
-
 
 export const deleteDoctorRecord = catchAsyncError(
   async (req: Request, res: Response, next: NextFunction) => {
     const id = Number(req.params.id);
 
     if (isNaN(id)) {
-      return next(
-        new ErrorHandler("Invalid ID", StatusCodes.BAD_REQUEST)
-      );
+      return next(new ErrorHandler("Invalid ID", StatusCodes.BAD_REQUEST));
     }
 
     try {
@@ -142,7 +128,7 @@ export const deleteDoctorRecord = catchAsyncError(
 
       if (!deletedDoctor) {
         return next(
-          new ErrorHandler("Doctor not found", StatusCodes.NOT_FOUND)
+          new ErrorHandler("Doctor not found", StatusCodes.NOT_FOUND),
         );
       }
 
@@ -160,22 +146,20 @@ export const deleteDoctorRecord = catchAsyncError(
         return next(
           new ErrorHandler(
             "Cannot delete doctor: Prescriptions or admissions linked to this doctor exist.",
-            StatusCodes.CONFLICT
-          )
+            StatusCodes.CONFLICT,
+          ),
         );
       }
 
       return next(
         new ErrorHandler(
           "An error occurred while deleting doctor",
-          StatusCodes.INTERNAL_ERROR
-        )
+          StatusCodes.INTERNAL_ERROR,
+        ),
       );
     }
-  }
+  },
 );
-
-
 
 export const searchDoctorResults = catchAsyncError(
   async (req: Request, res: Response, next: NextFunction) => {
@@ -192,7 +176,7 @@ export const searchDoctorResults = catchAsyncError(
       message: "Search results fetched successfully",
       data: doctors,
     });
-  }
+  },
 );
 
 export const filterDoctors = catchAsyncError(async (req, res) => {
@@ -206,8 +190,8 @@ export const filterDoctors = catchAsyncError(async (req, res) => {
     message: "Filtered doctors fetched",
     data,
     pagination: {
-      nextCursor: nextCursor !== null ? String(nextCursor) : undefined,
-      limit: validated.limit || 50,
+      nextCursor: nextCursor || undefined,
+      limit: validated.limit,
     },
   });
 });

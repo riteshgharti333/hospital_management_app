@@ -6,7 +6,7 @@ interface IApiResponse<T> {
   data?: T;
   statusCode: number;
   pagination?: {
-    nextCursor?: string;
+    nextCursor?: string | null; // ✅ FIXED
     limit?: number;
   };
 }
@@ -23,7 +23,7 @@ export const sendResponse = <T>(
 
   if (pagination) {
     responseBody.pagination = pagination;
-  }
+  } 
 
   res.status(statusCode).json(responseBody);
 };
