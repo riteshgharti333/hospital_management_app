@@ -136,6 +136,7 @@ export const searchDoctor = createSearchService(prisma, {
 });
 
 
+
 type FilterDoctorParams = {
   fromDate?: Date;
   toDate?: Date;
@@ -167,12 +168,18 @@ export const filterDoctorsService = async (
     };
   }
 
-  // ✅ Call centralized pagination
   return filterPaginate(
     prisma,
     {
       model: "doctor",
-      limit, 
+      limit,
+      // 🔥 Optional optimization
+      // select: {
+      //   id: true,
+      //   fullName: true,
+      //   status: true,
+      //   createdAt: true,
+      // },
     },
     cursor,
     where

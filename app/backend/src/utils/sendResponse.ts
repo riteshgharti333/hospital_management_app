@@ -6,10 +6,12 @@ interface IApiResponse<T> {
   data?: T;
   statusCode: number;
   pagination?: {
-    nextCursor?: string | null; // ✅ FIXED
+    nextCursor?: string; // ✅ remove null (cleaner API)
     limit?: number;
+    hasMore?: boolean; // ✅ ADD THIS
   };
 }
+
 
 export const sendResponse = <T>(
   res: Response,
@@ -23,7 +25,7 @@ export const sendResponse = <T>(
 
   if (pagination) {
     responseBody.pagination = pagination;
-  } 
+  }
 
   res.status(statusCode).json(responseBody);
 };

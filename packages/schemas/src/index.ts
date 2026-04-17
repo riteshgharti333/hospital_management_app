@@ -13,7 +13,7 @@ export const changePasswordSchema = z
       .regex(/[0-9]/, "Password must contain at least one number")
       .regex(
         /[^a-zA-Z0-9]/,
-        "Password must contain at least one special character"
+        "Password must contain at least one special character",
       ),
 
     confirmPassword: z.string().min(1, "Confirm password is required"),
@@ -61,7 +61,7 @@ export const admissionSchema = z.object({
 
   dischargeDate: z.preprocess(
     (val) => (val === "" || val === null ? undefined : val),
-    z.coerce.date().optional()
+    z.coerce.date().optional(),
   ),
 
   status: z.string().default("ADMITTED"),
@@ -112,7 +112,7 @@ export const bedAssignmentSchema = z.object({
 
   dischargeDate: z.preprocess(
     (val) => (val === "" ? undefined : val),
-    z.coerce.date().optional()
+    z.coerce.date().optional(),
   ),
 
   status: z.enum(["Active", "Discharged", "Transferred"]).default("Active"),
@@ -223,7 +223,7 @@ export const prescriptionSchema = z.object({
   admissionId: z.number().int().positive("Admission ID is required"),
 
   doctorId: z.number().int().positive("Doctor ID is required"),
- 
+
   prescriptionDate: z.coerce.date(),
 
   prescriptionDoc: z.string().url().optional(),
@@ -295,7 +295,7 @@ export const billSchema = z.object({
   patientSex: z.enum(["Male", "Female", "Other"]),
   dischargeDate: z.preprocess(
     (val) => (val === "" ? undefined : val),
-    z.coerce.date().optional()
+    z.coerce.date().optional(),
   ),
   address: z.string().min(1, "Address is required"),
   status: z
@@ -451,7 +451,7 @@ const requiredDate = z.preprocess(
   z.date({
     required_error: "Date is required",
     invalid_type_error: "Date is required",
-  })
+  }),
 );
 
 export const bankLedgerSchema = z.object({
@@ -565,214 +565,206 @@ export const supplierLedgerSchema = z.object({
 
 ////////// filter
 
-// 🔹 Admission Filters
-export const admissionFilterSchema = z.object({
-  gender: z.enum(["Male", "Female", "Other"]).optional(),
+// ============================================
+// 🔹 BASE FILTER SCHEMA (shared foundation)
+// ============================================
+
+const baseFilterSchema = {
   fromDate: z.coerce.date().optional(),
   toDate: z.coerce.date().optional(),
-  limit: z.coerce.number().default(50),
-  cursor: z.coerce.number().optional(),
+  limit: z.coerce.number().min(1).max(100).default(50),
+  cursor: z.string().optional(), // ✅ composite cursor for keyset pagination
+};
+
+// ============================================
+// 🔹 ADMISSION FILTER
+// ============================================
+
+export const admissionFilterSchema = z.object({
+  gender: z.enum(["Male", "Female", "Other"]).optional(),
+  ...baseFilterSchema,
 });
 
 export type AdmissionFilterInput = z.infer<typeof admissionFilterSchema>;
 
-/////////////// Birth Filter
+// ============================================
+// 🔹 BIRTH FILTER
+// ============================================
 
 export const birthFilterSchema = z.object({
   babySex: z.enum(["Male", "Female", "Other"]).optional(),
-
   deliveryType: z.enum(["Normal", "Cesarean", "Forceps", "Vacuum"]).optional(),
-
-  fromDate: z.coerce.date().optional(),
-  toDate: z.coerce.date().optional(),
-
-  limit: z.coerce.number().default(50),
-  cursor: z.coerce.number().optional(),
+  ...baseFilterSchema,
 });
 
 export type BirthFilterInput = z.infer<typeof birthFilterSchema>;
 
-///////
+// ============================================
+// 🔹 PATIENT FILTER
+// ============================================
 
-// 🔹 Patient Filters
 export const patientFilterSchema = z.object({
   gender: z.enum(["Male", "Female", "Other"]).optional(),
-
-  fromDate: z.coerce.date().optional(),
-  toDate: z.coerce.date().optional(),
-
-  limit: z.coerce.number().default(50),
-  cursor: z.coerce.number().optional(),
+  ...baseFilterSchema,
 });
 
 export type PatientFilterInput = z.infer<typeof patientFilterSchema>;
 
-//////////// Department
+// ============================================
+// 🔹 DEPARTMENT FILTER
+// ============================================
 
 export const departmentFilterSchema = z.object({
   status: z.enum(["Active", "Inactive"]).optional(),
-
-  fromDate: z.coerce.date().optional(),
-  toDate: z.coerce.date().optional(),
-
-  limit: z.coerce.number().default(50),
-  cursor: z.coerce.number().optional(),
+  ...baseFilterSchema,
 });
 
 export type DepartmentFilterInput = z.infer<typeof departmentFilterSchema>;
 
-// App
+// ============================================
+// 🔹 APPOINTMENT FILTER
+// ============================================
 
 export const appointmentFilterSchema = z.object({
-  department: z.string().optional(), // dynamic department name (not enum)
-
-  fromDate: z.coerce.date().optional(),
-  toDate: z.coerce.date().optional(),
-
-  limit: z.coerce.number().default(50),
-  cursor: z.coerce.number().optional(),
+  department: z.string().optional(),
+  ...baseFilterSchema,
 });
 
 export type AppointmentFilterInput = z.infer<typeof appointmentFilterSchema>;
 
-// Nurse
+// ============================================
+// 🔹 NURSE FILTER
+// ============================================
 
 export const nurseFilterSchema = z.object({
   shift: z.enum(["Day", "Night", "Rotating"]).optional(),
-
   status: z.enum(["Active", "Inactive", "On Leave"]).optional(),
-
-  fromDate: z.coerce.date().optional(),
-  toDate: z.coerce.date().optional(),
-
-  limit: z.coerce.number().default(50),
-  cursor: z.coerce.number().optional(),
+  ...baseFilterSchema,
 });
 
 export type NurseFilterInput = z.infer<typeof nurseFilterSchema>;
 
-/// Doc Filter
+// ============================================
+// 🔹 DOCTOR FILTER
+// ============================================
 
 export const doctorFilterSchema = z.object({
   status: z.enum(["Active", "Inactive", "On Leave"]).optional(),
-
-  fromDate: z.coerce.date().optional(),
-  toDate: z.coerce.date().optional(),
-
-  limit: z.coerce.number().default(50),
-  cursor: z.coerce.number().optional(),
+  ...baseFilterSchema,
 });
 
 export type DoctorFilterInput = z.infer<typeof doctorFilterSchema>;
 
-// pre
+// ============================================
+// 🔹 PRESCRIPTION FILTER
+// ============================================
 
 export const prescriptionFilterSchema = z.object({
-  fromDate: z.coerce.date().optional(),
-  toDate: z.coerce.date().optional(),
-
-  limit: z.coerce.number().default(50),
-  cursor: z.coerce.number().optional(),
+  ...baseFilterSchema,
 });
 
 export type PrescriptionFilterInput = z.infer<typeof prescriptionFilterSchema>;
 
-///////////////// Filter Ledger
+// ============================================
+// 🔹 PATIENT LEDGER FILTER
+// ============================================
 
 export const patientLedgerFilterSchema = z.object({
   amountType: z.enum(["CREDIT", "DEBIT"]).optional(),
-
   paymentMode: z
     .enum(["CASH", "CARD", "UPI", "BANK_TRANSFER", "CHEQUE"])
     .optional(),
-
-  fromDate: z.coerce.date().optional(),
-
-  toDate: z.coerce.date().optional(),
-
-  limit: z.coerce.number().min(1).max(100).default(50),
-
-  cursor: z.coerce.number().optional(),
+  ...baseFilterSchema,
 });
 
-// Bank
+export type PatientLedgerFilterInput = z.infer<
+  typeof patientLedgerFilterSchema
+>;
+
+// ============================================
+// 🔹 BANK LEDGER FILTER
+// ============================================
 
 export const bankLedgerFilterSchema = z.object({
   amountType: z.enum(["CREDIT", "DEBIT"]).optional(),
-
-  fromDate: z.coerce.date().optional(),
-
-  toDate: z.coerce.date().optional(),
-
-  limit: z.coerce.number().min(1).max(100).default(50),
-
-  cursor: z.coerce.number().optional(),
+  ...baseFilterSchema,
 });
 
-// cash
+export type BankLedgerFilterInput = z.infer<typeof bankLedgerFilterSchema>;
+
+// ============================================
+// 🔹 CASH LEDGER FILTER
+// ============================================
 
 export const cashLedgerFilterSchema = z.object({
   amountType: z.enum(["INCOME", "EXPENSE"]).optional(),
-
-  fromDate: z.coerce.date().optional(),
-
-  toDate: z.coerce.date().optional(),
-
-  limit: z.coerce.number().min(1).max(100).default(50),
-
-  cursor: z.coerce.number().optional(),
+  ...baseFilterSchema,
 });
 
-// doctor
+export type CashLedgerFilterInput = z.infer<typeof cashLedgerFilterSchema>;
+
+// ============================================
+// 🔹 DOCTOR LEDGER FILTER
+// ============================================
 
 export const doctorLedgerFilterSchema = z.object({
   amountType: z.enum(["CREDIT", "DEBIT"]).optional(),
-
   paymentMode: z
     .enum(["CASH", "CARD", "UPI", "BANK_TRANSFER", "CHEQUE"])
     .optional(),
-
-  fromDate: z.coerce.date().optional(),
-
-  toDate: z.coerce.date().optional(),
-
-  limit: z.coerce.number().min(1).max(100).default(50),
-
-  cursor: z.coerce.number().optional(),
+  ...baseFilterSchema,
 });
 
-/// bill filter
+export type DoctorLedgerFilterInput = z.infer<typeof doctorLedgerFilterSchema>;
+
+// ============================================
+// 🔹 BILL FILTER
+// ============================================
 
 export const billFilterSchema = z.object({
   billType: z
     .enum(["OPD", "IPD", "Pharmacy", "Pathology", "Radiology"])
     .optional(),
-
   patientSex: z.enum(["Male", "Female", "Other"]).optional(),
-
   status: z
     .enum(["Pending", "PartiallyPaid", "Paid", "Cancelled", "Refunded"])
     .optional(),
-
-  fromDate: z.coerce.date().optional(),
-  toDate: z.coerce.date().optional(),
-
-  limit: z.coerce.number().default(50),
-  cursor: z.coerce.number().optional(),
+  ...baseFilterSchema,
 });
 
-/// filter money
+export type BillFilterInput = z.infer<typeof billFilterSchema>;
+
+// ============================================
+// 🔹 MONEY RECEIPT FILTER
+// ============================================
 
 export const moneyReceiptFilterSchema = z.object({
   paymentMode: z
     .enum(["Cash", "Cheque", "Card", "Online Transfer", "Other"])
     .optional(),
-
   status: z.enum(["Active", "Cancelled", "Refunded"]).optional(),
-
-  fromDate: z.coerce.date().optional(),
-  toDate: z.coerce.date().optional(),
-
-  limit: z.coerce.number().default(50),
-  cursor: z.coerce.number().optional(),
+  ...baseFilterSchema,
 });
+
+export type MoneyReceiptFilterInput = z.infer<typeof moneyReceiptFilterSchema>;
+
+// ============================================
+// 🔹 EXPORT ALL AS NAMESPACE (optional convenience)
+// ============================================
+
+export const FilterSchemas = {
+  admission: admissionFilterSchema,
+  birth: birthFilterSchema,
+  patient: patientFilterSchema,
+  department: departmentFilterSchema,
+  appointment: appointmentFilterSchema,
+  nurse: nurseFilterSchema,
+  doctor: doctorFilterSchema,
+  prescription: prescriptionFilterSchema,
+  patientLedger: patientLedgerFilterSchema,
+  bankLedger: bankLedgerFilterSchema,
+  cashLedger: cashLedgerFilterSchema,
+  doctorLedger: doctorLedgerFilterSchema,
+  bill: billFilterSchema,
+  moneyReceipt: moneyReceiptFilterSchema,
+} as const;

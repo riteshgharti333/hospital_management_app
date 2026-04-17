@@ -998,147 +998,147 @@ export declare const supplierLedgerSchema: z.ZodObject<{
     attachBill?: string | null | undefined;
 }>;
 export declare const admissionFilterSchema: z.ZodObject<{
-    gender: z.ZodOptional<z.ZodEnum<["Male", "Female", "Other"]>>;
     fromDate: z.ZodOptional<z.ZodDate>;
     toDate: z.ZodOptional<z.ZodDate>;
     limit: z.ZodDefault<z.ZodNumber>;
-    cursor: z.ZodOptional<z.ZodNumber>;
+    cursor: z.ZodOptional<z.ZodString>;
+    gender: z.ZodOptional<z.ZodEnum<["Male", "Female", "Other"]>>;
 }, "strip", z.ZodTypeAny, {
     limit: number;
     fromDate?: Date | undefined;
     toDate?: Date | undefined;
-    cursor?: number | undefined;
+    cursor?: string | undefined;
     gender?: "Other" | "Male" | "Female" | undefined;
 }, {
     fromDate?: Date | undefined;
     toDate?: Date | undefined;
-    cursor?: number | undefined;
+    cursor?: string | undefined;
     limit?: number | undefined;
     gender?: "Other" | "Male" | "Female" | undefined;
 }>;
 export type AdmissionFilterInput = z.infer<typeof admissionFilterSchema>;
 export declare const birthFilterSchema: z.ZodObject<{
-    babySex: z.ZodOptional<z.ZodEnum<["Male", "Female", "Other"]>>;
-    deliveryType: z.ZodOptional<z.ZodEnum<["Normal", "Cesarean", "Forceps", "Vacuum"]>>;
     fromDate: z.ZodOptional<z.ZodDate>;
     toDate: z.ZodOptional<z.ZodDate>;
     limit: z.ZodDefault<z.ZodNumber>;
-    cursor: z.ZodOptional<z.ZodNumber>;
+    cursor: z.ZodOptional<z.ZodString>;
+    babySex: z.ZodOptional<z.ZodEnum<["Male", "Female", "Other"]>>;
+    deliveryType: z.ZodOptional<z.ZodEnum<["Normal", "Cesarean", "Forceps", "Vacuum"]>>;
 }, "strip", z.ZodTypeAny, {
     limit: number;
     fromDate?: Date | undefined;
     toDate?: Date | undefined;
-    cursor?: number | undefined;
+    cursor?: string | undefined;
     babySex?: "Other" | "Male" | "Female" | undefined;
     deliveryType?: "Normal" | "Cesarean" | "Forceps" | "Vacuum" | undefined;
 }, {
     fromDate?: Date | undefined;
     toDate?: Date | undefined;
-    cursor?: number | undefined;
+    cursor?: string | undefined;
     limit?: number | undefined;
     babySex?: "Other" | "Male" | "Female" | undefined;
     deliveryType?: "Normal" | "Cesarean" | "Forceps" | "Vacuum" | undefined;
 }>;
 export type BirthFilterInput = z.infer<typeof birthFilterSchema>;
 export declare const patientFilterSchema: z.ZodObject<{
-    gender: z.ZodOptional<z.ZodEnum<["Male", "Female", "Other"]>>;
     fromDate: z.ZodOptional<z.ZodDate>;
     toDate: z.ZodOptional<z.ZodDate>;
     limit: z.ZodDefault<z.ZodNumber>;
-    cursor: z.ZodOptional<z.ZodNumber>;
+    cursor: z.ZodOptional<z.ZodString>;
+    gender: z.ZodOptional<z.ZodEnum<["Male", "Female", "Other"]>>;
 }, "strip", z.ZodTypeAny, {
     limit: number;
     fromDate?: Date | undefined;
     toDate?: Date | undefined;
-    cursor?: number | undefined;
+    cursor?: string | undefined;
     gender?: "Other" | "Male" | "Female" | undefined;
 }, {
     fromDate?: Date | undefined;
     toDate?: Date | undefined;
-    cursor?: number | undefined;
+    cursor?: string | undefined;
     limit?: number | undefined;
     gender?: "Other" | "Male" | "Female" | undefined;
 }>;
 export type PatientFilterInput = z.infer<typeof patientFilterSchema>;
 export declare const departmentFilterSchema: z.ZodObject<{
-    status: z.ZodOptional<z.ZodEnum<["Active", "Inactive"]>>;
     fromDate: z.ZodOptional<z.ZodDate>;
     toDate: z.ZodOptional<z.ZodDate>;
     limit: z.ZodDefault<z.ZodNumber>;
-    cursor: z.ZodOptional<z.ZodNumber>;
+    cursor: z.ZodOptional<z.ZodString>;
+    status: z.ZodOptional<z.ZodEnum<["Active", "Inactive"]>>;
 }, "strip", z.ZodTypeAny, {
     limit: number;
     fromDate?: Date | undefined;
     toDate?: Date | undefined;
-    cursor?: number | undefined;
+    cursor?: string | undefined;
     status?: "Active" | "Inactive" | undefined;
 }, {
     fromDate?: Date | undefined;
     toDate?: Date | undefined;
-    cursor?: number | undefined;
+    cursor?: string | undefined;
     limit?: number | undefined;
     status?: "Active" | "Inactive" | undefined;
 }>;
 export type DepartmentFilterInput = z.infer<typeof departmentFilterSchema>;
 export declare const appointmentFilterSchema: z.ZodObject<{
-    department: z.ZodOptional<z.ZodString>;
     fromDate: z.ZodOptional<z.ZodDate>;
     toDate: z.ZodOptional<z.ZodDate>;
     limit: z.ZodDefault<z.ZodNumber>;
-    cursor: z.ZodOptional<z.ZodNumber>;
+    cursor: z.ZodOptional<z.ZodString>;
+    department: z.ZodOptional<z.ZodString>;
 }, "strip", z.ZodTypeAny, {
     limit: number;
     fromDate?: Date | undefined;
     toDate?: Date | undefined;
-    cursor?: number | undefined;
+    cursor?: string | undefined;
     department?: string | undefined;
 }, {
     fromDate?: Date | undefined;
     toDate?: Date | undefined;
-    cursor?: number | undefined;
+    cursor?: string | undefined;
     limit?: number | undefined;
     department?: string | undefined;
 }>;
 export type AppointmentFilterInput = z.infer<typeof appointmentFilterSchema>;
 export declare const nurseFilterSchema: z.ZodObject<{
-    shift: z.ZodOptional<z.ZodEnum<["Day", "Night", "Rotating"]>>;
-    status: z.ZodOptional<z.ZodEnum<["Active", "Inactive", "On Leave"]>>;
     fromDate: z.ZodOptional<z.ZodDate>;
     toDate: z.ZodOptional<z.ZodDate>;
     limit: z.ZodDefault<z.ZodNumber>;
-    cursor: z.ZodOptional<z.ZodNumber>;
+    cursor: z.ZodOptional<z.ZodString>;
+    shift: z.ZodOptional<z.ZodEnum<["Day", "Night", "Rotating"]>>;
+    status: z.ZodOptional<z.ZodEnum<["Active", "Inactive", "On Leave"]>>;
 }, "strip", z.ZodTypeAny, {
     limit: number;
     fromDate?: Date | undefined;
     toDate?: Date | undefined;
-    cursor?: number | undefined;
+    cursor?: string | undefined;
     shift?: "Day" | "Night" | "Rotating" | undefined;
     status?: "Active" | "Inactive" | "On Leave" | undefined;
 }, {
     fromDate?: Date | undefined;
     toDate?: Date | undefined;
-    cursor?: number | undefined;
+    cursor?: string | undefined;
     limit?: number | undefined;
     shift?: "Day" | "Night" | "Rotating" | undefined;
     status?: "Active" | "Inactive" | "On Leave" | undefined;
 }>;
 export type NurseFilterInput = z.infer<typeof nurseFilterSchema>;
 export declare const doctorFilterSchema: z.ZodObject<{
-    status: z.ZodOptional<z.ZodEnum<["Active", "Inactive", "On Leave"]>>;
     fromDate: z.ZodOptional<z.ZodDate>;
     toDate: z.ZodOptional<z.ZodDate>;
     limit: z.ZodDefault<z.ZodNumber>;
-    cursor: z.ZodOptional<z.ZodNumber>;
+    cursor: z.ZodOptional<z.ZodString>;
+    status: z.ZodOptional<z.ZodEnum<["Active", "Inactive", "On Leave"]>>;
 }, "strip", z.ZodTypeAny, {
     limit: number;
     fromDate?: Date | undefined;
     toDate?: Date | undefined;
-    cursor?: number | undefined;
+    cursor?: string | undefined;
     status?: "Active" | "Inactive" | "On Leave" | undefined;
 }, {
     fromDate?: Date | undefined;
     toDate?: Date | undefined;
-    cursor?: number | undefined;
+    cursor?: string | undefined;
     limit?: number | undefined;
     status?: "Active" | "Inactive" | "On Leave" | undefined;
 }>;
@@ -1147,145 +1147,437 @@ export declare const prescriptionFilterSchema: z.ZodObject<{
     fromDate: z.ZodOptional<z.ZodDate>;
     toDate: z.ZodOptional<z.ZodDate>;
     limit: z.ZodDefault<z.ZodNumber>;
-    cursor: z.ZodOptional<z.ZodNumber>;
+    cursor: z.ZodOptional<z.ZodString>;
 }, "strip", z.ZodTypeAny, {
     limit: number;
     fromDate?: Date | undefined;
     toDate?: Date | undefined;
-    cursor?: number | undefined;
+    cursor?: string | undefined;
 }, {
     fromDate?: Date | undefined;
     toDate?: Date | undefined;
-    cursor?: number | undefined;
+    cursor?: string | undefined;
     limit?: number | undefined;
 }>;
 export type PrescriptionFilterInput = z.infer<typeof prescriptionFilterSchema>;
 export declare const patientLedgerFilterSchema: z.ZodObject<{
-    amountType: z.ZodOptional<z.ZodEnum<["CREDIT", "DEBIT"]>>;
-    paymentMode: z.ZodOptional<z.ZodEnum<["CASH", "CARD", "UPI", "BANK_TRANSFER", "CHEQUE"]>>;
     fromDate: z.ZodOptional<z.ZodDate>;
     toDate: z.ZodOptional<z.ZodDate>;
     limit: z.ZodDefault<z.ZodNumber>;
-    cursor: z.ZodOptional<z.ZodNumber>;
+    cursor: z.ZodOptional<z.ZodString>;
+    amountType: z.ZodOptional<z.ZodEnum<["CREDIT", "DEBIT"]>>;
+    paymentMode: z.ZodOptional<z.ZodEnum<["CASH", "CARD", "UPI", "BANK_TRANSFER", "CHEQUE"]>>;
 }, "strip", z.ZodTypeAny, {
     limit: number;
     fromDate?: Date | undefined;
     toDate?: Date | undefined;
-    cursor?: number | undefined;
+    cursor?: string | undefined;
     paymentMode?: "CASH" | "CARD" | "UPI" | "BANK_TRANSFER" | "CHEQUE" | undefined;
     amountType?: "CREDIT" | "DEBIT" | undefined;
 }, {
     fromDate?: Date | undefined;
     toDate?: Date | undefined;
-    cursor?: number | undefined;
+    cursor?: string | undefined;
     limit?: number | undefined;
     paymentMode?: "CASH" | "CARD" | "UPI" | "BANK_TRANSFER" | "CHEQUE" | undefined;
     amountType?: "CREDIT" | "DEBIT" | undefined;
 }>;
+export type PatientLedgerFilterInput = z.infer<typeof patientLedgerFilterSchema>;
 export declare const bankLedgerFilterSchema: z.ZodObject<{
+    fromDate: z.ZodOptional<z.ZodDate>;
+    toDate: z.ZodOptional<z.ZodDate>;
+    limit: z.ZodDefault<z.ZodNumber>;
+    cursor: z.ZodOptional<z.ZodString>;
     amountType: z.ZodOptional<z.ZodEnum<["CREDIT", "DEBIT"]>>;
-    fromDate: z.ZodOptional<z.ZodDate>;
-    toDate: z.ZodOptional<z.ZodDate>;
-    limit: z.ZodDefault<z.ZodNumber>;
-    cursor: z.ZodOptional<z.ZodNumber>;
 }, "strip", z.ZodTypeAny, {
     limit: number;
     fromDate?: Date | undefined;
     toDate?: Date | undefined;
-    cursor?: number | undefined;
+    cursor?: string | undefined;
     amountType?: "CREDIT" | "DEBIT" | undefined;
 }, {
     fromDate?: Date | undefined;
     toDate?: Date | undefined;
-    cursor?: number | undefined;
+    cursor?: string | undefined;
     limit?: number | undefined;
     amountType?: "CREDIT" | "DEBIT" | undefined;
 }>;
+export type BankLedgerFilterInput = z.infer<typeof bankLedgerFilterSchema>;
 export declare const cashLedgerFilterSchema: z.ZodObject<{
-    amountType: z.ZodOptional<z.ZodEnum<["INCOME", "EXPENSE"]>>;
     fromDate: z.ZodOptional<z.ZodDate>;
     toDate: z.ZodOptional<z.ZodDate>;
     limit: z.ZodDefault<z.ZodNumber>;
-    cursor: z.ZodOptional<z.ZodNumber>;
+    cursor: z.ZodOptional<z.ZodString>;
+    amountType: z.ZodOptional<z.ZodEnum<["INCOME", "EXPENSE"]>>;
 }, "strip", z.ZodTypeAny, {
     limit: number;
     fromDate?: Date | undefined;
     toDate?: Date | undefined;
-    cursor?: number | undefined;
+    cursor?: string | undefined;
     amountType?: "INCOME" | "EXPENSE" | undefined;
 }, {
     fromDate?: Date | undefined;
     toDate?: Date | undefined;
-    cursor?: number | undefined;
+    cursor?: string | undefined;
     limit?: number | undefined;
     amountType?: "INCOME" | "EXPENSE" | undefined;
 }>;
+export type CashLedgerFilterInput = z.infer<typeof cashLedgerFilterSchema>;
 export declare const doctorLedgerFilterSchema: z.ZodObject<{
+    fromDate: z.ZodOptional<z.ZodDate>;
+    toDate: z.ZodOptional<z.ZodDate>;
+    limit: z.ZodDefault<z.ZodNumber>;
+    cursor: z.ZodOptional<z.ZodString>;
     amountType: z.ZodOptional<z.ZodEnum<["CREDIT", "DEBIT"]>>;
     paymentMode: z.ZodOptional<z.ZodEnum<["CASH", "CARD", "UPI", "BANK_TRANSFER", "CHEQUE"]>>;
-    fromDate: z.ZodOptional<z.ZodDate>;
-    toDate: z.ZodOptional<z.ZodDate>;
-    limit: z.ZodDefault<z.ZodNumber>;
-    cursor: z.ZodOptional<z.ZodNumber>;
 }, "strip", z.ZodTypeAny, {
     limit: number;
     fromDate?: Date | undefined;
     toDate?: Date | undefined;
-    cursor?: number | undefined;
+    cursor?: string | undefined;
     paymentMode?: "CASH" | "CARD" | "UPI" | "BANK_TRANSFER" | "CHEQUE" | undefined;
     amountType?: "CREDIT" | "DEBIT" | undefined;
 }, {
     fromDate?: Date | undefined;
     toDate?: Date | undefined;
-    cursor?: number | undefined;
+    cursor?: string | undefined;
     limit?: number | undefined;
     paymentMode?: "CASH" | "CARD" | "UPI" | "BANK_TRANSFER" | "CHEQUE" | undefined;
     amountType?: "CREDIT" | "DEBIT" | undefined;
 }>;
+export type DoctorLedgerFilterInput = z.infer<typeof doctorLedgerFilterSchema>;
 export declare const billFilterSchema: z.ZodObject<{
+    fromDate: z.ZodOptional<z.ZodDate>;
+    toDate: z.ZodOptional<z.ZodDate>;
+    limit: z.ZodDefault<z.ZodNumber>;
+    cursor: z.ZodOptional<z.ZodString>;
     billType: z.ZodOptional<z.ZodEnum<["OPD", "IPD", "Pharmacy", "Pathology", "Radiology"]>>;
     patientSex: z.ZodOptional<z.ZodEnum<["Male", "Female", "Other"]>>;
     status: z.ZodOptional<z.ZodEnum<["Pending", "PartiallyPaid", "Paid", "Cancelled", "Refunded"]>>;
-    fromDate: z.ZodOptional<z.ZodDate>;
-    toDate: z.ZodOptional<z.ZodDate>;
-    limit: z.ZodDefault<z.ZodNumber>;
-    cursor: z.ZodOptional<z.ZodNumber>;
 }, "strip", z.ZodTypeAny, {
     limit: number;
     fromDate?: Date | undefined;
     toDate?: Date | undefined;
-    cursor?: number | undefined;
+    cursor?: string | undefined;
     status?: "Pending" | "PartiallyPaid" | "Paid" | "Cancelled" | "Refunded" | undefined;
     patientSex?: "Other" | "Male" | "Female" | undefined;
     billType?: "OPD" | "IPD" | "Pharmacy" | "Pathology" | "Radiology" | undefined;
 }, {
     fromDate?: Date | undefined;
     toDate?: Date | undefined;
-    cursor?: number | undefined;
+    cursor?: string | undefined;
     limit?: number | undefined;
     status?: "Pending" | "PartiallyPaid" | "Paid" | "Cancelled" | "Refunded" | undefined;
     patientSex?: "Other" | "Male" | "Female" | undefined;
     billType?: "OPD" | "IPD" | "Pharmacy" | "Pathology" | "Radiology" | undefined;
 }>;
+export type BillFilterInput = z.infer<typeof billFilterSchema>;
 export declare const moneyReceiptFilterSchema: z.ZodObject<{
+    fromDate: z.ZodOptional<z.ZodDate>;
+    toDate: z.ZodOptional<z.ZodDate>;
+    limit: z.ZodDefault<z.ZodNumber>;
+    cursor: z.ZodOptional<z.ZodString>;
     paymentMode: z.ZodOptional<z.ZodEnum<["Cash", "Cheque", "Card", "Online Transfer", "Other"]>>;
     status: z.ZodOptional<z.ZodEnum<["Active", "Cancelled", "Refunded"]>>;
-    fromDate: z.ZodOptional<z.ZodDate>;
-    toDate: z.ZodOptional<z.ZodDate>;
-    limit: z.ZodDefault<z.ZodNumber>;
-    cursor: z.ZodOptional<z.ZodNumber>;
 }, "strip", z.ZodTypeAny, {
     limit: number;
     fromDate?: Date | undefined;
     toDate?: Date | undefined;
-    cursor?: number | undefined;
+    cursor?: string | undefined;
     status?: "Active" | "Cancelled" | "Refunded" | undefined;
     paymentMode?: "Other" | "Cash" | "Cheque" | "Card" | "Online Transfer" | undefined;
 }, {
     fromDate?: Date | undefined;
     toDate?: Date | undefined;
-    cursor?: number | undefined;
+    cursor?: string | undefined;
     limit?: number | undefined;
     status?: "Active" | "Cancelled" | "Refunded" | undefined;
     paymentMode?: "Other" | "Cash" | "Cheque" | "Card" | "Online Transfer" | undefined;
 }>;
+export type MoneyReceiptFilterInput = z.infer<typeof moneyReceiptFilterSchema>;
+export declare const FilterSchemas: {
+    readonly admission: z.ZodObject<{
+        fromDate: z.ZodOptional<z.ZodDate>;
+        toDate: z.ZodOptional<z.ZodDate>;
+        limit: z.ZodDefault<z.ZodNumber>;
+        cursor: z.ZodOptional<z.ZodString>;
+        gender: z.ZodOptional<z.ZodEnum<["Male", "Female", "Other"]>>;
+    }, "strip", z.ZodTypeAny, {
+        limit: number;
+        fromDate?: Date | undefined;
+        toDate?: Date | undefined;
+        cursor?: string | undefined;
+        gender?: "Other" | "Male" | "Female" | undefined;
+    }, {
+        fromDate?: Date | undefined;
+        toDate?: Date | undefined;
+        cursor?: string | undefined;
+        limit?: number | undefined;
+        gender?: "Other" | "Male" | "Female" | undefined;
+    }>;
+    readonly birth: z.ZodObject<{
+        fromDate: z.ZodOptional<z.ZodDate>;
+        toDate: z.ZodOptional<z.ZodDate>;
+        limit: z.ZodDefault<z.ZodNumber>;
+        cursor: z.ZodOptional<z.ZodString>;
+        babySex: z.ZodOptional<z.ZodEnum<["Male", "Female", "Other"]>>;
+        deliveryType: z.ZodOptional<z.ZodEnum<["Normal", "Cesarean", "Forceps", "Vacuum"]>>;
+    }, "strip", z.ZodTypeAny, {
+        limit: number;
+        fromDate?: Date | undefined;
+        toDate?: Date | undefined;
+        cursor?: string | undefined;
+        babySex?: "Other" | "Male" | "Female" | undefined;
+        deliveryType?: "Normal" | "Cesarean" | "Forceps" | "Vacuum" | undefined;
+    }, {
+        fromDate?: Date | undefined;
+        toDate?: Date | undefined;
+        cursor?: string | undefined;
+        limit?: number | undefined;
+        babySex?: "Other" | "Male" | "Female" | undefined;
+        deliveryType?: "Normal" | "Cesarean" | "Forceps" | "Vacuum" | undefined;
+    }>;
+    readonly patient: z.ZodObject<{
+        fromDate: z.ZodOptional<z.ZodDate>;
+        toDate: z.ZodOptional<z.ZodDate>;
+        limit: z.ZodDefault<z.ZodNumber>;
+        cursor: z.ZodOptional<z.ZodString>;
+        gender: z.ZodOptional<z.ZodEnum<["Male", "Female", "Other"]>>;
+    }, "strip", z.ZodTypeAny, {
+        limit: number;
+        fromDate?: Date | undefined;
+        toDate?: Date | undefined;
+        cursor?: string | undefined;
+        gender?: "Other" | "Male" | "Female" | undefined;
+    }, {
+        fromDate?: Date | undefined;
+        toDate?: Date | undefined;
+        cursor?: string | undefined;
+        limit?: number | undefined;
+        gender?: "Other" | "Male" | "Female" | undefined;
+    }>;
+    readonly department: z.ZodObject<{
+        fromDate: z.ZodOptional<z.ZodDate>;
+        toDate: z.ZodOptional<z.ZodDate>;
+        limit: z.ZodDefault<z.ZodNumber>;
+        cursor: z.ZodOptional<z.ZodString>;
+        status: z.ZodOptional<z.ZodEnum<["Active", "Inactive"]>>;
+    }, "strip", z.ZodTypeAny, {
+        limit: number;
+        fromDate?: Date | undefined;
+        toDate?: Date | undefined;
+        cursor?: string | undefined;
+        status?: "Active" | "Inactive" | undefined;
+    }, {
+        fromDate?: Date | undefined;
+        toDate?: Date | undefined;
+        cursor?: string | undefined;
+        limit?: number | undefined;
+        status?: "Active" | "Inactive" | undefined;
+    }>;
+    readonly appointment: z.ZodObject<{
+        fromDate: z.ZodOptional<z.ZodDate>;
+        toDate: z.ZodOptional<z.ZodDate>;
+        limit: z.ZodDefault<z.ZodNumber>;
+        cursor: z.ZodOptional<z.ZodString>;
+        department: z.ZodOptional<z.ZodString>;
+    }, "strip", z.ZodTypeAny, {
+        limit: number;
+        fromDate?: Date | undefined;
+        toDate?: Date | undefined;
+        cursor?: string | undefined;
+        department?: string | undefined;
+    }, {
+        fromDate?: Date | undefined;
+        toDate?: Date | undefined;
+        cursor?: string | undefined;
+        limit?: number | undefined;
+        department?: string | undefined;
+    }>;
+    readonly nurse: z.ZodObject<{
+        fromDate: z.ZodOptional<z.ZodDate>;
+        toDate: z.ZodOptional<z.ZodDate>;
+        limit: z.ZodDefault<z.ZodNumber>;
+        cursor: z.ZodOptional<z.ZodString>;
+        shift: z.ZodOptional<z.ZodEnum<["Day", "Night", "Rotating"]>>;
+        status: z.ZodOptional<z.ZodEnum<["Active", "Inactive", "On Leave"]>>;
+    }, "strip", z.ZodTypeAny, {
+        limit: number;
+        fromDate?: Date | undefined;
+        toDate?: Date | undefined;
+        cursor?: string | undefined;
+        shift?: "Day" | "Night" | "Rotating" | undefined;
+        status?: "Active" | "Inactive" | "On Leave" | undefined;
+    }, {
+        fromDate?: Date | undefined;
+        toDate?: Date | undefined;
+        cursor?: string | undefined;
+        limit?: number | undefined;
+        shift?: "Day" | "Night" | "Rotating" | undefined;
+        status?: "Active" | "Inactive" | "On Leave" | undefined;
+    }>;
+    readonly doctor: z.ZodObject<{
+        fromDate: z.ZodOptional<z.ZodDate>;
+        toDate: z.ZodOptional<z.ZodDate>;
+        limit: z.ZodDefault<z.ZodNumber>;
+        cursor: z.ZodOptional<z.ZodString>;
+        status: z.ZodOptional<z.ZodEnum<["Active", "Inactive", "On Leave"]>>;
+    }, "strip", z.ZodTypeAny, {
+        limit: number;
+        fromDate?: Date | undefined;
+        toDate?: Date | undefined;
+        cursor?: string | undefined;
+        status?: "Active" | "Inactive" | "On Leave" | undefined;
+    }, {
+        fromDate?: Date | undefined;
+        toDate?: Date | undefined;
+        cursor?: string | undefined;
+        limit?: number | undefined;
+        status?: "Active" | "Inactive" | "On Leave" | undefined;
+    }>;
+    readonly prescription: z.ZodObject<{
+        fromDate: z.ZodOptional<z.ZodDate>;
+        toDate: z.ZodOptional<z.ZodDate>;
+        limit: z.ZodDefault<z.ZodNumber>;
+        cursor: z.ZodOptional<z.ZodString>;
+    }, "strip", z.ZodTypeAny, {
+        limit: number;
+        fromDate?: Date | undefined;
+        toDate?: Date | undefined;
+        cursor?: string | undefined;
+    }, {
+        fromDate?: Date | undefined;
+        toDate?: Date | undefined;
+        cursor?: string | undefined;
+        limit?: number | undefined;
+    }>;
+    readonly patientLedger: z.ZodObject<{
+        fromDate: z.ZodOptional<z.ZodDate>;
+        toDate: z.ZodOptional<z.ZodDate>;
+        limit: z.ZodDefault<z.ZodNumber>;
+        cursor: z.ZodOptional<z.ZodString>;
+        amountType: z.ZodOptional<z.ZodEnum<["CREDIT", "DEBIT"]>>;
+        paymentMode: z.ZodOptional<z.ZodEnum<["CASH", "CARD", "UPI", "BANK_TRANSFER", "CHEQUE"]>>;
+    }, "strip", z.ZodTypeAny, {
+        limit: number;
+        fromDate?: Date | undefined;
+        toDate?: Date | undefined;
+        cursor?: string | undefined;
+        paymentMode?: "CASH" | "CARD" | "UPI" | "BANK_TRANSFER" | "CHEQUE" | undefined;
+        amountType?: "CREDIT" | "DEBIT" | undefined;
+    }, {
+        fromDate?: Date | undefined;
+        toDate?: Date | undefined;
+        cursor?: string | undefined;
+        limit?: number | undefined;
+        paymentMode?: "CASH" | "CARD" | "UPI" | "BANK_TRANSFER" | "CHEQUE" | undefined;
+        amountType?: "CREDIT" | "DEBIT" | undefined;
+    }>;
+    readonly bankLedger: z.ZodObject<{
+        fromDate: z.ZodOptional<z.ZodDate>;
+        toDate: z.ZodOptional<z.ZodDate>;
+        limit: z.ZodDefault<z.ZodNumber>;
+        cursor: z.ZodOptional<z.ZodString>;
+        amountType: z.ZodOptional<z.ZodEnum<["CREDIT", "DEBIT"]>>;
+    }, "strip", z.ZodTypeAny, {
+        limit: number;
+        fromDate?: Date | undefined;
+        toDate?: Date | undefined;
+        cursor?: string | undefined;
+        amountType?: "CREDIT" | "DEBIT" | undefined;
+    }, {
+        fromDate?: Date | undefined;
+        toDate?: Date | undefined;
+        cursor?: string | undefined;
+        limit?: number | undefined;
+        amountType?: "CREDIT" | "DEBIT" | undefined;
+    }>;
+    readonly cashLedger: z.ZodObject<{
+        fromDate: z.ZodOptional<z.ZodDate>;
+        toDate: z.ZodOptional<z.ZodDate>;
+        limit: z.ZodDefault<z.ZodNumber>;
+        cursor: z.ZodOptional<z.ZodString>;
+        amountType: z.ZodOptional<z.ZodEnum<["INCOME", "EXPENSE"]>>;
+    }, "strip", z.ZodTypeAny, {
+        limit: number;
+        fromDate?: Date | undefined;
+        toDate?: Date | undefined;
+        cursor?: string | undefined;
+        amountType?: "INCOME" | "EXPENSE" | undefined;
+    }, {
+        fromDate?: Date | undefined;
+        toDate?: Date | undefined;
+        cursor?: string | undefined;
+        limit?: number | undefined;
+        amountType?: "INCOME" | "EXPENSE" | undefined;
+    }>;
+    readonly doctorLedger: z.ZodObject<{
+        fromDate: z.ZodOptional<z.ZodDate>;
+        toDate: z.ZodOptional<z.ZodDate>;
+        limit: z.ZodDefault<z.ZodNumber>;
+        cursor: z.ZodOptional<z.ZodString>;
+        amountType: z.ZodOptional<z.ZodEnum<["CREDIT", "DEBIT"]>>;
+        paymentMode: z.ZodOptional<z.ZodEnum<["CASH", "CARD", "UPI", "BANK_TRANSFER", "CHEQUE"]>>;
+    }, "strip", z.ZodTypeAny, {
+        limit: number;
+        fromDate?: Date | undefined;
+        toDate?: Date | undefined;
+        cursor?: string | undefined;
+        paymentMode?: "CASH" | "CARD" | "UPI" | "BANK_TRANSFER" | "CHEQUE" | undefined;
+        amountType?: "CREDIT" | "DEBIT" | undefined;
+    }, {
+        fromDate?: Date | undefined;
+        toDate?: Date | undefined;
+        cursor?: string | undefined;
+        limit?: number | undefined;
+        paymentMode?: "CASH" | "CARD" | "UPI" | "BANK_TRANSFER" | "CHEQUE" | undefined;
+        amountType?: "CREDIT" | "DEBIT" | undefined;
+    }>;
+    readonly bill: z.ZodObject<{
+        fromDate: z.ZodOptional<z.ZodDate>;
+        toDate: z.ZodOptional<z.ZodDate>;
+        limit: z.ZodDefault<z.ZodNumber>;
+        cursor: z.ZodOptional<z.ZodString>;
+        billType: z.ZodOptional<z.ZodEnum<["OPD", "IPD", "Pharmacy", "Pathology", "Radiology"]>>;
+        patientSex: z.ZodOptional<z.ZodEnum<["Male", "Female", "Other"]>>;
+        status: z.ZodOptional<z.ZodEnum<["Pending", "PartiallyPaid", "Paid", "Cancelled", "Refunded"]>>;
+    }, "strip", z.ZodTypeAny, {
+        limit: number;
+        fromDate?: Date | undefined;
+        toDate?: Date | undefined;
+        cursor?: string | undefined;
+        status?: "Pending" | "PartiallyPaid" | "Paid" | "Cancelled" | "Refunded" | undefined;
+        patientSex?: "Other" | "Male" | "Female" | undefined;
+        billType?: "OPD" | "IPD" | "Pharmacy" | "Pathology" | "Radiology" | undefined;
+    }, {
+        fromDate?: Date | undefined;
+        toDate?: Date | undefined;
+        cursor?: string | undefined;
+        limit?: number | undefined;
+        status?: "Pending" | "PartiallyPaid" | "Paid" | "Cancelled" | "Refunded" | undefined;
+        patientSex?: "Other" | "Male" | "Female" | undefined;
+        billType?: "OPD" | "IPD" | "Pharmacy" | "Pathology" | "Radiology" | undefined;
+    }>;
+    readonly moneyReceipt: z.ZodObject<{
+        fromDate: z.ZodOptional<z.ZodDate>;
+        toDate: z.ZodOptional<z.ZodDate>;
+        limit: z.ZodDefault<z.ZodNumber>;
+        cursor: z.ZodOptional<z.ZodString>;
+        paymentMode: z.ZodOptional<z.ZodEnum<["Cash", "Cheque", "Card", "Online Transfer", "Other"]>>;
+        status: z.ZodOptional<z.ZodEnum<["Active", "Cancelled", "Refunded"]>>;
+    }, "strip", z.ZodTypeAny, {
+        limit: number;
+        fromDate?: Date | undefined;
+        toDate?: Date | undefined;
+        cursor?: string | undefined;
+        status?: "Active" | "Cancelled" | "Refunded" | undefined;
+        paymentMode?: "Other" | "Cash" | "Cheque" | "Card" | "Online Transfer" | undefined;
+    }, {
+        fromDate?: Date | undefined;
+        toDate?: Date | undefined;
+        cursor?: string | undefined;
+        limit?: number | undefined;
+        status?: "Active" | "Cancelled" | "Refunded" | undefined;
+        paymentMode?: "Other" | "Cash" | "Cheque" | "Card" | "Online Transfer" | undefined;
+    }>;
+};

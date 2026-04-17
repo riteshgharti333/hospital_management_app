@@ -1,11 +1,5 @@
 import { PrismaClient } from "@prisma/client";
-
- const PAGINATION_CONFIG = {
-  DEFAULT_LIMIT: 50,
-  MAX_LIMIT: 100,
-};
-
-
+import { PAGINATION_CONFIG } from "../lib/paginationConfig";
 
 export async function filterPaginate<T extends keyof PrismaClient, R = any>(
   prisma: PrismaClient,
@@ -17,10 +11,11 @@ export async function filterPaginate<T extends keyof PrismaClient, R = any>(
     orderBy?: any;
   },
   rawCursor?: string,
-  extraWhere?: any
+  extraWhere?: any,
 ): Promise<{
   data: R[];
   nextCursor: string | null;
+  hasMore: boolean;
 }> {
   const {
     model,
@@ -29,19 +24,25 @@ export async function filterPaginate<T extends keyof PrismaClient, R = any>(
     orderBy = [{ createdAt: "desc" }, { id: "desc" }],
   } = options;
 
-  // ✅ CENTRALIZED LIMIT LOGIC
-  const safeLimit = Math.min(
-    options.limit || PAGINATION_CONFIG.DEFAULT_LIMIT,
-    PAGINATION_CONFIG.MAX_LIMIT
+  // ✅ Safe limit (centralized + protected)
+  const safeLimit = Math.max(
+    1,
+    Math.min(
+      options.limit ?? PAGINATION_CONFIG.DEFAULT_LIMIT,
+      PAGINATION_CONFIG.MAX_LIMIT,
+    ),
   );
 
+  // ✅ Safe cursor parsing
   let cursorDate: Date | null = null;
   let cursorId: number | null = null;
 
-  if (rawCursor) {
-    const [date, id] = rawCursor.split("|");
+  if (rawCursor && typeof rawCursor === "string") {
+    const parts = rawCursor.split("|");
 
-    if (date && id) {
+    if (parts.length === 2) {
+      const [date, id] = parts;
+
       const parsedDate = new Date(date);
       const parsedId = Number(id);
 
@@ -52,17 +53,15 @@ export async function filterPaginate<T extends keyof PrismaClient, R = any>(
     }
   }
 
+  // ✅ WHERE condition
   const whereCondition = {
-    ...(extraWhere || {}),
+    ...(extraWhere ?? {}),
     ...(cursorDate !== null && cursorId !== null
       ? {
           OR: [
             { createdAt: { lt: cursorDate } },
             {
-              AND: [
-                { createdAt: cursorDate },
-                { id: { lt: cursorId } },
-              ],
+              AND: [{ createdAt: cursorDate }, { id: { lt: cursorId } }],
             },
           ],
         }
@@ -72,7 +71,7 @@ export async function filterPaginate<T extends keyof PrismaClient, R = any>(
   const data = await (prisma[model] as any).findMany({
     where: whereCondition,
     orderBy,
-    take: safeLimit + 1, // ✅ use safeLimit
+    take: safeLimit + 1,
     ...(select ? { select } : {}),
     ...(include ? { include } : {}),
   });
@@ -90,5 +89,6 @@ export async function filterPaginate<T extends keyof PrismaClient, R = any>(
   return {
     data: results,
     nextCursor,
+    hasMore,
   };
 }

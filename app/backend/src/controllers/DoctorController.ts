@@ -16,6 +16,7 @@ import {
 import { doctorSchema, doctorFilterSchema } from "@hospital/schemas";
 import { PrismaClientKnownRequestError } from "@prisma/client/runtime/library";
 import { validateSearchQuery } from "../utils/queryValidation";
+import { PAGINATION_CONFIG } from "../lib/paginationConfig";
 
 export const createDoctorRecord = catchAsyncError(
   async (req: Request, res: Response, next: NextFunction) => {
@@ -53,7 +54,10 @@ export const getAllDoctorRecords = catchAsyncError(
       statusCode: StatusCodes.OK,
       message: "Doctor records fetched",
       data: result.data,
-      pagination: result.pagination,
+      pagination: {
+        nextCursor: result.pagination.nextCursor || undefined,
+        hasMore: result.pagination.hasMore,
+      },
     });
   },
 );
@@ -182,7 +186,7 @@ export const searchDoctorResults = catchAsyncError(
 export const filterDoctors = catchAsyncError(async (req, res) => {
   const validated = doctorFilterSchema.parse(req.query);
 
-  const { data, nextCursor } = await filterDoctorsService(validated);
+  const { data, nextCursor, hasMore } = await filterDoctorsService(validated);
 
   sendResponse(res, {
     success: true,
@@ -191,7 +195,8 @@ export const filterDoctors = catchAsyncError(async (req, res) => {
     data,
     pagination: {
       nextCursor: nextCursor || undefined,
-      limit: validated.limit,
+      limit: validated.limit ?? PAGINATION_CONFIG.DEFAULT_LIMIT,
+      hasMore,
     },
   });
 });
