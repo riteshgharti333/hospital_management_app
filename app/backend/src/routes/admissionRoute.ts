@@ -28,9 +28,9 @@ router
 router.get("/search", searchAdmissionsResults);
 router.get("/filter", filterAdmissions);   
  
-// GET / UPDATE / DELETE BY ID
+// GET / UPDATE / DELETE BY ID    
 router
-  .route("/:id")
+  .route("/:id") 
   .get(getAdmissionById) 
   .put(
     authenticateUser,

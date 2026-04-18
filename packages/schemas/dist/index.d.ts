@@ -423,7 +423,6 @@ export declare const billSchema: z.ZodObject<{
     patientName: z.ZodString;
     admissionNo: z.ZodString;
     admissionDate: z.ZodEffects<z.ZodEffects<z.ZodString, string, string>, Date, string>;
-    patientAge: z.ZodNumber;
     patientSex: z.ZodEnum<["Male", "Female", "Other"]>;
     dischargeDate: z.ZodEffects<z.ZodOptional<z.ZodDate>, Date | undefined, unknown>;
     address: z.ZodString;
@@ -458,7 +457,6 @@ export declare const billSchema: z.ZodObject<{
     billType: string;
     mobile: string;
     admissionNo: string;
-    patientAge: number;
     billItems: {
         company: string;
         itemOrService: string;
@@ -477,7 +475,6 @@ export declare const billSchema: z.ZodObject<{
     billType: string;
     mobile: string;
     admissionNo: string;
-    patientAge: number;
     billItems: {
         company: string;
         itemOrService: string;

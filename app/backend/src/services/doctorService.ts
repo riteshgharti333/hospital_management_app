@@ -1,5 +1,4 @@
 import { prisma } from "../lib/prisma";
-import { applyCommonFields } from "../utils/applyCommonFields";
 import { cursorPaginate } from "../utils/pagination";
 import { filterPaginate } from "../utils/filterPaginate";
 import { createSearchService } from "../utils/searchCache";

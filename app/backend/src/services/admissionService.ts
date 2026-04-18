@@ -6,7 +6,7 @@ import { cursorPaginate } from "../utils/pagination";
 import { createSearchService } from "../utils/searchCache";
 
 export type AdmissionInput = {
-  patientId: number; 
+  patientId: number;
   doctorId: number;
   admissionDate: Date;
   dischargeDate?: Date;
@@ -39,30 +39,33 @@ export const findActiveAdmissionByPatient = async (patientId: number) => {
 
 export const getAllAdmissionsService = async (
   cursor?: string,
-  limit?: number
+  limit?: number,
 ) => {
   return cursorPaginate(
     prisma,
     {
       model: "admission",
-      cursorField: "id",
       limit: limit || 50,
       cacheExpiry: 600,
+
+      // ⚠️ IMPORTANT: must match pagination order
+      // (your cursorPaginate uses createdAt + id)
 
       select: {
         id: true,
         hospitalAdmissionId: true,
         admissionDate: true,
         dischargeDate: true,
-    
+        createdAt: true, 
 
         patient: {
           select: {
             id: true,
             fullName: true,
             gender: true,
-            mobileNumber: true, 
-            aadhaarNumber: true,  
+            mobileNumber: true,
+            aadhaarNumber: true,
+            address: true,
           },
         },
 
@@ -74,11 +77,9 @@ export const getAllAdmissionsService = async (
         },
       },
     },
-    cursor ? Number(cursor) : undefined
+    cursor, // ✅ string cursor (createdAt|id)
   );
 };
-
-
 
 export const getAdmissionById = async (id: number) => {
   return prisma.admission.findUnique({ where: { id } });
@@ -86,7 +87,7 @@ export const getAdmissionById = async (id: number) => {
 
 export const updateAdmission = async (
   id: number,
-  data: Partial<AdmissionInput>
+  data: Partial<AdmissionInput>,
 ) => {
   return prisma.admission.update({
     where: { id },
@@ -98,45 +99,70 @@ export const deleteAdmission = async (id: number) => {
   return prisma.admission.delete({ where: { id } });
 };
 
-const commonSearchFields = ["hospitalAdmissionId"];
-
 export const searchAdmissions = createSearchService(prisma, {
   tableName: "Admission",
-  cacheKeyPrefix: "admission",
-  ...applyCommonFields(commonSearchFields),
+  exactFields: ["hospitalAdmissionId"],
+  prefixFields: [],
+  similarFields: [],
 });
 
 /// Filter
 
-export const filterAdmissionsService = async (filters: {
+type FilterAdmissionParams = {
   fromDate?: Date;
   toDate?: Date;
   gender?: string;
-  cursor?: string | number;
+  cursor?: string;
   limit?: number;
-}) => {
-  const { fromDate, toDate, gender, cursor, limit } = filters;
+};
 
-  // Build filter object
-  const filterObj: Record<string, any> = {};
+export const filterAdmissionsService = async (
+  params: FilterAdmissionParams,
+) => {
+  const { fromDate, toDate, gender, cursor, limit } = params;
 
-  if (gender)
-    filterObj.gender = { equals: gender, mode: "insensitive" };
-  if (fromDate || toDate)
-    filterObj.admissionDate = {
-      gte: fromDate ? new Date(fromDate) : undefined,
-      lte: toDate ? new Date(toDate) : undefined,
+  const where: Record<string, any> = {};
+
+  if (gender) {
+    where.patient = {
+      gender: {
+        equals: gender,
+        mode: "insensitive",
+      },
     };
+  }
 
-  // Call filterPaginate
+  if (fromDate || toDate) {
+    where.createdAt = {
+      ...(fromDate && { gte: fromDate }),
+      ...(toDate && { lte: toDate }),
+    };
+  }
+
   return filterPaginate(
     prisma,
     {
       model: "admission",
-      cursorField: "id",
-      limit: limit || 50,
-      filters: filterObj,
+      limit,
+      include: {
+        patient: {
+          select: {
+            id: true,
+            fullName: true,
+            gender: true,
+            mobileNumber: true,
+            aadhaarNumber: true,
+          },
+        },
+        doctor: {
+          select: {
+            id: true,
+            fullName: true,
+          },
+        },
+      },
     },
-    cursor
+    cursor,
+    where,
   );
 };

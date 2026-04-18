@@ -291,7 +291,6 @@ export const billSchema = z.object({
       message: "Invalid date format",
     })
     .transform((val) => new Date(val)),
-  patientAge: z.coerce.number().int().positive("Age must be positive"),
   patientSex: z.enum(["Male", "Female", "Other"]),
   dischargeDate: z.preprocess(
     (val) => (val === "" ? undefined : val),

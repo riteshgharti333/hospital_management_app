@@ -15,10 +15,27 @@ import {
 } from "../../services/transectionService/billService";
 import { billSchema, billFilterSchema } from "@hospital/schemas";
 import { validateSearchQuery } from "../../utils/queryValidation";
+import { PAGINATION_CONFIG } from "../../lib/paginationConfig";
+
 
 export const createBillRecord = catchAsyncError(
   async (req: Request, res: Response, next: NextFunction) => {
+    // Calculate totalAmount from billItems BEFORE validation
+    const calculatedTotalAmount = req.body.billItems?.reduce(
+      (sum: number, item: any) => {
+        const itemTotal = item.totalAmount ?? (item.mrp * item.quantity);
+        return sum + (itemTotal || 0);
+      },
+      0
+    ) || 0;
+
+    // Add totalAmount to request body
+    req.body.totalAmount = calculatedTotalAmount;
+    
+    // Now validate with Zod (totalAmount exists)
     const validated = billSchema.parse(req.body);
+    
+    // Create bill
     const bill = await createBill(validated);
 
     sendResponse(res, {
@@ -27,32 +44,26 @@ export const createBillRecord = catchAsyncError(
       message: "Bill created successfully",
       data: bill,
     });
-  }
+  },  
 );
 
 export const getAllBillRecords = catchAsyncError(
   async (req: Request, res: Response) => {
-    const { cursor, limit } = req.query as {
-      cursor?: string;
-      limit?: string;
-    };
+    const { cursor } = req.query as { cursor?: string };
 
-    const { data: bills, nextCursor } = await getAllBillsService(
-      cursor,
-      limit ? Number(limit) : undefined
-    );
+    const result = await getAllBillsService(cursor);
 
     sendResponse(res, {
       success: true,
       statusCode: StatusCodes.OK,
       message: "Bill records fetched",
-      data: bills,
+      data: result.data,
       pagination: {
-        nextCursor: nextCursor !== null ? String(nextCursor) : undefined,
-        limit: limit ? Number(limit) : 50,
+        nextCursor: result.pagination.nextCursor || undefined,
+        hasMore: result.pagination.hasMore,
       },
     });
-  }
+  },
 );
 
 export const getBillRecordById = catchAsyncError(
@@ -73,7 +84,7 @@ export const getBillRecordById = catchAsyncError(
       message: "Bill details fetched",
       data: bill,
     });
-  }
+  },
 );
 
 export const updateBillRecord = catchAsyncError(
@@ -103,7 +114,7 @@ export const updateBillRecord = catchAsyncError(
       message: "Bill updated successfully",
       data: updatedBill,
     });
-  }
+  },
 );
 
 export const deleteBillRecord = catchAsyncError(
@@ -124,7 +135,7 @@ export const deleteBillRecord = catchAsyncError(
       message: "Bill deleted successfully",
       data: deletedBill,
     });
-  }
+  },
 );
 
 export const searchBillsResults = catchAsyncError(async (req, res, next) => {
@@ -146,17 +157,17 @@ export const searchBillsResults = catchAsyncError(async (req, res, next) => {
 export const filterBills = catchAsyncError(async (req, res) => {
   const validated = billFilterSchema.parse(req.query);
 
-  const { data, nextCursor } = await filterBillsService(validated);
+  const { data, nextCursor, hasMore } = await filterBillsService(validated);
 
   sendResponse(res, {
     success: true,
-    statusCode: 200,
-    message: "Filtered bills fetched",
+    statusCode: StatusCodes.OK,
+    message: "Filtered Bills fetched",
     data,
     pagination: {
-      nextCursor: nextCursor !== null ? String(nextCursor) : undefined,
-      limit: validated.limit || 50,
+      nextCursor: nextCursor || undefined,
+      limit: validated.limit ?? PAGINATION_CONFIG.DEFAULT_LIMIT,
+      hasMore,
     },
   });
-});
-
+}); 

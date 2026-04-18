@@ -13,6 +13,7 @@ import {
   filterMoneyReceiptsService,
   searchMoneyReceipts,
 } from "../../services/transectionService/moneyReceiptService";
+import { PAGINATION_CONFIG } from "../../lib/paginationConfig";
 
 import {
   moneyReceiptFilterSchema,
@@ -31,32 +32,26 @@ export const createMoneyReceiptRecord = catchAsyncError(
       message: "Money receipt created successfully",
       data: moneyReceipt,
     });
-  }
+  },
 );
 
 export const getAllMoneyReceiptRecords = catchAsyncError(
   async (req: Request, res: Response) => {
-    const { cursor, limit } = req.query as {
-      cursor?: string;
-      limit?: string;
-    };
+    const { cursor } = req.query as { cursor?: string };
 
-    const { data: receipts, nextCursor } = await getAllMoneyReceiptsService(
-      cursor,
-      limit ? Number(limit) : undefined
-    );
+    const result = await getAllMoneyReceiptsService(cursor);
 
     sendResponse(res, {
       success: true,
       statusCode: StatusCodes.OK,
       message: "Money receipt records fetched",
-      data: receipts,
+      data: result.data,
       pagination: {
-        nextCursor: nextCursor !== null ? String(nextCursor) : undefined,
-        limit: limit ? Number(limit) : 50,
+        nextCursor: result.pagination.nextCursor || undefined,
+        hasMore: result.pagination.hasMore,
       },
     });
-  }
+  },
 );
 
 export const getMoneyReceiptRecordById = catchAsyncError(
@@ -69,7 +64,7 @@ export const getMoneyReceiptRecordById = catchAsyncError(
     const moneyReceipt = await getMoneyReceiptById(id);
     if (!moneyReceipt) {
       return next(
-        new ErrorHandler("Money receipt not found", StatusCodes.NOT_FOUND)
+        new ErrorHandler("Money receipt not found", StatusCodes.NOT_FOUND),
       );
     }
 
@@ -79,7 +74,7 @@ export const getMoneyReceiptRecordById = catchAsyncError(
       message: "Money receipt details fetched",
       data: moneyReceipt,
     });
-  }
+  },
 );
 
 export const updateMoneyReceiptRecord = catchAsyncError(
@@ -95,7 +90,7 @@ export const updateMoneyReceiptRecord = catchAsyncError(
     const updatedMoneyReceipt = await updateMoneyReceipt(id, validatedData);
     if (!updatedMoneyReceipt) {
       return next(
-        new ErrorHandler("Money receipt not found", StatusCodes.NOT_FOUND)
+        new ErrorHandler("Money receipt not found", StatusCodes.NOT_FOUND),
       );
     }
 
@@ -105,7 +100,7 @@ export const updateMoneyReceiptRecord = catchAsyncError(
       message: "Money receipt updated successfully",
       data: updatedMoneyReceipt,
     });
-  }
+  },
 );
 
 export const deleteMoneyReceiptRecord = catchAsyncError(
@@ -118,7 +113,7 @@ export const deleteMoneyReceiptRecord = catchAsyncError(
     const deletedMoneyReceipt = await deleteMoneyReceipt(id);
     if (!deletedMoneyReceipt) {
       return next(
-        new ErrorHandler("Money receipt not found", StatusCodes.NOT_FOUND)
+        new ErrorHandler("Money receipt not found", StatusCodes.NOT_FOUND),
       );
     }
 
@@ -128,7 +123,7 @@ export const deleteMoneyReceiptRecord = catchAsyncError(
       message: "Money receipt deleted successfully",
       data: deletedMoneyReceipt,
     });
-  }
+  },
 );
 
 export const searchMoneyReceiptResults = catchAsyncError(
@@ -141,27 +136,28 @@ export const searchMoneyReceiptResults = catchAsyncError(
 
     sendResponse(res, {
       success: true,
-      statusCode: 200,
+      statusCode: StatusCodes.OK,
       message: "Search results fetched successfully",
       data: receipts,
     });
-  }
+  },
 );
 
 export const filterMoneyReceipts = catchAsyncError(async (req, res) => {
   const validated = moneyReceiptFilterSchema.parse(req.query);
 
-  const { data, nextCursor } = await filterMoneyReceiptsService(validated);
+  const { data, nextCursor, hasMore } =
+    await filterMoneyReceiptsService(validated);
 
   sendResponse(res, {
     success: true,
-    statusCode: 200,
+    statusCode: StatusCodes.OK,
     message: "Filtered money receipts fetched",
     data,
     pagination: {
-      nextCursor: nextCursor !== null ? String(nextCursor) : undefined,
-      limit: validated.limit || 50,
+      nextCursor: nextCursor || undefined,
+      limit: validated.limit ?? PAGINATION_CONFIG.DEFAULT_LIMIT,
+      hasMore,
     },
   });
 });
-

@@ -15,7 +15,7 @@ import {
 } from "../services/patientService";
 import { patientFilterSchema, patientSchema } from "@hospital/schemas";
 import { validateSearchQuery } from "../utils/queryValidation";
-
+import { PAGINATION_CONFIG } from "../lib/paginationConfig";
 
 export const createPatientRecord = catchAsyncError(
   async (req: Request, res: Response, next: NextFunction) => {
@@ -28,32 +28,26 @@ export const createPatientRecord = catchAsyncError(
       message: "Patient record created successfully",
       data: patient,
     });
-  }
+  },
 );
 
-export const getAllPatientRecords  = catchAsyncError(
+export const getAllPatientRecords = catchAsyncError(
   async (req: Request, res: Response) => {
-    const { cursor, limit } = req.query as {
-      cursor?: string;
-      limit?: string;
-    };
+    const { cursor } = req.query as { cursor?: string };
 
-    const { data: doctor, nextCursor } = await getAllPatients(
-      cursor,
-      limit ? Number(limit) : undefined
-    );
+    const result = await getAllPatients(cursor);
 
     sendResponse(res, {
       success: true,
       statusCode: StatusCodes.OK,
       message: "Patient records fetched",
-      data: doctor,
+      data: result.data,
       pagination: {
-        nextCursor: nextCursor !== null ? String(nextCursor) : undefined,
-        limit: limit ? Number(limit) : 50,
+        nextCursor: result.pagination.nextCursor || undefined,
+        hasMore: result.pagination.hasMore,
       },
     });
-  }
+  },
 );
 
 export const getPatientRecordById = catchAsyncError(
@@ -74,7 +68,7 @@ export const getPatientRecordById = catchAsyncError(
       message: "Patient details fetched",
       data: patient,
     });
-  }
+  },
 );
 
 export const updatePatientRecord = catchAsyncError(
@@ -98,7 +92,7 @@ export const updatePatientRecord = catchAsyncError(
       message: "Patient updated successfully",
       data: updatedPatient,
     });
-  }
+  },
 );
 
 export const deletePatientRecord = catchAsyncError(
@@ -119,7 +113,7 @@ export const deletePatientRecord = catchAsyncError(
       message: "Patient deleted successfully",
       data: deletedPatient,
     });
-  }
+  },
 );
 
 ///
@@ -139,25 +133,23 @@ export const searchPatientResults = catchAsyncError(
       message: "Search results fetched successfully",
       data: admissions,
     });
-  }
+  },
 );
 
 export const filterPatients = catchAsyncError(async (req, res) => {
-  // Validate query
   const validated = patientFilterSchema.parse(req.query);
 
-  // Call service
-  const { data, nextCursor } = await filterPatientsService(validated);
+  const { data, nextCursor, hasMore } = await filterPatientsService(validated);
 
-  // Response
   sendResponse(res, {
     success: true,
     statusCode: StatusCodes.OK,
     message: "Filtered patients fetched",
     data,
     pagination: {
-      nextCursor: nextCursor !== null ? String(nextCursor) : undefined,
-      limit: validated.limit || 50,
+      nextCursor: nextCursor || undefined,
+      limit: validated.limit ?? PAGINATION_CONFIG.DEFAULT_LIMIT,
+      hasMore,
     },
   });
 });

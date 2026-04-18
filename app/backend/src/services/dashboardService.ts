@@ -7,20 +7,24 @@ const format = (num: number) => Number(num.toFixed(2));
 const getDateRanges = (now: Date) => {
   const threeMonthsAgo = new Date(now);
   threeMonthsAgo.setMonth(now.getMonth() - 3);
-  
+
   const sixMonthsAgo = new Date(now);
   sixMonthsAgo.setMonth(now.getMonth() - 6);
-  
+
   const oneYearAgo = new Date(now);
   oneYearAgo.setFullYear(now.getFullYear() - 1);
-  
+
   const currentMonthStart = new Date(now.getFullYear(), now.getMonth(), 1);
   const previousMonthStart = new Date(now.getFullYear(), now.getMonth() - 1, 1);
   const previousMonthEnd = new Date(now.getFullYear(), now.getMonth(), 0);
-  
+
   return {
-    threeMonthsAgo, sixMonthsAgo, oneYearAgo,
-    currentMonthStart, previousMonthStart, previousMonthEnd
+    threeMonthsAgo,
+    sixMonthsAgo,
+    oneYearAgo,
+    currentMonthStart,
+    previousMonthStart,
+    previousMonthEnd,
   };
 };
 
@@ -34,16 +38,18 @@ export const getRevenueAnalytics = () =>
     fetcher: async () => {
       const now = new Date();
       const ranges = getDateRanges(now);
-      
+
       // SINGLE QUERY - all aggregations at once
-      const result = await prisma.$queryRaw<{
-        three_months: number;
-        six_months: number;
-        one_year: number;
-        total: number;
-        current_month: number;
-        previous_month: number;
-      }[]>`
+      const result = await prisma.$queryRaw<
+        {
+          three_months: number;
+          six_months: number;
+          one_year: number;
+          total: number;
+          current_month: number;
+          previous_month: number;
+        }[]
+      >`
         SELECT 
           COALESCE(SUM(CASE WHEN date >= ${ranges.threeMonthsAgo} THEN amount ELSE 0 END), 0) as three_months,
           COALESCE(SUM(CASE WHEN date >= ${ranges.sixMonthsAgo} THEN amount ELSE 0 END), 0) as six_months,
@@ -54,12 +60,15 @@ export const getRevenueAnalytics = () =>
         FROM "MoneyReceipt"
         WHERE date <= ${now}
       `;
-      
+
       const data = result[0];
-      const percentChange = data.previous_month 
-        ? format(((data.current_month - data.previous_month) / data.previous_month) * 100)
+      const percentChange = data.previous_month
+        ? format(
+            ((data.current_month - data.previous_month) / data.previous_month) *
+              100,
+          )
         : 0;
-      
+
       return {
         threeMonths: format(data.three_months),
         sixMonths: format(data.six_months),
@@ -87,15 +96,23 @@ export const getPaymentModeBreakdownAnalytics = () =>
       sixMonthsAgo.setMonth(now.getMonth() - 6);
       const oneYearAgo = new Date(now);
       oneYearAgo.setFullYear(now.getFullYear() - 1);
-      
-      const paymentModes = ["Online Transfer", "Card", "Cash", "Cheque", "Other"];
-      
+
+      const paymentModes = [
+        "Online Transfer",
+        "Card",
+        "Cash",
+        "Cheque",
+        "Other",
+      ];
+
       // SINGLE QUERY - all time periods at once
-      const results = await prisma.$queryRaw<{
-        period: string;
-        payment_mode: string;
-        total_amount: number;
-      }[]>`
+      const results = await prisma.$queryRaw<
+        {
+          period: string;
+          payment_mode: string;
+          total_amount: number;
+        }[]
+      >`
         SELECT 
           'all_time' as period,
           "paymentMode" as payment_mode,
@@ -134,32 +151,41 @@ export const getPaymentModeBreakdownAnalytics = () =>
         WHERE date >= ${oneYearAgo} AND date <= ${now}
         GROUP BY "paymentMode"
       `;
-      
+
       // Process results into required format
       const buildStats = (periodData: typeof results) => {
-        const periodFiltered = periodData.filter(r => r.period === periodData[0]?.period);
-        const totalAmount = periodFiltered.reduce((sum, r) => sum + Number(r.total_amount), 0);
-        const amounts = paymentModes.map(mode => {
-          const found = periodFiltered.find(r => r.payment_mode === mode);
+        const periodFiltered = periodData.filter(
+          (r) => r.period === periodData[0]?.period,
+        );
+        const totalAmount = periodFiltered.reduce(
+          (sum, r) => sum + Number(r.total_amount),
+          0,
+        );
+        const amounts = paymentModes.map((mode) => {
+          const found = periodFiltered.find((r) => r.payment_mode === mode);
           return found ? Number(found.total_amount) : 0;
         });
-        const percentages = amounts.map(amt => 
-          totalAmount === 0 ? 0 : Number(((amt / totalAmount) * 100).toFixed(2))
+        const percentages = amounts.map((amt) =>
+          totalAmount === 0
+            ? 0
+            : Number(((amt / totalAmount) * 100).toFixed(2)),
         );
-        
+
         return {
           totalAmount: Number(totalAmount.toFixed(2)),
           paymentModes,
-          amounts: amounts.map(a => Number(a.toFixed(2))),
+          amounts: amounts.map((a) => Number(a.toFixed(2))),
           percentages,
         };
       };
-      
+
       return {
-        allTime: buildStats(results.filter(r => r.period === 'all_time')),
-        threeMonths: buildStats(results.filter(r => r.period === 'three_months')),
-        sixMonths: buildStats(results.filter(r => r.period === 'six_months')),
-        oneYear: buildStats(results.filter(r => r.period === 'one_year')),
+        allTime: buildStats(results.filter((r) => r.period === "all_time")),
+        threeMonths: buildStats(
+          results.filter((r) => r.period === "three_months"),
+        ),
+        sixMonths: buildStats(results.filter((r) => r.period === "six_months")),
+        oneYear: buildStats(results.filter((r) => r.period === "one_year")),
       };
     },
   });
@@ -174,15 +200,23 @@ export const getBillStatusAnalytics = () =>
     fetcher: async () => {
       const now = new Date();
       const ranges = getDateRanges(now);
-      const statuses = ["Pending", "PartiallyPaid", "Paid", "Cancelled", "Refunded"];
-      
+      const statuses = [
+        "Pending",
+        "PartiallyPaid",
+        "Paid",
+        "Cancelled",
+        "Refunded",
+      ];
+
       // SINGLE QUERY - all statuses and periods at once
-      const results = await prisma.$queryRaw<{
-        status: string;
-        total: number;
-        current_month: number;
-        previous_month: number;
-      }[]>`
+      const results = await prisma.$queryRaw<
+        {
+          status: string;
+          total: number;
+          current_month: number;
+          previous_month: number;
+        }[]
+      >`
         SELECT 
           status,
           COUNT(*) as total,
@@ -193,21 +227,28 @@ export const getBillStatusAnalytics = () =>
         WHERE "billDate" <= ${now}
         GROUP BY status
       `;
-      
+
       const result: any = {};
       const percent = (curr: number, prev: number) => {
         if (!prev) return 0;
         return Number((((curr - prev) / prev) * 100).toFixed(2));
       };
-      
+
       for (const status of statuses) {
-        const data = results.find(r => r.status === status) || { total: 0, current_month: 0, previous_month: 0 };
+        const data = results.find((r) => r.status === status) || {
+          total: 0,
+          current_month: 0,
+          previous_month: 0,
+        };
         result[status] = Number(data.total);
         result[`${status}Curr`] = Number(data.current_month);
         result[`${status}Prev`] = Number(data.previous_month);
-        result[`${status}Change`] = percent(Number(data.current_month), Number(data.previous_month));
+        result[`${status}Change`] = percent(
+          Number(data.current_month),
+          Number(data.previous_month),
+        );
       }
-      
+
       return result;
     },
   });
@@ -222,7 +263,7 @@ export const getMonthlyBillingVsReceipt = () =>
     fetcher: async () => {
       const year = new Date().getFullYear();
       const format = (n: number) => Number(n.toFixed(2));
-      
+
       // Parallel queries
       const [billingQuery, receiptQuery] = await Promise.all([
         prisma.$queryRaw<{ month: number; total: number }[]>`
@@ -242,19 +283,19 @@ export const getMonthlyBillingVsReceipt = () =>
           WHERE EXTRACT(YEAR FROM "date") = ${year}
           GROUP BY month
           ORDER BY month ASC
-        `
+        `,
       ]);
-      
+
       const billingMonthly = Array(12).fill(0);
       billingQuery.forEach((row) => {
         billingMonthly[row.month - 1] = format(Number(row.total));
       });
-      
+
       const receiptMonthly = Array(12).fill(0);
       receiptQuery.forEach((row) => {
         receiptMonthly[row.month - 1] = format(Number(row.total));
       });
-      
+
       return {
         year,
         billingMonthly,
@@ -280,16 +321,24 @@ export const getBillsByStatusAnalytics = () =>
       sixMonthsAgo.setMonth(now.getMonth() - 6);
       const oneYearAgo = new Date(now);
       oneYearAgo.setFullYear(now.getFullYear() - 1);
-      
-      const statuses = ["Pending", "PartiallyPaid", "Paid", "Cancelled", "Refunded"];
-      
+
+      const statuses = [
+        "Pending",
+        "PartiallyPaid",
+        "Paid",
+        "Cancelled",
+        "Refunded",
+      ];
+
       // SINGLE QUERY - all periods at once
-      const results = await prisma.$queryRaw<{
-        period: string;
-        status: string;
-        count: number;
-        total_bills: number;
-      }[]>`
+      const results = await prisma.$queryRaw<
+        {
+          period: string;
+          status: string;
+          count: number;
+          total_bills: number;
+        }[]
+      >`
         SELECT 'all_time' as period, status, COUNT(*) as count, SUM(COUNT(*)) OVER() as total_bills
         FROM "Bill"
         WHERE "createdAt" <= ${now}
@@ -316,26 +365,33 @@ export const getBillsByStatusAnalytics = () =>
         WHERE "createdAt" >= ${oneYearAgo} AND "createdAt" <= ${now}
         GROUP BY status
       `;
-      
+
       const buildStatusStats = (period: string) => {
-        const periodData = results.filter(r => r.period === period);
+        const periodData = results.filter((r) => r.period === period);
         const totalBills = periodData[0]?.total_bills || 0;
-        const counts = statuses.map(status => {
-          const found = periodData.find(r => r.status === status);
+        const counts = statuses.map((status) => {
+          const found = periodData.find((r) => r.status === status);
           return found ? Number(found.count) : 0;
         });
-        const percentages = counts.map(count =>
-          totalBills === 0 ? 0 : Number(((count / totalBills) * 100).toFixed(2))
+        const percentages = counts.map((count) =>
+          totalBills === 0
+            ? 0
+            : Number(((count / totalBills) * 100).toFixed(2)),
         );
-        
-        return { totalBills: Number(totalBills), statuses, counts, percentages };
+
+        return {
+          totalBills: Number(totalBills),
+          statuses,
+          counts,
+          percentages,
+        };
       };
-      
+
       return {
-        allTime: buildStatusStats('all_time'),
-        threeMonths: buildStatusStats('three_months'),
-        sixMonths: buildStatusStats('six_months'),
-        oneYear: buildStatusStats('one_year'),
+        allTime: buildStatusStats("all_time"),
+        threeMonths: buildStatusStats("three_months"),
+        sixMonths: buildStatusStats("six_months"),
+        oneYear: buildStatusStats("one_year"),
       };
     },
   });
@@ -350,16 +406,18 @@ export const getPatientAnalytics = () =>
     fetcher: async () => {
       const now = new Date();
       const ranges = getDateRanges(now);
-      
+
       // SINGLE QUERY - all counts at once
-      const result = await prisma.$queryRaw<{
-        total: number;
-        three_months: number;
-        six_months: number;
-        one_year: number;
-        current_month: number;
-        previous_month: number;
-      }[]>`
+      const result = await prisma.$queryRaw<
+        {
+          total: number;
+          three_months: number;
+          six_months: number;
+          one_year: number;
+          current_month: number;
+          previous_month: number;
+        }[]
+      >`
         SELECT 
           COUNT(*) as total,
           COUNT(*) FILTER (WHERE "createdAt" >= ${ranges.threeMonthsAgo}) as three_months,
@@ -371,13 +429,13 @@ export const getPatientAnalytics = () =>
         FROM "Patient"
         WHERE "createdAt" <= ${now}
       `;
-      
+
       const data = result[0];
       const percent = (curr: number, prev: number) => {
         if (!prev) return 0;
         return Number((((curr - prev) / prev) * 100).toFixed(2));
       };
-      
+
       return {
         total: Number(data.total),
         threeMonths: Number(data.three_months),
@@ -385,7 +443,10 @@ export const getPatientAnalytics = () =>
         oneYear: Number(data.one_year),
         currentMonth: Number(data.current_month),
         previousMonth: Number(data.previous_month),
-        percentChange: percent(Number(data.current_month), Number(data.previous_month)),
+        percentChange: percent(
+          Number(data.current_month),
+          Number(data.previous_month),
+        ),
       };
     },
   });
@@ -399,11 +460,13 @@ export const getPatientAgeDistribution = () =>
     ttlSeconds: 30 * 60,
     fetcher: async () => {
       // Use raw SQL for age calculation (much faster)
-      const result = await prisma.$queryRaw<{
-        age_group: string;
-        count: number;
-        avg_age: number;
-      }[]>`
+      const result = await prisma.$queryRaw<
+        {
+          age_group: string;
+          count: number;
+          avg_age: number;
+        }[]
+      >`
         WITH ages AS (
           SELECT 
             EXTRACT(YEAR FROM age(CURRENT_DATE, "dateOfBirth")) as age
@@ -426,27 +489,40 @@ export const getPatientAgeDistribution = () =>
         FROM ages
         GROUP BY age_group
       `;
-      
+
       const groups: Record<
-        "0-10" | "11-20" | "21-30" | "31-40" |
-        "41-50" | "51-60" | "61-70" | "71+",
+        | "0-10"
+        | "11-20"
+        | "21-30"
+        | "31-40"
+        | "41-50"
+        | "51-60"
+        | "61-70"
+        | "71+",
         number
       > = {
-        "0-10": 0, "11-20": 0, "21-30": 0, "31-40": 0,
-        "41-50": 0, "51-60": 0, "61-70": 0, "71+": 0,
+        "0-10": 0,
+        "11-20": 0,
+        "21-30": 0,
+        "31-40": 0,
+        "41-50": 0,
+        "51-60": 0,
+        "61-70": 0,
+        "71+": 0,
       };
-      
+
       let totalAge = 0;
       let totalPatients = 0;
-      
+
       for (const row of result) {
         groups[row.age_group as keyof typeof groups] = Number(row.count);
         totalAge += Number(row.avg_age) * Number(row.count);
         totalPatients += Number(row.count);
       }
-      
-      const averageAge = totalPatients === 0 ? 0 : Number((totalAge / totalPatients).toFixed(1));
-      
+
+      const averageAge =
+        totalPatients === 0 ? 0 : Number((totalAge / totalPatients).toFixed(1));
+
       let modeGroup = "";
       let highest = 0;
       for (const [key, value] of Object.entries(groups)) {
@@ -455,7 +531,7 @@ export const getPatientAgeDistribution = () =>
           modeGroup = key;
         }
       }
-      
+
       return { groups, averageAge, modeGroup, modeCount: highest };
     },
   });
@@ -470,14 +546,16 @@ export const getMonthlyAdmissionTrend = () =>
     fetcher: async () => {
       const now = new Date();
       const currentYear = now.getFullYear();
-      
+
       // SINGLE QUERY for monthly counts and growth
-      const result = await prisma.$queryRaw<{
-        month_index: number;
-        count: number;
-        current_6_months: number;
-        previous_6_months: number;
-      }[]>`
+      const result = await prisma.$queryRaw<
+        {
+          month_index: number;
+          count: number;
+          current_6_months: number;
+          previous_6_months: number;
+        }[]
+      >`
         WITH monthly_counts AS (
           SELECT 
             EXTRACT(MONTH FROM "admissionDate") - 1 as month_index,
@@ -503,10 +581,11 @@ export const getMonthlyAdmissionTrend = () =>
         FROM monthly_counts mc
         CROSS JOIN growth_calc gc
       `;
-      
+
       const monthlyCounts = Array(12).fill(0);
-      let current6 = 0, previous6 = 0;
-      
+      let current6 = 0,
+        previous6 = 0;
+
       for (const row of result) {
         if (row.month_index !== null) {
           monthlyCounts[row.month_index] = Number(row.count);
@@ -514,16 +593,36 @@ export const getMonthlyAdmissionTrend = () =>
         current6 = Number(row.current_6_months);
         previous6 = Number(row.previous_6_months);
       }
-      
+
       const trimmedCounts = monthlyCounts.slice(0, now.getMonth() + 1);
-      const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"].slice(0, trimmedCounts.length);
-      
-      const percentChange = previous6 === 0 ? 0 : Number((((current6 - previous6) / previous6) * 100).toFixed(2));
-      
+      const months = [
+        "Jan",
+        "Feb",
+        "Mar",
+        "Apr",
+        "May",
+        "Jun",
+        "Jul",
+        "Aug",
+        "Sep",
+        "Oct",
+        "Nov",
+        "Dec",
+      ].slice(0, trimmedCounts.length);
+
+      const percentChange =
+        previous6 === 0
+          ? 0
+          : Number((((current6 - previous6) / previous6) * 100).toFixed(2));
+
       return {
         months,
         counts: trimmedCounts,
-        growth: { currentSixMonths: current6, previousSixMonths: previous6, percentChange },
+        growth: {
+          currentSixMonths: current6,
+          previousSixMonths: previous6,
+          percentChange,
+        },
       };
     },
   });
@@ -537,11 +636,13 @@ export const getAdmissionGenderAnalytics = () =>
     ttlSeconds: 10 * 60,
     fetcher: async () => {
       // SINGLE QUERY with JOIN
-      const result = await prisma.$queryRaw<{
-        gender: string;
-        count: number;
-        total: number;
-      }[]>`
+      const result = await prisma.$queryRaw<
+        {
+          gender: string;
+          count: number;
+          total: number;
+        }[]
+      >`
         SELECT 
           p.gender,
           COUNT(*) as count,
@@ -550,20 +651,22 @@ export const getAdmissionGenderAnalytics = () =>
         INNER JOIN "Patient" p ON a."patientId" = p.id
         GROUP BY p.gender
       `;
-      
+
       const getCount = (gender: string) => {
-        const found = result.find(r => r.gender === gender);
+        const found = result.find((r) => r.gender === gender);
         return found ? Number(found.count) : 0;
       };
-      
+
       const totalAdmissions = result[0]?.total || 0;
-      const percent = (count: number) => 
-        totalAdmissions === 0 ? 0 : Number(((count / totalAdmissions) * 100).toFixed(2));
-      
-      const maleCount = getCount('Male');
-      const femaleCount = getCount('Female');
-      const otherCount = getCount('Other');
-      
+      const percent = (count: number) =>
+        totalAdmissions === 0
+          ? 0
+          : Number(((count / totalAdmissions) * 100).toFixed(2));
+
+      const maleCount = getCount("Male");
+      const femaleCount = getCount("Female");
+      const otherCount = getCount("Other");
+
       return {
         totalAdmissions: Number(totalAdmissions),
         male: { count: maleCount, percentage: percent(maleCount) },
@@ -583,16 +686,18 @@ export const getAdmissionAnalytics = () =>
     fetcher: async () => {
       const now = new Date();
       const ranges = getDateRanges(now);
-      
+
       // SINGLE QUERY - all counts at once
-      const result = await prisma.$queryRaw<{
-        total: number;
-        three_months: number;
-        six_months: number;
-        one_year: number;
-        current_month: number;
-        previous_month: number;
-      }[]>`
+      const result = await prisma.$queryRaw<
+        {
+          total: number;
+          three_months: number;
+          six_months: number;
+          one_year: number;
+          current_month: number;
+          previous_month: number;
+        }[]
+      >`
         SELECT 
           COUNT(*) as total,
           COUNT(*) FILTER (WHERE "admissionDate" >= ${ranges.threeMonthsAgo}) as three_months,
@@ -604,13 +709,13 @@ export const getAdmissionAnalytics = () =>
         FROM "Admission"
         WHERE "admissionDate" <= ${now}
       `;
-      
+
       const data = result[0];
       const percent = (curr: number, prev: number) => {
         if (!prev) return 0;
         return Number((((curr - prev) / prev) * 100).toFixed(2));
       };
-      
+
       return {
         total: Number(data.total),
         threeMonths: Number(data.three_months),
@@ -618,7 +723,10 @@ export const getAdmissionAnalytics = () =>
         oneYear: Number(data.one_year),
         currentMonth: Number(data.current_month),
         previousMonth: Number(data.previous_month),
-        percentChange: percent(Number(data.current_month), Number(data.previous_month)),
+        percentChange: percent(
+          Number(data.current_month),
+          Number(data.previous_month),
+        ),
       };
     },
   });
@@ -632,47 +740,105 @@ export const getLedgerFlowSummary = () =>
     ttlSeconds: 2 * 60,
     fetcher: async () => {
       // Execute all aggregations in parallel
-      const [patientCredit, patientDebit, doctorCredit, doctorDebit, bankCredit, bankDebit, cashIncome, cashExpense] = await Promise.all([
-        prisma.patientLedger.aggregate({ _sum: { amount: true }, where: { amountType: "CREDIT" } }),
-        prisma.patientLedger.aggregate({ _sum: { amount: true }, where: { amountType: "DEBIT" } }),
-        prisma.doctorLedger.aggregate({ _sum: { amount: true }, where: { amountType: "CREDIT" } }),
-        prisma.doctorLedger.aggregate({ _sum: { amount: true }, where: { amountType: "DEBIT" } }),
-        prisma.bankLedger.aggregate({ _sum: { amount: true }, where: { amountType: "CREDIT" } }),
-        prisma.bankLedger.aggregate({ _sum: { amount: true }, where: { amountType: "DEBIT" } }),
-        prisma.cashLedger.aggregate({ _sum: { amount: true }, where: { amountType: "INCOME" } }),
-        prisma.cashLedger.aggregate({ _sum: { amount: true }, where: { amountType: "EXPENSE" } }),
+      const [
+        patientCredit,
+        patientDebit,
+        doctorCredit,
+        doctorDebit,
+        bankCredit,
+        bankDebit,
+        cashIncome,
+        cashExpense,
+      ] = await Promise.all([
+        prisma.patientLedger.aggregate({
+          _sum: { amount: true },
+          where: { amountType: "CREDIT" },
+        }),
+        prisma.patientLedger.aggregate({
+          _sum: { amount: true },
+          where: { amountType: "DEBIT" },
+        }),
+        prisma.doctorLedger.aggregate({
+          _sum: { amount: true },
+          where: { amountType: "CREDIT" },
+        }),
+        prisma.doctorLedger.aggregate({
+          _sum: { amount: true },
+          where: { amountType: "DEBIT" },
+        }),
+        prisma.bankLedger.aggregate({
+          _sum: { amount: true },
+          where: { amountType: "CREDIT" },
+        }),
+        prisma.bankLedger.aggregate({
+          _sum: { amount: true },
+          where: { amountType: "DEBIT" },
+        }),
+        prisma.cashLedger.aggregate({
+          _sum: { amount: true },
+          where: { amountType: "INCOME" },
+        }),
+        prisma.cashLedger.aggregate({
+          _sum: { amount: true },
+          where: { amountType: "EXPENSE" },
+        }),
       ]);
-      
+
       const patientLedger = {
         moneyIn: Number(patientCredit._sum.amount || 0),
         moneyOut: Number(patientDebit._sum.amount || 0),
-        netBalance: Number(patientCredit._sum.amount || 0) - Number(patientDebit._sum.amount || 0),
+        netBalance:
+          Number(patientCredit._sum.amount || 0) -
+          Number(patientDebit._sum.amount || 0),
       };
-      
+
       const doctorLedger = {
         moneyIn: Number(doctorCredit._sum.amount || 0),
         moneyOut: Number(doctorDebit._sum.amount || 0),
-        netBalance: Number(doctorCredit._sum.amount || 0) - Number(doctorDebit._sum.amount || 0),
+        netBalance:
+          Number(doctorCredit._sum.amount || 0) -
+          Number(doctorDebit._sum.amount || 0),
       };
-      
+
       const bankLedger = {
         moneyIn: Number(bankCredit._sum.amount || 0),
         moneyOut: Number(bankDebit._sum.amount || 0),
-        netBalance: Number(bankCredit._sum.amount || 0) - Number(bankDebit._sum.amount || 0),
+        netBalance:
+          Number(bankCredit._sum.amount || 0) -
+          Number(bankDebit._sum.amount || 0),
       };
-      
+
       const cashLedger = {
         moneyIn: Number(cashIncome._sum.amount || 0),
         moneyOut: Number(cashExpense._sum.amount || 0),
-        netBalance: Number(cashIncome._sum.amount || 0) - Number(cashExpense._sum.amount || 0),
+        netBalance:
+          Number(cashIncome._sum.amount || 0) -
+          Number(cashExpense._sum.amount || 0),
       };
-      
-      const totalMoneyIn = patientLedger.moneyIn + doctorLedger.moneyIn + cashLedger.moneyIn + bankLedger.moneyIn;
-      const totalMoneyOut = patientLedger.moneyOut + doctorLedger.moneyOut + cashLedger.moneyOut + bankLedger.moneyOut;
-      
+
+      const totalMoneyIn =
+        patientLedger.moneyIn +
+        doctorLedger.moneyIn +
+        cashLedger.moneyIn +
+        bankLedger.moneyIn;
+      const totalMoneyOut =
+        patientLedger.moneyOut +
+        doctorLedger.moneyOut +
+        cashLedger.moneyOut +
+        bankLedger.moneyOut;
+
       return {
-        ledgers: { patient: patientLedger, doctor: doctorLedger, cash: cashLedger, bank: bankLedger },
-        totals: { totalMoneyIn, totalMoneyOut, overallNetBalance: totalMoneyIn - totalMoneyOut },
+        ledgers: {
+          patient: patientLedger,
+          doctor: doctorLedger,
+          cash: cashLedger,
+          bank: bankLedger,
+        },
+        totals: {
+          totalMoneyIn,
+          totalMoneyOut,
+          overallNetBalance: totalMoneyIn - totalMoneyOut,
+        },
       };
     },
   });
@@ -710,7 +876,7 @@ export const getDashboardStatsSummary = () =>
         getAdmissionAnalytics(),
         getLedgerFlowSummary(),
       ]);
-      
+
       return {
         revenue,
         paymentModes,

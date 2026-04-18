@@ -181,7 +181,7 @@ export const searchDoctorResults = catchAsyncError(
       data: doctors,
     });
   },
-);
+); 
 
 export const filterDoctors = catchAsyncError(async (req, res) => {
   const validated = doctorFilterSchema.parse(req.query);
@@ -200,3 +200,4 @@ export const filterDoctors = catchAsyncError(async (req, res) => {
     },
   });
 });
+ 

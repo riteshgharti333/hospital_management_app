@@ -668,7 +668,6 @@ model Bill {
   admissionNo    String
   patientName    String
   admissionDate  DateTime
-  patientAge     Int
   patientSex     String
   dischargeDate  DateTime?
   totalAmount    Float

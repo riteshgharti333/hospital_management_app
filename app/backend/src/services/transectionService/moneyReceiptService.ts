@@ -1,5 +1,5 @@
 import { prisma } from "../../lib/prisma";
-import { applyCommonFields } from "../../utils/applyCommonFields";
+import { bumpCacheVersion } from "../../utils/cacheVersion";
 import { filterPaginate } from "../../utils/filterPaginate";
 import { cursorPaginate } from "../../utils/pagination";
 import { createSearchService } from "../../utils/searchCache";
@@ -17,23 +17,12 @@ export type MoneyReceiptInput = {
 };
 
 export const createMoneyReceipt = async (data: MoneyReceiptInput) => {
+  await bumpCacheVersion("moneyreceipt");
   return prisma.moneyReceipt.create({ data });
 };
 
-export const getAllMoneyReceiptsService = async (
-  cursor?: string,
-  limit?: number
-) => {
-  return cursorPaginate(
-    prisma,
-    {
-      model: "moneyReceipt",
-      cursorField: "id",
-      limit: limit || 50,
-      cacheExpiry: 600,
-    },
-    cursor ? Number(cursor) : undefined
-  );
+export const getAllMoneyReceiptsService = async (cursor?: string) => {
+  return cursorPaginate(prisma, { model: "moneyReceipt" }, cursor); // ✅ "moneyReceipt"
 };
 
 export const getMoneyReceiptById = async (id: number) => {
@@ -42,7 +31,7 @@ export const getMoneyReceiptById = async (id: number) => {
 
 export const getMoneyReceiptsByDateRange = async (
   startDate: Date,
-  endDate: Date
+  endDate: Date,
 ) => {
   return prisma.moneyReceipt.findMany({
     where: {
@@ -57,8 +46,9 @@ export const getMoneyReceiptsByDateRange = async (
 
 export const updateMoneyReceipt = async (
   id: number,
-  data: Partial<MoneyReceiptInput>
+  data: Partial<MoneyReceiptInput>,
 ) => {
+  await bumpCacheVersion("moneyreceipt"); // ✅ Fixed: "moneyReceipt" (was "MoneyReceipt")
   return prisma.moneyReceipt.update({
     where: { id },
     data,
@@ -66,48 +56,76 @@ export const updateMoneyReceipt = async (
 };
 
 export const deleteMoneyReceipt = async (id: number) => {
+  await bumpCacheVersion("moneyreceipt"); // ✅ Fixed: "moneyReceipt" (was "MoneyReceipt")
   return prisma.moneyReceipt.delete({ where: { id } });
 };
 
-const moneyReceiptSearchFields = ["patientName", "mobile", "admissionNo"];
-
+// ✅ Fixed: tableName "moneyReceipt" to match Prisma model
 export const searchMoneyReceipts = createSearchService(prisma, {
-  tableName: "MoneyReceipt",
-  cacheKeyPrefix: "moneyreceipt",
-  ...applyCommonFields(moneyReceiptSearchFields),
+  tableName: "moneyReceipt", // ✅ Fixed: was "MoneyReceipt"
+  exactFields: ["admissionNo"],
+  prefixFields: ["admissionNo", "patientName"],
+  similarFields: ["patientName", "mobile"],
+  // selectFields: [
+  //   "id",
+  //   "admissionNo",
+  //   "patientName",
+  //   "mobile",
+  //   "amount",
+  //   "paymentMode",
+  //   "date",
+  //   "status",
+  //   "createdAt",
+  // ],
 });
 
-export const filterMoneyReceiptsService = async (filters: {
+type FilterMoneyReceiptParams = {
   fromDate?: Date;
   toDate?: Date;
   paymentMode?: string;
   status?: string;
-  cursor?: string | number;
+  cursor?: string;
   limit?: number;
-}) => {
-  const { fromDate, toDate, paymentMode, status, cursor, limit } = filters;
+};
 
-  const filterObj: Record<string, any> = {};
+export const filterMoneyReceiptsService = async (
+  params: FilterMoneyReceiptParams,
+) => {
+  const { fromDate, toDate, paymentMode, status, cursor, limit } = params;
 
-  if (paymentMode) filterObj.paymentMode = paymentMode;
-  if (status) filterObj.status = status;
+  const where: Record<string, any> = {};
 
+  // ✅ Payment Mode filter
+  if (paymentMode) {
+    where.paymentMode = {
+      equals: paymentMode,
+      mode: "insensitive",
+    };
+  }
+
+  // ✅ Status filter
+  if (status) {
+    where.status = {
+      equals: status,
+      mode: "insensitive",
+    };
+  }
+
+  // ✅ Date range filter (using 'date' field instead of 'createdAt')
   if (fromDate || toDate) {
-    filterObj.date = {
-      gte: fromDate ? new Date(fromDate) : undefined,
-      lte: toDate ? new Date(toDate) : undefined,
+    where.date = {
+      ...(fromDate && { gte: fromDate }),
+      ...(toDate && { lte: toDate }),
     };
   }
 
   return filterPaginate(
     prisma,
     {
-      model: "moneyReceipt",
-      cursorField: "id",
-      limit: limit || 50,
-      filters: filterObj,
+      model: "moneyReceipt", // ✅ "moneyReceipt"
+      limit,
     },
-    cursor
+    cursor,
+    where,
   );
 };
-

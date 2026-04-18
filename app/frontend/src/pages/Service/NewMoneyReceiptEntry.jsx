@@ -1,5 +1,11 @@
 import React, { useState } from "react";
-import { FaIdCard, FaUser, FaPhone, FaMoneyBillWave } from "react-icons/fa";
+import {
+  FaIdCard,
+  FaUser,
+  FaPhone,
+  FaMoneyBillWave,
+  FaSearch,
+} from "react-icons/fa";
 
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -22,8 +28,13 @@ const NewMoneyReceiptEntry = () => {
 
   const [searchAdmission, setSearchAdmission] = useState("");
   const [showDropdown, setShowDropdown] = useState(false);
+  const [selectedAdmission, setSelectedAdmission] = useState(null);
 
-  const { data: admissionResults = [] } = useSearchAdmissions(searchAdmission);
+  // Enable the query only when search term has at least 2 characters
+  const { data: admissionResults = [], isLoading: searchingAdmissions } =
+  useSearchAdmissions(searchAdmission, {
+    enabled: searchAdmission && searchAdmission.length >= 2,
+  });
 
   const {
     register,
@@ -48,12 +59,24 @@ const NewMoneyReceiptEntry = () => {
   const { mutateAsync, isPending } = useCreateMoneyReceipt();
 
   const handleSelectAdmission = (item) => {
-    setSearchAdmission(item.gsRsRegNo);
+    console.log("Selected admission:", item);
+
+    setSelectedAdmission(item);
+
+    // Extract admission number from the item
+    const admissionNo = item.hospitalAdmissionId;
+
+    // Extract patient name
+    const patientName = item.patient?.fullName;
+    // Extract phone number
+    const mobile = item.patient?.mobileNumber;
+
+    setSearchAdmission(admissionNo);
     setShowDropdown(false);
 
-    setValue("admissionNo", item.gsRsRegNo);
-    setValue("patientName", item.patientName);
-    setValue("mobile", item.phoneNo);
+    setValue("admissionNo", admissionNo);
+    setValue("patientName", patientName);
+    setValue("mobile", mobile);
 
     toast.success("Patient details auto-filled");
   };
@@ -69,6 +92,20 @@ const NewMoneyReceiptEntry = () => {
     `block w-full px-4 py-2 border rounded-lg focus:ring-blue-500 focus:border-blue-500 ${
       error ? "border-red-500" : "border-gray-300"
     }`;
+
+  // Helper function to safely display admission info
+  const getAdmissionDisplayInfo = (item) => {
+    const admissionNo =
+      item.hospitalAdmissionId 
+
+    const patientName =
+      item.patient?.fullName 
+
+    const patientId =
+      item.patient?.hospitalPatientId 
+
+    return { admissionNo, patientName, patientId };
+  };
 
   return (
     <div className="mx-auto">
@@ -117,34 +154,108 @@ const NewMoneyReceiptEntry = () => {
                     setValue("admissionNo", e.target.value);
                     setShowDropdown(true);
                   }}
-                  placeholder="Search admission number"
+                  onFocus={() => {
+                    if (searchAdmission.length >= 2) {
+                      setShowDropdown(true);
+                    }
+                  }}
+                  placeholder="Search admission number (min. 2 characters)"
                   autoComplete="off"
                   className={`${inputClass(errors.admissionNo)} pl-10`}
                 />
 
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <FaIdCard className="text-gray-400" />
+                  <FaSearch className="text-gray-400" />
                 </div>
               </div>
 
-              {showDropdown &&
-                searchAdmission &&
-                admissionResults.length > 0 && (
-                  <ul className="absolute z-50 bg-white w-full border border-gray-300 rounded-lg shadow-sm max-h-60 overflow-y-auto mt-1">
-                    {admissionResults.slice(0, 10).map((item) => (
-                      <li
-                        key={item.id}
-                        onClick={() => handleSelectAdmission(item)}
-                        className="px-4 py-2 cursor-pointer hover:bg-gray-100"
-                      >
-                        <p className="font-medium text-sm text-gray-800">
-                          {item.gsRsRegNo} — {item.patientName}
+              {/* Search Results Dropdown */}
+              {showDropdown && searchAdmission.length >= 2 && (
+                <ul className="absolute z-50 bg-white w-full border border-gray-300 rounded-lg shadow-lg max-h-60 overflow-y-auto mt-1">
+                  {searchingAdmissions ? (
+                    <li className="px-4 py-3 text-center text-gray-500">
+                      <div className="flex items-center justify-center">
+                        <svg
+                          className="animate-spin h-5 w-5 mr-2"
+                          viewBox="0 0 24 24"
+                        >
+                          <circle
+                            className="opacity-25"
+                            cx="12"
+                            cy="12"
+                            r="10"
+                            stroke="currentColor"
+                            strokeWidth="4"
+                            fill="none"
+                          />
+                          <path
+                            className="opacity-75"
+                            fill="currentColor"
+                            d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                          />
+                        </svg>
+                        Searching admissions...
+                      </div>
+                    </li>
+                  ) : admissionResults && admissionResults.length > 0 ? (
+                    admissionResults.slice(0, 10).map((item) => {
+                      const { admissionNo, patientName, patientId } =
+                        getAdmissionDisplayInfo(item);
+
+                      return (
+                        <li
+                          key={item.id}
+                          onClick={() => handleSelectAdmission(item)}
+                          className="px-4 py-3 cursor-pointer hover:bg-blue-50 border-b border-gray-100 last:border-b-0 transition-colors"
+                        >
+                          <div className="flex items-center justify-between">
+                            <div className="flex-1">
+                              <p className="font-medium text-gray-800">
+                                {patientName}
+                              </p>
+                              <div className="flex items-center gap-3 mt-1">
+                                <p className="text-sm text-gray-600">
+                                  <span className="font-medium">
+                                    Admission:
+                                  </span>{" "}
+                                  {admissionNo}
+                                </p>
+                                {patientId && (
+                                  <p className="text-sm text-gray-600">
+                                    <span className="font-medium">
+                                      Patient ID:
+                                    </span>{" "}
+                                    {patientId}
+                                  </p>
+                                )}
+                              </div>
+                              {item.admissionDate && (
+                                <p className="text-xs text-gray-500 mt-1">
+                                  Admitted:{" "}
+                                  {new Date(
+                                    item.admissionDate,
+                                  ).toLocaleDateString()}
+                                </p>
+                              )}
+                            </div>
+                            <FaIdCard className="text-gray-400 ml-3" />
+                          </div>
+                        </li>
+                      );
+                    })
+                  ) : (
+                    <li className="px-4 py-3 text-center text-gray-500">
+                      <div className="flex flex-col items-center">
+                        <FaSearch className="text-gray-400 mb-2" size={20} />
+                        <p>No admissions found</p>
+                        <p className="text-sm text-gray-400 mt-1">
+                          Try searching with a different term
                         </p>
-                        <p className="text-xs text-gray-500">{item.phoneNo}</p>
-                      </li>
-                    ))}
-                  </ul>
-                )}
+                      </div>
+                    </li>
+                  )}
+                </ul>
+              )}
 
               {errors.admissionNo && (
                 <p className="text-red-600 text-sm mt-1">
@@ -158,14 +269,19 @@ const NewMoneyReceiptEntry = () => {
               <label className="block text-sm font-medium text-gray-700">
                 Patient Name
               </label>
-              <input
-                type="text"
-                disabled
-                {...register("patientName")}
-                className={`${inputClass(
-                  errors.patientName
-                )} bg-gray-100 cursor-not-allowed`}
-              />
+              <div className="relative">
+                <input
+                  type="text"
+                  disabled
+                  {...register("patientName")}
+                  className={`${inputClass(
+                    errors.patientName,
+                  )} bg-gray-100 cursor-not-allowed pl-10`}
+                />
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <FaUser className="text-gray-400" />
+                </div>
+              </div>
 
               {errors.patientName && (
                 <p className="text-red-600 text-sm mt-1">
@@ -179,14 +295,19 @@ const NewMoneyReceiptEntry = () => {
               <label className="block text-sm font-medium text-gray-700">
                 Mobile
               </label>
-              <input
-                type="text"
-                disabled
-                {...register("mobile")}
-                className={`${inputClass(
-                  errors.mobile
-                )} bg-gray-100 cursor-not-allowed`}
-              />
+              <div className="relative">
+                <input
+                  type="text"
+                  disabled
+                  {...register("mobile")}
+                  className={`${inputClass(
+                    errors.mobile,
+                  )} bg-gray-100 cursor-not-allowed pl-10`}
+                />
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <FaPhone className="text-gray-400" />
+                </div>
+              </div>
 
               {errors.mobile && (
                 <p className="text-red-600 text-sm mt-1">

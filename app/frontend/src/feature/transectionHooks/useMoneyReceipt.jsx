@@ -13,7 +13,7 @@ import { getErrorMessage } from "../../utils/errorUtils";
 
 export const useGetMoneyReceipts = (cursor, limit = 50) => {
   return useQuery({
-    queryKey: ["money-receipts", cursor, limit],
+    queryKey: ["moneyReceipt", cursor, limit],
     queryFn: async () => {
       const { data } = await getAllMoneyReceiptsAPI(cursor, limit);
       return data || { data: [], pagination: {} };
@@ -41,7 +41,8 @@ export const useCreateMoneyReceipt = () => {
     mutationFn: createMoneyReceiptAPI,
     onSuccess: (res) => {
       toast.success(res?.data?.message || "Money receipt created successfully");
-      queryClient.invalidateQueries({ queryKey: ["moneyReceipts"] });
+      // ✅ FIXED: Use "moneyReceipt" (singular) to match useGetMoneyReceipts
+      queryClient.invalidateQueries({ queryKey: ["moneyReceipt"] });
     },
     onError: (error) => toast.error(getErrorMessage(error)),
   });
@@ -53,7 +54,8 @@ export const useUpdateMoneyReceipt = () => {
     mutationFn: ({ id, data }) => updateMoneyReceiptAPI(id, data),
     onSuccess: (res) => {
       toast.success(res?.data?.message || "Money receipt updated successfully");
-      queryClient.invalidateQueries({ queryKey: ["moneyReceipts"] });
+      // ✅ FIXED: Use "moneyReceipt" (singular) to match useGetMoneyReceipts
+      queryClient.invalidateQueries({ queryKey: ["moneyReceipt"] });
     },
     onError: (error) => toast.error(getErrorMessage(error)),
   });
@@ -65,7 +67,8 @@ export const useDeleteMoneyReceipt = () => {
     mutationFn: deleteMoneyReceiptAPI,
     onSuccess: (res) => {
       toast.success(res?.data?.message || "Money receipt deleted successfully");
-      queryClient.invalidateQueries({ queryKey: ["moneyReceipts"] });
+      // ✅ FIXED: Use "moneyReceipt" (singular) to match useGetMoneyReceipts
+      queryClient.invalidateQueries({ queryKey: ["moneyReceipt"] });
     },
     onError: (error) => toast.error(getErrorMessage(error)),
   });
@@ -74,7 +77,7 @@ export const useDeleteMoneyReceipt = () => {
 // SEARCH
 export const useSearchMoneyReceipts = (searchTerm) => {
   return useQuery({
-    queryKey: ["money-receipt-search", searchTerm],
+    queryKey: ["moneyReceipt", "search", searchTerm],
     queryFn: async () => {
       if (!searchTerm) return [];
       const { data } = await searchMoneyReceiptAPI(searchTerm);
@@ -89,7 +92,7 @@ export const useSearchMoneyReceipts = (searchTerm) => {
 // FILTER
 export const useFilterMoneyReceipts = (filters) => {
   return useQuery({
-    queryKey: ["money-receipt-filter", filters],
+    queryKey: ["moneyReceipt", "filter", filters],
     queryFn: async () => {
       const { data } = await filterMoneyReceiptAPI(filters);
       return data || { data: [], pagination: {} };

@@ -6,10 +6,10 @@ import { generateHospitalId } from "../utils/generateHospitalId";
 import { cursorPaginate } from "../utils/pagination";
 import { createSearchService } from "../utils/searchCache";
 
-export type PatientInput = { 
+export type PatientInput = {
   fullName: string;
   dateOfBirth: Date;
-  gender: string; 
+  gender: string;
   mobileNumber?: string;
   aadhaarNumber?: string;
   address: string;
@@ -34,21 +34,8 @@ export const createPatient = async (data: PatientInput) => {
   return patient;
 };
 
-export const getAllPatients = async (cursor?: string, limit?: number) => {
-  return cursorPaginate(
-    prisma,
-    {
-      model: "patient",
-      cursorField: "id",
-      limit: limit || 50,
-      cacheExpiry: 600,
-      orderBy: [
-      { createdAt: "desc" },
-      { id: "desc" }
-    ]
-    },
-    cursor ? Number(cursor) : undefined
-  );
+export const getAllPatients = async (cursor?: string) => {
+  return cursorPaginate(prisma, { model: "patient" }, cursor);
 };
 
 export const getPatientById = async (id: number) => {
@@ -59,7 +46,7 @@ export const getPatientById = async (id: number) => {
 
 export const updatePatient = async (
   id: number,
-  data: Partial<PatientInput>
+  data: Partial<PatientInput>,
 ) => {
   const patient = await prisma.patient.update({
     where: { id },
@@ -71,14 +58,11 @@ export const updatePatient = async (
   return patient;
 };
 
-
-
 export const deletePatient = async (id: number) => {
   const patient = await prisma.patient.delete({ where: { id } });
   await bumpCacheVersion("patient");
   return patient;
 };
-
 
 const commonSearchFields = [
   "fullName",
@@ -87,29 +71,51 @@ const commonSearchFields = [
   "hospitalPatientId",
 ];
 
+
 export const searchPatient = createSearchService(prisma, {
   tableName: "Patient",
-  cacheKeyPrefix: "patient",
-  ...applyCommonFields(commonSearchFields),
+  exactFields: ["fullName", "mobileNumber", "aadhaarNumber", "hospitalPatientId"],
+  prefixFields: ["fullName"],
+  similarFields: ["fullName", "address"],
+  selectFields: [
+    "id",
+    "hospitalPatientId",
+    "fullName",
+    // "dateOfBirth",
+    "gender",
+    "mobileNumber",
+    "aadhaarNumber",
+    "createdAt",
+  ],
 });
 
-export const filterPatientsService = async (filters: {
+
+type FilterPatientParams = {
   fromDate?: Date;
   toDate?: Date;
   gender?: string;
-  cursor?: string | number;
+  cursor?: string;
   limit?: number;
-}) => {
-  const { fromDate, toDate, gender, cursor, limit } = filters;
+};
 
-  const filterObj: Record<string, any> = {};
+export const filterPatientsService = async (
+  params: FilterPatientParams
+) => {
+  const { fromDate, toDate, gender, cursor, limit } = params;
 
-  if (gender) filterObj.gender = { equals: gender, mode: "insensitive" };
+  const where: Record<string, any> = {};
+
+  if (gender) {
+    where.gender = {
+      equals: gender,
+      mode: "insensitive",
+    };
+  }
 
   if (fromDate || toDate) {
-    filterObj.createdAt = {
-      gte: fromDate,
-      lte: toDate,
+    where.createdAt = {
+      ...(fromDate && { gte: fromDate }),
+      ...(toDate && { lte: toDate }),
     };
   }
 
@@ -117,10 +123,9 @@ export const filterPatientsService = async (filters: {
     prisma,
     {
       model: "patient",
-      cursorField: "id",
-      limit: limit || 50,
-      filters: filterObj,
+      limit,
     },
-    cursor
+    cursor,
+    where
   );
 };

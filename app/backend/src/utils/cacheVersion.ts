@@ -24,6 +24,8 @@ export const getCacheVersion = async (domain: string): Promise<number> => {
 export const bumpCacheVersion = async (domain: string): Promise<void> => {
   const key = `${VERSION_PREFIX}:${domain}`;
 
+  console.log(`Bumping cache version for: ${domain}`, key); // Add this
+
   try {
     // ✅ Atomic increment (NO race condition)
     await upstashIncr(key);

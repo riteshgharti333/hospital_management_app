@@ -45,11 +45,15 @@ export async function cursorPaginate<T extends keyof PrismaClient, R = any>(
     orderBy = [{ createdAt: "desc" }, { id: "desc" }],
   } = options;
 
+  // ✅ FIX: Normalize model name to lowercase for consistent cache keys
+  const modelName = String(model).toLowerCase();
+
   // ✅ LIMIT CONTROL
   let limit = options.limit ?? DEFAULT_LIMIT;
   if (limit > MAX_LIMIT) limit = MAX_LIMIT;
 
-  const version = await getCacheVersion(String(model));
+  // ✅ Use normalized modelName for cache version
+  const version = await getCacheVersion(modelName);
 
   // ✅ SAFE CURSOR
   const cursor =
@@ -59,8 +63,8 @@ export async function cursorPaginate<T extends keyof PrismaClient, R = any>(
 
   const safeCursor = cursor ? encodeURIComponent(cursor) : "0";
 
-  // ✅ IMPROVED CACHE KEY (includes orderBy)
-  const cacheKey = `p:${String(model)}:v:${version}:c:${safeCursor}:l:${limit}:o:${encodeURIComponent(
+  // ✅ Use normalized modelName in cache key
+  const cacheKey = `p:${modelName}:v:${version}:c:${safeCursor}:l:${limit}:o:${encodeURIComponent(
     JSON.stringify(orderBy)
   )}`;
 
@@ -83,7 +87,7 @@ export async function cursorPaginate<T extends keyof PrismaClient, R = any>(
   }
 
   if (process.env.NODE_ENV !== "production") {
-    console.log("🔥 DB QUERY:", String(model));
+    console.log("🔥 DB QUERY:", modelName);
   }
 
   // ✅ SAFE CURSOR PARSING
@@ -124,6 +128,7 @@ export async function cursorPaginate<T extends keyof PrismaClient, R = any>(
       : {}),
   };
 
+  // ✅ Keep original 'model' for Prisma query (not modelName)
   const data = await (prisma[model] as any).findMany({
     where: whereCondition,
     orderBy,

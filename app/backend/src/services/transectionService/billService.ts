@@ -4,6 +4,7 @@ import { applyCommonFields } from "../../utils/applyCommonFields";
 import { filterPaginate } from "../../utils/filterPaginate";
 import { cursorPaginate } from "../../utils/pagination";
 import { createSearchService } from "../../utils/searchCache";
+import { bumpCacheVersion } from "../../utils/cacheVersion";
 
 export type BillItemInput = {
   company: string;
@@ -22,17 +23,20 @@ export type BillInput = {
   admissionDate: Date;
   totalAmount: number;
   patientSex: string;
-  patientAge: number;
   dischargeDate?: Date | null;
   address: string;
   status: string;
   billItems: BillItemInput[];
 };
 
+
 export const createBill = async (data: BillInput) => {
   // Calculate each item's totalAmount (qty × mrp)
   const processedItems = data.billItems.map((item) => ({
-    ...item,
+    company: item.company,
+    itemOrService: item.itemOrService,
+    quantity: item.quantity,
+    mrp: item.mrp,
     totalAmount: item.totalAmount ?? item.mrp * item.quantity,
   }));
 
@@ -40,31 +44,38 @@ export const createBill = async (data: BillInput) => {
   const billTotalAmount = processedItems.reduce(
     (sum, item) => sum + (item.totalAmount || 0),
     0
-  );
+  ); 
+
+  await bumpCacheVersion("bill");
+
+  // Create bill with Prisma
+  const billData = {
+    billDate: new Date(data.billDate),
+    billType: data.billType,
+    mobile: data.mobile,
+    admissionNo: data.admissionNo,
+    patientName: data.patientName,
+    admissionDate: new Date(data.admissionDate),
+    patientSex: data.patientSex,
+    dischargeDate: data.dischargeDate ? new Date(data.dischargeDate) : null,
+    totalAmount: billTotalAmount, // Use calculated total, not data.totalAmount
+    address: data.address,
+    status: data.status,
+    billItems: {
+      create: processedItems,
+    },
+  };
+
+  await bumpCacheVersion("bill")
 
   return prisma.bill.create({
-    data: {
-      ...data,
-      totalAmount: billTotalAmount,
-      billItems: {
-        create: processedItems,
-      },
-    },
+    data: billData,
     include: { billItems: true },
   });
 };
 
-export const getAllBillsService = async (cursor?: string, limit?: number) => {
-  return cursorPaginate(
-    prisma,
-    {
-      model: "bill",
-      cursorField: "id",
-      limit: limit || 50,
-      cacheExpiry: 600,
-    },
-    cursor ? Number(cursor) : undefined
-  );
+export const getAllBillsService = async (cursor?: string) => {
+  return cursorPaginate(prisma, { model: "bill" }, cursor); 
 };
 
 export const getBillById = async (id: number) => {
@@ -83,7 +94,6 @@ export const getBillsByPatient = async (mobile: string) => {
 };
 
 export const updateBill = async (id: number, data: Partial<BillInput>) => {
-  // ⭐ Calculate each item's totalAmount
   const processedItems =
     data.billItems?.map((item) => {
       const total = item.totalAmount ?? item.mrp * item.quantity;
@@ -93,11 +103,12 @@ export const updateBill = async (id: number, data: Partial<BillInput>) => {
       };
     }) || [];
 
-  // ⭐ Calculate totalAmount for the entire bill
   const grandTotal = processedItems.reduce(
     (sum, item) => sum + (item.totalAmount || 0),
     0
   );
+
+   await bumpCacheVersion("bill");
 
   return prisma.bill.update({
     where: { id },
@@ -109,7 +120,6 @@ export const updateBill = async (id: number, data: Partial<BillInput>) => {
       admissionNo: data.admissionNo,
       patientName: data.patientName,
       admissionDate: data.admissionDate,
-      patientAge: data.patientAge,
       patientSex: data.patientSex,
       dischargeDate: data.dischargeDate ?? null,
       address: data.address,
@@ -131,53 +141,88 @@ export const updateBill = async (id: number, data: Partial<BillInput>) => {
 };
 
 export const deleteBill = async (id: number) => {
+   await bumpCacheVersion("bill");
   return prisma.bill.delete({
     where: { id },
     include: { billItems: true },
   });
 };
 
-const billSearchFields = ["admissionNo", "patientName", "mobile"];
-
 export const searchBills = createSearchService(prisma, {
-  tableName: "Bill",
-  cacheKeyPrefix: "bill",
-  ...applyCommonFields(billSearchFields),
+  tableName: "bill",
+  exactFields: ["admissionNo"],
+  prefixFields: ["admissionNo", "patientName"],
+  similarFields: ["patientName", "mobile"],
+  // selectFields: [
+  //   "id",
+  //   "admissionNo",
+  //   "patientName",
+  //   "mobile",
+  //   "amount",
+  //   "paymentMode",
+  //   "date",
+  //   "status",
+  //   "createdAt",
+  // ],
 });
 
-export const filterBillsService = async (filters: {
+
+type FilterBillParams = {
   fromDate?: Date;
   toDate?: Date;
   billType?: string;
   patientSex?: string;
   status?: string;
-  cursor?: string | number;
+  cursor?: string;
   limit?: number;
-}) => {
-  const { fromDate, toDate, billType, patientSex, status, cursor, limit } =
-    filters;
+};
 
-  const filterObj: Record<string, any> = {};
+export const filterBillsService = async (
+  params: FilterBillParams,
+) => {
+  const { fromDate, toDate, billType, patientSex, status, cursor, limit } = params;
 
-  if (billType) filterObj.billType = billType;
-  if (patientSex) filterObj.patientSex = patientSex;
-  if (status) filterObj.status = status;
+  const where: Record<string, any> = {};
 
-  if (fromDate || toDate)
-    filterObj.billDate = {
-      gte: fromDate ? new Date(fromDate) : undefined,
-      lte: toDate ? new Date(toDate) : undefined,
+  // ✅ Bill Type filter
+  if (billType) {
+    where.billType = {
+      equals: billType,
+      mode: "insensitive",
     };
+  }
+
+  // ✅ Patient Sex filter
+  if (patientSex) {
+    where.patientSex = {
+      equals: patientSex,
+      mode: "insensitive",
+    };
+  }
+
+  // ✅ Status filter
+  if (status) {
+    where.status = {
+      equals: status,
+      mode: "insensitive",
+    };
+  }
+
+  // ✅ Date range filter (using 'billDate' field)
+  if (fromDate || toDate) {
+    where.billDate = {
+      ...(fromDate && { gte: fromDate }),
+      ...(toDate && { lte: toDate }),
+    };
+  }
 
   return filterPaginate(
     prisma,
     {
-      model: "bill",
-      cursorField: "id",
-      limit: limit || 50,
-      filters: filterObj,
+      model: "bill", 
+      limit,
     },
-    cursor
+    cursor,
+    where,
   );
 };
-
