@@ -1,186 +1,237 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   FaUser,
   FaUserMd,
-  FaTruck,
-  FaPills,
-  FaFlask,
-  FaMoneyBillAlt,
-  FaBuilding,
-  FaFileInvoice,
-  FaFileMedical,
+  FaMoneyBillWave,
+  FaUniversity,
   FaCalendarAlt,
+  FaFileInvoice,
+  FaSearch,
+  FaCreditCard,
+  FaStickyNote,
 } from "react-icons/fa";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod";
 import { toast } from "sonner";
 import LoadingButton from "../../components/LoadingButton/LoadingButton";
 import BackButton from "../../components/BackButton/BackButton";
+import { ledgerSchema } from "@hospital/schemas";
+import { useCreateLedger } from "../../feature/hooks/useLedger";
+import { useSearchPatients } from "../../feature/hooks/usePatient";
+import { useSearchDoctors } from "../../feature/hooks/useDoctor";
+import { useSearchCashAccounts } from "../../feature/hooks/useCash";
+import { useSearchBanks } from "../../feature/hooks/useBank";
+import {
+  ENTITY_TYPES,
+  REFERENCE_TYPES,
+  AmountTypeEnum,
+  PaymentModeEnum,
+} from "@hospital/schemas";
 
-// --- Import all your mutation hooks ---
-import { useCreateBankLedgerEntry } from "../../feature/ledgerHook/useBankLedger";
-import { useCreateCashLedgerEntry } from "../../feature/ledgerHook/useCashLedger";
-import { useCreateDiagnosticsLedgerEntry } from "../../feature/ledgerHook/useDiagnosticsLedger";
-import { useCreateDoctorLedgerEntry } from "../../feature/ledgerHook/useDoctorLedger";
-import { useCreateExpenseEntry } from "../../feature/ledgerHook/useExpenseLedger";
-import { useCreateInsuranceLedgerEntry } from "../../feature/ledgerHook/useInsuranceLedger";
-import { useCreatePatientLedgerEntry } from "../../feature/ledgerHook/usePatientLedger";
-import { useCreatePharmacyLedgerEntry } from "../../feature/ledgerHook/usePharmacyLedger";
-import { useCreateSupplierLedgerEntry } from "../../feature/ledgerHook/useSupplierLedger";
+const referenceTypeDisplay = {
+  OPD: "OPD",
+  IPD: "IPD",
+  PHARMACY: "Pharmacy",
+  LAB: "Lab",
+  PROCEDURE: "Procedure",
+  SALARY: "Salary",
+  EXPENSE: "Expense",
+  ADVANCE: "Advance",
+  REFUND: "Refund",
+  OTHER: "Other",
+};
 
-// --- Updated Schemas ---
-const AmountTypeEnum = z.enum(["CREDIT", "DEBIT"]);
-const CashAmountTypeEnum = z.enum(["INCOME", "EXPENSE"]);
-const PaymentModeEnum = z.enum([
-  "CASH",
-  "CARD",
-  "UPI",
-  "BANK_TRANSFER",
-  "CHEQUE",
-]);
-const requiredDate = z.preprocess(
-  (val) => {
-    if (val === undefined || val === null || val === "") {
-      return undefined;
-    }
-    return new Date(val);
+const ledgerTypes = [
+  {
+    value: "PATIENT",
+    label: "Patient Ledger",
+    icon: <FaUser />,
+    color: "blue",
+    searchHook: useSearchPatients,
+    searchPlaceholder: "Search patient by name or ID...",
+    displayField: "fullName",
+    secondaryField: "patientId",
   },
-  z.date({
-    required_error: "Date is required",
-    invalid_type_error: "Date is required",
-  })
+  {
+    value: "DOCTOR",
+    label: "Doctor Ledger",
+    icon: <FaUserMd />,
+    color: "green",
+    searchHook: useSearchDoctors,
+    searchPlaceholder: "Search doctor by name or registration...",
+    displayField: "fullName",
+    secondaryField: "registrationNo",
+  },
+  {
+    value: "CASH",
+    label: "Cash Ledger",
+    icon: <FaMoneyBillWave />,
+    color: "emerald",
+    searchHook: useSearchCashAccounts,
+    searchPlaceholder: "Search cash account by name...",
+    displayField: "cashName",
+    secondaryField: "code",
+  },
+  {
+    value: "BANK",
+    label: "Bank Ledger",
+    icon: <FaUniversity />,
+    color: "purple",
+    searchHook: useSearchBanks,
+    searchPlaceholder: "Search bank by name or account...",
+    displayField: "bankName",
+    secondaryField: "accountNo",
+  },
+];
+
+// Search Results Dropdown Component (same style as Admission)
+const SearchResults = ({ results, loading, onSelect, icon }) => (
+  <div className="absolute z-10 mt-1 w-full bg-white border border-gray-300 rounded-lg shadow-lg max-h-60 overflow-y-auto">
+    {loading ? (
+      <div className="p-3 text-center text-gray-500">Searching...</div>
+    ) : results?.length > 0 ? (
+      results.map((item, index) => (
+        <div
+          key={index}
+          className="p-3 hover:bg-blue-50 cursor-pointer border-b border-gray-100 last:border-b-0"
+          onClick={() => onSelect(item)}
+        >
+          <div className="flex items-center">
+            <span className="mr-3 text-gray-500">{icon}</span>
+            <div className="flex-1">
+              <div className="font-medium text-gray-800">
+                {item.fullName || item.cashName || item.bankName || item.name}
+              </div>
+              <div className="text-sm text-gray-600">
+                {item.hospitalPatientId && `ID: ${item.hospitalPatientId}`}
+                {item.registrationNo && `Reg: ${item.registrationNo}`}
+                {item.code && `Code: ${item.code}`}
+                {item.accountNo && `A/C: ${item.accountNo}`}
+              </div>
+            </div>
+          </div>
+        </div>
+      ))
+    ) : (
+      <div className="p-3 text-center text-gray-500">No results found</div>
+    )}
+  </div>
 );
 
-export const bankLedgerSchema = z.object({
-  bankName: z.string().min(1, "Bank name is required"),
-  transactionDate: requiredDate,
-  description: z.string().min(1, "Description is required"),
-  amountType: AmountTypeEnum,
-  amount: z.number().positive("Amount must be positive"),
-  transactionId: z.string().optional(),
-  remarks: z.string().optional(),
-});
-
-export const cashLedgerSchema = z.object({
-  transactionDate: requiredDate,
-  purpose: z.string().min(1, "Purpose is required"),
-  amountType: CashAmountTypeEnum,
-  amount: z.number().positive("Amount must be positive"),
-  remarks: z.string().optional(),
-});
-
-export const doctorLedgerSchema = z.object({
-  doctorName: z.string().min(1, "Doctor name is required"),
-  transactionDate: requiredDate,
-  description: z.string().min(1, "Description is required"),
-  amountType: AmountTypeEnum,
-  amount: z.number().positive("Amount must be positive"),
-  paymentMode: PaymentModeEnum,
-  transactionId: z.string().optional(),
-  remarks: z.string().optional(),
-});
-
-export const patientLedgerSchema = z.object({
-  patientName: z.string().min(1, "Patient name is required"),
-  transactionDate: requiredDate,
-  description: z.string().min(1, "Description is required"),
-  amountType: AmountTypeEnum,
-  amount: z.number().positive("Amount must be positive"),
-  paymentMode: PaymentModeEnum,
-  transactionId: z.string().optional(),
-  remarks: z.string().optional(),
-});
-
-// --- Mappings for schemas, hooks, and navigation paths ---
-const schemas = {
-  Patient: patientLedgerSchema,
-  Doctor: doctorLedgerSchema,
-  // Supplier: supplierLedgerSchema,
-  // Pharmacy: pharmacyLedgerSchema,
-  // Lab: diagnosticsLedgerSchema,
-  Cash: cashLedgerSchema,
-  Bank: bankLedgerSchema,
-  // Insurance: insuranceLedgerSchema,
-  // Expense: expenseLedgerSchema,
-};
-
-const mutationHooks = {
-  Patient: useCreatePatientLedgerEntry,
-  Doctor: useCreateDoctorLedgerEntry,
-  // Supplier: useCreateSupplierLedgerEntry,
-  // Pharmacy: useCreatePharmacyLedgerEntry,
-  // Lab: useCreateDiagnosticsLedgerEntry,
-  Cash: useCreateCashLedgerEntry,
-  Bank: useCreateBankLedgerEntry,
-  // Insurance: useCreateInsuranceLedgerEntry,
-  // Expense: useCreateExpenseEntry,
-};
-
-const navigationPaths = {
-  Patient: "/ledger/patient-ledger",
-  Doctor: "/ledger/doctor-ledger",
-  // Supplier: "/ledger/supplier-ledger",
-  // Pharmacy: "/ledger/pharmacy-ledger",
-  // Lab: "/ledger/lab-ledger",
-  Cash: "/ledger/cash-ledger",
-  Bank: "/ledger/bank-ledger",
-  // Insurance: "/ledger/insurance-ledger",
-  // Expense: "/ledger/expense-ledger",
-};
-
-// --- Main Component ---
 const NewLedger = () => {
-  const [selectedLedger, setSelectedLedger] = useState("Patient");
+  const [selectedLedgerType, setSelectedLedgerType] = useState(ledgerTypes[0]);
+  const [selectedEntity, setSelectedEntity] = useState(null);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [showSearchResults, setShowSearchResults] = useState(false);
 
-  const ledgerTypes = [
-    { value: "Patient", label: "Patient Ledger", icon: <FaUser /> },
-    { value: "Doctor", label: "Doctor Ledger", icon: <FaUserMd /> },
-    // { value: "Supplier", label: "Supplier Ledger", icon: <FaTruck /> },
-    // { value: "Pharmacy", label: "Pharmacy Ledger", icon: <FaPills /> },
-    // { value: "Lab", label: "Lab Ledger", icon: <FaFlask /> },
-    { value: "Cash", label: "Cash Ledger", icon: <FaMoneyBillAlt /> },
-    { value: "Bank", label: "Bank Ledger", icon: <FaBuilding /> },
-    // { value: "Insurance", label: "Insurance Ledger", icon: <FaFileMedical /> },
-    // { value: "Expense", label: "Expense Ledger", icon: <FaFileInvoice /> },
-  ];
+  const navigate = useNavigate();
+  const { mutateAsync: createLedger, isPending } = useCreateLedger();
 
-  // More dynamic rendering of the form component
-  const renderForm = () => {
-    const ledgerType = selectedLedger;
-    const schema = schemas[ledgerType];
-    let formConfig;
+  const {
+    register,
+    handleSubmit,
+    setValue,
+    watch,
+    formState: { errors },
+  } = useForm({
+    resolver: zodResolver(ledgerSchema),
+    defaultValues: {
+      entityType: selectedLedgerType.value,
+      entityId: "",
+      transactionDate: new Date().toISOString().split("T")[0],
+      description: "",
+      amountType: "CREDIT",
+      amount: "",
+      paymentMode: "CASH",
+      referenceType: "",
+      referenceId: "",
+      remarks: "",
+    },
+  });
 
-    switch (ledgerType) {
-      case "Patient":
-        formConfig = patientFormConfig;
-        break;
-      case "Doctor":
-        formConfig = doctorFormConfig;
-        break;
-      case "Cash":
-        formConfig = cashFormConfig;
-        break;
-      case "Bank":
-        formConfig = bankFormConfig;
-        break;
-      default:
-        return null;
+  const entityType = watch("entityType");
+
+  // Use the appropriate search hook based on selected ledger type
+  const SearchHook = selectedLedgerType.searchHook;
+  const { data: searchResults, isLoading: searching } = SearchHook(searchTerm, {
+    enabled: searchTerm.length >= 2,
+  });
+
+  const handleLedgerTypeChange = (ledgerType) => {
+    setSelectedLedgerType(ledgerType);
+    setSelectedEntity(null);
+    setSearchTerm("");
+    setShowSearchResults(false);
+    setValue("entityType", ledgerType.value);
+    setValue("entityId", "");
+  };
+
+  const handleEntitySelect = (entity) => {
+    setSelectedEntity(entity);
+    setValue("entityId", entity.id);
+    setSearchTerm("");
+    setShowSearchResults(false);
+  };
+
+  // Handle click outside to close search results
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (showSearchResults && !event.target.closest(".search-container")) {
+        setShowSearchResults(false);
+      }
+    };
+
+    document.addEventListener("click", handleClickOutside);
+    return () => document.removeEventListener("click", handleClickOutside);
+  }, [showSearchResults]);
+
+  const onSubmit = async (data) => {
+    if (!selectedEntity) {
+      toast.error("Please select an entity");
+      return;
     }
 
-    return (
-      <BaseLedgerForm
-        key={ledgerType}
-        ledgerType={ledgerType}
-        schema={schema}
-        formConfig={formConfig}
-      />
-    );
+    // Validate enum values
+    if (!ENTITY_TYPES.includes(data.entityType)) {
+      toast.error("Invalid entity type");
+      return;
+    }
+
+    if (data.referenceType && !REFERENCE_TYPES.includes(data.referenceType)) {
+      toast.error("Invalid reference type");
+      return;
+    }
+
+    const formattedData = {
+      entityType: data.entityType,
+      entityId: parseInt(data.entityId),
+      transactionDate: new Date(data.transactionDate).toISOString(),
+      description: data.description,
+      amountType: data.amountType, // "CREDIT" | "DEBIT"
+      amount: Number(data.amount) || parseFloat(data.amount),
+      paymentMode: data.paymentMode || "CASH", // Enum value
+      referenceType: data.referenceType || "", // Enum value or null
+      referenceId: data.referenceId?.trim() || "",
+      remarks: data.remarks?.trim() || "",
+    };
+
+    console.log("Formatted data:", formattedData);
+
+    try {
+      const response = await createLedger(formattedData);
+      if (response?.data?.success) {
+        toast.success("Ledger entry created successfully");
+        navigate(`/ledger/${response.data.data.id}`);
+      }
+    } catch (error) {
+      console.error("Error creating ledger:", error);
+      toast.error(error.response?.data?.message || "Failed to create ledger");
+    }
   };
 
   return (
-    <div className="mx-auto">
+    <div className="mx-auto max-w-4xl">
       <div className="mb-8">
         <div className="flex items-center">
           <BackButton />
@@ -196,388 +247,288 @@ const NewLedger = () => {
         </div>
       </div>
 
+      {/* Ledger Type Selection */}
       <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6">
-        <label className="block text-sm font-medium text-gray-700 mb-2">
+        <label className="block text-sm font-medium text-gray-700 mb-3">
           Ledger Type<span className="text-red-500 ml-1">*</span>
         </label>
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
           {ledgerTypes.map((ledger) => (
             <button
               key={ledger.value}
-              onClick={() => setSelectedLedger(ledger.value)}
-              className={`flex items-center justify-center text-center cursor-pointer p-4 border rounded-lg transition-colors ${
-                selectedLedger === ledger.value
-                  ? "border-blue-500 bg-blue-50 text-blue-700 font-semibold"
-                  : "border-gray-300 hover:bg-gray-50"
+              type="button"
+              onClick={() => handleLedgerTypeChange(ledger)}
+              className={`flex items-center justify-center p-4 border-2 rounded-lg transition-all ${
+                selectedLedgerType.value === ledger.value
+                  ? `border-${ledger.color}-500 bg-${ledger.color}-50 text-${ledger.color}-700`
+                  : "border-gray-200 hover:border-gray-300 hover:bg-gray-50"
               }`}
             >
-              <span className="mr-3 text-lg">{ledger.icon}</span>
-              {ledger.label}
+              <span className="mr-2">{ledger.icon}</span>
+              <span className="font-medium">{ledger.label}</span>
             </button>
           ))}
         </div>
       </div>
 
-      {renderForm()}
-    </div>
-  );
-};
+      {/* Main Form */}
+      <form
+        onSubmit={handleSubmit(onSubmit)}
+        className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden"
+      >
+        <div className="p-6">
+          {/* Entity Search Section */}
+          <div className="mb-6 pb-6 border-b border-gray-200">
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Select {selectedLedgerType.label.split(" ")[0]}
+              <span className="text-red-500 ml-1">*</span>
+            </label>
 
-// --- Updated Form Configurations to match new schemas ---
+            {/* Selected Entity Display */}
+            {selectedEntity ? (
+              <div className="flex items-center justify-between p-4 bg-green-50 border border-green-200 rounded-lg">
+                <div className="flex items-center">
+                  <span className="text-2xl mr-3">
+                    {selectedLedgerType.icon}
+                  </span>
+                  <div>
+                    <p className="font-medium text-gray-800">
+                      {selectedEntity[selectedLedgerType.displayField]}
+                    </p>
 
-const patientFormConfig = {
-  formTitle: "Patient Ledger",
-  formIcon: <FaUser />,
-  fields: [
-    {
-      name: "patientName",
-      label: "Patient Name",
-      type: "text",
-      icon: <FaUser />,
-      required: true,
-    },
-    {
-      name: "transactionDate",
-      label: "Date",
-      type: "date",
-      icon: <FaCalendarAlt />,
-      required: true,
-    },
-    {
-      name: "description",
-      label: "Description",
-      type: "text",
-      placeholder: "X-ray, OPD fees etc.",
-      required: true,
-    },
-    {
-      name: "amountType",
-      label: "Amount Type",
-      type: "select",
-      options: ["CREDIT", "DEBIT"],
-      required: true,
-    },
-    { name: "amount", label: "Amount", type: "number", required: true },
-    {
-      name: "paymentMode",
-      label: "Payment Mode",
-      type: "select",
-      options: ["CASH", "CARD", "UPI", "BANK_TRANSFER", "CHEQUE"],
-      required: true,
-    },
-    { name: "transactionId", label: "Transaction ID", type: "text" },
-    { name: "remarks", label: "Remarks", type: "textarea" },
-  ],
-  defaultValues: {
-    patientName: "",
-    transactionDate: new Date().toISOString().split("T")[0],
-    description: "",
-    amountType: "DEBIT",
-    amount: 0,
-    paymentMode: "CASH",
-    transactionId: "",
-    remarks: "",
-  },
-};
-
-const doctorFormConfig = {
-  formTitle: "Doctor Ledger",
-  formIcon: <FaUserMd />,
-  fields: [
-    {
-      name: "doctorName",
-      label: "Doctor Name",
-      type: "text",
-      icon: <FaUserMd />,
-      required: true,
-    },
-    { name: "transactionDate", label: "Date", type: "date", required: true },
-    {
-      name: "description",
-      label: "Description",
-      type: "text",
-      placeholder: "Consultation share, Salary payment etc.",
-      required: true,
-    },
-    {
-      name: "amountType",
-      label: "Amount Type",
-      type: "select",
-      options: ["CREDIT", "DEBIT"],
-      required: true,
-    },
-    { name: "amount", label: "Amount", type: "number", required: true },
-    {
-      name: "paymentMode",
-      label: "Payment Mode",
-      type: "select",
-      options: ["CASH", "CARD", "UPI", "BANK_TRANSFER", "CHEQUE"],
-      required: true,
-    },
-    { name: "transactionId", label: "Transaction ID", type: "text" },
-    { name: "remarks", label: "Remarks", type: "textarea" },
-  ],
-  defaultValues: {
-    doctorName: "",
-    transactionDate: new Date().toISOString().split("T")[0],
-    description: "",
-    amountType: "DEBIT",
-    amount: 0,
-    paymentMode: "BANK_TRANSFER",
-    transactionId: "",
-    remarks: "",
-  },
-};
-
-const cashFormConfig = {
-  formTitle: "Cash Ledger",
-  formIcon: <FaMoneyBillAlt />,
-  fields: [
-    { name: "transactionDate", label: "Date", type: "date", required: true },
-    {
-      name: "purpose",
-      label: "Purpose",
-      type: "text",
-      placeholder: "Cash received from OPD, Cash expense etc.",
-      required: true,
-    },
-    {
-      name: "amountType",
-      label: "Amount Type",
-      type: "select",
-      options: ["INCOME", "EXPENSE"],
-      required: true,
-    },
-    { name: "amount", label: "Amount", type: "number", required: true },
-    { name: "remarks", label: "Remarks", type: "textarea" },
-  ],
-  defaultValues: {
-    transactionDate: new Date().toISOString().split("T")[0],
-    purpose: "",
-    amountType: "INCOME",
-    amount: 0,
-    remarks: "",
-  },
-};
-
-const bankFormConfig = {
-  formTitle: "Bank Ledger",
-  formIcon: <FaBuilding />,
-  fields: [
-    { name: "bankName", label: "Bank Name", type: "text", required: true },
-    { name: "transactionDate", label: "Date", type: "date", required: true },
-    {
-      name: "description",
-      label: "Description",
-      type: "text",
-      placeholder: "Doctor payment, Supplier payment etc.",
-      required: true,
-    },
-    {
-      name: "amountType",
-      label: "Amount Type",
-      type: "select",
-      options: ["CREDIT", "DEBIT"],
-      required: true,
-    },
-    { name: "amount", label: "Amount", type: "number", required: true },
-    { name: "transactionId", label: "Transaction ID", type: "text" },
-    { name: "remarks", label: "Remarks", type: "textarea" },
-  ],
-  defaultValues: {
-    bankName: "",
-    transactionDate: new Date().toISOString().split("T")[0],
-    description: "",
-    amountType: "DEBIT",
-    amount: 0,
-    transactionId: "",
-    remarks: "",
-  },
-};
-
-// --- The Reusable Base Form Component (with API logic) ---
-const BaseLedgerForm = ({ ledgerType, schema, formConfig }) => {
-  const navigate = useNavigate();
-
-  // Dynamically select the correct mutation hook
-  const { mutateAsync, isPending } = mutationHooks[ledgerType]();
-
-  const {
-    register,
-    handleSubmit,
-    formState: { errors },
-    reset,
-  } = useForm({
-    resolver: zodResolver(schema),
-    defaultValues: formConfig.defaultValues,
-  });
-
-  const onSubmit = async (data) => {
-    // Convert date strings to Date objects for schema validation
-    const processedData = {
-      ...data,
-      // Convert all date fields to Date objects
-      ...(data.transactionDate && {
-        transactionDate: new Date(data.transactionDate),
-      }),
-    };
-
-    // Clean empty values
-    Object.keys(processedData).forEach((key) => {
-      if (processedData[key] === undefined || processedData[key] === "") {
-        delete processedData[key];
-      }
-    });
-
-    try {
-      const response = await mutateAsync(processedData);
-      if (response?.data?.success) {
-        navigate(`${navigationPaths[ledgerType]}/${response.data.data.id}`);
-      }
-    } catch (error) {
-      console.error("Error:", error);
-    }
-  };
-
-  const handleCancel = () => {
-    reset(formConfig.defaultValues);
-    toast.info("Form reset.");
-  };
-
-  return (
-    <LedgerFormUI
-      fields={formConfig.fields}
-      formTitle={formConfig.formTitle}
-      formIcon={formConfig.formIcon}
-      register={register}
-      errors={errors}
-      onSubmit={handleSubmit(onSubmit)}
-      onCancel={handleCancel}
-      isSubmitting={isPending}
-    />
-  );
-};
-
-// --- Reusable UI Component ---
-const LedgerFormUI = ({
-  fields,
-  formTitle,
-  formIcon,
-  register,
-  errors,
-  onSubmit,
-  onCancel,
-  isSubmitting,
-}) => {
-  const getInputClass = (fieldName) =>
-    `block w-full px-4 py-2 border rounded-lg focus:ring-blue-500 focus:border-blue-500 ${
-      errors[fieldName] ? "border-red-500" : "border-gray-300"
-    }`;
-
-  return (
-    <form
-      onSubmit={onSubmit}
-      className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden mb-8"
-      noValidate
-    >
-      <div className="p-6">
-        <div className="flex items-center mb-6">
-          <span className="text-xl text-blue-500">{formIcon}</span>
-          <h3 className="ml-3 text-lg font-semibold text-gray-800">
-            {formTitle}
-          </h3>
-        </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {fields.map((field) => (
-            <div
-              key={field.name}
-              className={`space-y-1 ${
-                field.type === "textarea" ? "md:col-span-2" : ""
-              }`}
-            >
-              <label
-                htmlFor={field.name}
-                className="block text-sm font-medium text-gray-700"
-              >
-                {field.label}
-                {field.required && <span className="text-red-500 ml-1">*</span>}
-              </label>
-
-              {field.type === "select" ? (
-                <select
-                  id={field.name}
-                  {...register(field.name)}
-                  className={`${getInputClass(field.name)}  bg-white pr-8`}
+                    {selectedLedgerType.secondaryField && (
+                      <p className="text-sm text-gray-600">
+                        {selectedEntity[selectedLedgerType.secondaryField] ||
+                          (selectedLedgerType.value === "PATIENT" &&
+                            selectedEntity.hospitalPatientId) ||
+                          (selectedLedgerType.value === "PATIENT" &&
+                            selectedEntity.patientId)}
+                      </p>
+                    )}
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSelectedEntity(null);
+                    setValue("entityId", "");
+                  }}
+                  className="text-red-500 hover:text-red-700"
                 >
-                  <option disabled value="">
-                    Select {field.label}
-                  </option>
-                  {field.options.map((option) => (
-                    <option key={option} value={option}>
-                      {option}
-                    </option>
-                  ))}
-                </select>
-              ) : field.type === "textarea" ? (
-                <textarea
-                  id={field.name}
-                  {...register(field.name)}
-                  placeholder={field.placeholder}
-                  rows="3"
-                  className={getInputClass(field.name)}
-                />
-              ) : field.type === "file" ? (
-                <input
-                  id={field.name}
-                  type="file"
-                  {...register(field.name)}
-                  className={`block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 ${getInputClass(
-                    field.name
-                  )}`}
-                />
-              ) : (
+                  Change
+                </button>
+              </div>
+            ) : (
+              <div className="relative search-container">
                 <div className="relative">
                   <input
-                    id={field.name}
-                    type={field.type}
-                    {...register(field.name, {
-                      valueAsNumber: field.type === "number",
-                    })}
-                    placeholder={field.placeholder}
-                    className={`${getInputClass(field.name)} ${
-                      field.icon ? "pl-10" : ""
-                    }`}
+                    type="text"
+                    value={searchTerm}
+                    onChange={(e) => {
+                      setSearchTerm(e.target.value);
+                      setShowSearchResults(true);
+                    }}
+                    onFocus={() => setShowSearchResults(true)}
+                    placeholder={selectedLedgerType.searchPlaceholder}
+                    className="w-full px-4 py-3 pl-10 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
                   />
-                  {field.icon && (
-                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400">
-                      {field.icon}
-                    </div>
-                  )}
+                  <FaSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
                 </div>
-              )}
-              {errors[field.name] && (
+
+                {/* ✅ FIX 2: Same search dropdown design as Admission */}
+                {showSearchResults && searchTerm.length >= 2 && (
+                  <SearchResults
+                    results={searchResults}
+                    loading={searching}
+                    onSelect={handleEntitySelect}
+                    icon={selectedLedgerType.icon}
+                  />
+                )}
+              </div>
+            )}
+            <input type="hidden" {...register("entityId")} />
+          </div>
+
+          {/* Transaction Details */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {/* Transaction Date */}
+            <div className="space-y-1">
+              <label className="block text-sm font-medium text-gray-700">
+                Transaction Date<span className="text-red-500 ml-1">*</span>
+              </label>
+              <div className="relative">
+                <input
+                  type="date"
+                  {...register("transactionDate")}
+                  className={`w-full px-4 py-2 pl-10 border rounded-lg focus:ring-blue-500 focus:border-blue-500 ${
+                    errors.transactionDate
+                      ? "border-red-500"
+                      : "border-gray-300"
+                  }`}
+                />
+                <FaCalendarAlt className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+              </div>
+              {errors.transactionDate && (
                 <p className="text-red-600 text-sm mt-1">
-                  {errors[field.name].message}
+                  {errors.transactionDate.message}
                 </p>
               )}
             </div>
-          ))}
-        </div>
-      </div>
 
-      <div className="bg-gray-50 px-6 py-4 border-t border-gray-200 flex justify-end">
-        <button
-          type="button"
-          onClick={onCancel}
-          className="px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 mr-3"
-        >
-          Cancel
-        </button>
-        <LoadingButton type="submit" isLoading={isSubmitting}>
-          Save Ledger
-        </LoadingButton>
-      </div>
-    </form>
+            {/* Description */}
+            <div className="space-y-1">
+              <label className="block text-sm font-medium text-gray-700">
+                Description<span className="text-red-500 ml-1">*</span>
+              </label>
+              <input
+                type="text"
+                {...register("description")}
+                placeholder="Enter transaction description"
+                className={`w-full px-4 py-2 border rounded-lg focus:ring-blue-500 focus:border-blue-500 ${
+                  errors.description ? "border-red-500" : "border-gray-300"
+                }`}
+              />
+              {errors.description && (
+                <p className="text-red-600 text-sm mt-1">
+                  {errors.description.message}
+                </p>
+              )}
+            </div>
+
+            {/* Amount Type */}
+            <div className="space-y-1">
+              <label className="block text-sm font-medium text-gray-700">
+                Amount Type<span className="text-red-500 ml-1">*</span>
+              </label>
+              <select
+                {...register("amountType")}
+                className={`w-full px-4 py-2 border rounded-lg focus:ring-blue-500 focus:border-blue-500 bg-white ${
+                  errors.amountType ? "border-red-500" : "border-gray-300"
+                }`}
+              >
+                <option value="CREDIT">Credit (Income)</option>
+                <option value="DEBIT">Debit (Expense)</option>
+              </select>
+              {errors.amountType && (
+                <p className="text-red-600 text-sm mt-1">
+                  {errors.amountType.message}
+                </p>
+              )}
+            </div>
+
+            {/* Amount */}
+            <div className="space-y-1">
+              <label className="block text-sm font-medium text-gray-700">
+                Amount (₹)<span className="text-red-500 ml-1">*</span>
+              </label>
+              <input
+                type="number"
+                step="0.01"
+                {...register("amount", {
+                  valueAsNumber: true, // ✅ Convert to number automatically
+                })}
+                placeholder="Enter amount"
+                className={`w-full px-4 py-2 border rounded-lg focus:ring-blue-500 focus:border-blue-500 ${
+                  errors.amount ? "border-red-500" : "border-gray-300"
+                }`}
+              />
+              {errors.amount && (
+                <p className="text-red-600 text-sm mt-1">
+                  {errors.amount.message}
+                </p>
+              )}
+            </div>
+
+            {/* Payment Mode */}
+            {/* Payment Mode - Map enum to camel case display */}
+            <div className="space-y-1">
+              <label className="block text-sm font-medium text-gray-700">
+                Payment Mode
+              </label>
+              <div className="relative">
+                <select
+                  {...register("paymentMode")}
+                  className="w-full px-4 py-2 pl-10 border rounded-lg focus:ring-blue-500 focus:border-blue-500 bg-white border-gray-300"
+                >
+                  <option value="CASH">Cash</option>
+                  <option value="CARD">Card</option>
+                  <option value="UPI">UPI</option>
+                  <option value="BANK_TRANSFER">Bank Transfer</option>
+                  <option value="CHEQUE">Cheque</option>
+                </select>
+                <FaCreditCard className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+              </div>
+            </div>
+
+            {/* Reference Type */}
+            {/* Reference Type - Change to select */}
+            <div className="space-y-1">
+              <label className="block text-sm font-medium text-gray-700">
+                Reference Type
+              </label>
+              <select
+                {...register("referenceType")}
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 bg-white"
+              >
+                <option value="" disabled selected hidden>
+                  Select reference type
+                </option>
+                {REFERENCE_TYPES.map((type) => (
+                  <option key={type} value={type}>
+                    {referenceTypeDisplay[type]}
+                  </option>
+                ))}
+              </select>
+              {errors.referenceType && (
+                <p className="text-red-600 text-sm mt-1">
+                  {errors.referenceType.message}
+                </p>
+              )}
+            </div>
+
+            {/* Reference ID */}
+            <div className="space-y-1">
+              <label className="block text-sm font-medium text-gray-700">
+                Reference ID
+              </label>
+              <input
+                type="text"
+                {...register("referenceId")}
+                placeholder="Enter reference ID"
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
+              />
+            </div>
+
+            {/* Remarks */}
+            <div className="space-y-1 md:col-span-2">
+              <label className="block text-sm font-medium text-gray-700">
+                Remarks
+              </label>
+              <div className="relative">
+                <textarea
+                  {...register("remarks")}
+                  rows="3"
+                  placeholder="Additional notes..."
+                  className="w-full px-4 py-2 pl-10 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
+                />
+                <FaStickyNote className="absolute left-3 top-3 text-gray-400" />
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Form Actions */}
+        <div className="bg-gray-50 px-6 py-4 border-t border-gray-200 flex justify-end gap-3">
+          <LoadingButton
+            type="submit"
+            isLoading={isPending}
+            disabled={!selectedEntity}
+          >
+            {isPending ? "Creating..." : "Create Ledger Entry"}
+          </LoadingButton>
+        </div>
+      </form>
+    </div>
   );
 };
 

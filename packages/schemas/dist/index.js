@@ -1,7 +1,7 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.moneyReceiptFilterSchema = exports.billFilterSchema = exports.doctorLedgerFilterSchema = exports.cashLedgerFilterSchema = exports.bankLedgerFilterSchema = exports.patientLedgerFilterSchema = exports.prescriptionFilterSchema = exports.doctorFilterSchema = exports.nurseFilterSchema = exports.appointmentFilterSchema = exports.departmentFilterSchema = exports.patientFilterSchema = exports.birthFilterSchema = exports.admissionFilterSchema = exports.supplierLedgerSchema = exports.pharmacyLedgerSchema = exports.insuranceLedgerSchema = exports.expenseLedgerSchema = exports.diagnosticsLedgerSchema = exports.patientLedgerSchema = exports.doctorLedgerSchema = exports.cashLedgerSchema = exports.bankLedgerSchema = exports.serviceChargeSchema = exports.productMaterialSchema = exports.materialSpecSchema = exports.productSchema = exports.brandSchema = exports.voucherSchema = exports.moneyReceiptSchema = exports.employeeSchema = exports.billSchema = exports.billItemSchema = exports.xrayReportSchema = exports.prescriptionSchema = exports.medicineSchema = exports.pharmacistSchema = exports.patientSchema = exports.nurseSchema = exports.doctorSchema = exports.departmentSchema = exports.birthSchema = exports.bedAssignmentSchema = exports.appointmentSchema = exports.ambulanceSchema = exports.admissionSchema = exports.bedSchema = exports.loginSchema = exports.registerSchema = exports.changePasswordSchema = void 0;
-exports.FilterSchemas = void 0;
+exports.departmentFilterSchema = exports.patientFilterSchema = exports.birthFilterSchema = exports.admissionFilterSchema = exports.bankFilterSchema = exports.cashFilterSchema = exports.ledgerFilterSchema = exports.supplierLedgerSchema = exports.pharmacyLedgerSchema = exports.insuranceLedgerSchema = exports.expenseLedgerSchema = exports.diagnosticsLedgerSchema = exports.patientLedgerSchema = exports.doctorLedgerSchema = exports.cashLedgerSchema = exports.bankLedgerSchema = exports.ledgerSchema = exports.REFERENCE_TYPES = exports.ENTITY_TYPES = exports.PaymentModeEnum = exports.AmountTypeEnum = exports.bankSchema = exports.cashSchema = exports.serviceChargeSchema = exports.productMaterialSchema = exports.materialSpecSchema = exports.productSchema = exports.brandSchema = exports.voucherSchema = exports.moneyReceiptSchema = exports.employeeSchema = exports.billSchema = exports.billItemSchema = exports.xrayReportSchema = exports.prescriptionSchema = exports.medicineSchema = exports.pharmacistSchema = exports.patientSchema = exports.nurseSchema = exports.doctorSchema = exports.departmentSchema = exports.birthSchema = exports.bedAssignmentSchema = exports.appointmentSchema = exports.ambulanceSchema = exports.admissionSchema = exports.bedSchema = exports.loginSchema = exports.registerSchema = exports.changePasswordSchema = void 0;
+exports.FilterSchemas = exports.moneyReceiptFilterSchema = exports.billFilterSchema = exports.doctorLedgerFilterSchema = exports.cashLedgerFilterSchema = exports.bankLedgerFilterSchema = exports.patientLedgerFilterSchema = exports.prescriptionFilterSchema = exports.doctorFilterSchema = exports.nurseFilterSchema = exports.appointmentFilterSchema = void 0;
 const zod_1 = require("zod");
 exports.changePasswordSchema = zod_1.z
     .object({
@@ -356,16 +356,40 @@ exports.serviceChargeSchema = zod_1.z.object({
     status: zod_1.z.string().optional().default("Active"),
     notes: zod_1.z.string().optional(),
 });
+///////////////////////////////
+exports.cashSchema = zod_1.z.object({
+    cashName: zod_1.z.string().min(2, "Cash name is required").max(100),
+    isActive: zod_1.z.boolean().optional(),
+});
+exports.bankSchema = zod_1.z.object({
+    bankName: zod_1.z.string().min(2, "Bank name is required").max(100),
+    accountNo: zod_1.z.string().min(6, "Account number is required").max(50),
+    ifscCode: zod_1.z.string().min(4, "Invalid IFSC").max(20).optional(),
+    isActive: zod_1.z.boolean().optional(),
+});
 ////////////// ledger
-const AmountTypeEnum = zod_1.z.enum(["CREDIT", "DEBIT"]);
 const CashAmountTypeEnum = zod_1.z.enum(["INCOME", "EXPENSE"]);
-const PaymentModeEnum = zod_1.z.enum([
+exports.AmountTypeEnum = zod_1.z.enum(["CREDIT", "DEBIT"]);
+exports.PaymentModeEnum = zod_1.z.enum([
     "CASH",
     "CARD",
     "UPI",
     "BANK_TRANSFER",
     "CHEQUE",
 ]);
+exports.ENTITY_TYPES = ["PATIENT", "DOCTOR", "BANK", "CASH"];
+exports.REFERENCE_TYPES = [
+    "OPD",
+    "IPD",
+    "PHARMACY",
+    "LAB",
+    "PROCEDURE",
+    "SALARY",
+    "EXPENSE",
+    "ADVANCE",
+    "REFUND",
+    "OTHER",
+];
 const requiredDate = zod_1.z.preprocess((val) => {
     if (val === undefined || val === null || val === "") {
         return undefined;
@@ -375,11 +399,64 @@ const requiredDate = zod_1.z.preprocess((val) => {
     required_error: "Date is required",
     invalid_type_error: "Date is required",
 }));
+exports.ledgerSchema = zod_1.z.object({
+    entityType: zod_1.z
+        .string({
+        required_error: "Entity type is required",
+        invalid_type_error: "Entity type must be a valid string",
+    })
+        .refine((val) => exports.ENTITY_TYPES.includes(val), {
+        message: "Invalid entity type. Allowed values are: " + exports.ENTITY_TYPES.join(", "),
+    }),
+    entityId: zod_1.z
+        .number({
+        required_error: "Entity ID is required",
+        invalid_type_error: "Entity ID must be a number",
+    })
+        .int("Entity ID must be an integer")
+        .positive("Entity ID must be greater than 0"),
+    transactionDate: requiredDate, // assuming already well defined
+    description: zod_1.z
+        .string({
+        required_error: "Description is required",
+        invalid_type_error: "Description must be a string",
+    })
+        .min(1, "Description cannot be empty")
+        .max(255, "Description cannot exceed 255 characters"),
+    amountType: exports.AmountTypeEnum.refine((val) => val !== undefined, {
+        message: "Amount type is required (e.g., CREDIT or DEBIT)",
+    }),
+    amount: zod_1.z
+        .number({
+        required_error: "Amount is required",
+        invalid_type_error: "Amount must be a valid number",
+    })
+        .positive("Amount must be greater than 0"),
+    paymentMode: exports.PaymentModeEnum.optional(),
+    referenceType: zod_1.z
+        .string()
+        .transform((val) => (val === "" ? undefined : val))
+        .optional()
+        .refine((val) => !val || exports.REFERENCE_TYPES.includes(val), {
+        message: "Invalid reference type",
+    }),
+    referenceId: zod_1.z
+        .string({
+        invalid_type_error: "Reference ID must be a string",
+    })
+        .optional(),
+    remarks: zod_1.z
+        .string({
+        invalid_type_error: "Remarks must be a string",
+    })
+        .max(500, "Remarks cannot exceed 500 characters")
+        .optional(),
+});
 exports.bankLedgerSchema = zod_1.z.object({
     bankName: zod_1.z.string().min(1, "Bank name is required"),
     transactionDate: requiredDate,
     description: zod_1.z.string().min(1, "Description is required"),
-    amountType: AmountTypeEnum,
+    amountType: exports.AmountTypeEnum,
     amount: zod_1.z.number().positive("Amount must be positive"),
     transactionId: zod_1.z.string().optional(),
     remarks: zod_1.z.string().optional(),
@@ -395,9 +472,9 @@ exports.doctorLedgerSchema = zod_1.z.object({
     doctorName: zod_1.z.string().min(1, "Doctor name is required"),
     transactionDate: requiredDate,
     description: zod_1.z.string().min(1, "Description is required"),
-    amountType: AmountTypeEnum,
+    amountType: exports.AmountTypeEnum,
     amount: zod_1.z.number().positive("Amount must be positive"),
-    paymentMode: PaymentModeEnum,
+    paymentMode: exports.PaymentModeEnum,
     transactionId: zod_1.z.string().optional(),
     remarks: zod_1.z.string().optional(),
 });
@@ -405,9 +482,9 @@ exports.patientLedgerSchema = zod_1.z.object({
     patientName: zod_1.z.string().min(1, "Patient name is required"),
     transactionDate: requiredDate,
     description: zod_1.z.string().min(1, "Description is required"),
-    amountType: AmountTypeEnum,
+    amountType: exports.AmountTypeEnum,
     amount: zod_1.z.number().positive("Amount must be positive"),
-    paymentMode: PaymentModeEnum,
+    paymentMode: exports.PaymentModeEnum,
     transactionId: zod_1.z.string().optional(),
     remarks: zod_1.z.string().optional(),
 });
@@ -484,9 +561,34 @@ const baseFilterSchema = {
     limit: zod_1.z.coerce.number().min(1).max(100).default(50),
     cursor: zod_1.z.string().optional(), // ✅ composite cursor for keyset pagination
 };
+exports.ledgerFilterSchema = zod_1.z.object({
+    entityType: zod_1.z.enum(["PATIENT", "DOCTOR", "BANK", "CASH"]).optional(),
+    entityId: zod_1.z.coerce.number().int().positive().optional(),
+    amountType: zod_1.z.enum(["CREDIT", "DEBIT"]).optional(),
+    paymentMode: zod_1.z
+        .enum(["CASH", "CARD", "UPI", "BANK_TRANSFER", "CHEQUE"])
+        .optional(),
+    ...baseFilterSchema,
+});
 // ============================================
 // 🔹 ADMISSION FILTER
 // ============================================
+exports.cashFilterSchema = zod_1.z.object({
+    isActive: zod_1.z
+        .enum(["true", "false"])
+        .optional()
+        .transform((val) => val === "true"),
+    ...baseFilterSchema,
+});
+////////
+exports.bankFilterSchema = zod_1.z.object({
+    isActive: zod_1.z
+        .enum(["true", "false"])
+        .optional()
+        .transform((val) => val === "true"),
+    ...baseFilterSchema,
+});
+//////
 exports.admissionFilterSchema = zod_1.z.object({
     gender: zod_1.z.enum(["Male", "Female", "Other"]).optional(),
     ...baseFilterSchema,
@@ -616,4 +718,7 @@ exports.FilterSchemas = {
     doctorLedger: exports.doctorLedgerFilterSchema,
     bill: exports.billFilterSchema,
     moneyReceipt: exports.moneyReceiptFilterSchema,
+    cash: exports.cashFilterSchema,
+    bank: exports.bankFilterSchema,
+    ledger: exports.ledgerFilterSchema,
 };

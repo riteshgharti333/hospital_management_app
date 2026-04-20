@@ -31,24 +31,26 @@ import { LiaMoneyBillWaveSolid } from "react-icons/lia";
 import { MdOutlinePayments } from "react-icons/md";
 import { CgGirl } from "react-icons/cg";
 import { IoMdBook } from "react-icons/io";
+import { AiOutlineBank } from "react-icons/ai";
+import { HiOutlineBanknotes } from "react-icons/hi2";
 
 const ledgerTitles = [
   {
     title: "Patient Ledger",
-    link: "ledger/patient-ledger",
+    link: "ledger/PATIENT",
   },
   {
     title: "Doctor Ledger",
-    link: "ledger/doctor-ledger",
+    link: "ledger/DOCTOR",
   },
 
   {
     title: "Cash Ledger",
-    link: "ledger/cash-ledger",
+    link: "ledger/CASH",
   },
   {
     title: "Bank Ledger",
-    link: "ledger/bank-ledger",
+    link: "ledger/BANK",
   },
 ];
 
@@ -100,6 +102,18 @@ export const sidebarData = [
     title: "Prescription Register",
     icon: BsPrescription2,
     link: "/prescriptions",
+  },
+
+   {
+    title: "Bank Register",
+    icon: AiOutlineBank,
+    link: "/bank",
+  },
+
+   {
+    title: "Cash Register",
+    icon: HiOutlineBanknotes,
+    link: "/cash",
   },
 
   {

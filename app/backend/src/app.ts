@@ -6,12 +6,12 @@ import cookieParser from "cookie-parser";
 import { errorMiddleware } from "./middlewares/errorMiddleware";
 
 import authRoutes from "./routes/authRoute";
-        
+
 import departmentRoutes from "./routes/departmentRoute";
 import admissionRoutes from "./routes/admissionRoute";
 import birthRoutes from "./routes/birthRoute";
 import patientRoutes from "./routes/patientRoute";
-import bedRoutes  from "./routes/bedRoute";
+import bedRoutes from "./routes/bedRoute";
 import bedAssignRoutes from "./routes/bedAssignRoute";
 import appointmentRoutes from "./routes/appointmentRoute";
 import nurseRoutes from "./routes/nurseRoute";
@@ -21,7 +21,11 @@ import prescriptionRoutes from "./routes/prescriptionRoute";
 import ambulanceRoutes from "./routes/ambulanceRoute";
 import xrayRoutes from "./routes/xrayRoute";
 
-// Admin 
+import cash from "./routes/cashRoute";
+import bank from "./routes/bankRoute";
+import ledger from "./routes/ledgerRoute";
+
+// Admin
 import adminRoutes from "./routes/adminRoutes";
 
 // Password Reset
@@ -67,14 +71,12 @@ app.use(
       "https://hospital-management-app-nine.vercel.app",
     ],
     credentials: true,
-  })
+  }),
 );
 
 app.use(cookieParser());
 app.use(express.json());
 app.use(morgan("dev"));
-
-
 
 app.use("/api/v1/auth", authRoutes);
 
@@ -101,7 +103,12 @@ app.use("/api/v1/prescription", prescriptionRoutes);
 app.use("/api/v1/ambulance", ambulanceRoutes);
 app.use("/api/v1/xray", xrayRoutes);
 
-// ledger 
+app.use("/api/v1/cash", cash); 
+app.use("/api/v1/bank", bank);
+
+app.use("/api/v1/ledger", ledger); 
+
+// ledger
 app.use("/api/v1/ledger/patient-ledger", patientLedgerRoutes);
 app.use("/api/v1/ledger/bank-ledger", bankLedgerRoutes);
 app.use("/api/v1/ledger/cash-ledger", cashLedgerRoutes);
@@ -132,4 +139,3 @@ app.get("/", (_req, res) => {
 export default app;
 
 app.use(errorMiddleware);
- 

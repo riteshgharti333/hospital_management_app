@@ -22,7 +22,7 @@ export const createMoneyReceipt = async (data: MoneyReceiptInput) => {
 };
 
 export const getAllMoneyReceiptsService = async (cursor?: string) => {
-  return cursorPaginate(prisma, { model: "moneyReceipt" }, cursor); // ✅ "moneyReceipt"
+  return cursorPaginate(prisma, { model: "moneyReceipt" }, cursor); 
 };
 
 export const getMoneyReceiptById = async (id: number) => {
@@ -48,7 +48,7 @@ export const updateMoneyReceipt = async (
   id: number,
   data: Partial<MoneyReceiptInput>,
 ) => {
-  await bumpCacheVersion("moneyreceipt"); // ✅ Fixed: "moneyReceipt" (was "MoneyReceipt")
+  await bumpCacheVersion("moneyreceipt"); 
   return prisma.moneyReceipt.update({
     where: { id },
     data,
@@ -56,11 +56,11 @@ export const updateMoneyReceipt = async (
 };
 
 export const deleteMoneyReceipt = async (id: number) => {
-  await bumpCacheVersion("moneyreceipt"); // ✅ Fixed: "moneyReceipt" (was "MoneyReceipt")
+  await bumpCacheVersion("moneyreceipt"); 
   return prisma.moneyReceipt.delete({ where: { id } });
 };
 
-// ✅ Fixed: tableName "moneyReceipt" to match Prisma model
+
 export const searchMoneyReceipts = createSearchService(prisma, {
   tableName: "moneyReceipt", // ✅ Fixed: was "MoneyReceipt"
   exactFields: ["admissionNo"],

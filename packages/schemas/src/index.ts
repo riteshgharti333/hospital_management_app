@@ -429,17 +429,50 @@ export const serviceChargeSchema = z.object({
   notes: z.string().optional(),
 });
 
+///////////////////////////////
+
+export const cashSchema = z.object({
+  cashName: z.string().min(2, "Cash name is required").max(100),
+
+  isActive: z.boolean().optional(),
+});
+
+export const bankSchema = z.object({
+  bankName: z.string().min(2, "Bank name is required").max(100),
+
+  accountNo: z.string().min(6, "Account number is required").max(50),
+
+  ifscCode: z.string().min(4, "Invalid IFSC").max(20).optional(),
+
+  isActive: z.boolean().optional(),
+});
+
 ////////////// ledger
 
-const AmountTypeEnum = z.enum(["CREDIT", "DEBIT"]);
 const CashAmountTypeEnum = z.enum(["INCOME", "EXPENSE"]);
-const PaymentModeEnum = z.enum([
+
+export const AmountTypeEnum = z.enum(["CREDIT", "DEBIT"]);
+export const PaymentModeEnum = z.enum([
   "CASH",
   "CARD",
   "UPI",
   "BANK_TRANSFER",
   "CHEQUE",
 ]);
+export const ENTITY_TYPES = ["PATIENT", "DOCTOR", "BANK", "CASH"] as const;
+export const REFERENCE_TYPES = [
+  "OPD",
+  "IPD",
+  "PHARMACY",
+  "LAB",
+  "PROCEDURE",
+  "SALARY",
+  "EXPENSE",
+  "ADVANCE",
+  "REFUND",
+  "OTHER",
+] as const;
+
 const requiredDate = z.preprocess(
   (val) => {
     if (val === undefined || val === null || val === "") {
@@ -452,6 +485,70 @@ const requiredDate = z.preprocess(
     invalid_type_error: "Date is required",
   }),
 );
+
+export const ledgerSchema = z.object({
+  entityType: z
+    .string({
+      required_error: "Entity type is required",
+      invalid_type_error: "Entity type must be a valid string",
+    })
+    .refine((val) => ENTITY_TYPES.includes(val as any), {
+      message:
+        "Invalid entity type. Allowed values are: " + ENTITY_TYPES.join(", "),
+    }),
+
+  entityId: z
+    .number({
+      required_error: "Entity ID is required",
+      invalid_type_error: "Entity ID must be a number",
+    })
+    .int("Entity ID must be an integer")
+    .positive("Entity ID must be greater than 0"),
+
+  transactionDate: requiredDate, // assuming already well defined
+
+  description: z
+    .string({
+      required_error: "Description is required",
+      invalid_type_error: "Description must be a string",
+    })
+    .min(1, "Description cannot be empty")
+    .max(255, "Description cannot exceed 255 characters"),
+
+  amountType: AmountTypeEnum.refine((val) => val !== undefined, {
+    message: "Amount type is required (e.g., CREDIT or DEBIT)",
+  }),
+
+  amount: z
+    .number({
+      required_error: "Amount is required",
+      invalid_type_error: "Amount must be a valid number",
+    })
+    .positive("Amount must be greater than 0"),
+
+  paymentMode: PaymentModeEnum.optional(),
+
+  referenceType: z
+    .string()
+    .transform((val) => (val === "" ? undefined : val))
+    .optional()
+    .refine((val) => !val || REFERENCE_TYPES.includes(val as any), {
+      message: "Invalid reference type",
+    }),
+
+  referenceId: z
+    .string({
+      invalid_type_error: "Reference ID must be a string",
+    })
+    .optional(),
+
+  remarks: z
+    .string({
+      invalid_type_error: "Remarks must be a string",
+    })
+    .max(500, "Remarks cannot exceed 500 characters")
+    .optional(),
+});
 
 export const bankLedgerSchema = z.object({
   bankName: z.string().min(1, "Bank name is required"),
@@ -575,9 +672,43 @@ const baseFilterSchema = {
   cursor: z.string().optional(), // ✅ composite cursor for keyset pagination
 };
 
+export const ledgerFilterSchema = z.object({
+  entityType: z.enum(["PATIENT", "DOCTOR", "BANK", "CASH"]).optional(),
+  entityId: z.coerce.number().int().positive().optional(),
+  amountType: z.enum(["CREDIT", "DEBIT"]).optional(),
+  paymentMode: z
+    .enum(["CASH", "CARD", "UPI", "BANK_TRANSFER", "CHEQUE"])
+    .optional(),
+  ...baseFilterSchema,
+});
+
 // ============================================
 // 🔹 ADMISSION FILTER
 // ============================================
+
+export const cashFilterSchema = z.object({
+  isActive: z
+    .enum(["true", "false"])
+    .optional()
+    .transform((val) => val === "true"),
+  ...baseFilterSchema,
+});
+
+export type CashFilterInput = z.infer<typeof cashFilterSchema>;
+
+////////
+
+export const bankFilterSchema = z.object({
+  isActive: z
+    .enum(["true", "false"])
+    .optional()
+    .transform((val) => val === "true"),
+  ...baseFilterSchema,
+});
+
+export type BankFilterInput = z.infer<typeof bankFilterSchema>;
+
+//////
 
 export const admissionFilterSchema = z.object({
   gender: z.enum(["Male", "Female", "Other"]).optional(),
@@ -766,4 +897,7 @@ export const FilterSchemas = {
   doctorLedger: doctorLedgerFilterSchema,
   bill: billFilterSchema,
   moneyReceipt: moneyReceiptFilterSchema,
+  cash: cashFilterSchema,
+  bank: bankFilterSchema,
+  ledger: ledgerFilterSchema,
 } as const;

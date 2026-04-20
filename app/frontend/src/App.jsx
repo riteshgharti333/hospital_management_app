@@ -64,6 +64,17 @@ import Help from "./pages/HelpPage/Help";
 import NetworkProvider from "./utils/NetworkProvider";
 import RequireRole from "./utils/RequireRole";
 
+
+import BankTable from "./pages/TableData/BankTable";
+import CashTable from "./pages/TableData/CashTable";
+
+import NewBank from "./pages/Service/NewBank";
+import NewCash from "./pages/Service/NewCash";
+
+import EditBank from "./pages/UpdateData/EditBank";
+import EditCash from "./pages/updateData/EditCash";
+
+
 function App() {
   return (
     <div className="app">
@@ -142,19 +153,31 @@ function App() {
               <Route path="/new-prescription" element={<NewPrescription />} />
               <Route path="/prescription/:id" element={<EditPrescription />} />
 
+              {/* Bank */}
+              <Route path="/bank" element={<BankTable />} />
+              <Route path="/new-bank" element={<NewBank />} />
+              <Route path="/bank/:id" element={<EditBank />} />
+
+
+              {/* Cash */}
+              <Route path="/cash" element={<CashTable />} />
+              <Route path="/new-cash" element={<NewCash />} />
+              <Route path="/cash/:id" element={<EditCash />} />
+
+
               {/* Ledger */}
               <Route path="/new-ledger" element={<NewLedger />} />
-              
+
               <Route path="/ledger/:ledgerName/:id" element={<EditLedger />} />
 
               {/* Ledger Tables */}
               <Route
-                path="/ledger/patient-ledger"
+                path="/ledger/PATIENT"
                 element={<PatientLedger />}
               />
-              <Route path="/ledger/doctor-ledger" element={<DoctorLedger />} />
-              <Route path="/ledger/cash-ledger" element={<CashLedger />} />
-              <Route path="/ledger/bank-ledger" element={<BankLedger />} />
+              <Route path="/ledger/DOCTOR" element={<DoctorLedger />} />
+              <Route path="/ledger/CASH" element={<CashLedger />} />
+              <Route path="/ledger/BANK" element={<BankLedger />} />
 
               {/* Transection */}
               <Route path="/bills" element={<BillTable />} />
