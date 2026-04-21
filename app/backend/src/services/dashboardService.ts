@@ -812,7 +812,6 @@ export const getLedgerFlowSummary = () =>
         }),
       ]);
 
-      // Helper function with proper typing
       const toNumber = (value: any): number => Number(value || 0);
 
       const patientLedger = {
