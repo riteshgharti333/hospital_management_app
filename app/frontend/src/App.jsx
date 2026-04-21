@@ -55,7 +55,7 @@ import EditMoneyReceipt from "./pages/UpdateData/EditMoneyReceipt";
 
 import Login from "./pages/Auth/Login";
 import Profile from "./pages/Auth/Profile";
-import { Toaster } from "sonner";
+import { Toaster, toast } from "sonner";
 import ForgotPassword from "./pages/Auth/ForgotPassword";
 import AdminAccessManagement from "./pages/Auth/AdminAccessManagement";
 import Policy from "./pages/HelpPage/Policy";
@@ -63,7 +63,6 @@ import Terms from "./pages/HelpPage/Terms";
 import Help from "./pages/HelpPage/Help";
 import NetworkProvider from "./utils/NetworkProvider";
 import RequireRole from "./utils/RequireRole";
-
 
 import BankTable from "./pages/TableData/BankTable";
 import CashTable from "./pages/TableData/CashTable";
@@ -73,14 +72,18 @@ import NewCash from "./pages/Service/NewCash";
 
 import EditBank from "./pages/UpdateData/EditBank";
 import EditCash from "./pages/updateData/EditCash";
-
+import { initToastConfig } from "./utils/toastConfig";
 
 function App() {
+  initToastConfig();
   return (
     <div className="app">
       <NetworkProvider>
         <BrowserRouter>
-          <Toaster position="top-center" richColors />
+          <Toaster
+            position="top-center"
+            richColors
+          />
           <Routes>
             <Route path="/login" element={<Login />} />
             <Route path="/forgot-password" element={<ForgotPassword />} />
@@ -158,12 +161,10 @@ function App() {
               <Route path="/new-bank" element={<NewBank />} />
               <Route path="/bank/:id" element={<EditBank />} />
 
-
               {/* Cash */}
               <Route path="/cash" element={<CashTable />} />
               <Route path="/new-cash" element={<NewCash />} />
               <Route path="/cash/:id" element={<EditCash />} />
-
 
               {/* Ledger */}
               <Route path="/new-ledger" element={<NewLedger />} />
@@ -172,12 +173,12 @@ function App() {
 
               {/* Ledger Tables */}
               <Route
-                path="/ledger/PATIENT"
+                path="/ledger/patient-ledger"
                 element={<PatientLedger />}
               />
-              <Route path="/ledger/DOCTOR" element={<DoctorLedger />} />
-              <Route path="/ledger/CASH" element={<CashLedger />} />
-              <Route path="/ledger/BANK" element={<BankLedger />} />
+              <Route path="/ledger/doctor-ledger" element={<DoctorLedger />} />
+              <Route path="/ledger/cash-ledger" element={<CashLedger />} />
+              <Route path="/ledger/bank-ledger" element={<BankLedger />} />
 
               {/* Transection */}
               <Route path="/bills" element={<BillTable />} />

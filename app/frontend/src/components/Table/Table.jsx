@@ -37,7 +37,9 @@ const Table = ({
   const [showFilter, setShowFilter] = useState(false);
   const [localFilters, setLocalFilters] = useState(activeFilters);
   const [filtersChanged, setFiltersChanged] = useState(false);
-  const [debouncedTerm, setDebouncedTerm] = useState(searchConfig?.searchTerm || "");
+  const [debouncedTerm, setDebouncedTerm] = useState(
+    searchConfig?.searchTerm || "",
+  );
 
   const table = useReactTable({
     data: data || [],
@@ -123,7 +125,7 @@ const Table = ({
       }
       return acc;
     },
-    {}
+    {},
   );
 
   const hasActiveFilters = Object.keys(cleanedActiveFilters).length > 0;
@@ -137,7 +139,10 @@ const Table = ({
           <FiSearch className="absolute left-3 top-2.5 text-gray-400" />
           <input
             type="text"
-            placeholder={searchConfig?.placeholder || "Search records... (min. 2 characters)"}
+            placeholder={
+              searchConfig?.placeholder ||
+              "Search records... (min. 2 characters)"
+            }
             value={debouncedTerm}
             onChange={(e) => setDebouncedTerm(e.target.value)}
             className="block w-full pl-10 pr-3 py-2 border border-gray-300 outline-none rounded-lg focus:ring-1 focus:ring-blue-500 focus:border-blue-500 text-[12px]"
@@ -154,27 +159,41 @@ const Table = ({
           {/* Active Filters Badges */}
           {hasActiveFilters && (
             <div className="flex flex-wrap gap-1">
-              {Object.entries(cleanedActiveFilters).map(([key, value]) => (
-                <span
-                  key={key}
-                  className="inline-flex items-center px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded-full"
-                >
-                  {filterLabels[key] || key}:{" "}
-                  {(key === "fromDate" || key === "toDate") && value
-                    ? new Date(value).toLocaleDateString("en-GB")
-                    : value}
-                  <button
-                    onClick={() => {
-                      const newFilters = { ...activeFilters };
-                      delete newFilters[key];
-                      onApplyFilters?.(newFilters);
-                    }}
-                    className="ml-1 text-blue-600 hover:text-blue-800"
+              {Object.entries(cleanedActiveFilters).map(([key, value]) => {
+                let displayValue = value;
+
+                if ((key === "fromDate" || key === "toDate") && value) {
+                  displayValue = new Date(value).toLocaleDateString("en-GB");
+                } else {
+                  displayValue = value
+                    .split("_")
+                    .map(
+                      (word) =>
+                        word.charAt(0).toUpperCase() +
+                        word.slice(1).toLowerCase(),
+                    )
+                    .join(" ");
+                }
+
+                return (
+                  <span
+                    key={key}
+                    className="inline-flex items-center px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded-full"
                   >
-                    <FiX size={12} />
-                  </button>
-                </span>
-              ))}
+                    {filterLabels[key] || key}: {displayValue}
+                    <button
+                      onClick={() => {
+                        const newFilters = { ...activeFilters };
+                        delete newFilters[key];
+                        onApplyFilters?.(newFilters);
+                      }}
+                      className="ml-1 text-blue-600 hover:text-blue-800"
+                    >
+                      <FiX size={12} />
+                    </button>
+                  </span>
+                );
+              })}
             </div>
           )}
 
@@ -302,7 +321,7 @@ const Table = ({
                       >
                         {flexRender(
                           header.column.columnDef.header,
-                          header.getContext()
+                          header.getContext(),
                         )}
                       </th>
                     ))}
@@ -324,7 +343,7 @@ const Table = ({
                         >
                           {flexRender(
                             cell.column.columnDef.cell,
-                            cell.getContext()
+                            cell.getContext(),
                           )}
                         </td>
                       ))}
@@ -402,16 +421,17 @@ const Table = ({
                   {pagination.mode === "search" ? "Search" : "Filter"} results:{" "}
                   <span className="font-medium">{data.length}</span> records
                   found
-                  {searchConfig?.searchTerm && searchConfig.searchTerm.length >= 2 && (
-                    <span>
-                      {" "}
-                      for "
-                      <span className="font-medium">
-                        {searchConfig.searchTerm}
+                  {searchConfig?.searchTerm &&
+                    searchConfig.searchTerm.length >= 2 && (
+                      <span>
+                        {" "}
+                        for "
+                        <span className="font-medium">
+                          {searchConfig.searchTerm}
+                        </span>
+                        "
                       </span>
-                      "
-                    </span>
-                  )}
+                    )}
                 </p>
               </div>
             )}

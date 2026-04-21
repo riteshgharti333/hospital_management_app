@@ -2,12 +2,11 @@ import React, { useMemo, useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { FaPlus } from "react-icons/fa6";
 import Table from "../../components/Table/Table";
-
 import {
-  useGetCashLedgerEntries,
-  useSearchCashLedger,
-  useFilterCashLedger,
-} from "../../feature/ledgerHook/useCashLedger";
+  useGetLedgersByEntity,
+  useFilterLedgers,
+  useSearchLedgersByEntity,
+} from "../../feature/hooks/useLedger";
 
 const filterLabels = {
   amountType: "Transaction Type",
@@ -23,51 +22,51 @@ const CashLedger = () => {
   const [filters, setFilters] = useState({});
   const [mode, setMode] = useState("normal"); // normal | search | filter
 
-  // Normal paginated ledger
+  // Normal dataset
   const { data: ledgerData, isLoading: ledgerLoading } =
-    useGetCashLedgerEntries(currentCursor, 50);
+    useGetLedgersByEntity("CASH");
 
-    console.log("Cash Ledger Data:", ledgerData);
-
-  // Search results
+  // Search dataset
   const { data: searchData, isLoading: searchLoading } =
-    useSearchCashLedger(searchTerm);
+    useSearchLedgersByEntity("CASH", searchTerm);
 
-  // Filter results
-  const { data: filterData, isLoading: filterLoading } = useFilterCashLedger({
-    ...filters,
-    cursor: currentCursor,
-    limit: 50,
-  });
+  // Filter dataset
+  const { data: filterData, isLoading: filterLoading } = useFilterLedgers(
+    "CASH",
+    {
+      ...filters,
+      cursor: currentCursor,
+      limit: 50,
+    },
+  );
 
-  // Select active dataset
+  console.log(filterData);
+
+  // Select dataset based on mode
   const getCurrentData = () => {
     switch (mode) {
       case "search":
-        return { 
-          data: searchData?.transactions || [], 
-          pagination: null,
-          currentBalance: searchData?.currentBalance 
-        };
+        return { data: searchData || [], pagination: null };
       case "filter":
-        return { 
-          data: filterData?.transactions || [], 
-          pagination: filterData?.pagination || {},
-          currentBalance: filterData?.currentBalance 
-        };
+        return filterData || { data: [], pagination: {} };
       default:
-        return { 
-          data: ledgerData?.transactions || [], 
-          pagination: ledgerData?.pagination || {},
-          currentBalance: ledgerData?.currentBalance 
-        };
+        return ledgerData || { transactions: [], pagination: {} };
     }
   };
 
-  const { data, pagination, currentBalance } = getCurrentData();
+  const currentData = getCurrentData();
+  const data =
+    mode === "normal" || mode === "filter"
+      ? currentData?.transactions || []
+      : currentData?.data || [];
+  const pagination = currentData?.pagination || {};
+  const currentBalance =
+    mode === "normal" || mode === "filter"
+      ? currentData?.currentBalance || 0
+      : null;
   const isLoading = ledgerLoading || searchLoading || filterLoading;
 
-  // Auto-switch modes
+  // Mode switching logic
   useEffect(() => {
     if (searchTerm) {
       setMode("search");
@@ -104,10 +103,10 @@ const CashLedger = () => {
               });
         },
       },
-      { 
-        accessorKey: "description", 
+      {
+        accessorKey: "description",
         header: "Description",
-        cell: (info) => info.getValue() || "-"
+        cell: (info) => info.getValue() || "-",
       },
       {
         accessorKey: "amountType",
@@ -119,9 +118,13 @@ const CashLedger = () => {
               ? "bg-red-100 text-red-700"
               : "bg-green-100 text-green-700";
 
+          const displayText = value === "CREDIT" ? "Credit" : "Debit";
+
           return (
-            <span className={`px-2 py-1 rounded text-xs font-medium ${classes}`}>
-              {value === "CREDIT" ? "Credit" : "Debit"}
+            <span
+              className={`px-2 py-1 rounded text-xs font-medium ${classes}`}
+            >
+              {displayText}
             </span>
           );
         },
@@ -133,7 +136,13 @@ const CashLedger = () => {
           const row = info.row.original;
           const amount = parseFloat(row.amount).toFixed(2);
           return (
-            <span className={row.amountType === "CREDIT" ? "text-green-600 font-medium" : "text-red-600 font-medium"}>
+            <span
+              className={
+                row.amountType === "CREDIT"
+                  ? "text-green-600 font-medium"
+                  : "text-red-600 font-medium"
+              }
+            >
               ₹ {amount}
             </span>
           );
@@ -150,7 +159,31 @@ const CashLedger = () => {
       {
         accessorKey: "paymentMode",
         header: "Payment Mode",
-        cell: (info) => info.getValue() || "-",
+        cell: (info) => {
+          const mode = info.getValue();
+          if (!mode) return "-";
+
+          const colorMap = {
+            CASH: "bg-green-100 text-green-700",
+            CARD: "bg-blue-100 text-blue-700",
+            UPI: "bg-purple-100 text-purple-700",
+            BANK_TRANSFER: "bg-orange-100 text-orange-700",
+            CHEQUE: "bg-yellow-100 text-yellow-700",
+          };
+
+          const displayText = mode
+            .split("_")
+            .map((word) => word.charAt(0) + word.slice(1).toLowerCase())
+            .join(" ");
+
+          return (
+            <span
+              className={`px-2 py-1 rounded text-xs font-medium ${colorMap[mode] || "bg-gray-100 text-gray-700"}`}
+            >
+              {displayText}
+            </span>
+          );
+        },
       },
       {
         accessorKey: "referenceType",
@@ -161,19 +194,16 @@ const CashLedger = () => {
             <span className="text-xs bg-gray-100 px-2 py-1 rounded">
               {value}
             </span>
-          ) : "-";
+          ) : (
+            "-"
+          );
         },
       },
-      { 
-        accessorKey: "remarks", 
-        header: "Remarks",
-        cell: (info) => info.getValue() || "-"
-      },
+     
     ],
-    []
+    [],
   );
 
-  // Pagination
   const handleNextPage = () => {
     if (pagination?.nextCursor && mode !== "search") {
       setCursorHistory((prev) => [...prev, currentCursor]);
@@ -183,23 +213,46 @@ const CashLedger = () => {
 
   const handlePrevPage = () => {
     if (cursorHistory.length > 0) {
-      const prevCursor = cursorHistory[cursorHistory.length - 1];
+      const previousCursor = cursorHistory[cursorHistory.length - 1];
       setCursorHistory((prev) => prev.slice(0, -1));
-      setCurrentCursor(prevCursor);
+      setCurrentCursor(previousCursor);
     }
   };
 
-  // Filters
   const handleApplyFilters = (newFilters) => {
     const processedFilters = { ...newFilters };
-    
+
+    // Convert display values back to API enum values
+    if (processedFilters.amountType === "Credit") {
+      processedFilters.amountType = "CREDIT";
+    } else if (processedFilters.amountType === "Debit") {
+      processedFilters.amountType = "DEBIT";
+    }
+
+    // Payment mode mapping
+    const paymentModeMap = {
+      Cash: "CASH",
+      Card: "CARD",
+      UPI: "UPI",
+      "Bank Transfer": "BANK_TRANSFER",
+      Cheque: "CHEQUE",
+    };
+
+    if (
+      processedFilters.paymentMode &&
+      paymentModeMap[processedFilters.paymentMode]
+    ) {
+      processedFilters.paymentMode =
+        paymentModeMap[processedFilters.paymentMode];
+    }
+
     // Remove empty values
-    Object.keys(processedFilters).forEach(key => {
+    Object.keys(processedFilters).forEach((key) => {
       if (processedFilters[key] === "" || processedFilters[key] === undefined) {
         delete processedFilters[key];
       }
     });
-    
+
     setFilters(processedFilters);
     setCurrentCursor(null);
     setCursorHistory([]);
@@ -220,7 +273,7 @@ const CashLedger = () => {
           <h2 className="text-2xl font-bold text-gray-800 flex items-center">
             Cash Ledger
           </h2>
-          {mode === "normal" && currentBalance && (
+          {mode !== "search" && currentBalance !== null && (
             <p className="text-sm text-gray-600 mt-1">
               Current Balance:{" "}
               <span className="font-semibold text-green-600">
@@ -241,7 +294,7 @@ const CashLedger = () => {
         ledger={true}
         loading={isLoading}
         searchConfig={{
-          placeholder: "Search by transaction code or description...",
+          placeholder: "Search by transaction code...",
           searchTerm,
           onSearchChange: setSearchTerm,
         }}
@@ -250,13 +303,13 @@ const CashLedger = () => {
             key: "amountType",
             label: "Transaction Type",
             type: "select",
-            options: ["CREDIT", "DEBIT"],
+            options: ["Credit", "Debit"],
           },
           {
             key: "paymentMode",
             label: "Payment Mode",
             type: "select",
-            options: ["CASH", "BANK", "UPI", "CARD"],
+            options: ["Cash", "Card", "UPI", "Bank Transfer", "Cheque"],
           },
           { key: "fromDate", label: "From Date", type: "date" },
           { key: "toDate", label: "To Date", type: "date" },

@@ -408,14 +408,10 @@ exports.ledgerSchema = zod_1.z.object({
         .refine((val) => exports.ENTITY_TYPES.includes(val), {
         message: "Invalid entity type. Allowed values are: " + exports.ENTITY_TYPES.join(", "),
     }),
-    entityId: zod_1.z
-        .number({
+    entityId: zod_1.z.string({
         required_error: "Entity ID is required",
-        invalid_type_error: "Entity ID must be a number",
-    })
-        .int("Entity ID must be an integer")
-        .positive("Entity ID must be greater than 0"),
-    transactionDate: requiredDate, // assuming already well defined
+    }),
+    transactionDate: requiredDate,
     description: zod_1.z
         .string({
         required_error: "Description is required",
@@ -426,12 +422,11 @@ exports.ledgerSchema = zod_1.z.object({
     amountType: exports.AmountTypeEnum.refine((val) => val !== undefined, {
         message: "Amount type is required (e.g., CREDIT or DEBIT)",
     }),
-    amount: zod_1.z
-        .number({
+    // ✅ Change this line
+    amount: zod_1.z.coerce.number({
         required_error: "Amount is required",
         invalid_type_error: "Amount must be a valid number",
-    })
-        .positive("Amount must be greater than 0"),
+    }).positive("Amount must be greater than 0"),
     paymentMode: exports.PaymentModeEnum.optional(),
     referenceType: zod_1.z
         .string()
@@ -563,7 +558,6 @@ const baseFilterSchema = {
 };
 exports.ledgerFilterSchema = zod_1.z.object({
     entityType: zod_1.z.enum(["PATIENT", "DOCTOR", "BANK", "CASH"]).optional(),
-    entityId: zod_1.z.coerce.number().int().positive().optional(),
     amountType: zod_1.z.enum(["CREDIT", "DEBIT"]).optional(),
     paymentMode: zod_1.z
         .enum(["CASH", "CARD", "UPI", "BANK_TRANSFER", "CHEQUE"])

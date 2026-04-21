@@ -5,7 +5,7 @@ import {
   getLedgerRecordById,
   updateLedgerRecord,
   deleteLedgerRecord,
-  searchLedgerResults,
+  searchLedgerResultsByEntity,
   filterLedgers,
   getLedgersByEntityRecord,
 } from "../controllers/LedgerController";
@@ -20,32 +20,36 @@ router.post(
   "/",
   authenticateUser,
   authorizeRoles("ADMIN", "ACCOUNTANT"),
-  createLedgerRecord
-);
+  createLedgerRecord,
+); 
 
-// LIST
+// LIST ALL
 router.get("/", getAllLedgerRecords);
 
 // SEARCH & FILTER
-router.get("/search", searchLedgerResults);
-router.get("/filter", filterLedgers);
+router.get("/:entityType/search", searchLedgerResultsByEntity);
+router.get("/:entityType/filter", filterLedgers);
 
 // GET LEDGERS BY ENTITY
-router.get("/:entityType", getLedgersByEntityRecord);
+router.get("/entity/:entityType", getLedgersByEntityRecord);
 
-// GET / UPDATE / DELETE
-router
-  .route("/:id")
-  .get(getLedgerRecordById)
-  .put(
-    authenticateUser,
-    authorizeRoles("ADMIN", "ACCOUNTANT"),
-    updateLedgerRecord
-  )
-  .delete(
-    authenticateUser,
-    authorizeRoles("ADMIN"),
-    deleteLedgerRecord
-  );
+// GET BY ID
+router.get("/:id", getLedgerRecordById);
+
+// UPDATE BY ID
+router.put(
+  "/:id",
+  authenticateUser,
+  authorizeRoles("ADMIN", "ACCOUNTANT"),
+  updateLedgerRecord,
+);
+
+// DELETE BY ID
+router.delete(
+  "/:id",
+  authenticateUser,
+  authorizeRoles("ADMIN"),
+  deleteLedgerRecord,
+);
 
 export default router;

@@ -167,13 +167,33 @@ const NewLedger = () => {
     setValue("entityId", "");
   };
 
+  // Update the handleEntitySelect function
   const handleEntitySelect = (entity) => {
     setSelectedEntity(entity);
-    setValue("entityId", entity.id);
+
+    // Map the correct ID field based on ledger type
+    let entityIdValue;
+    switch (selectedLedgerType.value) {
+      case "PATIENT":
+        entityIdValue = entity.hospitalPatientId || entity.patientId;
+        break;
+      case "DOCTOR":
+        entityIdValue = entity.registrationNo;
+        break;
+      case "CASH":
+        entityIdValue = entity.code;
+        break;
+      case "BANK":
+        entityIdValue = entity.code || entity.accountNo;
+        break;
+      default:
+        entityIdValue = entity.id;
+    }
+
+    setValue("entityId", entityIdValue);
     setSearchTerm("");
     setShowSearchResults(false);
   };
-
   // Handle click outside to close search results
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -205,13 +225,13 @@ const NewLedger = () => {
 
     const formattedData = {
       entityType: data.entityType,
-      entityId: parseInt(data.entityId),
+      entityId: data.entityId,
       transactionDate: new Date(data.transactionDate).toISOString(),
       description: data.description,
-      amountType: data.amountType, // "CREDIT" | "DEBIT"
+      amountType: data.amountType,
       amount: Number(data.amount) || parseFloat(data.amount),
-      paymentMode: data.paymentMode || "CASH", // Enum value
-      referenceType: data.referenceType || "", // Enum value or null
+      paymentMode: data.paymentMode || "CASH",
+      referenceType: data.referenceType || "",
       referenceId: data.referenceId?.trim() || "",
       remarks: data.remarks?.trim() || "",
     };
@@ -222,16 +242,28 @@ const NewLedger = () => {
       const response = await createLedger(formattedData);
       if (response?.data?.success) {
         toast.success("Ledger entry created successfully");
-        navigate(`/ledger/${response.data.data.id}`);
+
+        const ledgerId = response.data.data.id;
+
+        // Redirect based on entity type with ID
+        const redirectMap = {
+          CASH: `/ledger/cash-ledger/${ledgerId}`,
+          PATIENT: `/ledger/patient-ledger/${ledgerId}`,
+          DOCTOR: `/ledger/doctor-ledger/${ledgerId}`,
+          BANK: `/ledger/bank-ledger/${ledgerId}`,
+        };
+
+        const redirectPath =
+          redirectMap[data.entityType] || `/ledger/${ledgerId}`;
+        navigate(redirectPath);
       }
     } catch (error) {
       console.error("Error creating ledger:", error);
       toast.error(error.response?.data?.message || "Failed to create ledger");
     }
   };
-
   return (
-    <div className="mx-auto max-w-4xl">
+    <div className="">
       <div className="mb-8">
         <div className="flex items-center">
           <BackButton />

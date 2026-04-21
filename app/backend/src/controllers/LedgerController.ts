@@ -32,7 +32,7 @@ export const createLedgerRecord = catchAsyncError(
       message: "Ledger entry created successfully",
       data: ledger,
     });
-  }
+  },
 );
 
 export const getAllLedgerRecords = catchAsyncError(
@@ -51,7 +51,7 @@ export const getAllLedgerRecords = catchAsyncError(
         hasMore: result.pagination.hasMore,
       },
     });
-  }
+  },
 );
 
 export const getLedgerRecordById = catchAsyncError(
@@ -63,7 +63,9 @@ export const getLedgerRecordById = catchAsyncError(
 
     const ledger = await getLedgerById(id);
     if (!ledger) {
-      return next(new ErrorHandler("Ledger entry not found", StatusCodes.NOT_FOUND));
+      return next(
+        new ErrorHandler("Ledger entry not found", StatusCodes.NOT_FOUND),
+      );
     }
 
     sendResponse(res, {
@@ -72,16 +74,17 @@ export const getLedgerRecordById = catchAsyncError(
       message: "Ledger details fetched",
       data: ledger,
     });
-  }
+  },
 );
-
 
 export const getLedgersByEntityRecord = catchAsyncError(
   async (req: Request, res: Response, next: NextFunction) => {
     const { entityType } = req.params;
 
     // Fix: Ensure entityType is a string
-    const entityTypeStr = Array.isArray(entityType) ? entityType[0] : entityType;
+    const entityTypeStr = Array.isArray(entityType)
+      ? entityType[0]
+      : entityType; 
 
     const ledgers = await getLedgersByEntity(entityTypeStr);
     const balance = await getCurrentBalance(entityTypeStr);
@@ -95,7 +98,7 @@ export const getLedgersByEntityRecord = catchAsyncError(
         currentBalance: balance,
       },
     });
-  }
+  },
 );
 
 export const updateLedgerRecord = catchAsyncError(
@@ -117,7 +120,7 @@ export const updateLedgerRecord = catchAsyncError(
       message: "Ledger entry updated successfully",
       data: updatedLedger,
     });
-  }
+  },
 );
 
 export const deleteLedgerRecord = catchAsyncError(
@@ -133,7 +136,7 @@ export const deleteLedgerRecord = catchAsyncError(
 
       if (!deletedLedger) {
         return next(
-          new ErrorHandler("Ledger entry not found", StatusCodes.NOT_FOUND)
+          new ErrorHandler("Ledger entry not found", StatusCodes.NOT_FOUND),
         );
       }
 
@@ -151,43 +154,57 @@ export const deleteLedgerRecord = catchAsyncError(
         return next(
           new ErrorHandler(
             "Cannot delete ledger entry: Related records exist.",
-            StatusCodes.CONFLICT
-          )
+            StatusCodes.CONFLICT,
+          ),
         );
       }
 
       return next(
         new ErrorHandler(
           "An error occurred while deleting ledger entry",
-          StatusCodes.INTERNAL_ERROR
-        )
+          StatusCodes.INTERNAL_ERROR,
+        ),
       );
     }
-  }
+  },
 );
 
-export const searchLedgerResults = catchAsyncError(
+export const searchLedgerResultsByEntity = catchAsyncError(
   async (req: Request, res: Response, next: NextFunction) => {
     const { query } = req.query;
+    const { entityType } = req.params;
+    const entityTypeString = Array.isArray(entityType) ? entityType[0] : entityType;
 
     const searchTerm = validateSearchQuery(query, next);
     if (!searchTerm) return;
 
-    const ledgers = await searchLedger(searchTerm);
+    // Get search results
+    const allResults = await searchLedger(searchTerm);
+    
+    // Filter by entityType
+    const filteredResults = allResults.filter(
+      (ledger: any) => ledger.entityType === entityTypeString
+    );
 
     sendResponse(res, {
       success: true,
       statusCode: StatusCodes.OK,
-      message: "Search results fetched successfully",
-      data: ledgers,
+      message: `Search results fetched successfully for ${entityTypeString} ledgers`,
+      data: filteredResults,
     });
   }
 );
 
 export const filterLedgers = catchAsyncError(async (req, res) => {
+  const { entityType } = req.params;
+  const entityTypeString = Array.isArray(entityType) ? entityType[0] : entityType;
+  
   const validated = ledgerFilterSchema.parse(req.query);
 
-  const { data, nextCursor, hasMore } = await filterLedgersService(validated);
+  const { data, nextCursor, hasMore } = await filterLedgersService(
+    validated,
+    entityTypeString
+  );
 
   sendResponse(res, {
     success: true,

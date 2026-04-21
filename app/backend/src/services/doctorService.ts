@@ -130,11 +130,10 @@ export const searchDoctor = createSearchService(prisma, {
     "qualification",
     "specialization",
     "status",
-    "createdAt",   
+    "createdAt",
+    "email",
   ],
 });
-
-
 
 type FilterDoctorParams = {
   fromDate?: Date;
@@ -144,9 +143,7 @@ type FilterDoctorParams = {
   limit?: number;
 };
 
-export const filterDoctorsService = async (
-  params: FilterDoctorParams
-) => {
+export const filterDoctorsService = async (params: FilterDoctorParams) => {
   const { fromDate, toDate, status, cursor, limit } = params;
 
   const where: Record<string, any> = {};
@@ -181,6 +178,6 @@ export const filterDoctorsService = async (
       // },
     },
     cursor,
-    where
+    where,
   );
 };

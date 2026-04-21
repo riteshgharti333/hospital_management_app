@@ -777,7 +777,7 @@ export declare const ENTITY_TYPES: readonly ["PATIENT", "DOCTOR", "BANK", "CASH"
 export declare const REFERENCE_TYPES: readonly ["OPD", "IPD", "PHARMACY", "LAB", "PROCEDURE", "SALARY", "EXPENSE", "ADVANCE", "REFUND", "OTHER"];
 export declare const ledgerSchema: z.ZodObject<{
     entityType: z.ZodEffects<z.ZodString, string, string>;
-    entityId: z.ZodNumber;
+    entityId: z.ZodString;
     transactionDate: z.ZodEffects<z.ZodDate, Date, unknown>;
     description: z.ZodString;
     amountType: z.ZodEffects<z.ZodEnum<["CREDIT", "DEBIT"]>, "CREDIT" | "DEBIT", "CREDIT" | "DEBIT">;
@@ -790,7 +790,7 @@ export declare const ledgerSchema: z.ZodObject<{
     description: string;
     amount: number;
     entityType: string;
-    entityId: number;
+    entityId: string;
     transactionDate: Date;
     amountType: "CREDIT" | "DEBIT";
     paymentMode?: "CASH" | "CARD" | "UPI" | "BANK_TRANSFER" | "CHEQUE" | undefined;
@@ -801,7 +801,7 @@ export declare const ledgerSchema: z.ZodObject<{
     description: string;
     amount: number;
     entityType: string;
-    entityId: number;
+    entityId: string;
     amountType: "CREDIT" | "DEBIT";
     paymentMode?: "CASH" | "CARD" | "UPI" | "BANK_TRANSFER" | "CHEQUE" | undefined;
     remarks?: string | undefined;
@@ -1064,14 +1064,12 @@ export declare const ledgerFilterSchema: z.ZodObject<{
     limit: z.ZodDefault<z.ZodNumber>;
     cursor: z.ZodOptional<z.ZodString>;
     entityType: z.ZodOptional<z.ZodEnum<["PATIENT", "DOCTOR", "BANK", "CASH"]>>;
-    entityId: z.ZodOptional<z.ZodNumber>;
     amountType: z.ZodOptional<z.ZodEnum<["CREDIT", "DEBIT"]>>;
     paymentMode: z.ZodOptional<z.ZodEnum<["CASH", "CARD", "UPI", "BANK_TRANSFER", "CHEQUE"]>>;
 }, "strip", z.ZodTypeAny, {
     limit: number;
     paymentMode?: "CASH" | "CARD" | "UPI" | "BANK_TRANSFER" | "CHEQUE" | undefined;
     entityType?: "CASH" | "PATIENT" | "DOCTOR" | "BANK" | undefined;
-    entityId?: number | undefined;
     amountType?: "CREDIT" | "DEBIT" | undefined;
     fromDate?: Date | undefined;
     toDate?: Date | undefined;
@@ -1079,7 +1077,6 @@ export declare const ledgerFilterSchema: z.ZodObject<{
 }, {
     paymentMode?: "CASH" | "CARD" | "UPI" | "BANK_TRANSFER" | "CHEQUE" | undefined;
     entityType?: "CASH" | "PATIENT" | "DOCTOR" | "BANK" | undefined;
-    entityId?: number | undefined;
     amountType?: "CREDIT" | "DEBIT" | undefined;
     fromDate?: Date | undefined;
     toDate?: Date | undefined;
@@ -1753,14 +1750,12 @@ export declare const FilterSchemas: {
         limit: z.ZodDefault<z.ZodNumber>;
         cursor: z.ZodOptional<z.ZodString>;
         entityType: z.ZodOptional<z.ZodEnum<["PATIENT", "DOCTOR", "BANK", "CASH"]>>;
-        entityId: z.ZodOptional<z.ZodNumber>;
         amountType: z.ZodOptional<z.ZodEnum<["CREDIT", "DEBIT"]>>;
         paymentMode: z.ZodOptional<z.ZodEnum<["CASH", "CARD", "UPI", "BANK_TRANSFER", "CHEQUE"]>>;
     }, "strip", z.ZodTypeAny, {
         limit: number;
         paymentMode?: "CASH" | "CARD" | "UPI" | "BANK_TRANSFER" | "CHEQUE" | undefined;
         entityType?: "CASH" | "PATIENT" | "DOCTOR" | "BANK" | undefined;
-        entityId?: number | undefined;
         amountType?: "CREDIT" | "DEBIT" | undefined;
         fromDate?: Date | undefined;
         toDate?: Date | undefined;
@@ -1768,7 +1763,6 @@ export declare const FilterSchemas: {
     }, {
         paymentMode?: "CASH" | "CARD" | "UPI" | "BANK_TRANSFER" | "CHEQUE" | undefined;
         entityType?: "CASH" | "PATIENT" | "DOCTOR" | "BANK" | undefined;
-        entityId?: number | undefined;
         amountType?: "CREDIT" | "DEBIT" | undefined;
         fromDate?: Date | undefined;
         toDate?: Date | undefined;

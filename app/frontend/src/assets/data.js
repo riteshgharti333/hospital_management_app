@@ -37,20 +37,20 @@ import { HiOutlineBanknotes } from "react-icons/hi2";
 const ledgerTitles = [
   {
     title: "Patient Ledger",
-    link: "ledger/PATIENT",
+    link: "ledger/patient-ledger",
   },
   {
     title: "Doctor Ledger",
-    link: "ledger/DOCTOR",
+    link: "ledger/doctor-ledger",
   },
 
   {
     title: "Cash Ledger",
-    link: "ledger/CASH",
+    link: "ledger/cash-ledger",
   },
   {
     title: "Bank Ledger",
-    link: "ledger/BANK",
+    link: "ledger/bank-ledger",
   },
 ];
 

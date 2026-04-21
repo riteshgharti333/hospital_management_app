@@ -10,22 +10,24 @@ export const getAllLedgersAPI = (cursor, limit) =>
     },
   });
 
-export const filterLedgerAPI = (filters) =>
-  axiosInstance.get("/ledger/filter", {
+
+  // API function - entityType is now part of the URL path
+export const filterLedgerAPI = (entityType, filters) =>
+  axiosInstance.get(`/ledger/${entityType}/filter`, {
     params: filters,
   });
 
 export const getLedgerByIdAPI = (id) => axiosInstance.get(`/ledger/${id}`);
 
 export const getLedgersByEntityAPI = (entityType) =>
-  axiosInstance.get(`/ledger/${entityType}`);
+  axiosInstance.get(`/ledger/entity/${entityType}`);
 
 export const updateLedgerAPI = (id, data) =>
   axiosInstance.put(`/ledger/${id}`, data);
 
 export const deleteLedgerAPI = (id) => axiosInstance.delete(`/ledger/${id}`);
 
-export const searchLedgerAPI = (searchTerm) =>
-  axiosInstance.get(`/ledger/search`, {
+export const searchLedgerByEntityAPI = (entityType, searchTerm) =>
+  axiosInstance.get(`/ledger/${entityType}/search`, {
     params: { query: searchTerm },
   });

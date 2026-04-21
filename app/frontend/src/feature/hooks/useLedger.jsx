@@ -7,7 +7,7 @@ import {
   getLedgersByEntityAPI,
   updateLedgerAPI,
   filterLedgerAPI,
-  searchLedgerAPI,
+  searchLedgerByEntityAPI, // Import the API function, not the hook
 } from "../api/ledgerApi";
 import { toast } from "sonner";
 import { getErrorMessage } from "../../utils/errorUtils";
@@ -26,15 +26,20 @@ export const useGetLedgers = (cursor = null, limit = 50) => {
   });
 };
 
-// Filter ledger entries
-export const useFilterLedgers = (filters) => {
+// Filter ledger entries hook
+// Filter ledger entries hook
+export const useFilterLedgers = (entityType, filters) => {
   return useQuery({
-    queryKey: ["ledger-filter", filters],
+    queryKey: ["ledger-filter", entityType, filters],
     queryFn: async () => {
-      const { data } = await filterLedgerAPI(filters);
-      return data || { data: [], pagination: {} };
+      const { data } = await filterLedgerAPI(entityType, filters);
+      return {
+        transactions: data?.data || [],  // data.data is the array
+        pagination: data?.pagination || {},
+        currentBalance: null  // Filter doesn't return currentBalance
+      };
     },
-    enabled: !!filters,
+    enabled: !!entityType && Object.keys(filters || {}).length > 0,
     retry: 1,
     onError: (error) => toast.error(getErrorMessage(error)),
   });
@@ -55,14 +60,14 @@ export const useGetLedgerById = (id) => {
 };
 
 // FETCH LEDGERS BY ENTITY
-export const useGetLedgersByEntity = (entityType, entityId) => {
+export const useGetLedgersByEntity = (entityType) => {
   return useQuery({
-    queryKey: ["ledger", entityType, entityId],
+    queryKey: ["ledger", entityType],
     queryFn: async () => {
-      const { data } = await getLedgersByEntityAPI(entityType, entityId);
+      const { data } = await getLedgersByEntityAPI(entityType);
       return data?.data || { transactions: [], currentBalance: 0 };
     },
-    enabled: !!entityType && !!entityId,
+    enabled: !!entityType,
     retry: 1,
     onError: (error) => toast.error(getErrorMessage(error)),
   });
@@ -113,16 +118,16 @@ export const useDeleteLedger = () => {
   });
 };
 
-// SEARCH LEDGERS
-export const useSearchLedgers = (searchTerm) => {
+// SEARCH LEDGERS BY ENTITY (Hook definition - only once)
+export const useSearchLedgersByEntity = (entityType, searchTerm) => {
   return useQuery({
-    queryKey: ["ledger-search", searchTerm],
+    queryKey: ["ledger-search", entityType, searchTerm],
     queryFn: async () => {
-      if (!searchTerm) return [];
-      const { data } = await searchLedgerAPI(searchTerm);
+      if (!searchTerm || searchTerm.length < 2) return [];
+      const { data } = await searchLedgerByEntityAPI(entityType, searchTerm);
       return data?.data || [];
     },
-    enabled: !!searchTerm,
+    enabled: !!entityType && !!searchTerm && searchTerm.length >= 2,
     retry: 1,
     onError: (err) => toast.error(getErrorMessage(err)),
   });

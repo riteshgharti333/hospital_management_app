@@ -739,81 +739,104 @@ export const getLedgerFlowSummary = () =>
     key: "dashboard:ledger-flow",
     ttlSeconds: 2 * 60,
     fetcher: async () => {
-      // Execute all aggregations in parallel
+      // Execute all aggregations in parallel for single ledger table
       const [
         patientCredit,
         patientDebit,
         doctorCredit,
         doctorDebit,
+        cashCredit,
+        cashDebit,
         bankCredit,
         bankDebit,
-        cashIncome,
-        cashExpense,
       ] = await Promise.all([
-        prisma.patientLedger.aggregate({
+        // Patient Ledger
+        prisma.ledger.aggregate({
           _sum: { amount: true },
-          where: { amountType: "CREDIT" },
+          where: { 
+            entityType: "PATIENT",
+            amountType: "CREDIT" 
+          },
         }),
-        prisma.patientLedger.aggregate({
+        prisma.ledger.aggregate({
           _sum: { amount: true },
-          where: { amountType: "DEBIT" },
+          where: { 
+            entityType: "PATIENT",
+            amountType: "DEBIT" 
+          },
         }),
-        prisma.doctorLedger.aggregate({
+        // Doctor Ledger
+        prisma.ledger.aggregate({
           _sum: { amount: true },
-          where: { amountType: "CREDIT" },
+          where: { 
+            entityType: "DOCTOR",
+            amountType: "CREDIT" 
+          },
         }),
-        prisma.doctorLedger.aggregate({
+        prisma.ledger.aggregate({
           _sum: { amount: true },
-          where: { amountType: "DEBIT" },
+          where: { 
+            entityType: "DOCTOR",
+            amountType: "DEBIT" 
+          },
         }),
-        prisma.bankLedger.aggregate({
+        // Cash Ledger
+        prisma.ledger.aggregate({
           _sum: { amount: true },
-          where: { amountType: "CREDIT" },
+          where: { 
+            entityType: "CASH",
+            amountType: "CREDIT" 
+          },
         }),
-        prisma.bankLedger.aggregate({
+        prisma.ledger.aggregate({
           _sum: { amount: true },
-          where: { amountType: "DEBIT" },
+          where: { 
+            entityType: "CASH",
+            amountType: "DEBIT" 
+          },
         }),
-        prisma.cashLedger.aggregate({
+        // Bank Ledger
+        prisma.ledger.aggregate({
           _sum: { amount: true },
-          where: { amountType: "INCOME" },
+          where: { 
+            entityType: "BANK",
+            amountType: "CREDIT" 
+          },
         }),
-        prisma.cashLedger.aggregate({
+        prisma.ledger.aggregate({
           _sum: { amount: true },
-          where: { amountType: "EXPENSE" },
+          where: { 
+            entityType: "BANK",
+            amountType: "DEBIT" 
+          },
         }),
       ]);
 
+      // Helper function with proper typing
+      const toNumber = (value: any): number => Number(value || 0);
+
       const patientLedger = {
-        moneyIn: Number(patientCredit._sum.amount || 0),
-        moneyOut: Number(patientDebit._sum.amount || 0),
-        netBalance:
-          Number(patientCredit._sum.amount || 0) -
-          Number(patientDebit._sum.amount || 0),
+        moneyIn: toNumber(patientCredit._sum.amount),
+        moneyOut: toNumber(patientDebit._sum.amount),
+        netBalance: toNumber(patientCredit._sum.amount) - toNumber(patientDebit._sum.amount),
       };
 
       const doctorLedger = {
-        moneyIn: Number(doctorCredit._sum.amount || 0),
-        moneyOut: Number(doctorDebit._sum.amount || 0),
-        netBalance:
-          Number(doctorCredit._sum.amount || 0) -
-          Number(doctorDebit._sum.amount || 0),
-      };
-
-      const bankLedger = {
-        moneyIn: Number(bankCredit._sum.amount || 0),
-        moneyOut: Number(bankDebit._sum.amount || 0),
-        netBalance:
-          Number(bankCredit._sum.amount || 0) -
-          Number(bankDebit._sum.amount || 0),
+        moneyIn: toNumber(doctorCredit._sum.amount),
+        moneyOut: toNumber(doctorDebit._sum.amount),
+        netBalance: toNumber(doctorCredit._sum.amount) - toNumber(doctorDebit._sum.amount),
       };
 
       const cashLedger = {
-        moneyIn: Number(cashIncome._sum.amount || 0),
-        moneyOut: Number(cashExpense._sum.amount || 0),
-        netBalance:
-          Number(cashIncome._sum.amount || 0) -
-          Number(cashExpense._sum.amount || 0),
+        moneyIn: toNumber(cashCredit._sum.amount),
+        moneyOut: toNumber(cashDebit._sum.amount),
+        netBalance: toNumber(cashCredit._sum.amount) - toNumber(cashDebit._sum.amount),
+      };
+
+      const bankLedger = {
+        moneyIn: toNumber(bankCredit._sum.amount),
+        moneyOut: toNumber(bankDebit._sum.amount),
+        netBalance: toNumber(bankCredit._sum.amount) - toNumber(bankDebit._sum.amount),
       };
 
       const totalMoneyIn =
@@ -821,6 +844,7 @@ export const getLedgerFlowSummary = () =>
         doctorLedger.moneyIn +
         cashLedger.moneyIn +
         bankLedger.moneyIn;
+        
       const totalMoneyOut =
         patientLedger.moneyOut +
         doctorLedger.moneyOut +

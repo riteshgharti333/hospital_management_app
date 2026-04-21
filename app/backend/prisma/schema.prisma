@@ -372,8 +372,8 @@ model Ledger {
   id              Int      @id @default(autoincrement())
   code            String   @unique // TXN-0001
 
-  entityType      String   // "PATIENT", "DOCTOR", "BANK", "CASH"
-  entityId        Int
+  entityType      String  
+  entityId        String
 
   transactionDate DateTime
   description     String

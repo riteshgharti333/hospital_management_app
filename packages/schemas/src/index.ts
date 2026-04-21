@@ -497,15 +497,11 @@ export const ledgerSchema = z.object({
         "Invalid entity type. Allowed values are: " + ENTITY_TYPES.join(", "),
     }),
 
-  entityId: z
-    .number({
-      required_error: "Entity ID is required",
-      invalid_type_error: "Entity ID must be a number",
-    })
-    .int("Entity ID must be an integer")
-    .positive("Entity ID must be greater than 0"),
-
-  transactionDate: requiredDate, // assuming already well defined
+  entityId: z.string({
+    required_error: "Entity ID is required",
+  }),
+  
+  transactionDate: requiredDate,
 
   description: z
     .string({
@@ -519,12 +515,11 @@ export const ledgerSchema = z.object({
     message: "Amount type is required (e.g., CREDIT or DEBIT)",
   }),
 
-  amount: z
-    .number({
-      required_error: "Amount is required",
-      invalid_type_error: "Amount must be a valid number",
-    })
-    .positive("Amount must be greater than 0"),
+  // ✅ Change this line
+  amount: z.coerce.number({
+    required_error: "Amount is required",
+    invalid_type_error: "Amount must be a valid number",
+  }).positive("Amount must be greater than 0"),
 
   paymentMode: PaymentModeEnum.optional(),
 
@@ -674,7 +669,6 @@ const baseFilterSchema = {
 
 export const ledgerFilterSchema = z.object({
   entityType: z.enum(["PATIENT", "DOCTOR", "BANK", "CASH"]).optional(),
-  entityId: z.coerce.number().int().positive().optional(),
   amountType: z.enum(["CREDIT", "DEBIT"]).optional(),
   paymentMode: z
     .enum(["CASH", "CARD", "UPI", "BANK_TRANSFER", "CHEQUE"])

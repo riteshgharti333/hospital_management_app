@@ -101,7 +101,7 @@ const EditLedger = () => {
       transactionDate: new Date(formData.transactionDate).toISOString(),
       description: formData.description,
       amountType: formData.amountType,
-      amount: Number(formData.amount) || parseFloat(formData.amount),
+      amount: parseFloat(formData.amount) || 0,
       paymentMode: formData.paymentMode || "CASH",
       referenceType: formData.referenceType || "",
       referenceId: formData.referenceId?.trim() || "",
@@ -116,15 +116,44 @@ const EditLedger = () => {
   };
 
   const handleCancel = () => {
-    reset(ledgerData);
+    if (ledgerData) {
+      const formattedData = {
+        ...ledgerData,
+        transactionDate: ledgerData.transactionDate
+          ? new Date(ledgerData.transactionDate).toISOString().split("T")[0]
+          : "",
+        amount: ledgerData.amount?.toString() || "",
+      };
+      reset(formattedData);
+    }
     setEditMode(false);
   };
 
   const handleDelete = async () => {
     const { data } = await deleteLedger(id);
     if (data?.success) {
-      navigate("/ledger");
-      toast.success("Ledger deleted successfully");
+      // Redirect based on entity type
+      const entityType = ledgerData?.entityType;
+      let redirectPath = "/ledger"; // default fallback
+
+      switch (entityType) {
+        case "CASH":
+          redirectPath = "/ledger/cash-ledger";
+          break;
+        case "PATIENT":
+          redirectPath = "/ledger/patient-ledger";
+          break;
+        case "DOCTOR":
+          redirectPath = "/ledger/doctor-ledger";
+          break;
+        case "BANK":
+          redirectPath = "/ledger/bank-ledger";
+          break;
+        default:
+          redirectPath = "/ledger";
+      }
+
+      navigate(redirectPath);
     }
     setShowDeleteModal(false);
   };
@@ -133,7 +162,7 @@ const EditLedger = () => {
   if (!ledgerData) return <NoData />;
 
   return (
-    <div className="mx-auto max-w-4xl">
+    <div className="">
       <ConfirmModal
         isOpen={showDeleteModal}
         onClose={() => setShowDeleteModal(false)}
@@ -302,7 +331,7 @@ const EditLedger = () => {
                 <input
                   type="number"
                   step="0.01"
-                  {...register("amount", { valueAsNumber: true })}
+                  {...register("amount")}
                   disabled={!editMode}
                   placeholder="Enter amount"
                   className={`w-full px-4 py-2 border rounded-lg focus:ring-blue-500 focus:border-blue-500 ${
