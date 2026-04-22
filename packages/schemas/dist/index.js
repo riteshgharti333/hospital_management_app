@@ -1,7 +1,7 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.departmentFilterSchema = exports.patientFilterSchema = exports.birthFilterSchema = exports.admissionFilterSchema = exports.bankFilterSchema = exports.cashFilterSchema = exports.ledgerFilterSchema = exports.supplierLedgerSchema = exports.pharmacyLedgerSchema = exports.insuranceLedgerSchema = exports.expenseLedgerSchema = exports.diagnosticsLedgerSchema = exports.patientLedgerSchema = exports.doctorLedgerSchema = exports.cashLedgerSchema = exports.bankLedgerSchema = exports.ledgerSchema = exports.REFERENCE_TYPES = exports.ENTITY_TYPES = exports.PaymentModeEnum = exports.AmountTypeEnum = exports.bankSchema = exports.cashSchema = exports.serviceChargeSchema = exports.productMaterialSchema = exports.materialSpecSchema = exports.productSchema = exports.brandSchema = exports.voucherSchema = exports.moneyReceiptSchema = exports.employeeSchema = exports.billSchema = exports.billItemSchema = exports.xrayReportSchema = exports.prescriptionSchema = exports.medicineSchema = exports.pharmacistSchema = exports.patientSchema = exports.nurseSchema = exports.doctorSchema = exports.departmentSchema = exports.birthSchema = exports.bedAssignmentSchema = exports.appointmentSchema = exports.ambulanceSchema = exports.admissionSchema = exports.bedSchema = exports.loginSchema = exports.registerSchema = exports.changePasswordSchema = void 0;
-exports.FilterSchemas = exports.moneyReceiptFilterSchema = exports.billFilterSchema = exports.doctorLedgerFilterSchema = exports.cashLedgerFilterSchema = exports.bankLedgerFilterSchema = exports.patientLedgerFilterSchema = exports.prescriptionFilterSchema = exports.doctorFilterSchema = exports.nurseFilterSchema = exports.appointmentFilterSchema = void 0;
+exports.birthFilterSchema = exports.admissionFilterSchema = exports.bankFilterSchema = exports.cashFilterSchema = exports.ledgerFilterSchema = exports.supplierLedgerSchema = exports.pharmacyLedgerSchema = exports.insuranceLedgerSchema = exports.expenseLedgerSchema = exports.diagnosticsLedgerSchema = exports.patientLedgerSchema = exports.doctorLedgerSchema = exports.cashLedgerSchema = exports.bankLedgerSchema = exports.ledgerSchema = exports.REFERENCE_TYPES = exports.ENTITY_TYPES = exports.PaymentModeEnum = exports.AmountTypeEnum = exports.bankSchema = exports.cashSchema = exports.serviceChargeSchema = exports.productMaterialSchema = exports.materialSpecSchema = exports.productSchema = exports.brandSchema = exports.voucherSchema = exports.moneyReceiptSchema = exports.employeeSchema = exports.billSchema = exports.billItemSchema = exports.xrayReportSchema = exports.prescriptionFilterSchema = exports.prescriptionSchema = exports.medicineSchema = exports.PrescriptionStatusEnum = exports.pharmacistSchema = exports.patientSchema = exports.nurseSchema = exports.doctorSchema = exports.departmentSchema = exports.birthSchema = exports.bedAssignmentSchema = exports.appointmentSchema = exports.ambulanceSchema = exports.admissionSchema = exports.bedSchema = exports.loginSchema = exports.registerSchema = exports.changePasswordSchema = void 0;
+exports.FilterSchemas = exports.moneyReceiptFilterSchema = exports.billFilterSchema = exports.doctorLedgerFilterSchema = exports.cashLedgerFilterSchema = exports.bankLedgerFilterSchema = exports.patientLedgerFilterSchema = exports.doctorFilterSchema = exports.nurseFilterSchema = exports.appointmentFilterSchema = exports.departmentFilterSchema = exports.patientFilterSchema = void 0;
 const zod_1 = require("zod");
 exports.changePasswordSchema = zod_1.z
     .object({
@@ -169,18 +169,80 @@ exports.pharmacistSchema = zod_1.z.object({
     status: zod_1.z.string().optional().default("Active"),
 });
 /////////////////////
+// ================= ENUM =================
+exports.PrescriptionStatusEnum = zod_1.z.enum([
+    "ACTIVE",
+    "COMPLETED",
+    "CANCELLED",
+]);
+// ================= MEDICINE =================
+// ================= MEDICINE =================
 exports.medicineSchema = zod_1.z.object({
-    medicineName: zod_1.z.string().min(1, "Medicine name is required"),
-    description: zod_1.z.string().min(1, "Description is required"),
+    medicineName: zod_1.z
+        .string({
+        required_error: "Medicine name is required",
+        invalid_type_error: "Medicine name must be a string",
+    })
+        .min(1, "Medicine name cannot be empty"),
+    dosage: zod_1.z
+        .string({
+        required_error: "Dosage is required",
+    })
+        .min(1, "Dosage cannot be empty"),
+    frequency: zod_1.z
+        .string({
+        required_error: "Frequency is required",
+    })
+        .min(1, "Frequency cannot be empty"),
+    duration: zod_1.z
+        .string({
+        required_error: "Duration is required",
+    })
+        .min(1, "Duration cannot be empty"),
+    instructions: zod_1.z
+        .string({
+        invalid_type_error: "Instructions must be a string",
+    })
+        .optional(),
 });
+// ================= PRESCRIPTION =================
 exports.prescriptionSchema = zod_1.z.object({
-    admissionId: zod_1.z.number().int().positive("Admission ID is required"),
-    doctorId: zod_1.z.number().int().positive("Doctor ID is required"),
-    prescriptionDate: zod_1.z.coerce.date(),
-    prescriptionDoc: zod_1.z.string().url().optional(),
+    admissionId: zod_1.z.coerce.number({
+        required_error: "Admission ID is required",
+        invalid_type_error: "Admission ID must be a number",
+    }),
+    prescriptionDate: zod_1.z
+        .string({
+        invalid_type_error: "Date must be a valid string",
+    })
+        .optional(),
+    prescriptionDoc: zod_1.z
+        .string({
+        invalid_type_error: "Prescription doc must be a string",
+    })
+        .url("Invalid URL")
+        .optional(),
+    notes: zod_1.z
+        .string({
+        invalid_type_error: "Notes must be a string",
+    })
+        .max(1000, "Notes cannot exceed 1000 characters")
+        .optional(),
+    status: exports.PrescriptionStatusEnum.optional().default("ACTIVE"),
     medicines: zod_1.z
-        .array(exports.medicineSchema)
+        .array(exports.medicineSchema, {
+        required_error: "At least one medicine is required",
+    })
         .min(1, "At least one medicine is required"),
+});
+// Filter schema for prescriptions
+exports.prescriptionFilterSchema = zod_1.z.object({
+    fromDate: zod_1.z.string().datetime().optional(),
+    toDate: zod_1.z.string().datetime().optional(),
+    status: exports.PrescriptionStatusEnum.optional(),
+    admissionId: zod_1.z.string().optional(),
+    cursor: zod_1.z.string().optional(),
+    limit: zod_1.z.coerce.number().optional(),
 });
 ////////////////
 exports.xrayReportSchema = zod_1.z.object({
@@ -423,10 +485,12 @@ exports.ledgerSchema = zod_1.z.object({
         message: "Amount type is required (e.g., CREDIT or DEBIT)",
     }),
     // ✅ Change this line
-    amount: zod_1.z.coerce.number({
+    amount: zod_1.z.coerce
+        .number({
         required_error: "Amount is required",
         invalid_type_error: "Amount must be a valid number",
-    }).positive("Amount must be greater than 0"),
+    })
+        .positive("Amount must be greater than 0"),
     paymentMode: exports.PaymentModeEnum.optional(),
     referenceType: zod_1.z
         .string()
@@ -629,12 +693,6 @@ exports.nurseFilterSchema = zod_1.z.object({
 // ============================================
 exports.doctorFilterSchema = zod_1.z.object({
     status: zod_1.z.enum(["Active", "Inactive", "On Leave"]).optional(),
-    ...baseFilterSchema,
-});
-// ============================================
-// 🔹 PRESCRIPTION FILTER
-// ============================================
-exports.prescriptionFilterSchema = zod_1.z.object({
     ...baseFilterSchema,
 });
 // ============================================

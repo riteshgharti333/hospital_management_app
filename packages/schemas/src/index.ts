@@ -213,24 +213,96 @@ export const pharmacistSchema = z.object({
 });
 
 /////////////////////
+// ================= ENUM =================
+
+export const PrescriptionStatusEnum = z.enum([
+  "ACTIVE",
+  "COMPLETED",
+  "CANCELLED",
+]);
+
+// ================= MEDICINE =================
+
+// ================= MEDICINE =================
 
 export const medicineSchema = z.object({
-  medicineName: z.string().min(1, "Medicine name is required"),
-  description: z.string().min(1, "Description is required"),
+  medicineName: z
+    .string({
+      required_error: "Medicine name is required",
+      invalid_type_error: "Medicine name must be a string",
+    })
+    .min(1, "Medicine name cannot be empty"),
+
+  dosage: z
+    .string({
+      required_error: "Dosage is required",
+    })
+    .min(1, "Dosage cannot be empty"),
+
+  frequency: z
+    .string({
+      required_error: "Frequency is required",
+    })
+    .min(1, "Frequency cannot be empty"),
+
+  duration: z
+    .string({
+      required_error: "Duration is required",
+    })
+    .min(1, "Duration cannot be empty"),
+
+  instructions: z
+    .string({
+      invalid_type_error: "Instructions must be a string",
+    })
+    .optional(),
 });
 
+// ================= PRESCRIPTION =================
+
 export const prescriptionSchema = z.object({
-  admissionId: z.number().int().positive("Admission ID is required"),
+  admissionId: z.coerce.number({
+    required_error: "Admission ID is required",
+    invalid_type_error: "Admission ID must be a number",
+  }),
 
-  doctorId: z.number().int().positive("Doctor ID is required"),
+  prescriptionDate: z
+    .string({
+      invalid_type_error: "Date must be a valid string",
+    })
+    .optional(),
 
-  prescriptionDate: z.coerce.date(),
+  prescriptionDoc: z
+    .string({
+      invalid_type_error: "Prescription doc must be a string",
+    })
+    .url("Invalid URL")
+    .optional(),
 
-  prescriptionDoc: z.string().url().optional(),
+  notes: z
+    .string({
+      invalid_type_error: "Notes must be a string",
+    })
+    .max(1000, "Notes cannot exceed 1000 characters")
+    .optional(),
+
+  status: PrescriptionStatusEnum.optional().default("ACTIVE"),
 
   medicines: z
-    .array(medicineSchema)
+    .array(medicineSchema, {
+      required_error: "At least one medicine is required",
+    })
     .min(1, "At least one medicine is required"),
+});
+
+// Filter schema for prescriptions
+export const prescriptionFilterSchema = z.object({
+  fromDate: z.string().datetime().optional(),
+  toDate: z.string().datetime().optional(),
+  status: PrescriptionStatusEnum.optional(),
+  admissionId: z.string().optional(),
+  cursor: z.string().optional(),
+  limit: z.coerce.number().optional(),
 });
 
 ////////////////
@@ -500,7 +572,7 @@ export const ledgerSchema = z.object({
   entityId: z.string({
     required_error: "Entity ID is required",
   }),
-  
+
   transactionDate: requiredDate,
 
   description: z
@@ -516,10 +588,12 @@ export const ledgerSchema = z.object({
   }),
 
   // ✅ Change this line
-  amount: z.coerce.number({
-    required_error: "Amount is required",
-    invalid_type_error: "Amount must be a valid number",
-  }).positive("Amount must be greater than 0"),
+  amount: z.coerce
+    .number({
+      required_error: "Amount is required",
+      invalid_type_error: "Amount must be a valid number",
+    })
+    .positive("Amount must be greater than 0"),
 
   paymentMode: PaymentModeEnum.optional(),
 
@@ -782,10 +856,6 @@ export type DoctorFilterInput = z.infer<typeof doctorFilterSchema>;
 // ============================================
 // 🔹 PRESCRIPTION FILTER
 // ============================================
-
-export const prescriptionFilterSchema = z.object({
-  ...baseFilterSchema,
-});
 
 export type PrescriptionFilterInput = z.infer<typeof prescriptionFilterSchema>;
 

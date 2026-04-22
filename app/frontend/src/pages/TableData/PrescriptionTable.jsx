@@ -11,6 +11,7 @@ import {
 const filterLabels = {
   fromDate: "From Date",
   toDate: "To Date",
+  status: "Status",
 };
 
 const PrescriptionTable = () => {
@@ -29,8 +30,11 @@ const PrescriptionTable = () => {
     useSearchPrescriptions(searchTerm);
 
   // Filter dataset
-  const { data: filterData, isLoading: loadingFilter } =
-    useFilterPrescriptions({ ...filters, cursor: currentCursor, limit: 50 });
+  const { data: filterData, isLoading: loadingFilter } = useFilterPrescriptions(
+    { ...filters, cursor: currentCursor, limit: 50 },
+  );
+
+  console.log(prescriptionData);
 
   // dataset selection
   const getCurrentData = () => {
@@ -45,8 +49,7 @@ const PrescriptionTable = () => {
   };
 
   const data = getCurrentData();
-  const isLoading =
-    loadingPrescriptions || loadingSearch || loadingFilter;
+  const isLoading = loadingPrescriptions || loadingSearch || loadingFilter;
 
   // Mode switching
   useEffect(() => {
@@ -64,6 +67,16 @@ const PrescriptionTable = () => {
   const columns = useMemo(
     () => [
       {
+        accessorKey: "prescriptionNo",
+        header: "Prescription No",
+        cell: (info) => info.getValue() || "-",
+      },
+      {
+        accessorKey: "admissionId",
+        header: "Admission ID",
+        cell: (info) => info.getValue() || "-",
+      },
+      {
         accessorKey: "prescriptionDate",
         header: "Prescription Date",
         cell: (info) => {
@@ -77,10 +90,35 @@ const PrescriptionTable = () => {
               });
         },
       },
-      { accessorKey: "doctorName", header: "Doctor Name" },
-      { accessorKey: "patientName", header: "Patient Name" },
+      {
+        accessorKey: "status",
+        header: "Status",
+        cell: (info) => {
+          const status = info.getValue();
+          const statusColors = {
+            ACTIVE: "bg-green-100 text-green-800",
+            COMPLETED: "bg-blue-100 text-blue-800",
+            CANCELLED: "bg-red-100 text-red-800",
+          };
+          return (
+            <span
+              className={`px-2 py-1 rounded-full text-xs font-medium ${statusColors[status] || "bg-gray-100 text-gray-800"}`}
+            >
+              {status}
+            </span>
+          );
+        },
+      },
+      {
+        accessorKey: "admission.patient.fullName",
+        header: "Patient Name",
+        cell: (info) => {
+          const patient = info.row.original?.admission?.patient;
+          return patient?.fullName || "-";
+        },
+      },
     ],
-    []
+    [],
   );
 
   const handleNextPage = () => {
@@ -112,9 +150,15 @@ const PrescriptionTable = () => {
     setCursorHistory([]);
   };
 
+ 
+  const statusMap = {
+  "Active": "ACTIVE",
+  "Completed": "COMPLETED",
+  "Cancelled": "CANCELLED"
+};
   return (
     <div>
-      <div className="flex justify-between items-center">
+      <div className="flex justify-between items-center mb-6">
         <h2 className="text-2xl font-bold text-gray-800">Prescriptions</h2>
         <Link className="btn-primary" to={"/new-prescription"}>
           <FaPlus /> New Prescription
@@ -127,11 +171,18 @@ const PrescriptionTable = () => {
         path="prescription"
         loading={isLoading}
         searchConfig={{
-          placeholder: "Search by Doctor or Patient Name...",
+          placeholder: "Search by Prescription No or Patient Name...",
           searchTerm,
           onSearchChange: setSearchTerm,
         }}
+        // Updated PrescriptionTable filtersConfig
         filtersConfig={[
+          {
+            key: "status",
+            label: "Status",
+            type: "select",
+            options: ["ACTIVE", "COMPLETED", "CANCELLED"], // ← Changed to array of strings
+          },
           { key: "fromDate", label: "From Date", type: "date" },
           { key: "toDate", label: "To Date", type: "date" },
         ]}

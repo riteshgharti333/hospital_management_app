@@ -130,6 +130,13 @@ const Table = ({
 
   const hasActiveFilters = Object.keys(cleanedActiveFilters).length > 0;
 
+   const capitalize = (str = "") => {
+  if (typeof str !== "string") return "";
+  if (!str) return "";
+
+  return str.charAt(0).toUpperCase() + str.slice(1).toLowerCase();
+};
+
   return (
     <div className="mt-5 max-w-[1050px] m-auto flex flex-col rounded-xl border border-gray-200 bg-white shadow-sm">
       {/* Header with Search and Filters */}
@@ -250,7 +257,7 @@ const Table = ({
                           <option value="">All</option>
                           {filter.options?.map((opt) => (
                             <option key={opt} value={opt}>
-                              {opt}
+                              {capitalize(opt)}
                             </option>
                           ))}
                         </select>

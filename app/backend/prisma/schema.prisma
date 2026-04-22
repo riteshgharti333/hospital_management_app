@@ -105,7 +105,7 @@ model Admission {
   patient              Patient  @relation(fields: [patientId], references: [id])
   doctor               Doctor   @relation(fields: [doctorId], references: [id])
 
-  prescriptions        Prescription[]   // 👈 inverse relation
+  prescriptions        Prescription[]   
 
   @@index([patientId])
   @@index([doctorId])
@@ -274,8 +274,6 @@ model Doctor {
   updatedAt      DateTime @updatedAt
   admissions      Admission[] 
 
-  prescriptions  Prescription[]
-
   // 🔍 Indexes f1or high-performance queries
   @@index([fullName])
   @@index([mobileNumber])
@@ -313,30 +311,44 @@ model Pharmacist {
 /////////////////
 
 
+enum PrescriptionStatus {
+  ACTIVE
+  COMPLETED
+  CANCELLED
+}
 model Prescription {
-  id               Int      @id @default(autoincrement())
-  admissionId      Int      // 👈 CORRECT foreign key
-  doctorId         Int
+  id               Int                 @id @default(autoincrement())
+  admissionId      Int
+  prescriptionNo   String              @unique
 
-  prescriptionDate DateTime
+  prescriptionDate DateTime            @default(now())
   prescriptionDoc  String?
+  notes            String?
+  status           PrescriptionStatus  @default(ACTIVE)
 
-  createdAt        DateTime @default(now())
-  updatedAt        DateTime @updatedAt
+  createdAt        DateTime            @default(now())
+  updatedAt        DateTime            @updatedAt
 
-  admission        Admission @relation(fields: [admissionId], references: [id])
-  doctor           Doctor    @relation(fields: [doctorId], references: [id])
-
+  admission        Admission           @relation(fields: [admissionId], references: [id])
   medicines        Medicine[]
+
+  @@index([admissionId])
+  @@index([prescriptionNo])
 }
 
-
 model Medicine {
-  id             Int          @id @default(autoincrement())
-  medicineName   String
-  description    String
+  id             Int       @id @default(autoincrement())
   prescriptionId Int
-  prescription   Prescription @relation(fields: [prescriptionId], references: [id])
+
+  medicineName   String
+  dosage         String
+  frequency      String
+  duration       String
+  instructions   String?
+
+  prescription   Prescription @relation(fields: [prescriptionId], references: [id], onDelete: Cascade)
+
+  @@index([prescriptionId])
 }
 
 /////////////////////

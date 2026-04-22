@@ -819,7 +819,7 @@ export const getLedgerFlowSummary = () =>
         moneyOut: toNumber(patientDebit._sum.amount),
         netBalance: toNumber(patientCredit._sum.amount) - toNumber(patientDebit._sum.amount),
       };
-
+     
       const doctorLedger = {
         moneyIn: toNumber(doctorCredit._sum.amount),
         moneyOut: toNumber(doctorDebit._sum.amount),
