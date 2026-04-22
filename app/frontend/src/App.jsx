@@ -71,7 +71,7 @@ import NewBank from "./pages/Service/NewBank";
 import NewCash from "./pages/Service/NewCash";
 
 import EditBank from "./pages/UpdateData/EditBank";
-import EditCash from "./pages/updateData/EditCash";
+import EditCash from "./pages/UpdateData/EditCash";
 import { initToastConfig } from "./utils/toastConfig";
 
 function App() {
