@@ -88,6 +88,15 @@ model Patient {
 
 /////////////////
 
+
+
+enum AdmissionStatus {
+  ACTIVE
+  DISCHARGED
+  CANCELLED
+}
+
+
 model Admission {
   id                   Int      @id @default(autoincrement())
   hospitalAdmissionId  String   @unique
@@ -97,7 +106,7 @@ model Admission {
 
   admissionDate        DateTime
   dischargeDate        DateTime?
-  status               String   @default("ADMITTED")
+  status               AdmissionStatus @default(ACTIVE)
 
   createdAt            DateTime @default(now())
   updatedAt            DateTime @updatedAt

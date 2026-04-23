@@ -15,7 +15,7 @@ import { authorizeRoles } from "../middlewares/authorize";
 const router = Router();
  
 router.post("/refresh-token", refreshAccessTokenController);   
-
+ 
 router.post("/identify", getUserByRegIdController); // Step 1
 router.post("/login", loginUserController); // Step 2
 router.post("/set-password", setNewPasswordController);

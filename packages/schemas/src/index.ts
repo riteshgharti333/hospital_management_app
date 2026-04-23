@@ -52,8 +52,12 @@ export const bedSchema = z.object({
 
 ////////////////
 
+const admissionStatus = z.enum(["ACTIVE", "DISCHARGED", "CANCELLED"]);
+
 export const admissionSchema = z.object({
   patientId: z.number().int().positive("Patient ID is required"),
+
+  status: admissionStatus.default("ACTIVE"),
 
   doctorId: z.number().int().positive("Doctor ID is required"),
 
@@ -63,8 +67,6 @@ export const admissionSchema = z.object({
     (val) => (val === "" || val === null ? undefined : val),
     z.coerce.date().optional(),
   ),
-
-  status: z.string().default("ADMITTED"),
 });
 
 ///////////////

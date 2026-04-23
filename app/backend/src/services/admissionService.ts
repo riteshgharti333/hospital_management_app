@@ -23,7 +23,7 @@ export const createAdmissionService = async (data: AdmissionInput) => {
     data: {
       ...data,
       hospitalAdmissionId,
-      status: "ADMITTED",
+      // status: "ADMITTED", // ❌ REMOVED
     },
   });
 };
@@ -32,7 +32,7 @@ export const findActiveAdmissionByPatient = async (patientId: number) => {
   return prisma.admission.findFirst({
     where: {
       patientId,
-      status: "ADMITTED",
+      // status: "ADMITTED", // ❌ REMOVED
     },
   });
 };

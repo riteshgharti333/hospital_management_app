@@ -44,12 +44,13 @@ exports.bedSchema = zod_1.z.object({
     description: zod_1.z.string().optional(),
 });
 ////////////////
+const admissionStatus = zod_1.z.enum(["ACTIVE", "DISCHARGED", "CANCELLED"]);
 exports.admissionSchema = zod_1.z.object({
     patientId: zod_1.z.number().int().positive("Patient ID is required"),
+    status: admissionStatus.default("ACTIVE"),
     doctorId: zod_1.z.number().int().positive("Doctor ID is required"),
     admissionDate: zod_1.z.coerce.date(),
     dischargeDate: zod_1.z.preprocess((val) => (val === "" || val === null ? undefined : val), zod_1.z.coerce.date().optional()),
-    status: zod_1.z.string().default("ADMITTED"),
 });
 ///////////////
 exports.ambulanceSchema = zod_1.z.object({

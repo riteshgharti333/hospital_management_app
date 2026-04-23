@@ -61,12 +61,12 @@ export declare const bedSchema: z.ZodObject<{
 }>;
 export declare const admissionSchema: z.ZodObject<{
     patientId: z.ZodNumber;
+    status: z.ZodDefault<z.ZodEnum<["ACTIVE", "DISCHARGED", "CANCELLED"]>>;
     doctorId: z.ZodNumber;
     admissionDate: z.ZodDate;
     dischargeDate: z.ZodEffects<z.ZodOptional<z.ZodDate>, Date | undefined, unknown>;
-    status: z.ZodDefault<z.ZodString>;
 }, "strip", z.ZodTypeAny, {
-    status: string;
+    status: "ACTIVE" | "DISCHARGED" | "CANCELLED";
     patientId: number;
     doctorId: number;
     admissionDate: Date;
@@ -75,7 +75,7 @@ export declare const admissionSchema: z.ZodObject<{
     patientId: number;
     doctorId: number;
     admissionDate: Date;
-    status?: string | undefined;
+    status?: "ACTIVE" | "DISCHARGED" | "CANCELLED" | undefined;
     dischargeDate?: unknown;
 }>;
 export declare const ambulanceSchema: z.ZodObject<{
@@ -346,7 +346,7 @@ export declare const prescriptionSchema: z.ZodObject<{
         instructions?: string | undefined;
     }>, "many">;
 }, "strip", z.ZodTypeAny, {
-    status: "ACTIVE" | "COMPLETED" | "CANCELLED";
+    status: "ACTIVE" | "CANCELLED" | "COMPLETED";
     admissionId: number;
     medicines: {
         medicineName: string;
@@ -367,7 +367,7 @@ export declare const prescriptionSchema: z.ZodObject<{
         duration: string;
         instructions?: string | undefined;
     }[];
-    status?: "ACTIVE" | "COMPLETED" | "CANCELLED" | undefined;
+    status?: "ACTIVE" | "CANCELLED" | "COMPLETED" | undefined;
     notes?: string | undefined;
     prescriptionDate?: string | undefined;
     prescriptionDoc?: string | undefined;
@@ -380,14 +380,14 @@ export declare const prescriptionFilterSchema: z.ZodObject<{
     cursor: z.ZodOptional<z.ZodString>;
     limit: z.ZodOptional<z.ZodNumber>;
 }, "strip", z.ZodTypeAny, {
-    status?: "ACTIVE" | "COMPLETED" | "CANCELLED" | undefined;
+    status?: "ACTIVE" | "CANCELLED" | "COMPLETED" | undefined;
     admissionId?: string | undefined;
     fromDate?: string | undefined;
     toDate?: string | undefined;
     cursor?: string | undefined;
     limit?: number | undefined;
 }, {
-    status?: "ACTIVE" | "COMPLETED" | "CANCELLED" | undefined;
+    status?: "ACTIVE" | "CANCELLED" | "COMPLETED" | undefined;
     admissionId?: string | undefined;
     fromDate?: string | undefined;
     toDate?: string | undefined;
@@ -893,12 +893,12 @@ export declare const cashLedgerSchema: z.ZodObject<{
 }, "strip", z.ZodTypeAny, {
     amount: number;
     transactionDate: Date;
-    amountType: "EXPENSE" | "INCOME";
+    amountType: "INCOME" | "EXPENSE";
     purpose: string;
     remarks?: string | undefined;
 }, {
     amount: number;
-    amountType: "EXPENSE" | "INCOME";
+    amountType: "INCOME" | "EXPENSE";
     purpose: string;
     remarks?: string | undefined;
     transactionDate?: unknown;
@@ -1374,13 +1374,13 @@ export declare const cashLedgerFilterSchema: z.ZodObject<{
     fromDate?: Date | undefined;
     toDate?: Date | undefined;
     cursor?: string | undefined;
-    amountType?: "EXPENSE" | "INCOME" | undefined;
+    amountType?: "INCOME" | "EXPENSE" | undefined;
 }, {
     fromDate?: Date | undefined;
     toDate?: Date | undefined;
     cursor?: string | undefined;
     limit?: number | undefined;
-    amountType?: "EXPENSE" | "INCOME" | undefined;
+    amountType?: "INCOME" | "EXPENSE" | undefined;
 }>;
 export type CashLedgerFilterInput = z.infer<typeof cashLedgerFilterSchema>;
 export declare const doctorLedgerFilterSchema: z.ZodObject<{
@@ -1603,14 +1603,14 @@ export declare const FilterSchemas: {
         cursor: z.ZodOptional<z.ZodString>;
         limit: z.ZodOptional<z.ZodNumber>;
     }, "strip", z.ZodTypeAny, {
-        status?: "ACTIVE" | "COMPLETED" | "CANCELLED" | undefined;
+        status?: "ACTIVE" | "CANCELLED" | "COMPLETED" | undefined;
         admissionId?: string | undefined;
         fromDate?: string | undefined;
         toDate?: string | undefined;
         cursor?: string | undefined;
         limit?: number | undefined;
     }, {
-        status?: "ACTIVE" | "COMPLETED" | "CANCELLED" | undefined;
+        status?: "ACTIVE" | "CANCELLED" | "COMPLETED" | undefined;
         admissionId?: string | undefined;
         fromDate?: string | undefined;
         toDate?: string | undefined;
@@ -1669,13 +1669,13 @@ export declare const FilterSchemas: {
         fromDate?: Date | undefined;
         toDate?: Date | undefined;
         cursor?: string | undefined;
-        amountType?: "EXPENSE" | "INCOME" | undefined;
+        amountType?: "INCOME" | "EXPENSE" | undefined;
     }, {
         fromDate?: Date | undefined;
         toDate?: Date | undefined;
         cursor?: string | undefined;
         limit?: number | undefined;
-        amountType?: "EXPENSE" | "INCOME" | undefined;
+        amountType?: "INCOME" | "EXPENSE" | undefined;
     }>;
     readonly doctorLedger: z.ZodObject<{
         fromDate: z.ZodOptional<z.ZodDate>;
