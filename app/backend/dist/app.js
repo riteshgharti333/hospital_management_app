@@ -23,7 +23,10 @@ const pharmacistRoute_1 = __importDefault(require("./routes/pharmacistRoute"));
 const prescriptionRoute_1 = __importDefault(require("./routes/prescriptionRoute"));
 const ambulanceRoute_1 = __importDefault(require("./routes/ambulanceRoute"));
 const xrayRoute_1 = __importDefault(require("./routes/xrayRoute"));
-// Admin 
+const cashRoute_1 = __importDefault(require("./routes/cashRoute"));
+const bankRoute_1 = __importDefault(require("./routes/bankRoute"));
+const ledgerRoute_1 = __importDefault(require("./routes/ledgerRoute"));
+// Admin
 const adminRoutes_1 = __importDefault(require("./routes/adminRoutes"));
 // Password Reset
 const passwordRoutes_1 = __importDefault(require("./routes/passwordRoutes"));
@@ -47,26 +50,27 @@ const billRoute_1 = __importDefault(require("./routes/transectionRoutes/billRout
 // import employeeRoutes from "./routes/transectionRoutes/employeeRoute";
 // import voucherRoutes from "./routes/transectionRoutes/voucherRoutes";
 const moneyReceiptRoute_1 = __importDefault(require("./routes/transectionRoutes/moneyReceiptRoute"));
-const errorHandler_1 = require("./middlewares/errorHandler");
 //
 const dashboardRoute_1 = __importDefault(require("./routes/dashboardRoute"));
 dotenv_1.default.config();
 const app = (0, express_1.default)();
-const allowedOrigins = ["http://localhost:5173", process.env.FRONTEND_URL];
+const allowedOrigins = [
+    "http://localhost:5173",
+    "https://hospital-management-app-nine.vercel.app",
+];
 app.use((0, cors_1.default)({
-    origin: (origin, callback) => {
+    origin: function (origin, callback) {
+        // allow requests with no origin (like Postman)
         if (!origin)
             return callback(null, true);
         if (allowedOrigins.includes(origin)) {
-            callback(null, true);
+            return callback(null, true);
         }
-        else {
-            console.error(`Blocked by CORS: ${origin}`);
-            callback(new errorHandler_1.ErrorHandler("Not allowed by CORS", 403));
-        }
+        return callback(new Error("CORS not allowed"));
     },
     credentials: true,
 }));
+// handle preflight
 app.use((0, cookie_parser_1.default)());
 app.use(express_1.default.json());
 app.use((0, morgan_1.default)("dev"));
@@ -90,6 +94,9 @@ app.use("/api/v1/pharmacist", pharmacistRoute_1.default);
 app.use("/api/v1/prescription", prescriptionRoute_1.default);
 app.use("/api/v1/ambulance", ambulanceRoute_1.default);
 app.use("/api/v1/xray", xrayRoute_1.default);
+app.use("/api/v1/cash", cashRoute_1.default);
+app.use("/api/v1/bank", bankRoute_1.default);
+app.use("/api/v1/ledger", ledgerRoute_1.default);
 // ledger
 app.use("/api/v1/ledger/patient-ledger", patientLedgerRoute_1.default);
 app.use("/api/v1/ledger/bank-ledger", bankLedgerRoute_1.default);

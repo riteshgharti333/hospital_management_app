@@ -30,7 +30,7 @@ export const createStaffAccess = catchAsyncError(
 
     if (!regId) {
       return next(
-        new ErrorHandler("Registration ID required", StatusCodes.BAD_REQUEST)
+        new ErrorHandler("Registration ID required", StatusCodes.BAD_REQUEST),
       );
     }
 
@@ -52,7 +52,10 @@ export const createStaffAccess = catchAsyncError(
       role = "NURSE";
     } else {
       return next(
-        new ErrorHandler("Invalid registration format", StatusCodes.BAD_REQUEST)
+        new ErrorHandler(
+          "Invalid registration format",
+          StatusCodes.BAD_REQUEST,
+        ),
       );
     }
 
@@ -65,11 +68,11 @@ export const createStaffAccess = catchAsyncError(
       return next(
         new ErrorHandler(
           "Login already created for this user",
-          StatusCodes.CONFLICT
-        )
-      );       
-    }   
-    
+          StatusCodes.CONFLICT,
+        ),
+      );
+    }
+
     // 🔐 Generate temp password
     const tempPassword =
       (role === "DOCTOR" ? "Doc@" : "Nur@") +
@@ -103,7 +106,7 @@ export const createStaffAccess = catchAsyncError(
         status: "DISABLED",
       },
     });
-  }
+  },
 );
 
 // TOGGLE ACCESS (doctor or nurse)
@@ -118,7 +121,7 @@ export const toggleStaffAccess = catchAsyncError(
     const user = await prisma.user.findUnique({ where: { regId } });
     if (!user) {
       return next(
-        new ErrorHandler("User login not found", StatusCodes.NOT_FOUND)
+        new ErrorHandler("User login not found", StatusCodes.NOT_FOUND),
       );
     }
 
@@ -126,8 +129,8 @@ export const toggleStaffAccess = catchAsyncError(
       return next(
         new ErrorHandler(
           "Action must be ENABLE or DISABLE",
-          StatusCodes.BAD_REQUEST
-        )
+          StatusCodes.BAD_REQUEST,
+        ),
       );
     }
 
@@ -149,7 +152,7 @@ export const toggleStaffAccess = catchAsyncError(
         status: updated.isActive ? "ACTIVE" : "DISABLED",
       },
     });
-  }
+  },
 );
 
 export const getAllUsers = catchAsyncError(
@@ -167,7 +170,7 @@ export const getAllUsers = catchAsyncError(
 
       if (!allowedRoles.includes(upperRole)) {
         return next(
-          new ErrorHandler("Invalid role query", StatusCodes.BAD_REQUEST)
+          new ErrorHandler("Invalid role query", StatusCodes.BAD_REQUEST),
         );
       }
 
@@ -192,7 +195,7 @@ export const getAllUsers = catchAsyncError(
         ...data,
       },
     });
-  }
+  },
 );
 
 export const regenerateStaffTempPassword = catchAsyncError(
@@ -201,7 +204,7 @@ export const regenerateStaffTempPassword = catchAsyncError(
 
     if (!regId) {
       return next(
-        new ErrorHandler("regId is required", StatusCodes.BAD_REQUEST)
+        new ErrorHandler("regId is required", StatusCodes.BAD_REQUEST),
       );
     }
 
@@ -220,21 +223,24 @@ export const regenerateStaffTempPassword = catchAsyncError(
         tempPassword: result.tempPassword,
       },
     });
-  }
+  },
 );
 
 export const deleteUserRecord = catchAsyncError(
   async (req: Request, res: Response, next: NextFunction) => {
     const { regId } = req.params;
 
-    if (!regId) {
+    // Extract string from potential array
+    const regIdString = Array.isArray(regId) ? regId[0] : regId;
+
+    if (!regIdString) {
       return next(
-        new ErrorHandler("regId is required", StatusCodes.BAD_REQUEST)
+        new ErrorHandler("regId is required", StatusCodes.BAD_REQUEST),
       );
     }
 
     try {
-      const deletedUser = await deleteUserByRegId(regId);
+      const deletedUser = await deleteUserByRegId(regIdString);
 
       if (!deletedUser) {
         return next(new ErrorHandler("User not found", StatusCodes.NOT_FOUND));
@@ -251,14 +257,14 @@ export const deleteUserRecord = catchAsyncError(
         return next(
           new ErrorHandler(
             "Admin users cannot be deleted",
-            StatusCodes.FORBIDDEN
-          )
+            StatusCodes.FORBIDDEN,
+          ),
         );
       }
 
       return next(
-        new ErrorHandler("Failed to delete user", StatusCodes.INTERNAL_ERROR)
+        new ErrorHandler("Failed to delete user", StatusCodes.INTERNAL_ERROR),
       );
     }
-  }
+  },
 );

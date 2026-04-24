@@ -2,33 +2,29 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.filterDoctorsService = exports.searchDoctor = exports.deleteDoctor = exports.updateDoctor = exports.getDoctorsByDepartment = exports.getDoctorByRegistration = exports.getDoctorById = exports.getAllDoctors = exports.getDoctorByEmail = exports.createDoctor = void 0;
 const prisma_1 = require("../lib/prisma");
-const applyCommonFields_1 = require("../utils/applyCommonFields");
 const pagination_1 = require("../utils/pagination");
 const filterPaginate_1 = require("../utils/filterPaginate");
 const searchCache_1 = require("../utils/searchCache");
 const registrationGenerator_1 = require("../utils/registrationGenerator");
+const cacheVersion_1 = require("../utils/cacheVersion");
 const createDoctor = async (data) => {
-    // Auto-generate registration number
     const registrationNo = await (0, registrationGenerator_1.generateRegistrationNumber)(prisma_1.prisma.doctor, "DOC", "registrationNo");
-    return prisma_1.prisma.doctor.create({
+    const result = await prisma_1.prisma.doctor.create({
         data: {
             ...data,
             registrationNo,
         },
     });
+    await (0, cacheVersion_1.bumpCacheVersion)("doctor");
+    return result;
 };
 exports.createDoctor = createDoctor;
 const getDoctorByEmail = async (email) => {
     return prisma_1.prisma.doctor.findUnique({ where: { email } });
 };
 exports.getDoctorByEmail = getDoctorByEmail;
-const getAllDoctors = async (cursor, limit) => {
-    return (0, pagination_1.cursorPaginate)(prisma_1.prisma, {
-        model: "doctor",
-        cursorField: "id",
-        limit: limit || 50,
-        cacheExpiry: 600,
-    }, cursor ? Number(cursor) : undefined);
+const getAllDoctors = async (cursor) => {
+    return (0, pagination_1.cursorPaginate)(prisma_1.prisma, { model: "doctor" }, cursor);
 };
 exports.getAllDoctors = getAllDoctors;
 const getDoctorById = async (id) => {
@@ -48,12 +44,12 @@ const getDoctorsByDepartment = async (department) => {
 exports.getDoctorsByDepartment = getDoctorsByDepartment;
 const updateDoctor = async (id, data) => {
     return prisma_1.prisma.$transaction(async (tx) => {
-        // 1️⃣ Update Doctor
+        // 1️⃣ Update doctor
         const updatedDoctor = await tx.doctor.update({
             where: { id },
             data,
         });
-        // 2️⃣ Sync ONLY identity fields to User
+        // 2️⃣ Prepare user update data
         const userUpdateData = {};
         if (data.fullName) {
             userUpdateData.name = data.fullName;
@@ -61,60 +57,83 @@ const updateDoctor = async (id, data) => {
         if (data.email) {
             userUpdateData.email = data.email;
         }
-        // Update User only if identity fields changed
+        // 3️⃣ Safe user update
         if (Object.keys(userUpdateData).length > 0) {
-            await tx.user.update({
+            await tx.user.updateMany({
                 where: { regId: updatedDoctor.registrationNo },
                 data: userUpdateData,
             });
         }
+        await (0, cacheVersion_1.bumpCacheVersion)("doctor");
         return updatedDoctor;
     });
 };
 exports.updateDoctor = updateDoctor;
 const deleteDoctor = async (id) => {
-    return prisma_1.prisma.$transaction(async (tx) => {
-        // 1️⃣ Find doctor first (to get registrationNo)
+    const deletedDoctor = await prisma_1.prisma.$transaction(async (tx) => {
         const doctor = await tx.doctor.findUnique({
             where: { id },
             select: { registrationNo: true },
         });
-        if (!doctor) {
+        if (!doctor)
             return null;
-        }
-        // 2️⃣ Delete doctor
-        const deletedDoctor = await tx.doctor.delete({
+        const deleted = await tx.doctor.delete({
             where: { id },
         });
-        // 3️⃣ Delete linked user (mirror cleanup)
-        await tx.user.delete({
+        await tx.user.deleteMany({
             where: { regId: doctor.registrationNo },
         });
-        return deletedDoctor;
+        return deleted;
     });
+    // ✅ Fire-and-forget (non-blocking)
+    (0, cacheVersion_1.bumpCacheVersion)("doctor");
+    return deletedDoctor;
 };
 exports.deleteDoctor = deleteDoctor;
-const commonSearchFields = ["fullName", "mobileNumber", "registrationNo"];
 exports.searchDoctor = (0, searchCache_1.createSearchService)(prisma_1.prisma, {
     tableName: "Doctor",
-    cacheKeyPrefix: "doctor",
-    ...(0, applyCommonFields_1.applyCommonFields)(commonSearchFields),
+    exactFields: ["fullName", "mobileNumber", "registrationNo"],
+    prefixFields: ["fullName"],
+    similarFields: ["fullName"],
+    selectFields: [
+        "id",
+        "fullName",
+        "mobileNumber",
+        "registrationNo",
+        "qualification",
+        "specialization",
+        "status",
+        "createdAt",
+        "email",
+    ],
 });
-const filterDoctorsService = async (filters) => {
-    const { fromDate, toDate, status, cursor, limit } = filters;
-    const filterObj = {};
-    if (status)
-        filterObj.status = { equals: status, mode: "insensitive" };
-    if (fromDate || toDate)
-        filterObj.createdAt = {
-            gte: fromDate ? new Date(fromDate) : undefined,
-            lte: toDate ? new Date(toDate) : undefined,
+const filterDoctorsService = async (params) => {
+    const { fromDate, toDate, status, cursor, limit } = params;
+    const where = {};
+    // ✅ Status filter
+    if (status) {
+        where.status = {
+            equals: status,
+            mode: "insensitive",
         };
+    }
+    // ✅ Date range filter
+    if (fromDate || toDate) {
+        where.createdAt = {
+            ...(fromDate && { gte: fromDate }),
+            ...(toDate && { lte: toDate }),
+        };
+    }
     return (0, filterPaginate_1.filterPaginate)(prisma_1.prisma, {
         model: "doctor",
-        cursorField: "id",
-        limit: limit || 50,
-        filters: filterObj,
-    }, cursor);
+        limit,
+        // 🔥 Optional optimization
+        // select: {
+        //   id: true,
+        //   fullName: true,
+        //   status: true,
+        //   createdAt: true,
+        // },
+    }, cursor, where);
 };
 exports.filterDoctorsService = filterDoctorsService;

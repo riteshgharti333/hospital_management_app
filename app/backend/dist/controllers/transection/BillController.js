@@ -8,8 +8,18 @@ const statusCodes_1 = require("../../constants/statusCodes");
 const billService_1 = require("../../services/transectionService/billService");
 const schemas_1 = require("@hospital/schemas");
 const queryValidation_1 = require("../../utils/queryValidation");
+const paginationConfig_1 = require("../../lib/paginationConfig");
 exports.createBillRecord = (0, catchAsyncError_1.catchAsyncError)(async (req, res, next) => {
+    // Calculate totalAmount from billItems BEFORE validation
+    const calculatedTotalAmount = req.body.billItems?.reduce((sum, item) => {
+        const itemTotal = item.totalAmount ?? (item.mrp * item.quantity);
+        return sum + (itemTotal || 0);
+    }, 0) || 0;
+    // Add totalAmount to request body
+    req.body.totalAmount = calculatedTotalAmount;
+    // Now validate with Zod (totalAmount exists)
     const validated = schemas_1.billSchema.parse(req.body);
+    // Create bill
     const bill = await (0, billService_1.createBill)(validated);
     (0, sendResponse_1.sendResponse)(res, {
         success: true,
@@ -19,16 +29,16 @@ exports.createBillRecord = (0, catchAsyncError_1.catchAsyncError)(async (req, re
     });
 });
 exports.getAllBillRecords = (0, catchAsyncError_1.catchAsyncError)(async (req, res) => {
-    const { cursor, limit } = req.query;
-    const { data: bills, nextCursor } = await (0, billService_1.getAllBillsService)(cursor, limit ? Number(limit) : undefined);
+    const { cursor } = req.query;
+    const result = await (0, billService_1.getAllBillsService)(cursor);
     (0, sendResponse_1.sendResponse)(res, {
         success: true,
         statusCode: statusCodes_1.StatusCodes.OK,
         message: "Bill records fetched",
-        data: bills,
+        data: result.data,
         pagination: {
-            nextCursor: nextCursor !== null ? String(nextCursor) : undefined,
-            limit: limit ? Number(limit) : 50,
+            nextCursor: result.pagination.nextCursor || undefined,
+            hasMore: result.pagination.hasMore,
         },
     });
 });
@@ -102,15 +112,16 @@ exports.searchBillsResults = (0, catchAsyncError_1.catchAsyncError)(async (req, 
 });
 exports.filterBills = (0, catchAsyncError_1.catchAsyncError)(async (req, res) => {
     const validated = schemas_1.billFilterSchema.parse(req.query);
-    const { data, nextCursor } = await (0, billService_1.filterBillsService)(validated);
+    const { data, nextCursor, hasMore } = await (0, billService_1.filterBillsService)(validated);
     (0, sendResponse_1.sendResponse)(res, {
         success: true,
-        statusCode: 200,
-        message: "Filtered bills fetched",
+        statusCode: statusCodes_1.StatusCodes.OK,
+        message: "Filtered Bills fetched",
         data,
         pagination: {
-            nextCursor: nextCursor !== null ? String(nextCursor) : undefined,
-            limit: validated.limit || 50,
+            nextCursor: nextCursor || undefined,
+            limit: validated.limit ?? paginationConfig_1.PAGINATION_CONFIG.DEFAULT_LIMIT,
+            hasMore,
         },
     });
 });

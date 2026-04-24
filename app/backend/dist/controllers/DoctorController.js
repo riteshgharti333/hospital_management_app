@@ -9,6 +9,7 @@ const doctorService_1 = require("../services/doctorService");
 const schemas_1 = require("@hospital/schemas");
 const library_1 = require("@prisma/client/runtime/library");
 const queryValidation_1 = require("../utils/queryValidation");
+const paginationConfig_1 = require("../lib/paginationConfig");
 exports.createDoctorRecord = (0, catchAsyncError_1.catchAsyncError)(async (req, res, next) => {
     const validated = schemas_1.doctorSchema.parse(req.body);
     const existingDoctor = await (0, doctorService_1.getDoctorByEmail)(validated.email);
@@ -24,16 +25,16 @@ exports.createDoctorRecord = (0, catchAsyncError_1.catchAsyncError)(async (req, 
     });
 });
 exports.getAllDoctorRecords = (0, catchAsyncError_1.catchAsyncError)(async (req, res) => {
-    const { cursor, limit } = req.query;
-    const { data: doctor, nextCursor } = await (0, doctorService_1.getAllDoctors)(cursor, limit ? Number(limit) : undefined);
+    const { cursor } = req.query;
+    const result = await (0, doctorService_1.getAllDoctors)(cursor);
     (0, sendResponse_1.sendResponse)(res, {
         success: true,
         statusCode: statusCodes_1.StatusCodes.OK,
         message: "Doctor records fetched",
-        data: doctor,
+        data: result.data,
         pagination: {
-            nextCursor: nextCursor !== null ? String(nextCursor) : undefined,
-            limit: limit ? Number(limit) : 50,
+            nextCursor: result.pagination.nextCursor || undefined,
+            hasMore: result.pagination.hasMore,
         },
     });
 });
@@ -115,15 +116,16 @@ exports.searchDoctorResults = (0, catchAsyncError_1.catchAsyncError)(async (req,
 });
 exports.filterDoctors = (0, catchAsyncError_1.catchAsyncError)(async (req, res) => {
     const validated = schemas_1.doctorFilterSchema.parse(req.query);
-    const { data, nextCursor } = await (0, doctorService_1.filterDoctorsService)(validated);
+    const { data, nextCursor, hasMore } = await (0, doctorService_1.filterDoctorsService)(validated);
     (0, sendResponse_1.sendResponse)(res, {
         success: true,
         statusCode: statusCodes_1.StatusCodes.OK,
         message: "Filtered doctors fetched",
         data,
         pagination: {
-            nextCursor: nextCursor !== null ? String(nextCursor) : undefined,
-            limit: validated.limit || 50,
+            nextCursor: nextCursor || undefined,
+            limit: validated.limit ?? paginationConfig_1.PAGINATION_CONFIG.DEFAULT_LIMIT,
+            hasMore,
         },
     });
 });

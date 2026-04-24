@@ -28,7 +28,7 @@ export const createAppointmentRecord = catchAsyncError(
       message: "Appointment created successfully",
       data: appointment,
     });
-  }
+  },
 );
 
 export const getAllAppointmentRecords = catchAsyncError(
@@ -40,7 +40,7 @@ export const getAllAppointmentRecords = catchAsyncError(
 
     const { data: appointment, nextCursor } = await getAllAppointments(
       cursor,
-      limit ? Number(limit) : undefined
+      limit ? Number(limit) : undefined,
     );
 
     sendResponse(res, {
@@ -53,7 +53,7 @@ export const getAllAppointmentRecords = catchAsyncError(
         limit: limit ? Number(limit) : 50,
       },
     });
-  }
+  },
 );
 
 export const getAppointmentRecordById = catchAsyncError(
@@ -66,7 +66,7 @@ export const getAppointmentRecordById = catchAsyncError(
     const appointment = await getAppointmentById(id);
     if (!appointment) {
       return next(
-        new ErrorHandler("Appointment not found", StatusCodes.NOT_FOUND)
+        new ErrorHandler("Appointment not found", StatusCodes.NOT_FOUND),
       );
     }
 
@@ -76,7 +76,7 @@ export const getAppointmentRecordById = catchAsyncError(
       message: "Appointment details fetched",
       data: appointment,
     });
-  }
+  },
 );
 
 export const updateAppointmentRecord = catchAsyncError(
@@ -97,7 +97,7 @@ export const updateAppointmentRecord = catchAsyncError(
     const updatedAppointment = await updateAppointment(id, validatedData);
     if (!updatedAppointment) {
       return next(
-        new ErrorHandler("Appointment not found", StatusCodes.NOT_FOUND)
+        new ErrorHandler("Appointment not found", StatusCodes.NOT_FOUND),
       );
     }
 
@@ -107,7 +107,7 @@ export const updateAppointmentRecord = catchAsyncError(
       message: "Appointment updated successfully",
       data: updatedAppointment,
     });
-  }
+  },
 );
 
 export const deleteAppointmentRecord = catchAsyncError(
@@ -120,7 +120,7 @@ export const deleteAppointmentRecord = catchAsyncError(
     const deletedAppointment = await deleteAppointment(id);
     if (!deletedAppointment) {
       return next(
-        new ErrorHandler("Appointment not found", StatusCodes.NOT_FOUND)
+        new ErrorHandler("Appointment not found", StatusCodes.NOT_FOUND),
       );
     }
 
@@ -130,7 +130,7 @@ export const deleteAppointmentRecord = catchAsyncError(
       message: "Appointment deleted successfully",
       data: deletedAppointment,
     });
-  }
+  },
 );
 
 export const searchAppointmentResults = catchAsyncError(
@@ -148,7 +148,7 @@ export const searchAppointmentResults = catchAsyncError(
       message: "Search results fetched successfully",
       data: appointments,
     });
-  }
+  },
 );
 
 export const filterAppointments = catchAsyncError(async (req, res) => {

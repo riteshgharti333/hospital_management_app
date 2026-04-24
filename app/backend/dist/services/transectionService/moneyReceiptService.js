@@ -2,21 +2,17 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.filterMoneyReceiptsService = exports.searchMoneyReceipts = exports.deleteMoneyReceipt = exports.updateMoneyReceipt = exports.getMoneyReceiptsByDateRange = exports.getMoneyReceiptById = exports.getAllMoneyReceiptsService = exports.createMoneyReceipt = void 0;
 const prisma_1 = require("../../lib/prisma");
-const applyCommonFields_1 = require("../../utils/applyCommonFields");
+const cacheVersion_1 = require("../../utils/cacheVersion");
 const filterPaginate_1 = require("../../utils/filterPaginate");
 const pagination_1 = require("../../utils/pagination");
 const searchCache_1 = require("../../utils/searchCache");
 const createMoneyReceipt = async (data) => {
+    await (0, cacheVersion_1.bumpCacheVersion)("moneyreceipt");
     return prisma_1.prisma.moneyReceipt.create({ data });
 };
 exports.createMoneyReceipt = createMoneyReceipt;
-const getAllMoneyReceiptsService = async (cursor, limit) => {
-    return (0, pagination_1.cursorPaginate)(prisma_1.prisma, {
-        model: "moneyReceipt",
-        cursorField: "id",
-        limit: limit || 50,
-        cacheExpiry: 600,
-    }, cursor ? Number(cursor) : undefined);
+const getAllMoneyReceiptsService = async (cursor) => {
+    return (0, pagination_1.cursorPaginate)(prisma_1.prisma, { model: "moneyReceipt" }, cursor);
 };
 exports.getAllMoneyReceiptsService = getAllMoneyReceiptsService;
 const getMoneyReceiptById = async (id) => {
@@ -36,6 +32,7 @@ const getMoneyReceiptsByDateRange = async (startDate, endDate) => {
 };
 exports.getMoneyReceiptsByDateRange = getMoneyReceiptsByDateRange;
 const updateMoneyReceipt = async (id, data) => {
+    await (0, cacheVersion_1.bumpCacheVersion)("moneyreceipt");
     return prisma_1.prisma.moneyReceipt.update({
         where: { id },
         data,
@@ -43,33 +40,54 @@ const updateMoneyReceipt = async (id, data) => {
 };
 exports.updateMoneyReceipt = updateMoneyReceipt;
 const deleteMoneyReceipt = async (id) => {
+    await (0, cacheVersion_1.bumpCacheVersion)("moneyreceipt");
     return prisma_1.prisma.moneyReceipt.delete({ where: { id } });
 };
 exports.deleteMoneyReceipt = deleteMoneyReceipt;
-const moneyReceiptSearchFields = ["patientName", "mobile", "admissionNo"];
 exports.searchMoneyReceipts = (0, searchCache_1.createSearchService)(prisma_1.prisma, {
-    tableName: "MoneyReceipt",
-    cacheKeyPrefix: "moneyreceipt",
-    ...(0, applyCommonFields_1.applyCommonFields)(moneyReceiptSearchFields),
+    tableName: "moneyReceipt", // ✅ Fixed: was "MoneyReceipt"
+    exactFields: ["admissionNo"],
+    prefixFields: ["admissionNo", "patientName"],
+    similarFields: ["patientName", "mobile"],
+    // selectFields: [
+    //   "id",
+    //   "admissionNo",
+    //   "patientName",
+    //   "mobile",
+    //   "amount",
+    //   "paymentMode",
+    //   "date",
+    //   "status",
+    //   "createdAt",
+    // ],
 });
-const filterMoneyReceiptsService = async (filters) => {
-    const { fromDate, toDate, paymentMode, status, cursor, limit } = filters;
-    const filterObj = {};
-    if (paymentMode)
-        filterObj.paymentMode = paymentMode;
-    if (status)
-        filterObj.status = status;
+const filterMoneyReceiptsService = async (params) => {
+    const { fromDate, toDate, paymentMode, status, cursor, limit } = params;
+    const where = {};
+    // ✅ Payment Mode filter
+    if (paymentMode) {
+        where.paymentMode = {
+            equals: paymentMode,
+            mode: "insensitive",
+        };
+    }
+    // ✅ Status filter
+    if (status) {
+        where.status = {
+            equals: status,
+            mode: "insensitive",
+        };
+    }
+    // ✅ Date range filter (using 'date' field instead of 'createdAt')
     if (fromDate || toDate) {
-        filterObj.date = {
-            gte: fromDate ? new Date(fromDate) : undefined,
-            lte: toDate ? new Date(toDate) : undefined,
+        where.date = {
+            ...(fromDate && { gte: fromDate }),
+            ...(toDate && { lte: toDate }),
         };
     }
     return (0, filterPaginate_1.filterPaginate)(prisma_1.prisma, {
-        model: "moneyReceipt",
-        cursorField: "id",
-        limit: limit || 50,
-        filters: filterObj,
-    }, cursor);
+        model: "moneyReceipt", // ✅ "moneyReceipt"
+        limit,
+    }, cursor, where);
 };
 exports.filterMoneyReceiptsService = filterMoneyReceiptsService;

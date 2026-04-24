@@ -16,7 +16,7 @@ router
 // SEARCH & FILTER
 router.get("/search", AdmissionController_1.searchAdmissionsResults);
 router.get("/filter", AdmissionController_1.filterAdmissions);
-// GET / UPDATE / DELETE BY ID
+// GET / UPDATE / DELETE BY ID    
 router
     .route("/:id")
     .get(AdmissionController_1.getAdmissionById)

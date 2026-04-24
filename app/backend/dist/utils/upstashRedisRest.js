@@ -3,6 +3,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.upstashSet = upstashSet;
 exports.upstashGet = upstashGet;
 exports.upstashDelete = upstashDelete;
+exports.upstashIncr = upstashIncr;
 // utils/upstashRedisRest.ts
 const REDIS_TIMEOUT = 1000; // 1s fetch timeout
 const MAX_RETRIES = 2;
@@ -100,5 +101,29 @@ async function upstashDelete(key) {
     }
     catch (error) {
         await handleFailure(error, "DELETE");
+    }
+}
+/** Redis INCR (atomic increment) */
+async function upstashIncr(key) {
+    if (!isRedisAvailable() || typeof key !== "string" || key.length === 0)
+        return null;
+    try {
+        const url = `${process.env.UPSTASH_REDIS_REST_URL}/incr/${encodeURIComponent(key)}`;
+        const response = await withRetry(() => fetch(url, {
+            method: "POST",
+            headers: {
+                Authorization: `Bearer ${process.env.UPSTASH_REDIS_REST_TOKEN}`,
+                "Content-Type": "application/json",
+                Connection: "keep-alive",
+            },
+        }));
+        if (!response.ok)
+            throw new Error(`Redis INCR failed with status ${response.status}`);
+        const data = await response.json();
+        return data?.result ?? null;
+    }
+    catch (error) {
+        await handleFailure(error, "INCR");
+        return null;
     }
 }

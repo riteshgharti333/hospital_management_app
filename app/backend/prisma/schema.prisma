@@ -122,11 +122,42 @@ model Admission {
 }
 
 
-
-
-
 ////////////////////
 
+model Doctor {
+  id             Int      @id @default(autoincrement())
+  fullName       String
+  mobileNumber   String
+  registrationNo String   @unique
+  qualification  String
+  designation    String
+  department     String
+  email          String   @unique
+  specialization String
+  status         String   @default("Active")
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  admissions      Admission[] 
+
+
+  // 🔗 Department relation
+  departmentId   Int?
+  department     Department? @relation(fields: [departmentId], references: [id])
+
+  // 🔗 Reverse relation for head
+  headedDepartment Department? @relation("DepartmentHead")
+
+  // 🔍 Indexes f1or high-performance queries
+  @@index([fullName])
+  @@index([mobileNumber])
+  @@index([registrationNo])
+  @@index([department])
+  @@index([status])
+  @@index([createdAt])
+  @@index([createdAt, id])
+}
+
+/////////
 
 model Birth {
   id               Int      @id @default(autoincrement())
@@ -157,22 +188,23 @@ model Birth {
 
 
 model Department {
-  id             Int      @id @default(autoincrement())
-  name           String   @unique
-  head           String
-  contactNumber  String
-  email          String
-  location       String
-  description    String
-  status         String   @default("Active")
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
+  id          Int      @id @default(autoincrement())
+  name        String   @unique
+  description String?
+  status      DepartmentStatus @default(ACTIVE)
 
-  // 🔍 Indexes
+  // ✅ Department Head (linked to Doctor)
+  headId      Int?
+  head        Doctor?  @relation("DepartmentHead", fields: [headId], references: [id])
+
+  // Optional: other doctors in department
+  doctors     Doctor[]
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
   @@index([status])
-  @@index([head])
   @@index([name])
-  @@index([updatedAt])
 }
 
 
@@ -268,30 +300,7 @@ model Nurse {
 ///////////
 
 
-model Doctor {
-  id             Int      @id @default(autoincrement())
-  fullName       String
-  mobileNumber   String
-  registrationNo String   @unique
-  qualification  String
-  designation    String
-  department     String
-  email          String   @unique
-  specialization String
-  status         String   @default("Active")
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
-  admissions      Admission[] 
 
-  // 🔍 Indexes f1or high-performance queries
-  @@index([fullName])
-  @@index([mobileNumber])
-  @@index([registrationNo])
-  @@index([department])
-  @@index([status])
-  @@index([createdAt])
-  @@index([createdAt, id])
-}
 
 
 /////////////

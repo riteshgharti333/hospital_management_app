@@ -2,37 +2,48 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.filterBillsService = exports.searchBills = exports.deleteBill = exports.updateBill = exports.getBillsByPatient = exports.getBillById = exports.getAllBillsService = exports.createBill = void 0;
 const prisma_1 = require("../../lib/prisma");
-const applyCommonFields_1 = require("../../utils/applyCommonFields");
 const filterPaginate_1 = require("../../utils/filterPaginate");
 const pagination_1 = require("../../utils/pagination");
 const searchCache_1 = require("../../utils/searchCache");
+const cacheVersion_1 = require("../../utils/cacheVersion");
 const createBill = async (data) => {
     // Calculate each item's totalAmount (qty × mrp)
     const processedItems = data.billItems.map((item) => ({
-        ...item,
+        company: item.company,
+        itemOrService: item.itemOrService,
+        quantity: item.quantity,
+        mrp: item.mrp,
         totalAmount: item.totalAmount ?? item.mrp * item.quantity,
     }));
     // Calculate full bill total (sum of all items)
     const billTotalAmount = processedItems.reduce((sum, item) => sum + (item.totalAmount || 0), 0);
-    return prisma_1.prisma.bill.create({
-        data: {
-            ...data,
-            totalAmount: billTotalAmount,
-            billItems: {
-                create: processedItems,
-            },
+    await (0, cacheVersion_1.bumpCacheVersion)("bill");
+    // Create bill with Prisma
+    const billData = {
+        billDate: new Date(data.billDate),
+        billType: data.billType,
+        mobile: data.mobile,
+        admissionNo: data.admissionNo,
+        patientName: data.patientName,
+        admissionDate: new Date(data.admissionDate),
+        patientSex: data.patientSex,
+        dischargeDate: data.dischargeDate ? new Date(data.dischargeDate) : null,
+        totalAmount: billTotalAmount, // Use calculated total, not data.totalAmount
+        address: data.address,
+        status: data.status,
+        billItems: {
+            create: processedItems,
         },
+    };
+    await (0, cacheVersion_1.bumpCacheVersion)("bill");
+    return prisma_1.prisma.bill.create({
+        data: billData,
         include: { billItems: true },
     });
 };
 exports.createBill = createBill;
-const getAllBillsService = async (cursor, limit) => {
-    return (0, pagination_1.cursorPaginate)(prisma_1.prisma, {
-        model: "bill",
-        cursorField: "id",
-        limit: limit || 50,
-        cacheExpiry: 600,
-    }, cursor ? Number(cursor) : undefined);
+const getAllBillsService = async (cursor) => {
+    return (0, pagination_1.cursorPaginate)(prisma_1.prisma, { model: "bill" }, cursor);
 };
 exports.getAllBillsService = getAllBillsService;
 const getBillById = async (id) => {
@@ -51,7 +62,6 @@ const getBillsByPatient = async (mobile) => {
 };
 exports.getBillsByPatient = getBillsByPatient;
 const updateBill = async (id, data) => {
-    // ⭐ Calculate each item's totalAmount
     const processedItems = data.billItems?.map((item) => {
         const total = item.totalAmount ?? item.mrp * item.quantity;
         return {
@@ -59,8 +69,8 @@ const updateBill = async (id, data) => {
             totalAmount: total,
         };
     }) || [];
-    // ⭐ Calculate totalAmount for the entire bill
     const grandTotal = processedItems.reduce((sum, item) => sum + (item.totalAmount || 0), 0);
+    await (0, cacheVersion_1.bumpCacheVersion)("bill");
     return prisma_1.prisma.bill.update({
         where: { id },
         data: {
@@ -71,7 +81,6 @@ const updateBill = async (id, data) => {
             admissionNo: data.admissionNo,
             patientName: data.patientName,
             admissionDate: data.admissionDate,
-            patientAge: data.patientAge,
             patientSex: data.patientSex,
             dischargeDate: data.dischargeDate ?? null,
             address: data.address,
@@ -92,37 +101,64 @@ const updateBill = async (id, data) => {
 };
 exports.updateBill = updateBill;
 const deleteBill = async (id) => {
+    await (0, cacheVersion_1.bumpCacheVersion)("bill");
     return prisma_1.prisma.bill.delete({
         where: { id },
         include: { billItems: true },
     });
 };
 exports.deleteBill = deleteBill;
-const billSearchFields = ["admissionNo", "patientName", "mobile"];
 exports.searchBills = (0, searchCache_1.createSearchService)(prisma_1.prisma, {
-    tableName: "Bill",
-    cacheKeyPrefix: "bill",
-    ...(0, applyCommonFields_1.applyCommonFields)(billSearchFields),
+    tableName: "bill",
+    exactFields: ["admissionNo"],
+    prefixFields: ["admissionNo", "patientName"],
+    similarFields: ["patientName", "mobile"],
+    // selectFields: [
+    //   "id",
+    //   "admissionNo",
+    //   "patientName",
+    //   "mobile",
+    //   "amount",
+    //   "paymentMode",
+    //   "date",
+    //   "status",
+    //   "createdAt",
+    // ],
 });
-const filterBillsService = async (filters) => {
-    const { fromDate, toDate, billType, patientSex, status, cursor, limit } = filters;
-    const filterObj = {};
-    if (billType)
-        filterObj.billType = billType;
-    if (patientSex)
-        filterObj.patientSex = patientSex;
-    if (status)
-        filterObj.status = status;
-    if (fromDate || toDate)
-        filterObj.billDate = {
-            gte: fromDate ? new Date(fromDate) : undefined,
-            lte: toDate ? new Date(toDate) : undefined,
+const filterBillsService = async (params) => {
+    const { fromDate, toDate, billType, patientSex, status, cursor, limit } = params;
+    const where = {};
+    // ✅ Bill Type filter
+    if (billType) {
+        where.billType = {
+            equals: billType,
+            mode: "insensitive",
         };
+    }
+    // ✅ Patient Sex filter
+    if (patientSex) {
+        where.patientSex = {
+            equals: patientSex,
+            mode: "insensitive",
+        };
+    }
+    // ✅ Status filter
+    if (status) {
+        where.status = {
+            equals: status,
+            mode: "insensitive",
+        };
+    }
+    // ✅ Date range filter (using 'billDate' field)
+    if (fromDate || toDate) {
+        where.billDate = {
+            ...(fromDate && { gte: fromDate }),
+            ...(toDate && { lte: toDate }),
+        };
+    }
     return (0, filterPaginate_1.filterPaginate)(prisma_1.prisma, {
         model: "bill",
-        cursorField: "id",
-        limit: limit || 50,
-        filters: filterObj,
-    }, cursor);
+        limit,
+    }, cursor, where);
 };
 exports.filterBillsService = filterBillsService;

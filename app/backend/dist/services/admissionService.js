@@ -2,7 +2,6 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.filterAdmissionsService = exports.searchAdmissions = exports.deleteAdmission = exports.updateAdmission = exports.getAdmissionById = exports.getAllAdmissionsService = exports.findActiveAdmissionByPatient = exports.createAdmissionService = void 0;
 const prisma_1 = require("../lib/prisma");
-const applyCommonFields_1 = require("../utils/applyCommonFields");
 const filterPaginate_1 = require("../utils/filterPaginate");
 const generateHospitalId_1 = require("../utils/generateHospitalId");
 const pagination_1 = require("../utils/pagination");
@@ -17,7 +16,7 @@ const createAdmissionService = async (data) => {
         data: {
             ...data,
             hospitalAdmissionId,
-            status: "ADMITTED",
+            // status: "ADMITTED", // ❌ REMOVED
         },
     });
 };
@@ -26,7 +25,7 @@ const findActiveAdmissionByPatient = async (patientId) => {
     return prisma_1.prisma.admission.findFirst({
         where: {
             patientId,
-            status: "ADMITTED",
+            // status: "ADMITTED", // ❌ REMOVED
         },
     });
 };
@@ -34,14 +33,16 @@ exports.findActiveAdmissionByPatient = findActiveAdmissionByPatient;
 const getAllAdmissionsService = async (cursor, limit) => {
     return (0, pagination_1.cursorPaginate)(prisma_1.prisma, {
         model: "admission",
-        cursorField: "id",
         limit: limit || 50,
         cacheExpiry: 600,
+        // ⚠️ IMPORTANT: must match pagination order
+        // (your cursorPaginate uses createdAt + id)
         select: {
             id: true,
             hospitalAdmissionId: true,
             admissionDate: true,
             dischargeDate: true,
+            createdAt: true,
             patient: {
                 select: {
                     id: true,
@@ -49,6 +50,7 @@ const getAllAdmissionsService = async (cursor, limit) => {
                     gender: true,
                     mobileNumber: true,
                     aadhaarNumber: true,
+                    address: true,
                 },
             },
             doctor: {
@@ -58,7 +60,7 @@ const getAllAdmissionsService = async (cursor, limit) => {
                 },
             },
         },
-    }, cursor ? Number(cursor) : undefined);
+    }, cursor);
 };
 exports.getAllAdmissionsService = getAllAdmissionsService;
 const getAdmissionById = async (id) => {
@@ -76,30 +78,49 @@ const deleteAdmission = async (id) => {
     return prisma_1.prisma.admission.delete({ where: { id } });
 };
 exports.deleteAdmission = deleteAdmission;
-const commonSearchFields = ["hospitalAdmissionId"];
 exports.searchAdmissions = (0, searchCache_1.createSearchService)(prisma_1.prisma, {
     tableName: "Admission",
-    cacheKeyPrefix: "admission",
-    ...(0, applyCommonFields_1.applyCommonFields)(commonSearchFields),
+    exactFields: ["hospitalAdmissionId"],
+    prefixFields: [],
+    similarFields: [],
 });
-/// Filter
-const filterAdmissionsService = async (filters) => {
-    const { fromDate, toDate, gender, cursor, limit } = filters;
-    // Build filter object
-    const filterObj = {};
-    if (gender)
-        filterObj.gender = { equals: gender, mode: "insensitive" };
-    if (fromDate || toDate)
-        filterObj.admissionDate = {
-            gte: fromDate ? new Date(fromDate) : undefined,
-            lte: toDate ? new Date(toDate) : undefined,
+const filterAdmissionsService = async (params) => {
+    const { fromDate, toDate, gender, cursor, limit } = params;
+    const where = {};
+    if (gender) {
+        where.patient = {
+            gender: {
+                equals: gender,
+                mode: "insensitive",
+            },
         };
-    // Call filterPaginate
+    }
+    if (fromDate || toDate) {
+        where.createdAt = {
+            ...(fromDate && { gte: fromDate }),
+            ...(toDate && { lte: toDate }),
+        };
+    }
     return (0, filterPaginate_1.filterPaginate)(prisma_1.prisma, {
         model: "admission",
-        cursorField: "id",
-        limit: limit || 50,
-        filters: filterObj,
-    }, cursor);
+        limit,
+        include: {
+            patient: {
+                select: {
+                    id: true,
+                    fullName: true,
+                    gender: true,
+                    mobileNumber: true,
+                    aadhaarNumber: true,
+                },
+            },
+            doctor: {
+                select: {
+                    id: true,
+                    fullName: true,
+                },
+            },
+        },
+    }, cursor, where);
 };
 exports.filterAdmissionsService = filterAdmissionsService;
