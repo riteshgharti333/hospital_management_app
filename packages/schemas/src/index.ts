@@ -144,29 +144,49 @@ export const birthSchema = z.object({
 
 ///////////
 
+export const DepartmentStatusEnum = z.enum(["ACTIVE", "INACTIVE"]);
+
+export const DepartmentNameEnum = z.enum([
+  "CARDIOLOGY",
+  "NEUROLOGY",
+  "ORTHOPEDICS",
+  "PEDIATRICS",
+  "DERMATOLOGY",
+  "GENERAL",
+]);
+
 export const departmentSchema = z.object({
-  name: z.string().min(1, "Department name is required"),
-  head: z.string().min(1, "Department head is required"),
-  contactNumber: z.string().min(10, "Contact number must be 10 digits"),
-  email: z.string().email("Invalid email address"),
-  location: z.string().min(1, "Location is required"),
-  description: z.string().min(1, "Description is required"),
-  status: z.string().optional().default("Active"),
+  // ✅ enum instead of free string
+  name: DepartmentNameEnum,
+
+  description: z.string().optional(),
+
+  // ✅ matches Prisma (Int headId)
+  headId: z.coerce.number().int().positive("Valid doctor ID is required"),
+
+  // ✅ enum match
+  status: DepartmentStatusEnum.optional().default("ACTIVE"),
 });
 
 /////////////
 
 export const doctorSchema = z.object({
   fullName: z.string().min(1, "Full name is required"),
-  mobileNumber: z.string().min(10, "Mobile number must be at least 10 digits"),
+
+  mobileNumber: z
+    .string()
+    .regex(/^[0-9]{10}$/, "Mobile number must be exactly 10 digits"),
+
   email: z.string().email("Invalid email format"),
+
   qualification: z.string().min(1, "Qualification is required"),
+
   designation: z.string().min(1, "Designation is required"),
-  department: z.string().min(1, "Department is required"),
+
   specialization: z.string().min(1, "Specialization is required"),
+
   status: z.string().optional().default("Active"),
 });
-
 ///////////
 
 export const nurseSchema = z.object({

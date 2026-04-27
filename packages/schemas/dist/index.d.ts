@@ -178,30 +178,23 @@ export declare const birthSchema: z.ZodObject<{
     placeOfBirth: string;
     attendantsName: string;
 }>;
+export declare const DepartmentStatusEnum: z.ZodEnum<["ACTIVE", "INACTIVE"]>;
+export declare const DepartmentNameEnum: z.ZodEnum<["CARDIOLOGY", "NEUROLOGY", "ORTHOPEDICS", "PEDIATRICS", "DERMATOLOGY", "GENERAL"]>;
 export declare const departmentSchema: z.ZodObject<{
-    name: z.ZodString;
-    head: z.ZodString;
-    contactNumber: z.ZodString;
-    email: z.ZodString;
-    location: z.ZodString;
-    description: z.ZodString;
-    status: z.ZodDefault<z.ZodOptional<z.ZodString>>;
+    name: z.ZodEnum<["CARDIOLOGY", "NEUROLOGY", "ORTHOPEDICS", "PEDIATRICS", "DERMATOLOGY", "GENERAL"]>;
+    description: z.ZodOptional<z.ZodString>;
+    headId: z.ZodNumber;
+    status: z.ZodDefault<z.ZodOptional<z.ZodEnum<["ACTIVE", "INACTIVE"]>>>;
 }, "strip", z.ZodTypeAny, {
-    status: string;
-    name: string;
-    email: string;
-    description: string;
-    head: string;
-    contactNumber: string;
-    location: string;
+    status: "ACTIVE" | "INACTIVE";
+    name: "CARDIOLOGY" | "NEUROLOGY" | "ORTHOPEDICS" | "PEDIATRICS" | "DERMATOLOGY" | "GENERAL";
+    headId: number;
+    description?: string | undefined;
 }, {
-    name: string;
-    email: string;
-    description: string;
-    head: string;
-    contactNumber: string;
-    location: string;
-    status?: string | undefined;
+    name: "CARDIOLOGY" | "NEUROLOGY" | "ORTHOPEDICS" | "PEDIATRICS" | "DERMATOLOGY" | "GENERAL";
+    headId: number;
+    status?: "ACTIVE" | "INACTIVE" | undefined;
+    description?: string | undefined;
 }>;
 export declare const doctorSchema: z.ZodObject<{
     fullName: z.ZodString;
@@ -209,13 +202,11 @@ export declare const doctorSchema: z.ZodObject<{
     email: z.ZodString;
     qualification: z.ZodString;
     designation: z.ZodString;
-    department: z.ZodString;
     specialization: z.ZodString;
     status: z.ZodDefault<z.ZodOptional<z.ZodString>>;
 }, "strip", z.ZodTypeAny, {
     status: string;
     email: string;
-    department: string;
     mobileNumber: string;
     fullName: string;
     qualification: string;
@@ -223,7 +214,6 @@ export declare const doctorSchema: z.ZodObject<{
     specialization: string;
 }, {
     email: string;
-    department: string;
     mobileNumber: string;
     fullName: string;
     qualification: string;
@@ -893,12 +883,12 @@ export declare const cashLedgerSchema: z.ZodObject<{
 }, "strip", z.ZodTypeAny, {
     amount: number;
     transactionDate: Date;
-    amountType: "INCOME" | "EXPENSE";
+    amountType: "EXPENSE" | "INCOME";
     purpose: string;
     remarks?: string | undefined;
 }, {
     amount: number;
-    amountType: "INCOME" | "EXPENSE";
+    amountType: "EXPENSE" | "INCOME";
     purpose: string;
     remarks?: string | undefined;
     transactionDate?: unknown;
@@ -1374,13 +1364,13 @@ export declare const cashLedgerFilterSchema: z.ZodObject<{
     fromDate?: Date | undefined;
     toDate?: Date | undefined;
     cursor?: string | undefined;
-    amountType?: "INCOME" | "EXPENSE" | undefined;
+    amountType?: "EXPENSE" | "INCOME" | undefined;
 }, {
     fromDate?: Date | undefined;
     toDate?: Date | undefined;
     cursor?: string | undefined;
     limit?: number | undefined;
-    amountType?: "INCOME" | "EXPENSE" | undefined;
+    amountType?: "EXPENSE" | "INCOME" | undefined;
 }>;
 export type CashLedgerFilterInput = z.infer<typeof cashLedgerFilterSchema>;
 export declare const doctorLedgerFilterSchema: z.ZodObject<{
@@ -1669,13 +1659,13 @@ export declare const FilterSchemas: {
         fromDate?: Date | undefined;
         toDate?: Date | undefined;
         cursor?: string | undefined;
-        amountType?: "INCOME" | "EXPENSE" | undefined;
+        amountType?: "EXPENSE" | "INCOME" | undefined;
     }, {
         fromDate?: Date | undefined;
         toDate?: Date | undefined;
         cursor?: string | undefined;
         limit?: number | undefined;
-        amountType?: "INCOME" | "EXPENSE" | undefined;
+        amountType?: "EXPENSE" | "INCOME" | undefined;
     }>;
     readonly doctorLedger: z.ZodObject<{
         fromDate: z.ZodOptional<z.ZodDate>;

@@ -24,18 +24,7 @@ export const createAdmission = catchAsyncError(
     // 1️⃣ Validate body
     const validated = admissionSchema.parse(req.body);
 
-    // 2️⃣ Business rule (controller responsibility)
-    const activeAdmission = await findActiveAdmissionByPatient(
-      validated.patientId,
-    );
-
-    // if (activeAdmission) {
-    //   return sendResponse(res, {
-    //     success: false,
-    //     statusCode: StatusCodes.BAD_REQUEST,
-    //     message: "Patient already has an active admission",
-    //   });
-    // }
+   
 
     // 3️⃣ Create admission (DB + ID handled in service)
     const admission = await createAdmissionService(validated);

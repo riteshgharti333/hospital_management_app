@@ -8,7 +8,6 @@ import {
   searchDepartmentResults,
   filterDepartments,
 } from "../controllers/DepartmentController";
-
 import { authenticateUser } from "../middlewares/authenticate";
 import { authorizeRoles } from "../middlewares/authorize";
 
@@ -17,30 +16,18 @@ const router = express.Router();
 // CREATE + LIST
 router
   .route("/")
-  .post(
-    authenticateUser,
-    authorizeRoles("ADMIN"),
-    createDepartmentRecord
-  )
+  .post(authenticateUser, authorizeRoles("ADMIN"), createDepartmentRecord)
   .get(getAllDepartmentRecords);
 
 // SEARCH & FILTER
 router.get("/search", searchDepartmentResults);
 router.get("/filter", filterDepartments);
 
-// GET / UPDATE / DELETE
+// GET / UPDATE / DELETE BY ID
 router
   .route("/:id")
   .get(getDepartmentRecordById)
-  .put(
-    authenticateUser,
-    authorizeRoles("ADMIN"),
-    updateDepartmentRecord
-  )
-  .delete(
-    authenticateUser,
-    authorizeRoles("ADMIN"),
-    deleteDepartmentRecord
-  );
+  .put(authenticateUser, authorizeRoles("ADMIN"), updateDepartmentRecord)
+  .delete(authenticateUser, authorizeRoles("ADMIN"), deleteDepartmentRecord);
 
 export default router;

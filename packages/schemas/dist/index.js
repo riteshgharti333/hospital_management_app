@@ -1,7 +1,7 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.birthFilterSchema = exports.admissionFilterSchema = exports.bankFilterSchema = exports.cashFilterSchema = exports.ledgerFilterSchema = exports.supplierLedgerSchema = exports.pharmacyLedgerSchema = exports.insuranceLedgerSchema = exports.expenseLedgerSchema = exports.diagnosticsLedgerSchema = exports.patientLedgerSchema = exports.doctorLedgerSchema = exports.cashLedgerSchema = exports.bankLedgerSchema = exports.ledgerSchema = exports.REFERENCE_TYPES = exports.ENTITY_TYPES = exports.PaymentModeEnum = exports.AmountTypeEnum = exports.bankSchema = exports.cashSchema = exports.serviceChargeSchema = exports.productMaterialSchema = exports.materialSpecSchema = exports.productSchema = exports.brandSchema = exports.voucherSchema = exports.moneyReceiptSchema = exports.employeeSchema = exports.billSchema = exports.billItemSchema = exports.xrayReportSchema = exports.prescriptionFilterSchema = exports.prescriptionSchema = exports.medicineSchema = exports.PrescriptionStatusEnum = exports.pharmacistSchema = exports.patientSchema = exports.nurseSchema = exports.doctorSchema = exports.departmentSchema = exports.birthSchema = exports.bedAssignmentSchema = exports.appointmentSchema = exports.ambulanceSchema = exports.admissionSchema = exports.bedSchema = exports.loginSchema = exports.registerSchema = exports.changePasswordSchema = void 0;
-exports.FilterSchemas = exports.moneyReceiptFilterSchema = exports.billFilterSchema = exports.doctorLedgerFilterSchema = exports.cashLedgerFilterSchema = exports.bankLedgerFilterSchema = exports.patientLedgerFilterSchema = exports.doctorFilterSchema = exports.nurseFilterSchema = exports.appointmentFilterSchema = exports.departmentFilterSchema = exports.patientFilterSchema = void 0;
+exports.bankFilterSchema = exports.cashFilterSchema = exports.ledgerFilterSchema = exports.supplierLedgerSchema = exports.pharmacyLedgerSchema = exports.insuranceLedgerSchema = exports.expenseLedgerSchema = exports.diagnosticsLedgerSchema = exports.patientLedgerSchema = exports.doctorLedgerSchema = exports.cashLedgerSchema = exports.bankLedgerSchema = exports.ledgerSchema = exports.REFERENCE_TYPES = exports.ENTITY_TYPES = exports.PaymentModeEnum = exports.AmountTypeEnum = exports.bankSchema = exports.cashSchema = exports.serviceChargeSchema = exports.productMaterialSchema = exports.materialSpecSchema = exports.productSchema = exports.brandSchema = exports.voucherSchema = exports.moneyReceiptSchema = exports.employeeSchema = exports.billSchema = exports.billItemSchema = exports.xrayReportSchema = exports.prescriptionFilterSchema = exports.prescriptionSchema = exports.medicineSchema = exports.PrescriptionStatusEnum = exports.pharmacistSchema = exports.patientSchema = exports.nurseSchema = exports.doctorSchema = exports.departmentSchema = exports.DepartmentNameEnum = exports.DepartmentStatusEnum = exports.birthSchema = exports.bedAssignmentSchema = exports.appointmentSchema = exports.ambulanceSchema = exports.admissionSchema = exports.bedSchema = exports.loginSchema = exports.registerSchema = exports.changePasswordSchema = void 0;
+exports.FilterSchemas = exports.moneyReceiptFilterSchema = exports.billFilterSchema = exports.doctorLedgerFilterSchema = exports.cashLedgerFilterSchema = exports.bankLedgerFilterSchema = exports.patientLedgerFilterSchema = exports.doctorFilterSchema = exports.nurseFilterSchema = exports.appointmentFilterSchema = exports.departmentFilterSchema = exports.patientFilterSchema = exports.birthFilterSchema = exports.admissionFilterSchema = void 0;
 const zod_1 = require("zod");
 exports.changePasswordSchema = zod_1.z
     .object({
@@ -113,23 +113,33 @@ exports.birthSchema = zod_1.z.object({
     attendantsName: zod_1.z.string().min(1, "Attendant's name is required"),
 });
 ///////////
+exports.DepartmentStatusEnum = zod_1.z.enum(["ACTIVE", "INACTIVE"]);
+exports.DepartmentNameEnum = zod_1.z.enum([
+    "CARDIOLOGY",
+    "NEUROLOGY",
+    "ORTHOPEDICS",
+    "PEDIATRICS",
+    "DERMATOLOGY",
+    "GENERAL",
+]);
 exports.departmentSchema = zod_1.z.object({
-    name: zod_1.z.string().min(1, "Department name is required"),
-    head: zod_1.z.string().min(1, "Department head is required"),
-    contactNumber: zod_1.z.string().min(10, "Contact number must be 10 digits"),
-    email: zod_1.z.string().email("Invalid email address"),
-    location: zod_1.z.string().min(1, "Location is required"),
-    description: zod_1.z.string().min(1, "Description is required"),
-    status: zod_1.z.string().optional().default("Active"),
+    // ✅ enum instead of free string
+    name: exports.DepartmentNameEnum,
+    description: zod_1.z.string().optional(),
+    // ✅ matches Prisma (Int headId)
+    headId: zod_1.z.coerce.number().int().positive("Valid doctor ID is required"),
+    // ✅ enum match
+    status: exports.DepartmentStatusEnum.optional().default("ACTIVE"),
 });
 /////////////
 exports.doctorSchema = zod_1.z.object({
     fullName: zod_1.z.string().min(1, "Full name is required"),
-    mobileNumber: zod_1.z.string().min(10, "Mobile number must be at least 10 digits"),
+    mobileNumber: zod_1.z
+        .string()
+        .regex(/^[0-9]{10}$/, "Mobile number must be exactly 10 digits"),
     email: zod_1.z.string().email("Invalid email format"),
     qualification: zod_1.z.string().min(1, "Qualification is required"),
     designation: zod_1.z.string().min(1, "Designation is required"),
-    department: zod_1.z.string().min(1, "Department is required"),
     specialization: zod_1.z.string().min(1, "Specialization is required"),
     status: zod_1.z.string().optional().default("Active"),
 });
