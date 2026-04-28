@@ -1,11 +1,11 @@
 import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
 
 import Layout from "./components/Layout/Layout";
-import AdmissionEntry from "./pages/Service/AdmissionEntry";
+import NewAdmission from "./pages/Service/NewAdmission";
 import Dashboard from "./pages/Service/Dashboard";
 import BirthRegister from "./pages/Service/BirthRegister";
 import PatientRegister from "./pages/Service/PatientRegister";
-import AddmissionEntriesTable from "./pages/TableData/AddmissionEntriesTable";
+import AdmissionTable from "./pages/TableData/AdmissionTable";
 import BirthEntriesTable from "./pages/TableData/BirthEntriesTable";
 import PatientsEntriesTable from "./pages/TableData/PatientsEntriesTable";
 import DepartmentTable from "./pages/TableData/DepartmentTable";
@@ -80,10 +80,7 @@ function App() {
     <div className="app">
       <NetworkProvider>
         <BrowserRouter>
-          <Toaster
-            position="top-center"
-            richColors
-          />
+          <Toaster position="top-center" richColors />
           <Routes>
             <Route path="/login" element={<Login />} />
             <Route path="/forgot-password" element={<ForgotPassword />} />
@@ -108,11 +105,9 @@ function App() {
               {/* Help page */}
 
               {/* Admission Entry  */}
-              <Route
-                path="/admission-entries"
-                element={<AddmissionEntriesTable />}
-              />
-              <Route path="/new-admission-entry" element={<AdmissionEntry />} />
+              <Route path="/admission-entries" element={<AdmissionTable />} />
+
+              <Route path="/new-admission-entry" element={<NewAdmission />} />
               <Route path="/admission/:id" element={<EditAdmission />} />
 
               {/* Birth Entry */}

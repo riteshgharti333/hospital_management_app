@@ -86,20 +86,7 @@ const formFields = [
         icon: <FaBriefcase className="text-gray-400" />,
         required: true,
       },
-      {
-        label: "Department",
-        type: "select",
-        name: "department",
-        placeholder: "Select department",
-        options: [
-          "Cardiology",
-          "Neurology",
-          "Pediatrics",
-          "Orthopedics",
-          "General Medicine",
-        ],
-        required: true,
-      },
+
       {
         label: "Specialization",
         type: "text",

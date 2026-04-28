@@ -15,7 +15,7 @@ const filterLabels = {
   toDate: "To Date",
 };
 
-const AdmissionEntriesTable = () => {
+const AdmissionTable = () => {
   const [currentCursor, setCurrentCursor] = useState(null);
   const [cursorHistory, setCursorHistory] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
@@ -196,4 +196,4 @@ const AdmissionEntriesTable = () => {
   );
 };
 
-export default AdmissionEntriesTable;
+export default AdmissionTable;

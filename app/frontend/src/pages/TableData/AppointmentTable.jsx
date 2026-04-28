@@ -9,7 +9,7 @@ import {
 } from "../../feature/hooks/useAppointment";
 
 const filterLabels = {
-  department: "Department",
+  status: "Status",
   fromDate: "From Date",
   toDate: "To Date",
 };
@@ -25,13 +25,18 @@ const AppointmentTable = () => {
   const { data: appointmentData, isLoading: loadingAppointments } =
     useGetAppointments(currentCursor, 50);
 
+  console.log(appointmentData);
+
   // Search dataset
   const { data: searchData, isLoading: loadingSearch } =
     useSearchAppointments(searchTerm);
 
   // Filter dataset
-  const { data: filterData, isLoading: loadingFilter } =
-    useFilterAppointments({ ...filters, cursor: currentCursor, limit: 50 });
+  const { data: filterData, isLoading: loadingFilter } = useFilterAppointments({
+    ...filters,
+    cursor: currentCursor,
+    limit: 50,
+  });
 
   // Select dataset based on mode
   const getCurrentData = () => {
@@ -63,25 +68,50 @@ const AppointmentTable = () => {
 
   const columns = useMemo(
     () => [
+      { accessorKey: "id", header: "ID" },
       {
         accessorKey: "appointmentDate",
         header: "Appointment Date",
         cell: (info) => {
           const date = new Date(info.getValue());
-          return isNaN(date)
-            ? info.getValue()
-            : date.toLocaleDateString("en-GB", {
-                day: "2-digit",
-                month: "short",
-                year: "numeric",
-              });
+          return date.toLocaleDateString();
         },
       },
-      { accessorKey: "appointmentTime", header: "Time" },
-      { accessorKey: "doctorName", header: "Doctor" },
-      { accessorKey: "department", header: "Department" },
+      { accessorKey: "appointmentTime", header: "Appointment Time" },
+      {
+        accessorKey: "doctor.fullName",
+        header: "Doctor Name",
+        accessorFn: (row) => row.doctor?.fullName || "N/A",
+      },
+      {
+        accessorKey: "status",
+        header: "Status",
+        cell: (info) => {
+          const value = info.getValue();
+          const map = {
+            BOOKED: "bg-blue-100 text-blue-700",
+            CANCELLED: "bg-red-100 text-red-700",
+            EXPIRED: "bg-gray-100 text-gray-700",
+          };
+          return (
+            <span
+              className={`px-2 py-1 rounded text-xs font-medium ${
+                map[value] || ""
+              }`}
+            >
+              {value === "BOOKED"
+                ? "Booked"
+                : value === "CANCELLED"
+                  ? "Cancelled"
+                  : value === "EXPIRED"
+                    ? "Expired"
+                    : value}
+            </span>
+          );
+        },
+      },
     ],
-    []
+    [],
   );
 
   const handleNextPage = () => {
@@ -117,7 +147,7 @@ const AppointmentTable = () => {
     <div className="">
       <div className="flex justify-between items-center mb-4">
         <h2 className="text-2xl font-bold text-gray-800">Appointments</h2>
-        <Link className="btn-primary" to="/new-appointment">
+        <Link className="btn-primary" to={"/new-appointment"}>
           <FaPlus /> New Appointment
         </Link>
       </div>
@@ -128,22 +158,16 @@ const AppointmentTable = () => {
         path="appointment"
         loading={isLoading}
         searchConfig={{
-          placeholder: "Search by Doctor or Department...",
+          placeholder: "Search by Doctor Name",
           searchTerm,
           onSearchChange: setSearchTerm,
         }}
         filtersConfig={[
           {
-            key: "department",
-            label: "Department",
+            key: "status",
+            label: "Status",
             type: "select",
-            options: [
-              "Cardiology",
-              "Neurology",
-              "Pediatrics",
-              "Orthopedics",
-              "Dermatology",
-            ],
+            options: ["BOOKED", "CANCELLED", "EXPIRED"],
           },
           { key: "fromDate", label: "From Date", type: "date" },
           { key: "toDate", label: "To Date", type: "date" },

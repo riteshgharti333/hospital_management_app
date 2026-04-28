@@ -1,107 +1,139 @@
-import React from "react";
-import { FaBuilding, FaUser, FaPhone } from "react-icons/fa";
+import React, { useState, useEffect } from "react";
+import { FaBuilding, FaUser, FaPhone, FaSearch } from "react-icons/fa";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import BackButton from "../../components/BackButton/BackButton";
 import { useCreateDepartment } from "../../feature/hooks/useDepartments";
 import { toast } from "sonner";
-
 import LoadingButton from "../../components/LoadingButton/LoadingButton";
 import { useNavigate } from "react-router-dom";
-import { departmentSchema } from "@hospital/schemas";
+import { useSearchDoctors } from "../../feature/hooks/useDoctor";
 
-const formFields = [
-  {
-    section: "Department Information",
-    icon: <FaBuilding className="text-blue-500" />,
-    fields: [
-      {
-        label: "Department Name",
-        type: "text",
-        name: "name",
-        placeholder: "Enter department name",
-      },
-      {
-        label: "Department Head",
-        type: "text",
-        name: "head",
-        placeholder: "Enter department head name",
-        icon: <FaUser className="text-gray-400" />,
-      },
-      {
-        label: "Contact Number",
-        type: "tel",
-        name: "contactNumber",
-        placeholder: "Enter contact number",
-        icon: <FaPhone className="text-gray-400" />,
-      },
-      {
-        label: "Email",
-        type: "email",
-        name: "email",
-        placeholder: "Enter department email",
-      },
-    ],
-  },
-  {
-    section: "Additional Details",
-    icon: <FaBuilding className="text-blue-500" />,
-    fields: [
-      {
-        label: "Location",
-        type: "text",
-        name: "location",
-        placeholder: "Enter department location",
-      },
-      {
-        label: "Description",
-        type: "textarea",
-        name: "description",
-        placeholder: "Enter department description",
-      },
-      {
-        label: "Status",
-        type: "select",
-        name: "status",
-        placeholder: "Select department status",
-        options: ["Active", "Inactive"],
-      },
-    ],
-  },
-];
+// Department Status Enum
+export const DepartmentStatusEnum = z.enum(["ACTIVE", "INACTIVE"]);
+
+// Department Name Enum
+export const DepartmentNameEnum = z.enum([
+  "CARDIOLOGY",
+  "NEUROLOGY",
+  "ORTHOPEDICS",
+  "PEDIATRICS",
+  "DERMATOLOGY",
+  "GENERAL",
+]);
+
+// Schema for department
+export const departmentSchema = z.object({
+  name: DepartmentNameEnum,
+  description: z.string().optional(),
+  headId: z.number().min(1, "Please select a department head"),
+  status: DepartmentStatusEnum.default("ACTIVE"),
+});
 
 const NewDepartment = () => {
   const navigate = useNavigate();
+  const [showDoctorSearch, setShowDoctorSearch] = useState(false);
+  const [searchDoctorQuery, setSearchDoctorQuery] = useState("");
+  const [selectedDoctor, setSelectedDoctor] = useState(null);
+
+  const { data: doctorSearchResults, isLoading: searchingDoctors } =
+    useSearchDoctors(searchDoctorQuery, {
+      enabled: searchDoctorQuery.length >= 2,
+    });
+
   const {
     register,
     handleSubmit,
-    reset,
+    setValue,
+    watch,
+    trigger,
     formState: { errors },
   } = useForm({
     resolver: zodResolver(departmentSchema),
     defaultValues: {
       name: "",
-      head: "",
-      contactNumber: "",
-      email: "",
-      location: "",
       description: "",
-      status: "Active",
+      headId: null,
+      status: "ACTIVE",
     },
   });
 
   const { mutateAsync, isPending } = useCreateDepartment();
 
-  const onSubmit = async (data) => {
-    const response = await mutateAsync(data);
-    const { success, message, data: createdDept } = response;
+  // Watch form values
+  const formValues = watch();
 
+  // Handle doctor selection from search
+  const handleDoctorSelect = (doctor) => {
+    setValue("headId", doctor.id);
+    setSelectedDoctor({
+      id: doctor.id,
+      name: doctor.fullName || doctor.doctorName || doctor.name,
+      specialization: doctor.specialization,
+    });
+    trigger("headId");
+    setShowDoctorSearch(false);
+    setSearchDoctorQuery("");
+  };
+
+  const onSubmit = async (data) => {
+    // Prepare submission data with headId as number
+    const submissionData = {
+      name: data.name,
+      description: data.description || "",
+      headId: data.headId,
+      status: data.status,
+    };
+
+    console.log("Submitting department data:", submissionData);
+
+    const response = await mutateAsync(submissionData);
+    
     if (response?.data?.success) {
       toast.success(response?.data?.message);
       navigate(`/department/${response.data.data.id}`);
     }
   };
+
+  // Handle click outside to close search results
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (showDoctorSearch && !event.target.closest('.doctor-search-container')) {
+        setShowDoctorSearch(false);
+      }
+    };
+
+    document.addEventListener("click", handleClickOutside);
+    return () => document.removeEventListener("click", handleClickOutside);
+  }, [showDoctorSearch]);
+
+  // Search result component
+  const SearchResults = ({ results, loading, onSelect }) => (
+    <div className="absolute z-10 mt-1 w-full bg-white border border-gray-300 rounded-lg shadow-lg max-h-60 overflow-y-auto">
+      {loading ? (
+        <div className="p-3 text-center text-gray-500">Searching doctors...</div>
+      ) : results?.length > 0 ? (
+        results.map((doctor, index) => (
+          <div
+            key={index}
+            className="p-3 hover:bg-blue-50 cursor-pointer border-b border-gray-100 last:border-b-0"
+            onClick={() => onSelect(doctor)}
+          >
+            <div className="font-medium text-gray-800">
+              {doctor.fullName || doctor.doctorName || doctor.name}
+            </div>
+            <div className="text-sm text-gray-600 flex justify-between">
+              <span>ID: {doctor.registrationNo || doctor.doctorId || `D-${doctor.id}`}</span>
+              <span>{doctor.specialization}</span>
+            </div>
+          </div>
+        ))
+      ) : (
+        <div className="p-3 text-center text-gray-500">No doctors found</div>
+      )}
+    </div>
+  );
 
   return (
     <div className="mx-auto">
@@ -124,108 +156,144 @@ const NewDepartment = () => {
         onSubmit={handleSubmit(onSubmit)}
         className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden"
       >
-        {formFields.map((section, sectionIndex) => (
-          <div
-            key={sectionIndex}
-            className={`p-6 ${
-              sectionIndex !== 0 ? "border-t border-gray-100" : ""
-            }`}
-          >
-            <div className="flex items-center mb-6">
-              {section.icon}
-              <h3 className="ml-2 text-lg font-semibold text-gray-800">
-                {section.section}
-              </h3>
+        <div className="p-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {/* Department Name - Select dropdown */}
+            <div className="space-y-1">
+              <label className="block text-sm font-medium text-gray-700">
+                Department Name
+                <span className="text-red-500 ml-1">*</span>
+              </label>
+              <div className="relative">
+                <select
+                  {...register("name")}
+                  className={`block w-full px-4 py-2 border rounded-lg focus:ring-blue-500 focus:border-blue-500 appearance-none bg-white pr-8 ${
+                    errors.name ? "border-red-500" : "border-gray-300"
+                  }`}
+                >
+                  <option value="" disabled>
+                    Select department name
+                  </option>
+                  {DepartmentNameEnum.options.map((option) => (
+                    <option key={option} value={option}>
+                      {option.charAt(0) + option.slice(1).toLowerCase()}
+                    </option>
+                  ))}
+                </select>
+                <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
+                  <svg
+                    className="h-5 w-5 text-gray-400"
+                    xmlns="http://www.w3.org/2000/svg"
+                    viewBox="0 0 20 20"
+                    fill="currentColor"
+                  >
+                    <path
+                      fillRule="evenodd"
+                      d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"
+                      clipRule="evenodd"
+                    />
+                  </svg>
+                </div>
+              </div>
+              {errors.name && (
+                <p className="text-red-600 text-sm mt-1">{errors.name.message}</p>
+              )}
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {section.fields.map((field, fieldIndex) => {
-                const error = errors[field.name];
-                return (
-                  <div
-                    key={fieldIndex}
-                    className={`space-y-1 ${
-                      field.type === "textarea" ? "md:col-span-2" : ""
-                    }`}
-                  >
-                    <label className="block text-sm font-medium text-gray-700">
-                      {field.label}
-                      <span className="text-red-500 ml-1">*</span>
-                    </label>
-
-                    {field.type === "select" ? (
-                      <div className="relative">
-                        <select
-                          {...register(field.name)}
-                          className={`block w-full px-4 py-2 border rounded-lg focus:ring-blue-500 focus:border-blue-500 appearance-none bg-white pr-8 ${
-                            error ? "border-red-500" : "border-gray-300"
-                          }`}
-                          aria-invalid={error ? "true" : "false"}
-                        >
-                          <option value="" disabled selected hidden>
-                            {field.placeholder}
-                          </option>
-                          {field.options.map((option, i) => (
-                            <option key={i} value={option}>
-                              {option}
-                            </option>
-                          ))}
-                        </select>
-                        <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
-                          <svg
-                            className="h-5 w-5 text-gray-400"
-                            xmlns="http://www.w3.org/2000/svg"
-                            viewBox="0 0 20 20"
-                            fill="currentColor"
-                          >
-                            <path
-                              fillRule="evenodd"
-                              d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"
-                              clipRule="evenodd"
-                            />
-                          </svg>
-                        </div>
-                      </div>
-                    ) : field.type === "textarea" ? (
-                      <textarea
-                        {...register(field.name)}
-                        rows={3}
-                        placeholder={field.placeholder}
-                        className={`block w-full px-4 py-2 border rounded-lg focus:ring-blue-500 focus:border-blue-500 ${
-                          error ? "border-red-500" : "border-gray-300"
-                        }`}
-                        aria-invalid={error ? "true" : "false"}
-                      />
-                    ) : (
-                      <div className="relative">
-                        <input
-                          type={field.type}
-                          {...register(field.name)}
-                          placeholder={field.placeholder}
-                          className={`block w-full px-4 py-2 border rounded-lg focus:ring-blue-500 focus:border-blue-500 ${
-                            field.icon ? "pl-10" : ""
-                          } ${error ? "border-red-500" : "border-gray-300"}`}
-                          aria-invalid={error ? "true" : "false"}
-                        />
-                        {field.icon && (
-                          <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                            {field.icon}
-                          </div>
-                        )}
-                      </div>
-                    )}
-
-                    {error && (
-                      <p className="text-red-600 text-sm mt-1" role="alert">
-                        {error.message}
-                      </p>
-                    )}
+            {/* Department Head - Search functionality */}
+            <div className="space-y-1 relative doctor-search-container">
+              <label className="block text-sm font-medium text-gray-700">
+                Department Head
+                <span className="text-red-500 ml-1">*</span>
+              </label>
+              <div className="relative">
+                <input
+                  type="text"
+                  value={searchDoctorQuery}
+                  onChange={(e) => {
+                    setSearchDoctorQuery(e.target.value);
+                    setShowDoctorSearch(true);
+                  }}
+                  onFocus={() => setShowDoctorSearch(true)}
+                  placeholder="Search by Doctor Name or Registration No..."
+                  className={`block w-full px-4 py-2 border rounded-lg focus:ring-blue-500 focus:border-blue-500 pl-10 ${
+                    errors.headId ? "border-red-500" : "border-gray-300"
+                  }`}
+                />
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <FaSearch className="text-gray-400" />
+                </div>
+                {showDoctorSearch && (
+                  <SearchResults
+                    results={doctorSearchResults}
+                    loading={searchingDoctors}
+                    onSelect={handleDoctorSelect}
+                  />
+                )}
+              </div>
+              
+              {/* Show selected doctor name */}
+              {selectedDoctor && (
+                <div className="mt-2 p-2 bg-blue-50 rounded-lg border border-blue-200">
+                  <div className="text-sm text-gray-700">
+                    <span className="font-medium">Selected Head:</span> {selectedDoctor.name}
                   </div>
-                );
-              })}
+                  <div className="text-xs text-gray-500 mt-1">
+                    Specialization: {selectedDoctor.specialization}
+                  </div>
+                </div>
+              )}
+              
+              {errors.headId && (
+                <p className="text-red-600 text-sm mt-1">{errors.headId.message}</p>
+              )}
+            </div>
+
+            {/* Status - Select dropdown */}
+            <div className="space-y-1">
+              <label className="block text-sm font-medium text-gray-700">
+                Status
+                <span className="text-red-500 ml-1">*</span>
+              </label>
+              <div className="relative">
+                <select
+                  {...register("status")}
+                  className="block w-full px-4 py-2 border rounded-lg focus:ring-blue-500 focus:border-blue-500 appearance-none bg-white pr-8 border-gray-300"
+                >
+                  <option value="ACTIVE">ACTIVE</option>
+                  <option value="INACTIVE">INACTIVE</option>
+                </select>
+                <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
+                  <svg
+                    className="h-5 w-5 text-gray-400"
+                    xmlns="http://www.w3.org/2000/svg"
+                    viewBox="0 0 20 20"
+                    fill="currentColor"
+                  >
+                    <path
+                      fillRule="evenodd"
+                      d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"
+                      clipRule="evenodd"
+                    />
+                  </svg>
+                </div>
+              </div>
+            </div>
+
+            {/* Description - Textarea spanning full width */}
+            <div className="md:col-span-2 space-y-1">
+              <label className="block text-sm font-medium text-gray-700">
+                Description
+              </label>
+              <textarea
+                {...register("description")}
+                rows={3}
+                placeholder="Enter department description"
+                className="block w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
+              />
             </div>
           </div>
-        ))}
+        </div>
 
         <div className="bg-gray-50 px-6 py-4 border-t border-gray-200 flex justify-end">
           <LoadingButton isLoading={isPending} type="submit">

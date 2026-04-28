@@ -67,20 +67,7 @@ const formFields = [
         icon: <FaBriefcase className="text-gray-400" />,
         required: true, // Marked as required
       },
-      {
-        label: "Department",
-        type: "select",
-        name: "department",
-        placeholder: "Select department",
-        options: [
-          "Cardiology",
-          "Neurology",
-          "Pediatrics",
-          "Orthopedics",
-          "General Medicine",
-        ],
-        required: true, // Marked as required
-      },
+      
       {
         label: "Specialization",
         type: "text",
@@ -115,7 +102,6 @@ const NewDoctor = () => {
       qualification: "",
       email: "",
       designation: "",
-      department: "",
       specialization: "",
       status: "Active",
     },

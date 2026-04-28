@@ -84,19 +84,6 @@ export const ambulanceSchema = z.object({
 
 ////////////
 
-export const appointmentSchema = z.object({
-  appointmentDate: z
-    .string()
-    .min(1, "Appointment date is required")
-    .refine((val) => !isNaN(new Date(val).getTime()), {
-      message: "Invalid date format",
-    })
-    .transform((val) => new Date(val)),
-  doctorName: z.string().min(1, "Doctor name is required"),
-  department: z.string().min(1, "Department is required"),
-  appointmentTime: z.string().min(1, "Appointment time is required"),
-});
-
 ////////
 
 export const bedAssignmentSchema = z.object({
@@ -169,6 +156,38 @@ export const departmentSchema = z.object({
 });
 
 /////////////
+
+export const AppointmentStatus = z.enum([
+  "BOOKED",
+  "CANCELLED",
+  "EXPIRED",
+]);
+
+export const appointmentSchema = z.object({
+  appointmentDate: z
+    .string()
+    .min(1, "Appointment date is required")
+    .refine((val) => !isNaN(new Date(val).getTime()), {
+      message: "Invalid date format",
+    })
+    .transform((val) => new Date(val)),
+
+  appointmentTime: z.string().min(1, "Appointment time is required"),
+
+  doctorId: z
+    .number({
+      required_error: "Doctor is required",
+      invalid_type_error: "Doctor ID must be a number",
+    })
+    .int("Doctor ID must be an integer")
+    .positive("Doctor ID must be positive"),
+
+  // ✅ USE ENUM HERE
+  status: AppointmentStatus.optional(),
+});
+
+
+//////////////////
 
 export const doctorSchema = z.object({
   fullName: z.string().min(1, "Full name is required"),
@@ -835,7 +854,7 @@ export type PatientFilterInput = z.infer<typeof patientFilterSchema>;
 // ============================================
 
 export const departmentFilterSchema = z.object({
-  status: z.enum(["Active", "Inactive"]).optional(),
+  status: DepartmentStatusEnum.optional(),
   ...baseFilterSchema,
 });
 

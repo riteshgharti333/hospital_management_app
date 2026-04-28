@@ -25,15 +25,20 @@ const DepartmentTable = () => {
   const { data: departmentData, isLoading: loadingDepartments } =
     useGetDepartments(currentCursor, 50);
 
+  console.log(departmentData);
+
   // Search dataset
   const { data: searchData, isLoading: loadingSearch } =
     useSearchDepartments(searchTerm);
 
   // Filter dataset
-  const { data: filterData, isLoading: loadingFilter } =
-    useFilterDepartments({ ...filters, cursor: currentCursor, limit: 50 });
+  const { data: filterData, isLoading: loadingFilter } = useFilterDepartments({
+    ...filters,
+    cursor: currentCursor,
+    limit: 50,
+  });
 
-  // Active dataset
+  // Select dataset based on mode
   const getCurrentData = () => {
     switch (mode) {
       case "search":
@@ -48,7 +53,7 @@ const DepartmentTable = () => {
   const data = getCurrentData();
   const isLoading = loadingDepartments || loadingSearch || loadingFilter;
 
-  // Mode switching
+  // Mode switching logic
   useEffect(() => {
     if (searchTerm) {
       setMode("search");
@@ -63,28 +68,36 @@ const DepartmentTable = () => {
 
   const columns = useMemo(
     () => [
-      { accessorKey: "name", header: "Department" },
-      { accessorKey: "head", header: "Head" },
-      { accessorKey: "contactNumber", header: "Contact" },
-      { accessorKey: "email", header: "Email" },
-      { accessorKey: "location", header: "Location" },
+      { accessorKey: "name", header: "Department Name" },
+      { accessorKey: "head.fullName", header: "Department Head" },
       {
         accessorKey: "status",
         header: "Status",
-        cell: (info) => (
-          <span
-            className={`px-2 py-1 rounded text-xs font-medium ${
-              info.getValue() === "Active"
-                ? "bg-green-100 text-green-700"
-                : "bg-red-100 text-red-700"
-            }`}
-          >
-            {info.getValue()}
-          </span>
-        ),
+        cell: (info) => {
+          const value = info.getValue();
+          const map = {
+            Active: "bg-green-100 text-green-700",
+            Inactive: "bg-red-100 text-red-700",
+            ACTIVE: "bg-green-100 text-green-700",
+            INACTIVE: "bg-red-100 text-red-700",
+          };
+          return (
+            <span
+              className={`px-2 py-1 rounded text-xs font-medium ${
+                map[value] || ""
+              }`}
+            >
+              {value === "ACTIVE"
+                ? "Active"
+                : value === "INACTIVE"
+                  ? "Inactive"
+                  : value}
+            </span>
+          );
+        },
       },
     ],
-    []
+    [],
   );
 
   const handleNextPage = () => {
@@ -119,9 +132,7 @@ const DepartmentTable = () => {
   return (
     <div className="">
       <div className="flex justify-between items-center mb-4">
-        <h2 className="text-2xl font-bold text-gray-800 flex items-center">
-          Departments
-        </h2>
+        <h2 className="text-2xl font-bold text-gray-800">Departments</h2>
         <Link className="btn-primary" to={"/new-department"}>
           <FaPlus /> New Department
         </Link>
@@ -133,7 +144,7 @@ const DepartmentTable = () => {
         path="department"
         loading={isLoading}
         searchConfig={{
-          placeholder: "Search by Name or Head...",
+          placeholder: "Search by Department Name",
           searchTerm,
           onSearchChange: setSearchTerm,
         }}
@@ -142,7 +153,7 @@ const DepartmentTable = () => {
             key: "status",
             label: "Status",
             type: "select",
-            options: ["Active", "Inactive"],
+            options: ["ACTIVE", "INACTIVE"],
           },
           { key: "fromDate", label: "From Date", type: "date" },
           { key: "toDate", label: "To Date", type: "date" },
@@ -163,6 +174,6 @@ const DepartmentTable = () => {
       />
     </div>
   );
-}; 
+};
 
 export default DepartmentTable;

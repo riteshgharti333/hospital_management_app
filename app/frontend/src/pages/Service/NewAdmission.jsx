@@ -135,7 +135,7 @@ const formFields = [
   },
 ];
 
-const AdmissionEntry = () => {
+const NewAdmission = () => {
   const navigate = useNavigate();
   const [showPatientSearch, setShowPatientSearch] = useState(false);
   const [showDoctorSearch, setShowDoctorSearch] = useState(false);
@@ -663,4 +663,4 @@ const AdmissionEntry = () => {
   );
 };
 
-export default AdmissionEntry;
+export default NewAdmission;

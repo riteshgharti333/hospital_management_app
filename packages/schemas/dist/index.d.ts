@@ -100,22 +100,6 @@ export declare const ambulanceSchema: z.ZodObject<{
     driverContact: string;
     status?: "Available" | "Maintenance" | "On-Call" | undefined;
 }>;
-export declare const appointmentSchema: z.ZodObject<{
-    appointmentDate: z.ZodEffects<z.ZodEffects<z.ZodString, string, string>, Date, string>;
-    doctorName: z.ZodString;
-    department: z.ZodString;
-    appointmentTime: z.ZodString;
-}, "strip", z.ZodTypeAny, {
-    appointmentDate: Date;
-    doctorName: string;
-    department: string;
-    appointmentTime: string;
-}, {
-    appointmentDate: string;
-    doctorName: string;
-    department: string;
-    appointmentTime: string;
-}>;
 export declare const bedAssignmentSchema: z.ZodObject<{
     wardNumber: z.ZodString;
     bedNumber: z.ZodString;
@@ -196,6 +180,23 @@ export declare const departmentSchema: z.ZodObject<{
     status?: "ACTIVE" | "INACTIVE" | undefined;
     description?: string | undefined;
 }>;
+export declare const AppointmentStatus: z.ZodEnum<["BOOKED", "CANCELLED", "EXPIRED"]>;
+export declare const appointmentSchema: z.ZodObject<{
+    appointmentDate: z.ZodEffects<z.ZodEffects<z.ZodString, string, string>, Date, string>;
+    appointmentTime: z.ZodString;
+    doctorId: z.ZodNumber;
+    status: z.ZodOptional<z.ZodEnum<["BOOKED", "CANCELLED", "EXPIRED"]>>;
+}, "strip", z.ZodTypeAny, {
+    doctorId: number;
+    appointmentDate: Date;
+    appointmentTime: string;
+    status?: "CANCELLED" | "BOOKED" | "EXPIRED" | undefined;
+}, {
+    doctorId: number;
+    appointmentDate: string;
+    appointmentTime: string;
+    status?: "CANCELLED" | "BOOKED" | "EXPIRED" | undefined;
+}>;
 export declare const doctorSchema: z.ZodObject<{
     fullName: z.ZodString;
     mobileNumber: z.ZodString;
@@ -233,16 +234,16 @@ export declare const nurseSchema: z.ZodObject<{
     shift: string;
     status: string;
     email: string;
-    department: string;
     mobileNumber: string;
     fullName: string;
+    department: string;
     address: string;
 }, {
     shift: string;
     email: string;
-    department: string;
     mobileNumber: string;
     fullName: string;
+    department: string;
     address: string;
     status?: string | undefined;
 }>;
@@ -278,15 +279,15 @@ export declare const pharmacistSchema: z.ZodObject<{
 }, "strip", z.ZodTypeAny, {
     status: string;
     registrationNo: string;
-    department: string;
     mobileNumber: string;
     fullName: string;
+    department: string;
     address: string;
 }, {
     registrationNo: string;
-    department: string;
     mobileNumber: string;
     fullName: string;
+    department: string;
     address: string;
     status?: string | undefined;
 }>;
@@ -402,8 +403,8 @@ export declare const xrayReportSchema: z.ZodObject<{
     commissionPercent: z.ZodNumber;
     doctorEarning: z.ZodNumber;
 }, "strip", z.ZodTypeAny, {
-    department: string;
     patientName: string;
+    department: string;
     billDate: Date;
     patientMobile: string;
     patientSex: "Male" | "Female" | "Other";
@@ -419,8 +420,8 @@ export declare const xrayReportSchema: z.ZodObject<{
     doctorEarning: number;
     patientAddress?: string | undefined;
 }, {
-    department: string;
     patientName: string;
+    department: string;
     billDate: Date;
     patientMobile: string;
     patientSex: "Male" | "Female" | "Other";
@@ -540,8 +541,8 @@ export declare const employeeSchema: z.ZodObject<{
     department: z.ZodString;
     photoUrl: z.ZodOptional<z.ZodString>;
 }, "strip", z.ZodTypeAny, {
-    department: string;
     fathersName: string;
+    department: string;
     dateOfBirth: Date;
     gender: "Male" | "Female" | "Other";
     employeeName: string;
@@ -554,8 +555,8 @@ export declare const employeeSchema: z.ZodObject<{
     bloodGroup?: "A+" | "A-" | "B+" | "B-" | "AB+" | "AB-" | "O+" | "O-" | undefined;
     photoUrl?: string | undefined;
 }, {
-    department: string;
     fathersName: string;
+    department: string;
     dateOfBirth: string;
     gender: "Male" | "Female" | "Other";
     employeeName: string;
@@ -904,19 +905,19 @@ export declare const doctorLedgerSchema: z.ZodObject<{
     remarks: z.ZodOptional<z.ZodString>;
 }, "strip", z.ZodTypeAny, {
     description: string;
-    doctorName: string;
     amount: number;
     paymentMode: "CASH" | "CARD" | "UPI" | "BANK_TRANSFER" | "CHEQUE";
     transactionDate: Date;
     amountType: "CREDIT" | "DEBIT";
+    doctorName: string;
     remarks?: string | undefined;
     transactionId?: string | undefined;
 }, {
     description: string;
-    doctorName: string;
     amount: number;
     paymentMode: "CASH" | "CARD" | "UPI" | "BANK_TRANSFER" | "CHEQUE";
     amountType: "CREDIT" | "DEBIT";
+    doctorName: string;
     remarks?: string | undefined;
     transactionDate?: unknown;
     transactionId?: string | undefined;
@@ -1231,15 +1232,15 @@ export declare const departmentFilterSchema: z.ZodObject<{
     toDate: z.ZodOptional<z.ZodDate>;
     limit: z.ZodDefault<z.ZodNumber>;
     cursor: z.ZodOptional<z.ZodString>;
-    status: z.ZodOptional<z.ZodEnum<["Active", "Inactive"]>>;
+    status: z.ZodOptional<z.ZodEnum<["ACTIVE", "INACTIVE"]>>;
 }, "strip", z.ZodTypeAny, {
     limit: number;
-    status?: "Active" | "Inactive" | undefined;
+    status?: "ACTIVE" | "INACTIVE" | undefined;
     fromDate?: Date | undefined;
     toDate?: Date | undefined;
     cursor?: string | undefined;
 }, {
-    status?: "Active" | "Inactive" | undefined;
+    status?: "ACTIVE" | "INACTIVE" | undefined;
     fromDate?: Date | undefined;
     toDate?: Date | undefined;
     cursor?: string | undefined;
@@ -1511,15 +1512,15 @@ export declare const FilterSchemas: {
         toDate: z.ZodOptional<z.ZodDate>;
         limit: z.ZodDefault<z.ZodNumber>;
         cursor: z.ZodOptional<z.ZodString>;
-        status: z.ZodOptional<z.ZodEnum<["Active", "Inactive"]>>;
+        status: z.ZodOptional<z.ZodEnum<["ACTIVE", "INACTIVE"]>>;
     }, "strip", z.ZodTypeAny, {
         limit: number;
-        status?: "Active" | "Inactive" | undefined;
+        status?: "ACTIVE" | "INACTIVE" | undefined;
         fromDate?: Date | undefined;
         toDate?: Date | undefined;
         cursor?: string | undefined;
     }, {
-        status?: "Active" | "Inactive" | undefined;
+        status?: "ACTIVE" | "INACTIVE" | undefined;
         fromDate?: Date | undefined;
         toDate?: Date | undefined;
         cursor?: string | undefined;
