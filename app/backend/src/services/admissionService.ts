@@ -1,5 +1,4 @@
 import { prisma } from "../lib/prisma";
-import { applyCommonFields } from "../utils/applyCommonFields";
 import { filterPaginate } from "../utils/filterPaginate";
 import { generateHospitalId } from "../utils/generateHospitalId";
 import { cursorPaginate } from "../utils/pagination";

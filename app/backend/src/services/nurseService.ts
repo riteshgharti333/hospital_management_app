@@ -1,8 +1,8 @@
 import { prisma } from "../lib/prisma";
-import { applyCommonFields } from "../utils/applyCommonFields";
+import { bumpCacheVersion } from "../utils/cacheVersion";
+import { filterPaginate } from "../utils/filterPaginate";
 import { cursorPaginate } from "../utils/pagination";
 import { createSearchService } from "../utils/searchCache";
-import { filterPaginate } from "../utils/filterPaginate";
 import { generateRegistrationNumber } from "../utils/registrationGenerator";
 
 export type NurseInput = {
@@ -22,57 +22,39 @@ export const createNurse = async (data: NurseInput) => {
     "registrationNo"
   );
 
-  return prisma.nurse.create({
+  const nurse = await prisma.nurse.create({
     data: {
       ...data,
       registrationNo,
     },
   });
+
+  await bumpCacheVersion("nurse");
+  return nurse;
 };
 
 export const getNurseByEmail = async (email: string) => {
   return prisma.nurse.findUnique({ where: { email } });
 };
 
-export const getAllNurses = async (cursor?: string, limit?: number) => {
-  return cursorPaginate(
-    prisma,
-    {
-      model: "nurse",
-      cursorField: "id",
-      limit: limit || 50,
-      cacheExpiry: 600,
-    },
-    cursor ? Number(cursor) : undefined
-  );
+export const getAllNursesService = async (cursor?: string) => {
+  return cursorPaginate(prisma, { model: "nurse" }, cursor);
 };
 
 export const getNurseById = async (id: number) => {
   return prisma.nurse.findUnique({ where: { id } });
 };
 
-export const getNurseByRegistration = async (registrationNo: string) => {
-  return prisma.nurse.findUnique({ where: { registrationNo } });
-};
-
 export const updateNurse = async (id: number, data: Partial<NurseInput>) => {
-  return prisma.$transaction(async (tx) => {
-    // 1️⃣ Update Nurse
+  const nurse = await prisma.$transaction(async (tx) => {
     const updatedNurse = await tx.nurse.update({
       where: { id },
       data,
     });
 
-    // 2️⃣ Sync ONLY identity fields to User
     const userUpdateData: any = {};
-
-    if (data.fullName) {
-      userUpdateData.name = data.fullName;
-    }
-
-    if (data.email) {
-      userUpdateData.email = data.email;
-    }
+    if (data.fullName) userUpdateData.name = data.fullName;
+    if (data.email) userUpdateData.email = data.email;
 
     if (Object.keys(userUpdateData).length > 0) {
       await tx.user.update({
@@ -83,70 +65,91 @@ export const updateNurse = async (id: number, data: Partial<NurseInput>) => {
 
     return updatedNurse;
   });
+
+  await bumpCacheVersion("nurse");
+  return nurse;
 };
 
 export const deleteNurse = async (id: number) => {
-  return prisma.$transaction(async (tx) => {
-    // 1️⃣ Find nurse
-    const nurse = await tx.nurse.findUnique({
+  const nurse = await prisma.$transaction(async (tx) => {
+    const nurseData = await tx.nurse.findUnique({
       where: { id },
       select: { registrationNo: true },
     });
 
-    if (!nurse) return null;
+    if (!nurseData) return null;
 
-    // 2️⃣ Delete nurse
-    const deletedNurse = await tx.nurse.delete({
-      where: { id },
-    });
-
-    // 3️⃣ Safe user cleanup
-    await tx.user.deleteMany({
-      where: { regId: nurse.registrationNo },
-    });
+    const deletedNurse = await tx.nurse.delete({ where: { id } });
+    await tx.user.deleteMany({ where: { regId: nurseData.registrationNo } });
 
     return deletedNurse;
   });
+
+  await bumpCacheVersion("nurse");
+  return nurse;
 };
 
-const commonSearchFields = ["fullName", "mobileNumber", "registrationNo"];
-
 export const searchNurse = createSearchService(prisma, {
-  tableName: "Nurse",
-  cacheKeyPrefix: "nurse",
-  ...applyCommonFields(commonSearchFields),
+  tableName: "nurse",
+  exactFields: ["fullName", "mobileNumber", "registrationNo", "email"],
+  prefixFields: ["fullName"],
+  similarFields: ["fullName", "department"],
+  selectFields: [
+    "id",
+    "registrationNo",
+    "fullName",
+    "mobileNumber",
+    "department",
+    "address",
+    "shift",
+    "email",
+    "status",
+    "createdAt",
+  ],
 });
 
-export const filterNursesService = async (filters: {
+type FilterNurseParams = {
   fromDate?: Date;
   toDate?: Date;
   shift?: string;
   status?: string;
-  cursor?: string | number;
+  cursor?: string;
   limit?: number;
-}) => {
-  const { fromDate, toDate, shift, status, cursor, limit } = filters;
+};
 
-  const filterObj: Record<string, any> = {};
+export const filterNursesService = async (params: FilterNurseParams) => {
+  const { fromDate, toDate, shift, status, cursor, limit } = params;
 
-  if (shift) filterObj.shift = { equals: shift, mode: "insensitive" };
+  const where: Record<string, any> = {};
 
-  if (status) filterObj.status = { equals: status, mode: "insensitive" };
-
-  if (fromDate || toDate)
-    filterObj.createdAt = {
-      gte: fromDate ? new Date(fromDate) : undefined,
-      lte: toDate ? new Date(toDate) : undefined,
+  if (shift) {
+    where.shift = {
+      equals: shift,
+      mode: "insensitive",
     };
+  }
+
+  if (status) {
+    where.status = {
+      equals: status,
+      mode: "insensitive",
+    };
+  }
+
+  if (fromDate || toDate) {
+    where.createdAt = {
+      ...(fromDate && { gte: fromDate }),
+      ...(toDate && { lte: toDate }),
+    };
+  }
 
   return filterPaginate(
     prisma,
     {
       model: "nurse",
-      cursorField: "id",
-      limit: limit || 50,
-      filters: filterObj,
+      limit,
     },
-    cursor
+    cursor,
+    where,
   );
 };

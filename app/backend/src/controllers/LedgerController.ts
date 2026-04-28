@@ -84,10 +84,9 @@ export const getLedgersByEntityRecord = catchAsyncError(
     // Fix: Ensure entityType is a string
     const entityTypeStr = Array.isArray(entityType)
       ? entityType[0]
-      : entityType; 
+      : entityType;
 
     const ledgers = await getLedgersByEntity(entityTypeStr);
-    const balance = await getCurrentBalance(entityTypeStr);
 
     sendResponse(res, {
       success: true,
@@ -95,7 +94,6 @@ export const getLedgersByEntityRecord = catchAsyncError(
       message: "Entity ledger entries fetched",
       data: {
         transactions: ledgers,
-        currentBalance: balance,
       },
     });
   },
@@ -173,17 +171,19 @@ export const searchLedgerResultsByEntity = catchAsyncError(
   async (req: Request, res: Response, next: NextFunction) => {
     const { query } = req.query;
     const { entityType } = req.params;
-    const entityTypeString = Array.isArray(entityType) ? entityType[0] : entityType;
+    const entityTypeString = Array.isArray(entityType)
+      ? entityType[0]
+      : entityType;
 
     const searchTerm = validateSearchQuery(query, next);
     if (!searchTerm) return;
 
     // Get search results
     const allResults = await searchLedger(searchTerm);
-    
+
     // Filter by entityType
     const filteredResults = allResults.filter(
-      (ledger: any) => ledger.entityType === entityTypeString
+      (ledger: any) => ledger.entityType === entityTypeString,
     );
 
     sendResponse(res, {
@@ -192,18 +192,20 @@ export const searchLedgerResultsByEntity = catchAsyncError(
       message: `Search results fetched successfully for ${entityTypeString} ledgers`,
       data: filteredResults,
     });
-  }
+  },
 );
 
 export const filterLedgers = catchAsyncError(async (req, res) => {
   const { entityType } = req.params;
-  const entityTypeString = Array.isArray(entityType) ? entityType[0] : entityType;
-  
+  const entityTypeString = Array.isArray(entityType)
+    ? entityType[0]
+    : entityType;
+
   const validated = ledgerFilterSchema.parse(req.query);
 
   const { data, nextCursor, hasMore } = await filterLedgersService(
     validated,
-    entityTypeString
+    entityTypeString,
   );
 
   sendResponse(res, {

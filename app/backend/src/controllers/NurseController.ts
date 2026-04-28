@@ -1,11 +1,12 @@
 import { Request, Response, NextFunction } from "express";
+import { z } from "zod";
 import { catchAsyncError } from "../middlewares/catchAsyncError";
 import { ErrorHandler } from "../middlewares/errorHandler";
 import { sendResponse } from "../utils/sendResponse";
 import { StatusCodes } from "../constants/statusCodes";
 import {
   createNurse,
-  getAllNurses,
+  getAllNursesService,
   getNurseById,
   updateNurse,
   deleteNurse,
@@ -15,12 +16,12 @@ import {
 } from "../services/nurseService";
 import { nurseSchema, nurseFilterSchema } from "@hospital/schemas";
 import { validateSearchQuery } from "../utils/queryValidation";
+import { PAGINATION_CONFIG } from "../lib/paginationConfig";
 
 export const createNurseRecord = catchAsyncError(
   async (req: Request, res: Response, next: NextFunction) => {
     const validated = nurseSchema.parse(req.body);
 
-    // 🔍 Check email uniqueness
     const existingEmail = await getNurseByEmail(validated.email);
     if (existingEmail) {
       return next(
@@ -44,24 +45,18 @@ export const createNurseRecord = catchAsyncError(
 
 export const getAllNurseRecords = catchAsyncError(
   async (req: Request, res: Response) => {
-    const { cursor, limit } = req.query as {
-      cursor?: string;
-      limit?: string;
-    };
+    const { cursor } = req.query as { cursor?: string };
 
-    const { data: nurse, nextCursor } = await getAllNurses(
-      cursor,
-      limit ? Number(limit) : undefined
-    );
+    const result = await getAllNursesService(cursor);
 
     sendResponse(res, {
       success: true,
       statusCode: StatusCodes.OK,
       message: "Nurse records fetched",
-      data: nurse,
+      data: result.data,
       pagination: {
-        nextCursor: nextCursor !== null ? String(nextCursor) : undefined,
-        limit: limit ? Number(limit) : 50,
+        nextCursor: result.pagination.nextCursor || undefined,
+        hasMore: result.pagination.hasMore,
       },
     });
   }
@@ -91,7 +86,6 @@ export const getNurseRecordById = catchAsyncError(
 export const updateNurseRecord = catchAsyncError(
   async (req: Request, res: Response, next: NextFunction) => {
     const id = Number(req.params.id);
-
     if (isNaN(id)) {
       return next(new ErrorHandler("Invalid ID", StatusCodes.BAD_REQUEST));
     }
@@ -99,10 +93,8 @@ export const updateNurseRecord = catchAsyncError(
     const partialSchema = nurseSchema.partial();
     const validatedData = partialSchema.parse(req.body);
 
-    // 🔍 Email uniqueness check (Nurse table)
     if (validatedData.email) {
       const existingEmail = await getNurseByEmail(validatedData.email);
-
       if (existingEmail && existingEmail.id !== id) {
         return next(
           new ErrorHandler(
@@ -114,7 +106,6 @@ export const updateNurseRecord = catchAsyncError(
     }
 
     const updatedNurse = await updateNurse(id, validatedData);
-
     if (!updatedNurse) {
       return next(new ErrorHandler("Nurse not found", StatusCodes.NOT_FOUND));
     }
@@ -131,13 +122,11 @@ export const updateNurseRecord = catchAsyncError(
 export const deleteNurseRecord = catchAsyncError(
   async (req: Request, res: Response, next: NextFunction) => {
     const id = Number(req.params.id);
-
     if (isNaN(id)) {
       return next(new ErrorHandler("Invalid ID", StatusCodes.BAD_REQUEST));
     }
 
     const deletedNurse = await deleteNurse(id);
-
     if (!deletedNurse) {
       return next(new ErrorHandler("Nurse not found", StatusCodes.NOT_FOUND));
     }
@@ -145,7 +134,7 @@ export const deleteNurseRecord = catchAsyncError(
     sendResponse(res, {
       success: true,
       statusCode: StatusCodes.OK,
-      message: "Nurse and access deleted successfully",
+      message: "Nurse deleted successfully",
       data: deletedNurse,
     });
   }
@@ -172,7 +161,7 @@ export const searchNurseResults = catchAsyncError(
 export const filterNurses = catchAsyncError(async (req, res) => {
   const validated = nurseFilterSchema.parse(req.query);
 
-  const { data, nextCursor } = await filterNursesService(validated);
+  const { data, nextCursor, hasMore } = await filterNursesService(validated);
 
   sendResponse(res, {
     success: true,
@@ -180,8 +169,9 @@ export const filterNurses = catchAsyncError(async (req, res) => {
     message: "Filtered nurses fetched",
     data,
     pagination: {
-      nextCursor: nextCursor !== null ? String(nextCursor) : undefined,
-      limit: validated.limit || 50,
+      nextCursor: nextCursor || undefined,
+      limit: validated.limit ?? PAGINATION_CONFIG.DEFAULT_LIMIT,
+      hasMore,
     },
   });
 });

@@ -1,74 +1,66 @@
 import { Request, Response, NextFunction } from "express";
+import { z } from "zod";
 import { catchAsyncError } from "../middlewares/catchAsyncError";
 import { ErrorHandler } from "../middlewares/errorHandler";
 import { sendResponse } from "../utils/sendResponse";
 import { StatusCodes } from "../constants/statusCodes";
 import {
   createBirth,
+  getAllBirthService,
   getBirthById,
   updateBirth,
   deleteBirth,
   searchBirth,
-  getAllBirthService,
   filterBirthsService,
 } from "../services/birthService";
 import { birthFilterSchema, birthSchema } from "@hospital/schemas";
 import { validateSearchQuery } from "../utils/queryValidation";
+import { PAGINATION_CONFIG } from "../lib/paginationConfig";
 
 export const createBirthRecord = catchAsyncError(
   async (req: Request, res: Response, next: NextFunction) => {
-    try {
-      const validated = birthSchema.parse(req.body);
-      const birth = await createBirth(validated);
+    const validated = birthSchema.parse(req.body);
+    const birth = await createBirth(validated);
 
-      sendResponse(res, {
-        success: true,
-        statusCode: StatusCodes.CREATED,
-        message: "Birth record created successfully",
-        data: birth,
-      });
-    } catch (error) {
-      console.log(error);
-    }
-  }
+    sendResponse(res, {
+      success: true,
+      statusCode: StatusCodes.CREATED,
+      message: "Birth record created successfully",
+      data: birth,
+    });
+  },
 );
 
-export const getAllBirth = catchAsyncError(
+export const getAllBirthRecords = catchAsyncError(
   async (req: Request, res: Response) => {
-    const { cursor, limit } = req.query as {
-      cursor?: string;
-      limit?: string;
-    };
+    const { cursor } = req.query as { cursor?: string };
 
-    const { data: birth, nextCursor } = await getAllBirthService(
-      cursor,
-      limit ? Number(limit) : undefined
-    );
+    const result = await getAllBirthService(cursor);
 
     sendResponse(res, {
       success: true,
       statusCode: StatusCodes.OK,
       message: "Birth records fetched",
-      data: birth,
+      data: result.data,
       pagination: {
-        nextCursor: nextCursor !== null ? String(nextCursor) : undefined,
-        limit: limit ? Number(limit) : 50,
+        nextCursor: result.pagination.nextCursor || undefined,
+        hasMore: result.pagination.hasMore,
       },
     });
-  }
+  },
 );
 
 export const getBirthRecordById = catchAsyncError(
   async (req: Request, res: Response, next: NextFunction) => {
     const id = Number(req.params.id);
-    if (isNaN(id))
+    if (isNaN(id)) {
       return next(new ErrorHandler("Invalid ID", StatusCodes.BAD_REQUEST));
+    }
 
     const birth = await getBirthById(id);
-    if (!birth)
-      return next(
-        new ErrorHandler("Birth record not found", StatusCodes.NOT_FOUND)
-      );
+    if (!birth) {
+      return next(new ErrorHandler("Birth record not found", StatusCodes.NOT_FOUND));
+    }
 
     sendResponse(res, {
       success: true,
@@ -76,23 +68,23 @@ export const getBirthRecordById = catchAsyncError(
       message: "Birth record details fetched",
       data: birth,
     });
-  }
+  },
 );
 
 export const updateBirthRecord = catchAsyncError(
   async (req: Request, res: Response, next: NextFunction) => {
     const id = Number(req.params.id);
-    if (isNaN(id))
+    if (isNaN(id)) {
       return next(new ErrorHandler("Invalid ID", StatusCodes.BAD_REQUEST));
+    }
 
     const partialSchema = birthSchema.partial();
     const validatedData = partialSchema.parse(req.body);
 
     const updatedBirth = await updateBirth(id, validatedData);
-    if (!updatedBirth)
-      return next(
-        new ErrorHandler("Birth record not found", StatusCodes.NOT_FOUND)
-      );
+    if (!updatedBirth) {
+      return next(new ErrorHandler("Birth record not found", StatusCodes.NOT_FOUND));
+    }
 
     sendResponse(res, {
       success: true,
@@ -100,20 +92,20 @@ export const updateBirthRecord = catchAsyncError(
       message: "Birth record updated successfully",
       data: updatedBirth,
     });
-  }
+  },
 );
 
 export const deleteBirthRecord = catchAsyncError(
   async (req: Request, res: Response, next: NextFunction) => {
     const id = Number(req.params.id);
-    if (isNaN(id))
+    if (isNaN(id)) {
       return next(new ErrorHandler("Invalid ID", StatusCodes.BAD_REQUEST));
+    }
 
     const deletedBirth = await deleteBirth(id);
-    if (!deletedBirth)
-      return next(
-        new ErrorHandler("Birth record not found", StatusCodes.NOT_FOUND)
-      );
+    if (!deletedBirth) {
+      return next(new ErrorHandler("Birth record not found", StatusCodes.NOT_FOUND));
+    }
 
     sendResponse(res, {
       success: true,
@@ -121,7 +113,7 @@ export const deleteBirthRecord = catchAsyncError(
       message: "Birth record deleted successfully",
       data: deletedBirth,
     });
-  }
+  },
 );
 
 export const searchBirthResults = catchAsyncError(
@@ -131,33 +123,31 @@ export const searchBirthResults = catchAsyncError(
     const searchTerm = validateSearchQuery(query, next);
     if (!searchTerm) return;
 
-    const birth = await searchBirth(searchTerm);
+    const births = await searchBirth(searchTerm);
 
     sendResponse(res, {
       success: true,
       statusCode: StatusCodes.OK,
       message: "Search results fetched successfully",
-      data: birth,
+      data: births,
     });
-  }
+  },
 );
 
 export const filterBirths = catchAsyncError(async (req, res) => {
-  // Validate query params
   const validated = birthFilterSchema.parse(req.query);
 
-  // Get filtered results
-  const { data, nextCursor } = await filterBirthsService(validated);
+  const { data, nextCursor, hasMore } = await filterBirthsService(validated);
 
-  // Send response
   sendResponse(res, {
     success: true,
     statusCode: StatusCodes.OK,
     message: "Filtered births fetched",
     data,
     pagination: {
-      nextCursor: nextCursor !== null ? String(nextCursor) : undefined,
-      limit: validated.limit || 50,
+      nextCursor: nextCursor || undefined,
+      limit: validated.limit ?? PAGINATION_CONFIG.DEFAULT_LIMIT,
+      hasMore,
     },
   });
 });
