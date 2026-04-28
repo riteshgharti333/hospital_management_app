@@ -169,6 +169,7 @@ model Doctor {
 
   // 🔁 If this doctor is assigned as a department head
   headedDepartment Department? @relation("DepartmentHead")
+  appointments     Appointment[]
 
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
@@ -186,7 +187,7 @@ model Department {
   status      DepartmentStatus @default(ACTIVE)
 
   // ✅ ONLY doctor linked to department (as head)
-  headId      String      @unique
+  headId      Int      @unique
   head        Doctor   @relation("DepartmentHead", fields: [headId], references: [id])
 
   createdAt   DateTime @default(now())
@@ -200,6 +201,30 @@ enum DepartmentStatus {
   INACTIVE
 }
 
+
+enum AppointmentStatus {
+  BOOKED
+  CANCELLED
+  EXPIRED
+}
+
+model Appointment {
+  id              Int      @id @default(autoincrement())
+  appointmentDate DateTime
+  appointmentTime String
+
+  status          AppointmentStatus @default(BOOKED)
+
+  // ✅ relation with doctor (important)
+  doctorId        Int
+  doctor          Doctor   @relation(fields: [doctorId], references: [id])
+
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([appointmentDate])
+  @@index([doctorId])
+}
 
 //////////////////
 
@@ -245,22 +270,6 @@ model BedAssignment {
 }
 
 /////////////////
-
-
-model Appointment {
-  id              Int      @id @default(autoincrement())
-  appointmentDate DateTime
-  doctorName      String
-  department      String
-  appointmentTime String
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
-
-  // 🔍 Indexes for fast lookups
-  @@index([appointmentDate])
-  @@index([doctorName])
-  @@index([department])
-}
 
 
 

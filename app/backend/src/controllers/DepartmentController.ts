@@ -13,13 +13,43 @@ import {
   searchDepartment,
   filterDepartmentsService,
 } from "../services/departmentService";
-import { departmentSchema } from "@hospital/schemas";
+import { departmentFilterSchema, departmentSchema } from "@hospital/schemas";
 import { validateSearchQuery } from "../utils/queryValidation";
 import { PAGINATION_CONFIG } from "../lib/paginationConfig";
+import { prisma } from "../lib/prisma";
 
 export const createDepartmentRecord = catchAsyncError(
   async (req: Request, res: Response, next: NextFunction) => {
     const validated = departmentSchema.parse(req.body);
+
+    // Check if department name already exists
+    const existingDepartment = await prisma.department.findUnique({
+      where: { name: validated.name },
+    });
+
+    if (existingDepartment) {
+      return sendResponse(res, {
+        success: false,
+        statusCode: StatusCodes.CONFLICT,
+        message: "Department already exists",
+        data: null,
+      });
+    }
+
+    // Check if doctor is already assigned to a department
+    const existingHead = await prisma.department.findUnique({
+      where: { headId: validated.headId },
+    });
+
+    if (existingHead) {
+      return sendResponse(res, {
+        success: false,
+        statusCode: StatusCodes.CONFLICT,
+        message: "Doctor already assigned to a department",
+        data: null,
+      });
+    }
+
     const department = await createDepartment(validated);
 
     sendResponse(res, {
@@ -59,7 +89,9 @@ export const getDepartmentRecordById = catchAsyncError(
 
     const department = await getDepartmentById(id);
     if (!department) {
-      return next(new ErrorHandler("Department not found", StatusCodes.NOT_FOUND));
+      return next(
+        new ErrorHandler("Department not found", StatusCodes.NOT_FOUND),
+      );
     }
 
     sendResponse(res, {
@@ -74,6 +106,7 @@ export const getDepartmentRecordById = catchAsyncError(
 export const updateDepartmentRecord = catchAsyncError(
   async (req: Request, res: Response, next: NextFunction) => {
     const id = Number(req.params.id);
+
     if (isNaN(id)) {
       return next(new ErrorHandler("Invalid ID", StatusCodes.BAD_REQUEST));
     }
@@ -81,10 +114,56 @@ export const updateDepartmentRecord = catchAsyncError(
     const partialSchema = departmentSchema.partial();
     const validatedData = partialSchema.parse(req.body);
 
-    const updatedDepartment = await updateDepartment(id, validatedData);
-    if (!updatedDepartment) {
-      return next(new ErrorHandler("Department not found", StatusCodes.NOT_FOUND));
+    // 🔍 Check if department exists
+    const existingDepartment = await prisma.department.findUnique({
+      where: { id },
+    });
+
+    if (!existingDepartment) {
+      return next(
+        new ErrorHandler("Department not found", StatusCodes.NOT_FOUND),
+      );
     }
+
+    // 🔴 Check duplicate name (exclude current)
+    if (validatedData.name) {
+      const duplicateName = await prisma.department.findFirst({
+        where: {
+          name: validatedData.name,
+          NOT: { id },
+        },
+      });
+
+      if (duplicateName) {
+        return sendResponse(res, {
+          success: false,
+          statusCode: StatusCodes.CONFLICT,
+          message: "Department already exists",
+          data: null,
+        });
+      }
+    }
+
+    // 🔴 Check doctor already assigned (exclude current)
+    if (validatedData.headId) {
+      const existingHead = await prisma.department.findFirst({
+        where: {
+          headId: validatedData.headId,
+          NOT: { id },
+        },
+      });
+
+      if (existingHead) {
+        return sendResponse(res, {
+          success: false,
+          statusCode: StatusCodes.CONFLICT,
+          message: "Doctor already assigned to a department",
+          data: null,
+        });
+      }
+    }
+
+    const updatedDepartment = await updateDepartment(id, validatedData);
 
     sendResponse(res, {
       success: true,
@@ -104,7 +183,9 @@ export const deleteDepartmentRecord = catchAsyncError(
 
     const deletedDepartment = await deleteDepartment(id);
     if (!deletedDepartment) {
-      return next(new ErrorHandler("Department not found", StatusCodes.NOT_FOUND));
+      return next(
+        new ErrorHandler("Department not found", StatusCodes.NOT_FOUND),
+      );
     }
 
     sendResponse(res, {
@@ -135,16 +216,10 @@ export const searchDepartmentResults = catchAsyncError(
 );
 
 export const filterDepartments = catchAsyncError(async (req, res) => {
-  const validated = departmentSchema.partial().pick({
-    status: true,
-  }).extend({
-    fromDate: z.coerce.date().optional(),
-    toDate: z.coerce.date().optional(),
-    cursor: z.string().optional(),
-    limit: z.coerce.number().optional(),
-  }).parse(req.query);
+  const validated = departmentFilterSchema.parse(req.query);
 
-  const { data, nextCursor, hasMore } = await filterDepartmentsService(validated);
+  const { data, nextCursor, hasMore } =
+    await filterDepartmentsService(validated);
 
   sendResponse(res, {
     success: true,

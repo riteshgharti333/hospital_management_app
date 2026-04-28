@@ -1,94 +1,177 @@
 import { prisma } from "../lib/prisma";
-import { applyCommonFields } from "../utils/applyCommonFields";
-import { cursorPaginate } from "../utils/pagination";
+import { bumpCacheVersion } from "../utils/cacheVersion";
 import { filterPaginate } from "../utils/filterPaginate";
+import { cursorPaginate } from "../utils/pagination";
 import { createSearchService } from "../utils/searchCache";
+import {
+  checkAndUpdateExpiredAppointments,
+  isAppointmentExpired,
+} from "../utils/checkAppointmentExpiry";
 
 export type AppointmentInput = {
   appointmentDate: Date;
-  doctorName: string;
-  department: string;
   appointmentTime: string;
+  doctorId: number;
+  status?: "BOOKED" | "CANCELLED" | "EXPIRED";
 };
 
 export const createAppointment = async (data: AppointmentInput) => {
+  await bumpCacheVersion("appointment");
   return prisma.appointment.create({ data });
 };
 
-export const getAllAppointments = async (
-  cursor?: string,
-  limit?: number
-) => {
+export const getAllAppointmentsService = async (cursor?: string) => {
+  // Update all expired appointments first
+  await checkAndUpdateExpiredAppointments();
+
   return cursorPaginate(
     prisma,
     {
       model: "appointment",
-      cursorField: "id",
-      limit: limit || 50,
-      cacheExpiry: 600,
+      include: {
+        doctor: {
+          select: {
+            fullName: true,
+          },
+        },
+      },
     },
-    cursor ? Number(cursor) : undefined
+    cursor,
   );
 };
 
 export const getAppointmentById = async (id: number) => {
-  return prisma.appointment.findUnique({ where: { id } });
+  let appointment = await prisma.appointment.findUnique({
+    where: { id },
+    include: {
+      doctor: {
+        select: {
+          fullName: true,
+        },
+      },
+    },
+  });
+
+  if (appointment && appointment.status === "BOOKED") {
+    const expired = isAppointmentExpired(
+      appointment.appointmentDate,
+      appointment.appointmentTime,
+    );
+
+    if (expired) {
+      appointment = await prisma.appointment.update({
+        where: { id },
+        data: { status: "EXPIRED" },
+        include: {
+          doctor: {
+            select: {
+              fullName: true,
+            },
+          },
+        },
+      });
+      await bumpCacheVersion("appointment");
+    }
+  }
+
+  return appointment;
 };
 
 export const updateAppointment = async (
   id: number,
-  data: Partial<AppointmentInput>
+  data: Partial<AppointmentInput>,
 ) => {
+  await bumpCacheVersion("appointment");
   return prisma.appointment.update({
     where: { id },
     data,
+    include: {
+      doctor: {
+        select: {
+          fullName: true,
+        },
+      },
+    },
+  });
+};
+
+export const cancelAppointment = async (id: number) => {
+  await bumpCacheVersion("appointment");
+  return prisma.appointment.update({
+    where: { id },
+    data: { status: "CANCELLED" },
+    include: {
+      doctor: {
+        select: {
+          fullName: true,
+        },
+      },
+    },
   });
 };
 
 export const deleteAppointment = async (id: number) => {
+  await bumpCacheVersion("appointment");
   return prisma.appointment.delete({ where: { id } });
 };
 
-const commonSearchFields = ["doctorName", "department"];
-
-export const searchAppointment = createSearchService(prisma, {
+export const searchAppointments = createSearchService(prisma, {
   tableName: "Appointment",
-  cacheKeyPrefix: "appointment",
-  ...applyCommonFields(commonSearchFields),
+  exactFields: [],
+  prefixFields: [],
+  similarFields: [],
 });
 
-
-export const filterAppointmentsService = async (filters: {
+type FilterAppointmentParams = {
   fromDate?: Date;
   toDate?: Date;
-  department?: string;
-  cursor?: string | number;
+  doctorId?: number;
+  status?: string;
+  cursor?: string;
   limit?: number;
-}) => {
-  const { fromDate, toDate, department, cursor, limit } = filters;
+};
 
-  const filterObj: Record<string, any> = {};
+export const filterAppointmentsService = async (
+  params: FilterAppointmentParams,
+) => {
+  const { fromDate, toDate, doctorId, status, cursor, limit } = params;
 
-  if (department)
-    filterObj.department = {
-      equals: department,
-      mode: "insensitive",
+  const where: Record<string, any> = {};
+
+  if (doctorId) {
+    where.doctorId = doctorId;
+  }
+
+  if (status) {
+    where.status = status;
+  }
+
+  if (fromDate || toDate) {
+    where.appointmentDate = {
+      ...(fromDate && { gte: fromDate }),
+      ...(toDate && { lte: toDate }),
     };
-
-  if (fromDate || toDate)
-    filterObj.appointmentDate = {
-      gte: fromDate ? new Date(fromDate) : undefined,
-      lte: toDate ? new Date(toDate) : undefined,
-    };
+  }
 
   return filterPaginate(
     prisma,
     {
       model: "appointment",
-      cursorField: "id",
-      limit: limit || 50,
-      filters: filterObj,
+      limit,
+      include: {
+        doctor: {
+          select: {
+            fullName: true,
+          },
+        },
+      },
     },
-    cursor
+    cursor,
+    where,
   );
+};
+
+// Update expired appointments (for cron job or manual trigger)
+export const updateExpiredAppointments = async () => {
+  return checkAndUpdateExpiredAppointments();
 };

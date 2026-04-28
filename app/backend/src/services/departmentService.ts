@@ -5,7 +5,7 @@ import { cursorPaginate } from "../utils/pagination";
 import { createSearchService } from "../utils/searchCache";
 
 export type DepartmentInput = {
-  name: string; 
+  name: string;
   description?: string;
   headId: number;
   status?: "ACTIVE" | "INACTIVE";
@@ -25,12 +25,33 @@ export const createDepartment = async (data: DepartmentInput) => {
 };
 
 export const getAllDepartments = async (cursor?: string) => {
-  return cursorPaginate(prisma, { model: "department" }, cursor);
+  return cursorPaginate(
+    prisma,
+    {
+      model: "department",
+     include: {
+      head: {
+        select: {
+          fullName: true  
+        }
+      }
+    }
+    },
+    cursor,
+  );
 };
 
 export const getDepartmentById = async (id: number) => {
   return prisma.department.findUnique({
     where: { id },
+    include: {
+      head: {
+        select: {
+          id: true,
+          fullName: true,
+        },
+      },
+    },
   });
 };
 
@@ -54,23 +75,11 @@ export const deleteDepartment = async (id: number) => {
   return department;
 };
 
-const commonSearchFields = [
-  "name",
-  "description",
-];
-
 export const searchDepartment = createSearchService(prisma, {
   tableName: "Department",
   exactFields: ["name"],
   prefixFields: ["name"],
   similarFields: ["name", "description"],
-  selectFields: [
-    "id",
-    "name",
-    "description",
-    "status",
-    "createdAt",
-  ],
 });
 
 type FilterDepartmentParams = {
@@ -82,19 +91,18 @@ type FilterDepartmentParams = {
 };
 
 export const filterDepartmentsService = async (
-  params: FilterDepartmentParams
+  params: FilterDepartmentParams,
 ) => {
   const { fromDate, toDate, status, cursor, limit } = params;
 
   const where: Record<string, any> = {};
 
+  // ✅ Status filter
   if (status) {
-    where.status = {
-      equals: status,
-      mode: "insensitive",
-    };
+    where.status = status.toUpperCase();
   }
 
+  // ✅ Date range filter
   if (fromDate || toDate) {
     where.createdAt = {
       ...(fromDate && { gte: fromDate }),
@@ -107,8 +115,15 @@ export const filterDepartmentsService = async (
     {
       model: "department",
       limit,
+      // 🔥 Optional optimization
+      // select: {
+      //   id: true,
+      //   fullName: true,
+      //   status: true,
+      //   createdAt: true,
+      // },
     },
     cursor,
-    where
+    where,
   );
 };

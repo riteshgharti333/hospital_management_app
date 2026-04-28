@@ -11,8 +11,8 @@ import departmentRoutes from "./routes/departmentRoute";
 import admissionRoutes from "./routes/admissionRoute";
 import birthRoutes from "./routes/birthRoute";
 import patientRoutes from "./routes/patientRoute";
-import bedRoutes from "./routes/bedRoute";
-import bedAssignRoutes from "./routes/bedAssignRoute";
+// import bedRoutes from "./routes/bedRoute";
+// import bedAssignRoutes from "./routes/bedAssignRoute";
 import appointmentRoutes from "./routes/appointmentRoute";
 import nurseRoutes from "./routes/nurseRoute";
 import doctorRoutes from "./routes/doctorRoute";
@@ -30,17 +30,6 @@ import adminRoutes from "./routes/adminRoutes";
 
 // Password Reset
 import passwordRoutes from "./routes/passwordRoutes";
-
-// ledger
-import patientLedgerRoutes from "./routes/ledgerRoutes/patientLedgerRoute";
-import bankLedgerRoutes from "./routes/ledgerRoutes/bankLedgerRoute";
-import cashLedgerRoutes from "./routes/ledgerRoutes/cashLedgerRoute";
-import diagnosticsLedgerRoutes from "./routes/ledgerRoutes/diagnosticsLedgerRoute";
-import doctorLedgerRoutes from "./routes/ledgerRoutes/doctorLedgerRoute";
-import expenseLedgerRoutes from "./routes/ledgerRoutes/expenseLedgerRoute";
-import insuranceLedgerRoutes from "./routes/ledgerRoutes/insuranceLedgerRoute";
-import pharmacyLedgerRoutes from "./routes/ledgerRoutes/pharmacyLedgerRoute";
-import supplierLedgerRoutes from "./routes/ledgerRoutes/supplierLedgerRoute";
 
 // item/service
 import brandRoutes from "./routes/itemRoutes/brandRoute";
@@ -62,7 +51,6 @@ dotenv.config();
 
 const app: Application = express();
 
-
 const allowedOrigins = [
   "http://localhost:5173",
   "https://hospital-management-app-nine.vercel.app",
@@ -81,7 +69,7 @@ app.use(
       return callback(new Error("CORS not allowed"));
     },
     credentials: true,
-  })
+  }),
 );
 
 // handle preflight
@@ -104,8 +92,8 @@ app.use("/api/v1/admission", admissionRoutes);
 app.use("/api/v1/birth", birthRoutes);
 app.use("/api/v1/patient", patientRoutes);
 app.use("/api/v1/department", departmentRoutes);
-app.use("/api/v1/bed", bedRoutes);
-app.use("/api/v1/bed-assign", bedAssignRoutes);
+// app.use("/api/v1/bed", bedRoutes);
+// app.use("/api/v1/bed-assign", bedAssignRoutes);
 app.use("/api/v1/appointment", appointmentRoutes);
 app.use("/api/v1/nurse", nurseRoutes);
 app.use("/api/v1/doctor", doctorRoutes);
@@ -114,21 +102,10 @@ app.use("/api/v1/prescription", prescriptionRoutes);
 app.use("/api/v1/ambulance", ambulanceRoutes);
 app.use("/api/v1/xray", xrayRoutes);
 
-app.use("/api/v1/cash", cash); 
-app.use("/api/v1/bank", bank); 
+app.use("/api/v1/cash", cash);
+app.use("/api/v1/bank", bank);
 
-app.use("/api/v1/ledger", ledger);  
-
-// ledger
-app.use("/api/v1/ledger/patient-ledger", patientLedgerRoutes);
-app.use("/api/v1/ledger/bank-ledger", bankLedgerRoutes);
-app.use("/api/v1/ledger/cash-ledger", cashLedgerRoutes);
-app.use("/api/v1/ledger/diagnostics-ledger", diagnosticsLedgerRoutes);
-app.use("/api/v1/ledger/doctor-ledger", doctorLedgerRoutes);   
-app.use("/api/v1/ledger/expense-ledger", expenseLedgerRoutes);
-app.use("/api/v1/ledger/insurance-ledger", insuranceLedgerRoutes);
-app.use("/api/v1/ledger/pharmacy-ledger", pharmacyLedgerRoutes);
-app.use("/api/v1/ledger/supplier-ledger", supplierLedgerRoutes);
+app.use("/api/v1/ledger", ledger);
 
 // item/service
 app.use("/api/v1/brand", brandRoutes);

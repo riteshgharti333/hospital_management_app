@@ -11,7 +11,6 @@ export type DoctorInput = {
   email: string;
   qualification: string;
   designation: string;
-  department: string;
   specialization: string;
   status?: string;
 };
@@ -49,13 +48,6 @@ export const getDoctorById = async (id: number) => {
 
 export const getDoctorByRegistration = async (registrationNo: string) => {
   return prisma.doctor.findUnique({ where: { registrationNo } });
-};
-
-export const getDoctorsByDepartment = async (department: string) => {
-  return prisma.doctor.findMany({
-    where: { department },
-    orderBy: { fullName: "asc" },
-  });
 };
 
 export const updateDoctor = async (id: number, data: Partial<DoctorInput>) => {

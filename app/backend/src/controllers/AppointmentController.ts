@@ -6,22 +6,30 @@ import { sendResponse } from "../utils/sendResponse";
 import { StatusCodes } from "../constants/statusCodes";
 import {
   createAppointment,
-  getAllAppointments,
   getAppointmentById,
   updateAppointment,
   deleteAppointment,
-  searchAppointment,
+  cancelAppointment,
+  getAllAppointmentsService,
   filterAppointmentsService,
+  searchAppointments,
+  updateExpiredAppointments,
 } from "../services/appointmentService";
+import { PAGINATION_CONFIG } from "../lib/paginationConfig";
 
-import { appointmentSchema, appointmentFilterSchema } from "@hospital/schemas";
-import { validateSearchQuery } from "../utils/queryValidation";
+import {
+  appointmentFilterSchema,
+  appointmentSchema,
+  AppointmentStatus,
+} from "@hospital/schemas";
+import { prisma } from "../lib/prisma";
+import { searchDoctor } from "../services/doctorService";
 
 export const createAppointmentRecord = catchAsyncError(
-  async (req: Request, res: Response) => {
+  async (req: Request, res: Response, next: NextFunction) => {
     const validated = appointmentSchema.parse(req.body);
-
     const appointment = await createAppointment(validated);
+
     sendResponse(res, {
       success: true,
       statusCode: StatusCodes.CREATED,
@@ -33,24 +41,18 @@ export const createAppointmentRecord = catchAsyncError(
 
 export const getAllAppointmentRecords = catchAsyncError(
   async (req: Request, res: Response) => {
-    const { cursor, limit } = req.query as {
-      cursor?: string;
-      limit?: string;
-    };
+    const { cursor } = req.query as { cursor?: string };
 
-    const { data: appointment, nextCursor } = await getAllAppointments(
-      cursor,
-      limit ? Number(limit) : undefined,
-    );
+    const result = await getAllAppointmentsService(cursor);
 
     sendResponse(res, {
       success: true,
       statusCode: StatusCodes.OK,
       message: "Appointment records fetched",
-      data: appointment,
+      data: result.data,
       pagination: {
-        nextCursor: nextCursor !== null ? String(nextCursor) : undefined,
-        limit: limit ? Number(limit) : 50,
+        nextCursor: result.pagination.nextCursor || undefined,
+        hasMore: result.pagination.hasMore,
       },
     });
   },
@@ -79,6 +81,8 @@ export const getAppointmentRecordById = catchAsyncError(
   },
 );
 
+
+
 export const updateAppointmentRecord = catchAsyncError(
   async (req: Request, res: Response, next: NextFunction) => {
     const id = Number(req.params.id);
@@ -87,12 +91,7 @@ export const updateAppointmentRecord = catchAsyncError(
     }
 
     const partialSchema = appointmentSchema.partial();
-    const validatedData = partialSchema.parse({
-      ...req.body,
-      appointmentDate: req.body.appointmentDate
-        ? new Date(req.body.appointmentDate)
-        : undefined,
-    });
+    const validatedData = partialSchema.parse(req.body);
 
     const updatedAppointment = await updateAppointment(id, validatedData);
     if (!updatedAppointment) {
@@ -106,6 +105,24 @@ export const updateAppointmentRecord = catchAsyncError(
       statusCode: StatusCodes.OK,
       message: "Appointment updated successfully",
       data: updatedAppointment,
+    });
+  },
+);
+
+export const cancelAppointmentRecord = catchAsyncError(
+  async (req: Request, res: Response, next: NextFunction) => {
+    const id = Number(req.params.id);
+    if (isNaN(id)) {
+      return next(new ErrorHandler("Invalid ID", StatusCodes.BAD_REQUEST));
+    }
+
+    const cancelledAppointment = await cancelAppointment(id);
+
+    sendResponse(res, {
+      success: true,
+      statusCode: StatusCodes.OK,
+      message: "Appointment cancelled successfully",
+      data: cancelledAppointment,
     });
   },
 );
@@ -134,27 +151,91 @@ export const deleteAppointmentRecord = catchAsyncError(
 );
 
 export const searchAppointmentResults = catchAsyncError(
-  async (req: Request, res: Response, next: NextFunction) => {
+  async (req, res, next) => {
     const { query } = req.query;
 
-    const searchTerm = validateSearchQuery(query, next);
-    if (!searchTerm) return;
+    const searchTerm = typeof query === "string" ? query : null;
+    if (!searchTerm) {
+      return sendResponse(res, {
+        success: true,
+        statusCode: StatusCodes.OK,
+        message: "No search query provided",
+        data: [],
+      });
+    }
 
-    const appointments = await searchAppointment(searchTerm);
+    // 1️⃣ Direct appointment search
+    const appointmentsDirect = await searchAppointments(searchTerm);
 
+    // 2️⃣ Collect doctorIds
+    const doctorIds = [
+      ...new Set(appointmentsDirect.map((a: any) => a.doctorId)),
+    ];
+
+    // 3️⃣ Fetch doctors (batch)
+    const doctors = doctorIds.length
+      ? await prisma.doctor.findMany({
+          where: { id: { in: doctorIds } },
+          select: {
+            id: true,
+            fullName: true,
+          },
+        })
+      : [];
+
+    const doctorMap = new Map(doctors.map((d) => [d.id, d]));
+
+    // 4️⃣ Enrich direct results
+    const enrichedDirect = appointmentsDirect.map((a: any) => ({
+      ...a,
+      doctor: doctorMap.get(a.doctorId) || null,
+    }));
+
+    // 5️⃣ Search doctors by name (THIS is key part)
+    const matchedDoctors = await searchDoctor(searchTerm);
+    const matchedDoctorIds = matchedDoctors.map((d: any) => d.id);
+
+    // 6️⃣ Appointments via doctor name
+    const appointmentsViaDoctors = matchedDoctorIds.length
+      ? await prisma.appointment.findMany({
+          where: {
+            doctorId: { in: matchedDoctorIds },
+          },
+          include: { 
+            doctor: {
+              select: {
+                id: true,
+                fullName: true,
+              },
+            },
+          },
+          orderBy: { createdAt: "desc" },
+        })
+      : [];
+
+    // 7️⃣ Merge + dedupe
+    const mergedMap = new Map();
+
+    enrichedDirect.forEach((a: any) => mergedMap.set(a.id, a));
+    appointmentsViaDoctors.forEach((a: any) => mergedMap.set(a.id, a));
+
+    const mergedResults = Array.from(mergedMap.values());
+
+    // 8️⃣ Response
     sendResponse(res, {
       success: true,
       statusCode: StatusCodes.OK,
       message: "Search results fetched successfully",
-      data: appointments,
+      data: mergedResults,
     });
-  },
+  }
 );
 
 export const filterAppointments = catchAsyncError(async (req, res) => {
   const validated = appointmentFilterSchema.parse(req.query);
 
-  const { data, nextCursor } = await filterAppointmentsService(validated);
+  const { data, nextCursor, hasMore } =
+    await filterAppointmentsService(validated);
 
   sendResponse(res, {
     success: true,
@@ -162,8 +243,26 @@ export const filterAppointments = catchAsyncError(async (req, res) => {
     message: "Filtered appointments fetched",
     data,
     pagination: {
-      nextCursor: nextCursor !== null ? String(nextCursor) : undefined,
-      limit: validated.limit || 50,
+      nextCursor: nextCursor || undefined,
+      limit: validated.limit ?? PAGINATION_CONFIG.DEFAULT_LIMIT,
+      hasMore,
     },
   });
 });
+
+// Admin endpoint to manually trigger expired appointment update
+export const runExpiredAppointmentsUpdate = catchAsyncError(
+  async (req: Request, res: Response) => {
+    const result = await updateExpiredAppointments();
+
+    sendResponse(res, {
+      success: true,
+      statusCode: StatusCodes.OK,
+      message: "Expired appointments updated",
+      data: {
+        updatedCount: result.count,
+      },
+    });
+  },
+);
+
