@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { sidebar2Data, sidebar3Data, sidebarData } from "../../assets/data";
+import { sidebar2Data, sidebarData } from "../../assets/data";
 import {
   FiLogOut,
   FiChevronDown,
@@ -194,12 +194,12 @@ const Sidebar = React.memo(() => {
         )}
         {renderMenuItems(sidebar2Data, "tran")}
 
-        {!collapsed && (
+        {/* {!collapsed && (
           <h1 className="px-2 mt-3 mb-3 text-[18px] font-bold text-blue-950">
             Reports
           </h1>
-        )}
-        {renderMenuItems(sidebar3Data, "report")}
+        )} */}
+        {/* {renderMenuItems(sidebar3Data, "report")} */}
       </div>
 
       {/* Quick Actions */}

@@ -86,9 +86,9 @@ app.use("/api/v1/doctor", doctorRoutes);
 app.use("/api/v1/prescription", prescriptionRoutes);
 
 app.use("/api/v1/cash", cash);
-app.use("/api/v1/bank", bank);
+app.use("/api/v1/bank", bank); 
 
-app.use("/api/v1/ledger", ledger);
+app.use("/api/v1/ledger", ledger); 
 
 
 // transection

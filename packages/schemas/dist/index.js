@@ -1,8 +1,8 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.cashFilterSchema = exports.ledgerFilterSchema = exports.supplierLedgerSchema = exports.pharmacyLedgerSchema = exports.insuranceLedgerSchema = exports.expenseLedgerSchema = exports.diagnosticsLedgerSchema = exports.patientLedgerSchema = exports.doctorLedgerSchema = exports.cashLedgerSchema = exports.bankLedgerSchema = exports.ledgerSchema = exports.REFERENCE_TYPES = exports.ENTITY_TYPES = exports.PaymentModeEnum = exports.AmountTypeEnum = exports.bankSchema = exports.cashSchema = exports.serviceChargeSchema = exports.productMaterialSchema = exports.materialSpecSchema = exports.productSchema = exports.brandSchema = exports.voucherSchema = exports.moneyReceiptSchema = exports.employeeSchema = exports.billSchema = exports.billItemSchema = exports.xrayReportSchema = exports.prescriptionFilterSchema = exports.prescriptionSchema = exports.medicineSchema = exports.PrescriptionStatusEnum = exports.pharmacistSchema = exports.patientSchema = exports.nurseSchema = exports.doctorSchema = exports.appointmentSchema = exports.AppointmentStatus = exports.departmentSchema = exports.DepartmentNameEnum = exports.DepartmentStatusEnum = exports.birthSchema = exports.bedAssignmentSchema = exports.ambulanceSchema = exports.admissionSchema = exports.bedSchema = exports.loginSchema = exports.registerSchema = exports.changePasswordSchema = void 0;
-exports.FilterSchemas = exports.moneyReceiptFilterSchema = exports.billFilterSchema = exports.doctorLedgerFilterSchema = exports.cashLedgerFilterSchema = exports.bankLedgerFilterSchema = exports.patientLedgerFilterSchema = exports.doctorFilterSchema = exports.nurseFilterSchema = exports.appointmentFilterSchema = exports.departmentFilterSchema = exports.patientFilterSchema = exports.birthFilterSchema = exports.admissionFilterSchema = exports.bankFilterSchema = void 0;
+exports.moneyReceiptFilterSchema = exports.billFilterSchema = exports.doctorLedgerFilterSchema = exports.patientLedgerFilterSchema = exports.doctorFilterSchema = exports.nurseFilterSchema = exports.appointmentFilterSchema = exports.departmentFilterSchema = exports.patientFilterSchema = exports.birthFilterSchema = exports.admissionFilterSchema = exports.bankFilterSchema = exports.cashFilterSchema = exports.ledgerFilterSchema = exports.ledgerSchema = exports.REFERENCE_TYPES = exports.ENTITY_TYPES = exports.PaymentModeEnum = exports.AmountTypeEnum = exports.bankSchema = exports.cashSchema = exports.moneyReceiptSchema = exports.billSchema = exports.billItemSchema = exports.prescriptionFilterSchema = exports.prescriptionSchema = exports.medicineSchema = exports.PrescriptionStatusEnum = exports.patientSchema = exports.nurseSchema = exports.doctorSchema = exports.appointmentSchema = exports.AppointmentStatus = exports.departmentSchema = exports.DepartmentNameEnum = exports.DepartmentStatusEnum = exports.birthSchema = exports.admissionSchema = exports.loginSchema = exports.registerSchema = exports.changePasswordSchema = void 0;
 const zod_1 = require("zod");
+// AUTHENTICATION SCHEMAS
 exports.changePasswordSchema = zod_1.z
     .object({
     currentPassword: zod_1.z.string().min(1, "Current password is required"),
@@ -36,14 +36,7 @@ exports.loginSchema = zod_1.z.object({
     email: zod_1.z.string().email("Invalid email"),
     password: zod_1.z.string().min(1, "Password is required"),
 });
-//////////////////
-exports.bedSchema = zod_1.z.object({
-    bedNumber: zod_1.z.string().min(1, "Bed number is required"),
-    wardNumber: zod_1.z.string().min(1, "Ward number is required"),
-    status: zod_1.z.enum(["Available", "Occupied", "Maintenance"]).default("Available"),
-    description: zod_1.z.string().optional(),
-});
-////////////////
+// ADMISSION SCHEMAS
 const admissionStatus = zod_1.z.enum(["ACTIVE", "DISCHARGED", "CANCELLED"]);
 exports.admissionSchema = zod_1.z.object({
     patientId: zod_1.z.number().int().positive("Patient ID is required"),
@@ -52,36 +45,7 @@ exports.admissionSchema = zod_1.z.object({
     admissionDate: zod_1.z.coerce.date(),
     dischargeDate: zod_1.z.preprocess((val) => (val === "" || val === null ? undefined : val), zod_1.z.coerce.date().optional()),
 });
-///////////////
-exports.ambulanceSchema = zod_1.z.object({
-    modelName: zod_1.z.string().min(1, "Model name is required"),
-    brand: zod_1.z.string().min(1, "Brand is required"),
-    registrationNo: zod_1.z.string().min(1, "Registration number is required"),
-    driverName: zod_1.z.string().min(1, "Driver name is required"),
-    driverContact: zod_1.z
-        .string()
-        .min(10, "Driver contact must be at least 10 digits"),
-    status: zod_1.z.enum(["Available", "On-Call", "Maintenance"]).default("Available"),
-});
-////////////
-////////
-exports.bedAssignmentSchema = zod_1.z.object({
-    wardNumber: zod_1.z.string().min(1, "Ward number is required"),
-    bedNumber: zod_1.z.string().min(1, "Bed number is required"),
-    bedType: zod_1.z.string().min(1, "Bed type is required"),
-    patientName: zod_1.z.string().min(1, "Patient name is required"),
-    allocateDate: zod_1.z
-        .string()
-        .min(1, "Allocation date is required")
-        .refine((val) => !isNaN(new Date(val).getTime()), {
-        message: "Invalid date format",
-    })
-        .transform((val) => new Date(val)),
-    dischargeDate: zod_1.z.preprocess((val) => (val === "" ? undefined : val), zod_1.z.coerce.date().optional()),
-    status: zod_1.z.enum(["Active", "Discharged", "Transferred"]).default("Active"),
-    notes: zod_1.z.string().optional(),
-});
-/////////////
+// BIRTH SCHEMAS
 exports.birthSchema = zod_1.z.object({
     birthTime: zod_1.z.string().min(1, "Birth time is required"),
     birthDate: zod_1.z
@@ -100,7 +64,7 @@ exports.birthSchema = zod_1.z.object({
     placeOfBirth: zod_1.z.string().min(1, "Place of birth is required"),
     attendantsName: zod_1.z.string().min(1, "Attendant's name is required"),
 });
-///////////
+// DEPARTMENT SCHEMAS
 exports.DepartmentStatusEnum = zod_1.z.enum(["ACTIVE", "INACTIVE"]);
 exports.DepartmentNameEnum = zod_1.z.enum([
     "CARDIOLOGY",
@@ -111,15 +75,12 @@ exports.DepartmentNameEnum = zod_1.z.enum([
     "GENERAL",
 ]);
 exports.departmentSchema = zod_1.z.object({
-    // ✅ enum instead of free string
     name: exports.DepartmentNameEnum,
     description: zod_1.z.string().optional(),
-    // ✅ matches Prisma (Int headId)
     headId: zod_1.z.coerce.number().int().positive("Valid doctor ID is required"),
-    // ✅ enum match
     status: exports.DepartmentStatusEnum.optional().default("ACTIVE"),
 });
-/////////////
+// APPOINTMENT SCHEMAS
 exports.AppointmentStatus = zod_1.z.enum([
     "BOOKED",
     "CANCELLED",
@@ -141,10 +102,9 @@ exports.appointmentSchema = zod_1.z.object({
     })
         .int("Doctor ID must be an integer")
         .positive("Doctor ID must be positive"),
-    // ✅ USE ENUM HERE
     status: exports.AppointmentStatus.optional(),
 });
-//////////////////
+// DOCTOR SCHEMAS
 exports.doctorSchema = zod_1.z.object({
     fullName: zod_1.z.string().min(1, "Full name is required"),
     mobileNumber: zod_1.z
@@ -156,7 +116,7 @@ exports.doctorSchema = zod_1.z.object({
     specialization: zod_1.z.string().min(1, "Specialization is required"),
     status: zod_1.z.string().optional().default("Active"),
 });
-///////////
+// NURSE SCHEMAS
 exports.nurseSchema = zod_1.z.object({
     fullName: zod_1.z.string().min(1, "Full name is required"),
     mobileNumber: zod_1.z.string().min(10, "Mobile number must be at least 10 digits"),
@@ -166,7 +126,7 @@ exports.nurseSchema = zod_1.z.object({
     shift: zod_1.z.string().min(1, "Shift is required"),
     status: zod_1.z.string().optional().default("Active"),
 });
-/////////////////
+// PATIENT SCHEMAS
 exports.patientSchema = zod_1.z.object({
     fullName: zod_1.z.string().min(1, "Full name is required").trim(),
     dateOfBirth: zod_1.z.coerce.date({
@@ -183,24 +143,12 @@ exports.patientSchema = zod_1.z.object({
         .optional(),
     address: zod_1.z.string().min(1, "Address is required").trim(),
 });
-//////////////
-exports.pharmacistSchema = zod_1.z.object({
-    fullName: zod_1.z.string().min(1, "Full name is required"),
-    mobileNumber: zod_1.z.string().min(10, "Mobile number must be at least 10 digits"),
-    registrationNo: zod_1.z.string().min(1, "Registration number is required"),
-    address: zod_1.z.string().min(1, "Address is required"),
-    department: zod_1.z.string().min(1, "Department is required"),
-    status: zod_1.z.string().optional().default("Active"),
-});
-/////////////////////
-// ================= ENUM =================
+// PRESCRIPTION SCHEMAS
 exports.PrescriptionStatusEnum = zod_1.z.enum([
     "ACTIVE",
     "COMPLETED",
     "CANCELLED",
 ]);
-// ================= MEDICINE =================
-// ================= MEDICINE =================
 exports.medicineSchema = zod_1.z.object({
     medicineName: zod_1.z
         .string({
@@ -229,7 +177,6 @@ exports.medicineSchema = zod_1.z.object({
     })
         .optional(),
 });
-// ================= PRESCRIPTION =================
 exports.prescriptionSchema = zod_1.z.object({
     admissionId: zod_1.z.coerce.number({
         required_error: "Admission ID is required",
@@ -259,7 +206,6 @@ exports.prescriptionSchema = zod_1.z.object({
     })
         .min(1, "At least one medicine is required"),
 });
-// Filter schema for prescriptions
 exports.prescriptionFilterSchema = zod_1.z.object({
     fromDate: zod_1.z.string().datetime().optional(),
     toDate: zod_1.z.string().datetime().optional(),
@@ -268,38 +214,7 @@ exports.prescriptionFilterSchema = zod_1.z.object({
     cursor: zod_1.z.string().optional(),
     limit: zod_1.z.coerce.number().optional(),
 });
-////////////////
-exports.xrayReportSchema = zod_1.z.object({
-    billDate: zod_1.z.coerce.date(),
-    patientMobile: zod_1.z.string().min(10, "Valid mobile number required"),
-    patientName: zod_1.z.string().min(1, "Patient name is required"),
-    patientSex: zod_1.z.enum(["Male", "Female", "Other"]),
-    age: zod_1.z.number().positive("Age must be positive"),
-    referredDoctor: zod_1.z.string().min(1, "Referred doctor is required"),
-    testDate: zod_1.z.coerce.date(),
-    reportDate: zod_1.z
-        .string()
-        .min(1, "Report date is required")
-        .refine((val) => !isNaN(new Date(val).getTime()), {
-        message: "Invalid date format",
-    })
-        .transform((val) => new Date(val)),
-    patientAddress: zod_1.z.string().optional(),
-    examDescription: zod_1.z.string().min(1, "Exam description is required"),
-    department: zod_1.z.string().min(1, "Department is required"),
-    billAmount: zod_1.z.number().positive("Bill amount must be positive"),
-    discountPercent: zod_1.z
-        .number()
-        .min(0)
-        .max(100, "Discount must be between 0-100%"),
-    netBillAmount: zod_1.z.number().positive("Net amount must be positive"),
-    commissionPercent: zod_1.z
-        .number()
-        .min(0)
-        .max(100, "Commission must be between 0-100%"),
-    doctorEarning: zod_1.z.number().min(0, "Doctor earning must be positive"),
-});
-////////////// Transection Schema
+// TRANSACTION SCHEMAS
 exports.billItemSchema = zod_1.z.object({
     company: zod_1.z.string().min(1, "Company is required"),
     itemOrService: zod_1.z.string().min(1, "Item/Service is required"),
@@ -331,29 +246,6 @@ exports.billSchema = zod_1.z.object({
         .array(exports.billItemSchema)
         .min(1, "At least one bill item is required"),
 });
-exports.employeeSchema = zod_1.z.object({
-    employeeName: zod_1.z.string().min(1, "Employee name is required"),
-    fathersName: zod_1.z.string().min(1, "Father's name is required"),
-    dateOfRegistration: zod_1.z.string().transform((val) => new Date(val)),
-    contactNo: zod_1.z.string().min(10, "Contact number must be at least 10 digits"),
-    dateOfBirth: zod_1.z
-        .string()
-        .min(1, "Date of birth is required")
-        .refine((val) => !isNaN(new Date(val).getTime()), {
-        message: "Invalid date format",
-    })
-        .transform((val) => new Date(val)),
-    email: zod_1.z.string().email().optional(),
-    gender: zod_1.z.enum(["Male", "Female", "Other"]),
-    maritalStatus: zod_1.z.enum(["Married", "Unmarried"]),
-    aadharNo: zod_1.z.string().length(12, "Aadhar must be 12 digits").optional(),
-    voterId: zod_1.z.string().min(1, "Voter ID is required").optional(),
-    bloodGroup: zod_1.z
-        .enum(["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"])
-        .optional(),
-    department: zod_1.z.string().min(1, "Department is required"),
-    photoUrl: zod_1.z.string().optional(),
-});
 exports.moneyReceiptSchema = zod_1.z.object({
     date: zod_1.z.string().transform((val) => new Date(val)),
     patientName: zod_1.z.string().min(1, "Patient name is required"),
@@ -368,81 +260,7 @@ exports.moneyReceiptSchema = zod_1.z.object({
         .optional()
         .default("Active"),
 });
-exports.voucherSchema = zod_1.z.object({
-    voucherDate: zod_1.z.string().transform((val) => new Date(val)),
-    paymentFor: zod_1.z.string().min(1, "Payment for is required"),
-    voucherType: zod_1.z.enum(["Payment", "Receipt", "Journal"]),
-    vendorName: zod_1.z.string().min(1, "Vendor name is required"),
-    paymentDate: zod_1.z
-        .string()
-        .min(1, "Payment date is required")
-        .refine((val) => !isNaN(new Date(val).getTime()), {
-        message: "Invalid date format",
-    })
-        .transform((val) => new Date(val)),
-    amount: zod_1.z.number().min(0.01, "Amount must be positive"),
-    paymentMode: zod_1.z.enum(["Cash", "Cheque", "Bank Transfer", "Card", "Online"]),
-    referenceNo: zod_1.z.string().optional(),
-    description: zod_1.z.string().optional(),
-    status: zod_1.z
-        .enum(["Pending", "Approved", "Rejected", "Paid"])
-        .optional()
-        .default("Pending"),
-});
-////////////// item
-const ACCEPTED_IMAGE_TYPES = [
-    "image/jpeg",
-    "image/jpg",
-    "image/png",
-    "image/webp",
-    "image/svg+xml",
-];
-exports.brandSchema = zod_1.z.object({
-    brandName: zod_1.z.string().min(1, "Brand name is required"),
-    // brandLogo: z.string().url().optional(),
-    description: zod_1.z.string().min(1, "Description is required"),
-    status: zod_1.z.enum(["Active", "Inactive"]).default("Active"),
-});
-exports.productSchema = zod_1.z.object({
-    productName: zod_1.z.string().min(1, "Product name is required"),
-    productCode: zod_1.z.string().min(1, "Product code is required"),
-    parentCategory: zod_1.z.string().min(1, "Parent category is required"),
-    subCategory: zod_1.z.string().min(1, "Sub category is required"),
-    categoryLogo: zod_1.z.string().url().optional(),
-    description: zod_1.z.string().optional(),
-    unit: zod_1.z.string().min(1, "Unit is required"),
-    price: zod_1.z.number().min(0, "Price must be positive"),
-    taxRate: zod_1.z.number().min(0, "Tax rate must be positive"),
-    status: zod_1.z.string().optional().default("Active"),
-});
-exports.materialSpecSchema = zod_1.z.object({
-    uom: zod_1.z.string().min(1, "UOM is required"),
-    description: zod_1.z.string().optional(),
-    alterUnit: zod_1.z.string().optional(),
-    alterUnitValue: zod_1.z.number().optional(),
-    serialUniqueNo: zod_1.z.string().optional(),
-});
-exports.productMaterialSchema = zod_1.z.object({
-    brand: zod_1.z.string().min(1, "Brand is required"),
-    category: zod_1.z.string().min(1, "Category is required"),
-    productName: zod_1.z.string().min(1, "Product name is required"),
-    shortDescription: zod_1.z.string().optional(),
-    hsnCode: zod_1.z.string().min(1, "HSN Code is required"),
-    gstPercentage: zod_1.z.string().min(1, "GST Percentage is required"),
-    status: zod_1.z.string().default("Active"),
-    specifications: zod_1.z.array(exports.materialSpecSchema).optional(),
-});
-exports.serviceChargeSchema = zod_1.z.object({
-    serviceName: zod_1.z.string().min(1, "Service name is required"),
-    category: zod_1.z.string().min(1, "Category is required"),
-    chargeType: zod_1.z.string().min(1, "Charge type is required"),
-    baseAmount: zod_1.z.number().min(0, "Base amount must be positive"),
-    taxApplicable: zod_1.z.boolean().default(false),
-    taxPercentage: zod_1.z.number().min(0).max(100).optional(),
-    status: zod_1.z.string().optional().default("Active"),
-    notes: zod_1.z.string().optional(),
-});
-///////////////////////////////
+// CASH & BANK SCHEMAS
 exports.cashSchema = zod_1.z.object({
     cashName: zod_1.z.string().min(2, "Cash name is required").max(100),
     isActive: zod_1.z.boolean().optional(),
@@ -453,7 +271,7 @@ exports.bankSchema = zod_1.z.object({
     ifscCode: zod_1.z.string().min(4, "Invalid IFSC").max(20).optional(),
     isActive: zod_1.z.boolean().optional(),
 });
-////////////// ledger
+// LEDGER SCHEMAS
 const CashAmountTypeEnum = zod_1.z.enum(["INCOME", "EXPENSE"]);
 exports.AmountTypeEnum = zod_1.z.enum(["CREDIT", "DEBIT"]);
 exports.PaymentModeEnum = zod_1.z.enum([
@@ -508,7 +326,6 @@ exports.ledgerSchema = zod_1.z.object({
     amountType: exports.AmountTypeEnum.refine((val) => val !== undefined, {
         message: "Amount type is required (e.g., CREDIT or DEBIT)",
     }),
-    // ✅ Change this line
     amount: zod_1.z.coerce
         .number({
         required_error: "Amount is required",
@@ -535,115 +352,14 @@ exports.ledgerSchema = zod_1.z.object({
         .max(500, "Remarks cannot exceed 500 characters")
         .optional(),
 });
-exports.bankLedgerSchema = zod_1.z.object({
-    bankName: zod_1.z.string().min(1, "Bank name is required"),
-    transactionDate: requiredDate,
-    description: zod_1.z.string().min(1, "Description is required"),
-    amountType: exports.AmountTypeEnum,
-    amount: zod_1.z.number().positive("Amount must be positive"),
-    transactionId: zod_1.z.string().optional(),
-    remarks: zod_1.z.string().optional(),
-});
-exports.cashLedgerSchema = zod_1.z.object({
-    transactionDate: requiredDate,
-    purpose: zod_1.z.string().min(1, "Purpose is required"),
-    amountType: CashAmountTypeEnum,
-    amount: zod_1.z.number().positive("Amount must be positive"),
-    remarks: zod_1.z.string().optional(),
-});
-exports.doctorLedgerSchema = zod_1.z.object({
-    doctorName: zod_1.z.string().min(1, "Doctor name is required"),
-    transactionDate: requiredDate,
-    description: zod_1.z.string().min(1, "Description is required"),
-    amountType: exports.AmountTypeEnum,
-    amount: zod_1.z.number().positive("Amount must be positive"),
-    paymentMode: exports.PaymentModeEnum,
-    transactionId: zod_1.z.string().optional(),
-    remarks: zod_1.z.string().optional(),
-});
-exports.patientLedgerSchema = zod_1.z.object({
-    patientName: zod_1.z.string().min(1, "Patient name is required"),
-    transactionDate: requiredDate,
-    description: zod_1.z.string().min(1, "Description is required"),
-    amountType: exports.AmountTypeEnum,
-    amount: zod_1.z.number().positive("Amount must be positive"),
-    paymentMode: exports.PaymentModeEnum,
-    transactionId: zod_1.z.string().optional(),
-    remarks: zod_1.z.string().optional(),
-});
-exports.diagnosticsLedgerSchema = zod_1.z.object({
-    patientName: zod_1.z.string().min(1, "Patient name is required"),
-    date: zod_1.z.coerce.date(),
-    testName: zod_1.z.string().min(1, "Test name is required"),
-    description: zod_1.z.string().min(1, "Description is required"),
-    amount: zod_1.z.number().positive("Amount must be positive"),
-    paymentMode: zod_1.z.string().min(1, "Payment mode is required"),
-    attachReport: zod_1.z.string().url().nullable().optional(),
-    remarks: zod_1.z.string().optional(),
-});
-exports.expenseLedgerSchema = zod_1.z.object({
-    expenseCategory: zod_1.z.string().min(1, "Expense category is required"),
-    date: zod_1.z.coerce.date(),
-    description: zod_1.z.string().min(1, "Description is required"),
-    amount: zod_1.z.number().positive("Amount must be positive"),
-    paymentMode: zod_1.z.string().min(1, "Payment mode is required"),
-    transactionId: zod_1.z.string().optional(),
-    remarks: zod_1.z.string().optional(),
-});
-exports.insuranceLedgerSchema = zod_1.z.object({
-    patientName: zod_1.z.string().min(1),
-    tpaInsuranceCompany: zod_1.z.string().min(1),
-    claimAmount: zod_1.z.number().positive(),
-    approvedAmount: zod_1.z.number().min(0).optional(),
-    settledAmount: zod_1.z.number().min(0).optional(),
-    status: zod_1.z.enum([
-        "Pending",
-        "Approved",
-        "Rejected",
-        "Partially Approved",
-        "Settled",
-    ]),
-    remarks: zod_1.z.string().optional(),
-    claimDate: zod_1.z.coerce.date(),
-    approvalDate: zod_1.z
-        .union([zod_1.z.coerce.date(), zod_1.z.literal(""), zod_1.z.undefined()])
-        .transform((val) => (val === "" ? undefined : val)),
-    settlementDate: zod_1.z
-        .union([zod_1.z.coerce.date(), zod_1.z.literal(""), zod_1.z.undefined()])
-        .transform((val) => (val === "" ? undefined : val)),
-});
-exports.pharmacyLedgerSchema = zod_1.z.object({
-    date: zod_1.z.coerce.date(),
-    medicineName: zod_1.z.string().min(1, "Medicine name is required"),
-    category: zod_1.z.string().min(1, "Category is required"),
-    description: zod_1.z.string().min(1, "Description is required"),
-    amountType: zod_1.z.enum(["Income", "Expense"]),
-    amount: zod_1.z.number().positive("Amount must be positive"),
-    paymentMode: zod_1.z.string().min(1, "Payment mode is required"),
-    remarks: zod_1.z.string().optional(),
-});
-exports.supplierLedgerSchema = zod_1.z.object({
-    supplierName: zod_1.z.string().min(1, "Supplier name is required"),
-    date: zod_1.z.coerce.date(),
-    invoiceNo: zod_1.z.string().min(1, "Invoice number is required"),
-    description: zod_1.z.string().min(1, "Description is required"),
-    amountType: zod_1.z.enum(["Credit", "Debit"]),
-    amount: zod_1.z.number().positive("Amount must be positive"),
-    paymentMode: zod_1.z.string().optional(),
-    transactionId: zod_1.z.string().optional(),
-    attachBill: zod_1.z.string().url().nullable().optional(),
-    remarks: zod_1.z.string().optional(),
-});
-////////// filter
-// ============================================
-// 🔹 BASE FILTER SCHEMA (shared foundation)
-// ============================================
+// BASE FILTER SCHEMA
 const baseFilterSchema = {
     fromDate: zod_1.z.coerce.date().optional(),
     toDate: zod_1.z.coerce.date().optional(),
     limit: zod_1.z.coerce.number().min(1).max(100).default(50),
-    cursor: zod_1.z.string().optional(), // ✅ composite cursor for keyset pagination
+    cursor: zod_1.z.string().optional(),
 };
+// LEDGER FILTER SCHEMAS
 exports.ledgerFilterSchema = zod_1.z.object({
     entityType: zod_1.z.enum(["PATIENT", "DOCTOR", "BANK", "CASH"]).optional(),
     amountType: zod_1.z.enum(["CREDIT", "DEBIT"]).optional(),
@@ -652,9 +368,7 @@ exports.ledgerFilterSchema = zod_1.z.object({
         .optional(),
     ...baseFilterSchema,
 });
-// ============================================
-// 🔹 ADMISSION FILTER
-// ============================================
+// CASH FILTER SCHEMAS
 exports.cashFilterSchema = zod_1.z.object({
     isActive: zod_1.z
         .enum(["true", "false"])
@@ -662,7 +376,7 @@ exports.cashFilterSchema = zod_1.z.object({
         .transform((val) => val === "true"),
     ...baseFilterSchema,
 });
-////////
+// BANK FILTER SCHEMAS
 exports.bankFilterSchema = zod_1.z.object({
     isActive: zod_1.z
         .enum(["true", "false"])
@@ -670,58 +384,44 @@ exports.bankFilterSchema = zod_1.z.object({
         .transform((val) => val === "true"),
     ...baseFilterSchema,
 });
-//////
+// ADMISSION FILTER SCHEMAS
 exports.admissionFilterSchema = zod_1.z.object({
     gender: zod_1.z.enum(["Male", "Female", "Other"]).optional(),
     ...baseFilterSchema,
 });
-// ============================================
-// 🔹 BIRTH FILTER
-// ============================================
+// BIRTH FILTER SCHEMAS
 exports.birthFilterSchema = zod_1.z.object({
     babySex: zod_1.z.enum(["Male", "Female", "Other"]).optional(),
     deliveryType: zod_1.z.enum(["Normal", "Cesarean", "Forceps", "Vacuum"]).optional(),
     ...baseFilterSchema,
 });
-// ============================================
-// 🔹 PATIENT FILTER
-// ============================================
+// PATIENT FILTER SCHEMAS
 exports.patientFilterSchema = zod_1.z.object({
     gender: zod_1.z.enum(["Male", "Female", "Other"]).optional(),
     ...baseFilterSchema,
 });
-// ============================================
-// 🔹 DEPARTMENT FILTER
-// ============================================
+// DEPARTMENT FILTER SCHEMAS
 exports.departmentFilterSchema = zod_1.z.object({
     status: exports.DepartmentStatusEnum.optional(),
     ...baseFilterSchema,
 });
-// ============================================
-// 🔹 APPOINTMENT FILTER
-// ============================================
+// APPOINTMENT FILTER SCHEMAS
 exports.appointmentFilterSchema = zod_1.z.object({
     department: zod_1.z.string().optional(),
     ...baseFilterSchema,
 });
-// ============================================
-// 🔹 NURSE FILTER
-// ============================================
+// NURSE FILTER SCHEMAS
 exports.nurseFilterSchema = zod_1.z.object({
     shift: zod_1.z.enum(["Day", "Night", "Rotating"]).optional(),
     status: zod_1.z.enum(["Active", "Inactive", "On Leave"]).optional(),
     ...baseFilterSchema,
 });
-// ============================================
-// 🔹 DOCTOR FILTER
-// ============================================
+// DOCTOR FILTER SCHEMAS
 exports.doctorFilterSchema = zod_1.z.object({
     status: zod_1.z.enum(["Active", "Inactive", "On Leave"]).optional(),
     ...baseFilterSchema,
 });
-// ============================================
-// 🔹 PATIENT LEDGER FILTER
-// ============================================
+// PATIENT LEDGER FILTER SCHEMAS
 exports.patientLedgerFilterSchema = zod_1.z.object({
     amountType: zod_1.z.enum(["CREDIT", "DEBIT"]).optional(),
     paymentMode: zod_1.z
@@ -729,23 +429,7 @@ exports.patientLedgerFilterSchema = zod_1.z.object({
         .optional(),
     ...baseFilterSchema,
 });
-// ============================================
-// 🔹 BANK LEDGER FILTER
-// ============================================
-exports.bankLedgerFilterSchema = zod_1.z.object({
-    amountType: zod_1.z.enum(["CREDIT", "DEBIT"]).optional(),
-    ...baseFilterSchema,
-});
-// ============================================
-// 🔹 CASH LEDGER FILTER
-// ============================================
-exports.cashLedgerFilterSchema = zod_1.z.object({
-    amountType: zod_1.z.enum(["INCOME", "EXPENSE"]).optional(),
-    ...baseFilterSchema,
-});
-// ============================================
-// 🔹 DOCTOR LEDGER FILTER
-// ============================================
+// DOCTOR LEDGER FILTER SCHEMAS
 exports.doctorLedgerFilterSchema = zod_1.z.object({
     amountType: zod_1.z.enum(["CREDIT", "DEBIT"]).optional(),
     paymentMode: zod_1.z
@@ -753,9 +437,7 @@ exports.doctorLedgerFilterSchema = zod_1.z.object({
         .optional(),
     ...baseFilterSchema,
 });
-// ============================================
-// 🔹 BILL FILTER
-// ============================================
+// BILL FILTER SCHEMAS
 exports.billFilterSchema = zod_1.z.object({
     billType: zod_1.z
         .enum(["OPD", "IPD", "Pharmacy", "Pathology", "Radiology"])
@@ -766,9 +448,7 @@ exports.billFilterSchema = zod_1.z.object({
         .optional(),
     ...baseFilterSchema,
 });
-// ============================================
-// 🔹 MONEY RECEIPT FILTER
-// ============================================
+// MONEY RECEIPT FILTER SCHEMAS
 exports.moneyReceiptFilterSchema = zod_1.z.object({
     paymentMode: zod_1.z
         .enum(["Cash", "Cheque", "Card", "Online Transfer", "Other"])
@@ -776,25 +456,3 @@ exports.moneyReceiptFilterSchema = zod_1.z.object({
     status: zod_1.z.enum(["Active", "Cancelled", "Refunded"]).optional(),
     ...baseFilterSchema,
 });
-// ============================================
-// 🔹 EXPORT ALL AS NAMESPACE (optional convenience)
-// ============================================
-exports.FilterSchemas = {
-    admission: exports.admissionFilterSchema,
-    birth: exports.birthFilterSchema,
-    patient: exports.patientFilterSchema,
-    department: exports.departmentFilterSchema,
-    appointment: exports.appointmentFilterSchema,
-    nurse: exports.nurseFilterSchema,
-    doctor: exports.doctorFilterSchema,
-    prescription: exports.prescriptionFilterSchema,
-    patientLedger: exports.patientLedgerFilterSchema,
-    bankLedger: exports.bankLedgerFilterSchema,
-    cashLedger: exports.cashLedgerFilterSchema,
-    doctorLedger: exports.doctorLedgerFilterSchema,
-    bill: exports.billFilterSchema,
-    moneyReceipt: exports.moneyReceiptFilterSchema,
-    cash: exports.cashFilterSchema,
-    bank: exports.bankFilterSchema,
-    ledger: exports.ledgerFilterSchema,
-};

@@ -1,16 +1,16 @@
+// GENERATOR CLIENT
 generator client {
   provider = "prisma-client-js"
-  // output   = ""
 }
 
-
+// DATABASE CONNECTION
 datasource db {
   provider  = "postgresql"
   url       = env("DATABASE_URL")
   directUrl = env("DIRECT_URL")
 }
- 
- 
+
+// USER MANAGEMENT
 model User {
   id                 String    @id @default(uuid())
   regId              String    @unique
@@ -35,6 +35,7 @@ model User {
   activityLogs       ActivityLog[]
 }
 
+// USER SESSIONS
 model Session {
   id                String   @id @default(uuid())
   userId            String
@@ -48,6 +49,7 @@ model Session {
   expiresAt         DateTime
 }
 
+// USER ACTIVITY LOGS
 model ActivityLog {
   id        String   @id @default(uuid())
   userId    String
@@ -58,15 +60,14 @@ model ActivityLog {
   user User @relation(fields: [userId], references: [id])
 }
 
+// USER ROLES
 enum Role {
   ADMIN
   DOCTOR
   NURSE
 }
 
-
-
-/////////////////
+// PATIENT MANAGEMENT
 model Patient {
   id                 Int      @id @default(autoincrement())
   hospitalPatientId  String   @unique
@@ -83,20 +84,14 @@ model Patient {
   admissions         Admission[]
 }
 
-
-
-
-/////////////////
-
-
-
+// ADMISSION STATUS
 enum AdmissionStatus {
   ACTIVE
   DISCHARGED
   CANCELLED
 }
 
-
+// ADMISSION MANAGEMENT
 model Admission {
   id                   Int      @id @default(autoincrement())
   hospitalAdmissionId  String   @unique
@@ -121,13 +116,7 @@ model Admission {
   @@index([admissionDate])
 }
 
-
-////////////////////
-
-
-
-/////////
-
+// BIRTH RECORD MANAGEMENT
 model Birth {
   id               Int      @id @default(autoincrement())
   birthTime        String
@@ -150,12 +139,7 @@ model Birth {
   @@index([babySex])
 }
 
-
-
-
-//////////////////
-
-
+// DOCTOR MANAGEMENT
 model Doctor {
   id             Int      @id @default(autoincrement())
   fullName       String
@@ -167,7 +151,6 @@ model Doctor {
   specialization String
   status         String   @default("Active")
 
-  // 🔁 If this doctor is assigned as a department head
   headedDepartment Department? @relation("DepartmentHead")
   appointments     Appointment[]
 
@@ -180,13 +163,13 @@ model Doctor {
   @@index([status])
 }
 
+// DEPARTMENT MANAGEMENT
 model Department {
   id          Int      @id @default(autoincrement())
   name        String   @unique
   description String?
   status      DepartmentStatus @default(ACTIVE)
 
-  // ✅ ONLY doctor linked to department (as head)
   headId      Int      @unique
   head        Doctor   @relation("DepartmentHead", fields: [headId], references: [id])
 
@@ -196,18 +179,20 @@ model Department {
   @@index([status])
 }
 
+// DEPARTMENT STATUS
 enum DepartmentStatus {
   ACTIVE
   INACTIVE
 }
 
-
+// APPOINTMENT STATUS
 enum AppointmentStatus {
   BOOKED
   CANCELLED
   EXPIRED
 }
 
+// APPOINTMENT MANAGEMENT
 model Appointment {
   id              Int      @id @default(autoincrement())
   appointmentDate DateTime
@@ -215,7 +200,6 @@ model Appointment {
 
   status          AppointmentStatus @default(BOOKED)
 
-  // ✅ relation with doctor (important)
   doctorId        Int
   doctor          Doctor   @relation(fields: [doctorId], references: [id])
 
@@ -226,55 +210,7 @@ model Appointment {
   @@index([doctorId])
 }
 
-//////////////////
-
-
-model Bed {
-  id          Int      @id @default(autoincrement())
-  bedNumber   String   @unique
-  wardNumber  String
-  status      String   @default("Available")
-  description String?
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-
-  // 🔍 Indexes for fast search/filtering
-  @@index([wardNumber])
-  @@index([status])
-  @@index([updatedAt])
-  @@index([bedNumber])
-
-}
-
-
-//////////////////
-
-model BedAssignment {
-  id            Int      @id @default(autoincrement())
-  wardNumber    String
-  bedNumber     String
-  bedType       String  
-  notes         String?   
-  patientName   String
-  allocateDate  DateTime
-  dischargeDate DateTime?
-  status        String   @default("Active") 
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
-
-  @@index([wardNumber])
-  @@index([bedNumber])
-  @@index([patientName])
-  @@index([status])
-  @@index([updatedAt])
-}
-
-/////////////////
-
-
-
-////////////////
-
+// NURSE MANAGEMENT
 model Nurse {
   id             Int      @id @default(autoincrement())
   fullName       String
@@ -288,54 +224,22 @@ model Nurse {
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
 
-  // 🔍 Indexes for better performance
   @@index([fullName])
   @@index([mobileNumber])
   @@index([registrationNo])
   @@index([status])
   @@index([shift])
   @@index([createdAt])
-
 }
 
-
-///////////
-
-
-
-
-
-/////////////
-
-
-model Pharmacist {
-  id             Int      @id @default(autoincrement())
-  fullName       String
-  mobileNumber   String
-  registrationNo String   @unique
-  address        String
-  department     String
-  status         String   @default("Active")
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
-
-  // 🔍 Indexes for fast searching and filtering
-  @@index([fullName])
-  @@index([mobileNumber])
-  @@index([registrationNo])
-  @@index([department])
-  @@index([status])
-  @@index([createdAt])
-}
-
-/////////////////
-
-
+// PRESCRIPTION STATUS
 enum PrescriptionStatus {
   ACTIVE
   COMPLETED
   CANCELLED
 }
+
+// PRESCRIPTION MANAGEMENT
 model Prescription {
   id               Int                 @id @default(autoincrement())
   admissionId      Int
@@ -356,6 +260,7 @@ model Prescription {
   @@index([prescriptionNo])
 }
 
+// MEDICINE MANAGEMENT
 model Medicine {
   id             Int       @id @default(autoincrement())
   prescriptionId Int
@@ -371,27 +276,13 @@ model Medicine {
   @@index([prescriptionId])
 }
 
-/////////////////////
-
-model Ambulance {
-  id             Int      @id @default(autoincrement())
-  modelName      String
-  brand          String
-  registrationNo String   @unique
-  driverName     String
-  driverContact  String
-  status         String   @default("Available") 
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
-} 
-
-/////////// Ledgers 
-
+// LEDGER AMOUNT TYPES
 enum AmountType {
   CREDIT
   DEBIT
 }
 
+// LEDGER ENTITY TYPES
 enum EntityType {
   PATIENT
   DOCTOR
@@ -399,10 +290,10 @@ enum EntityType {
   CASH
 }
 
-
+// LEDGER MANAGEMENT
 model Ledger {
   id              Int      @id @default(autoincrement())
-  code            String   @unique // TXN-0001
+  code            String   @unique
 
   entityType      String  
   entityId        String
@@ -416,7 +307,7 @@ model Ledger {
 
   paymentMode     PaymentMode?
 
-  referenceType   String?   // "OPD", "LAB", etc.
+  referenceType   String?
   referenceId     String?
 
   remarks         String?
@@ -428,11 +319,13 @@ model Ledger {
   @@index([transactionDate])
 }
 
+// CASH AMOUNT TYPES
 enum CashAmountType {
   INCOME
   EXPENSE
 }
 
+// PAYMENT MODES
 enum PaymentMode {
   CASH
   CARD
@@ -441,14 +334,11 @@ enum PaymentMode {
   CHEQUE
 }
 
-
-
-
-
+// CASH ACCOUNT MANAGEMENT
 model CashAccount {
   id        Int      @id @default(autoincrement())
-  code      String   @unique   // CASH-001
-  cashName      String   @db.VarChar(100)
+  code      String   @unique
+  cashName  String   @db.VarChar(100)
 
   isActive  Boolean  @default(true)
 
@@ -456,12 +346,12 @@ model CashAccount {
   updatedAt DateTime @updatedAt
 }
 
-
+// BANK ACCOUNT MANAGEMENT
 model BankAccount {
   id        Int      @id @default(autoincrement())
-  code      String   @unique   // BANK-001
+  code      String   @unique
 
-  bankName  String   @db.VarChar(100) // SBI, HDFC
+  bankName  String   @db.VarChar(100)
   accountNo String   @db.VarChar(50)  @unique
   ifscCode  String?  @db.VarChar(20)
 
@@ -473,293 +363,7 @@ model BankAccount {
   @@index([bankName])
 }
 
-
-model PatientLedger {
-  id              Int        @id @default(autoincrement())
-  patientName     String
-  transactionDate DateTime
-  description     String
-  amountType      AmountType
-  amount          Decimal
-  paymentMode     PaymentMode
-  transactionId   String?
-  referenceType   String?
-  referenceId     String?
-  remarks         String?
-  createdAt       DateTime   @default(now())
-  updatedAt       DateTime   @updatedAt
-
-  @@index([patientName])
-  @@index([transactionDate])
-  @@index([amountType])
-}
-
-
-model BankLedger {
-  id              Int        @id @default(autoincrement())
-  bankName        String
-  transactionDate DateTime
-  description     String
-  amountType      AmountType
-  amount          Decimal
-  transactionId   String?
-  referenceType   String?
-  referenceId     String?
-  remarks         String?
-  createdAt       DateTime   @default(now())
-  updatedAt       DateTime   @updatedAt
-
-  @@index([bankName])
-  @@index([transactionDate])
-  @@index([amountType])
-}
-
-
-
-model CashLedger {
-  id              Int             @id @default(autoincrement())
-  transactionDate DateTime
-  purpose         String
-  amountType      CashAmountType
-  amount          Decimal
-  referenceType   String?
-  referenceId     String?
-  remarks         String?
-  createdAt       DateTime        @default(now())
-  updatedAt       DateTime        @updatedAt
-
-  @@index([transactionDate])
-  @@index([amountType])
-}
-
-
-
-model DoctorLedger {
-  id              Int        @id @default(autoincrement())
-  doctorName      String
-  transactionDate DateTime
-  description     String
-  amountType      AmountType
-  amount          Decimal
-  paymentMode     PaymentMode
-  transactionId   String?
-  referenceType   String?
-  referenceId     String?
-  remarks         String?
-  createdAt       DateTime   @default(now())
-  updatedAt       DateTime   @updatedAt
-
-  @@index([doctorName])
-  @@index([transactionDate])
-  @@index([amountType])
-}
-
-
-model DiagnosticsLedger {
-  id           Int      @id @default(autoincrement())
-  patientName  String
-  date         DateTime
-  testName     String
-  description  String
-  amount       Decimal
-  paymentMode  String   // Cash, Card, UPI, Insurance, etc.
-  attachReport String?  // File path or URL to diagnostic report
-  remarks      String?
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
-
-  @@index([patientName])
-  @@index([date])
-  @@index([testName])
-}
-
-
-
-
-model ExpenseLedger {
-  id              Int      @id @default(autoincrement())
-  expenseCategory String
-  date            DateTime
-  description     String
-  amount          Decimal
-  paymentMode     String   // Cash, Bank Transfer, UPI, etc.
-  transactionId   String?
-  remarks         String?
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
-
-  @@index([expenseCategory])
-  @@index([date])
-}
-
-model InsuranceLedger {
-  id                  Int      @id @default(autoincrement())
-  patientName         String
-  tpaInsuranceCompany String
-  claimAmount         Decimal
-  approvedAmount      Decimal
-  settledAmount       Decimal
-  status              String   // Pending, Approved, Rejected, Partially Approved, Settled
-  remarks             String?
-  claimDate           DateTime
-  approvalDate        DateTime?
-  settlementDate      DateTime?
-  createdAt           DateTime @default(now())
-  updatedAt           DateTime @updatedAt
-
-  @@index([patientName])
-  @@index([tpaInsuranceCompany])
-  @@index([status])
-  @@index([claimDate])
-}
-
-
-model PharmacyLedger {
-  id            Int      @id @default(autoincrement())
-  date          DateTime
-  medicineName  String
-  category      String
-  description   String
-  amountType    String   // "Income" or "Expense"
-  amount        Decimal
-  paymentMode   String   // Cash, Card, UPI, Insurance, etc.
-  remarks       String?
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
-
-  @@index([date])
-  @@index([medicineName])
-  @@index([category])
-  @@index([amountType])
-}
-
-
-model SupplierLedger {
-  id            Int      @id @default(autoincrement())
-  supplierName  String
-  date          DateTime
-  invoiceNo     String
-  description   String
-  amountType    String   // "Credit" (Payable) or "Debit" (Payment)
-  amount        Decimal
-  paymentMode   String?  // Cash, Cheque, Bank Transfer, UPI, etc.
-  transactionId String?
-  attachBill    String?  // File path or URL to attached bill
-  remarks       String?
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
-
-  @@index([supplierName])
-  @@index([date])
-  @@index([invoiceNo])
-  @@index([amountType])
-}
-
-////////////////
-
-
-model XrayReport {
-  id              Int      @id @default(autoincrement())
-  billDate        DateTime
-  patientMobile   String
-  patientName     String
-  patientSex      String
-  age             Int
-  referredDoctor  String
-  testDate        DateTime
-  reportDate      DateTime
-  patientAddress  String?
-  examDescription String
-  department      String
-  billAmount      Decimal
-  discountPercent Decimal
-  netBillAmount   Decimal
-  commissionPercent Decimal
-  doctorEarning   Decimal
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
-
-  @@index([patientMobile])
-  @@index([patientName])
-  @@index([referredDoctor])
-  @@index([billDate])
-  @@index([testDate])
-  @@index([department])
-}
-
-////////// item service
-
-
-model Brand {
-  id          Int      @id @default(autoincrement())
-  brandName   String   @unique
-  brandLogo   String?
-  description String
-  status      String   @default("Active")
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-}
-
-
-model ProductEntery {
-  id               Int                    @id @default(autoincrement())
-  brand            String
-  category         String
-  productName      String
-  shortDescription String?
-  hsnCode          String
-  gstPercentage    String
-  status           String                @default("Active")
-  createdAt        DateTime              @default(now())
-  updatedAt        DateTime              @updatedAt
-  specifications   MaterialSpecification[]
-}
-
-model MaterialSpecification {
-  id               Int         @id @default(autoincrement())
-  productEntryId   Int
-  productEntry     ProductEntery @relation(fields: [productEntryId], references: [id], onDelete: Cascade)
-  uom              String
-  description      String?
-  alterUnit        String?
-  alterUnitValue   Float?
-  serialUniqueNo   String?
-  createdAt        DateTime    @default(now())
-}
-
-model Product {
-  id              Int      @id @default(autoincrement())
-  productName     String
-  productCode     String   @unique
-  parentCategory  String
-  subCategory     String
-  categoryLogo    String?
-  description     String?
-  unit            String
-  price           Float
-  taxRate         Float
-  status          String   @default("Active")
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
-}
-
-
-model ServiceCharge {
-  id            Int      @id @default(autoincrement())
-  serviceName   String
-  category      String
-  chargeType    String
-  baseAmount    Float
-  taxApplicable Boolean  @default(false)
-  taxPercentage Float?   @default(0)
-  status        String   @default("Active")
-  notes         String?
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
-}
-
-// transection 
-
+// BILL MANAGEMENT
 model Bill {
   id             Int          @id @default(autoincrement())
   billDate       DateTime
@@ -778,6 +382,7 @@ model Bill {
   billItems      BillItem[]
 }
 
+// BILL ITEMS MANAGEMENT
 model BillItem {
   id             Int      @id @default(autoincrement())
   billId         Int
@@ -790,46 +395,7 @@ model BillItem {
   createdAt      DateTime @default(now())
 }
 
-
-model Employee {
-  id                  Int       @id @default(autoincrement())
-  photoUrl            String?
-  employeeName        String
-  fathersName         String
-  dateOfRegistration  DateTime
-  contactNo           String
-  dateOfBirth         DateTime
-  email               String?   @unique
-  gender              String
-  maritalStatus       String
-  aadharNo            String?   @unique
-  voterId             String?   @unique
-  bloodGroup          String?
-  department          String
-  createdAt           DateTime  @default(now())
-  updatedAt           DateTime  @updatedAt
-}
-
-
-
-
-model Voucher {
-  id          Int       @id @default(autoincrement())
-  voucherDate DateTime
-  paymentFor  String
-  voucherType String
-  vendorName  String
-  paymentDate DateTime
-  amount      Float
-  paymentMode String
-  referenceNo String?
-  description String?
-  status      String    @default("Pending")
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
-}
-
-
+// MONEY RECEIPT MANAGEMENT
 model MoneyReceipt {
   id           Int       @id @default(autoincrement())
   date         DateTime
