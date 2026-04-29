@@ -16,7 +16,7 @@ router
 // SEARCH & FILTER
 router.get("/search", DepartmentController_1.searchDepartmentResults);
 router.get("/filter", DepartmentController_1.filterDepartments);
-// GET / UPDATE / DELETE
+// GET / UPDATE / DELETE BY ID
 router
     .route("/:id")
     .get(DepartmentController_1.getDepartmentRecordById)

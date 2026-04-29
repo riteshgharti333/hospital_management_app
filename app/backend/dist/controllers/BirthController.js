@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.filterBirths = exports.searchBirthResults = exports.deleteBirthRecord = exports.updateBirthRecord = exports.getBirthRecordById = exports.getAllBirth = exports.createBirthRecord = void 0;
+exports.filterBirths = exports.searchBirthResults = exports.deleteBirthRecord = exports.updateBirthRecord = exports.getBirthRecordById = exports.getAllBirthRecords = exports.createBirthRecord = void 0;
 const catchAsyncError_1 = require("../middlewares/catchAsyncError");
 const errorHandler_1 = require("../middlewares/errorHandler");
 const sendResponse_1 = require("../utils/sendResponse");
@@ -8,42 +8,40 @@ const statusCodes_1 = require("../constants/statusCodes");
 const birthService_1 = require("../services/birthService");
 const schemas_1 = require("@hospital/schemas");
 const queryValidation_1 = require("../utils/queryValidation");
+const paginationConfig_1 = require("../lib/paginationConfig");
 exports.createBirthRecord = (0, catchAsyncError_1.catchAsyncError)(async (req, res, next) => {
-    try {
-        const validated = schemas_1.birthSchema.parse(req.body);
-        const birth = await (0, birthService_1.createBirth)(validated);
-        (0, sendResponse_1.sendResponse)(res, {
-            success: true,
-            statusCode: statusCodes_1.StatusCodes.CREATED,
-            message: "Birth record created successfully",
-            data: birth,
-        });
-    }
-    catch (error) {
-        console.log(error);
-    }
+    const validated = schemas_1.birthSchema.parse(req.body);
+    const birth = await (0, birthService_1.createBirth)(validated);
+    (0, sendResponse_1.sendResponse)(res, {
+        success: true,
+        statusCode: statusCodes_1.StatusCodes.CREATED,
+        message: "Birth record created successfully",
+        data: birth,
+    });
 });
-exports.getAllBirth = (0, catchAsyncError_1.catchAsyncError)(async (req, res) => {
-    const { cursor, limit } = req.query;
-    const { data: birth, nextCursor } = await (0, birthService_1.getAllBirthService)(cursor, limit ? Number(limit) : undefined);
+exports.getAllBirthRecords = (0, catchAsyncError_1.catchAsyncError)(async (req, res) => {
+    const { cursor } = req.query;
+    const result = await (0, birthService_1.getAllBirthService)(cursor);
     (0, sendResponse_1.sendResponse)(res, {
         success: true,
         statusCode: statusCodes_1.StatusCodes.OK,
         message: "Birth records fetched",
-        data: birth,
+        data: result.data,
         pagination: {
-            nextCursor: nextCursor !== null ? String(nextCursor) : undefined,
-            limit: limit ? Number(limit) : 50,
+            nextCursor: result.pagination.nextCursor || undefined,
+            hasMore: result.pagination.hasMore,
         },
     });
 });
 exports.getBirthRecordById = (0, catchAsyncError_1.catchAsyncError)(async (req, res, next) => {
     const id = Number(req.params.id);
-    if (isNaN(id))
+    if (isNaN(id)) {
         return next(new errorHandler_1.ErrorHandler("Invalid ID", statusCodes_1.StatusCodes.BAD_REQUEST));
+    }
     const birth = await (0, birthService_1.getBirthById)(id);
-    if (!birth)
+    if (!birth) {
         return next(new errorHandler_1.ErrorHandler("Birth record not found", statusCodes_1.StatusCodes.NOT_FOUND));
+    }
     (0, sendResponse_1.sendResponse)(res, {
         success: true,
         statusCode: statusCodes_1.StatusCodes.OK,
@@ -53,13 +51,15 @@ exports.getBirthRecordById = (0, catchAsyncError_1.catchAsyncError)(async (req, 
 });
 exports.updateBirthRecord = (0, catchAsyncError_1.catchAsyncError)(async (req, res, next) => {
     const id = Number(req.params.id);
-    if (isNaN(id))
+    if (isNaN(id)) {
         return next(new errorHandler_1.ErrorHandler("Invalid ID", statusCodes_1.StatusCodes.BAD_REQUEST));
+    }
     const partialSchema = schemas_1.birthSchema.partial();
     const validatedData = partialSchema.parse(req.body);
     const updatedBirth = await (0, birthService_1.updateBirth)(id, validatedData);
-    if (!updatedBirth)
+    if (!updatedBirth) {
         return next(new errorHandler_1.ErrorHandler("Birth record not found", statusCodes_1.StatusCodes.NOT_FOUND));
+    }
     (0, sendResponse_1.sendResponse)(res, {
         success: true,
         statusCode: statusCodes_1.StatusCodes.OK,
@@ -69,11 +69,13 @@ exports.updateBirthRecord = (0, catchAsyncError_1.catchAsyncError)(async (req, r
 });
 exports.deleteBirthRecord = (0, catchAsyncError_1.catchAsyncError)(async (req, res, next) => {
     const id = Number(req.params.id);
-    if (isNaN(id))
+    if (isNaN(id)) {
         return next(new errorHandler_1.ErrorHandler("Invalid ID", statusCodes_1.StatusCodes.BAD_REQUEST));
+    }
     const deletedBirth = await (0, birthService_1.deleteBirth)(id);
-    if (!deletedBirth)
+    if (!deletedBirth) {
         return next(new errorHandler_1.ErrorHandler("Birth record not found", statusCodes_1.StatusCodes.NOT_FOUND));
+    }
     (0, sendResponse_1.sendResponse)(res, {
         success: true,
         statusCode: statusCodes_1.StatusCodes.OK,
@@ -86,28 +88,26 @@ exports.searchBirthResults = (0, catchAsyncError_1.catchAsyncError)(async (req, 
     const searchTerm = (0, queryValidation_1.validateSearchQuery)(query, next);
     if (!searchTerm)
         return;
-    const birth = await (0, birthService_1.searchBirth)(searchTerm);
+    const births = await (0, birthService_1.searchBirth)(searchTerm);
     (0, sendResponse_1.sendResponse)(res, {
         success: true,
         statusCode: statusCodes_1.StatusCodes.OK,
         message: "Search results fetched successfully",
-        data: birth,
+        data: births,
     });
 });
 exports.filterBirths = (0, catchAsyncError_1.catchAsyncError)(async (req, res) => {
-    // Validate query params
     const validated = schemas_1.birthFilterSchema.parse(req.query);
-    // Get filtered results
-    const { data, nextCursor } = await (0, birthService_1.filterBirthsService)(validated);
-    // Send response
+    const { data, nextCursor, hasMore } = await (0, birthService_1.filterBirthsService)(validated);
     (0, sendResponse_1.sendResponse)(res, {
         success: true,
         statusCode: statusCodes_1.StatusCodes.OK,
         message: "Filtered births fetched",
         data,
         pagination: {
-            nextCursor: nextCursor !== null ? String(nextCursor) : undefined,
-            limit: validated.limit || 50,
+            nextCursor: nextCursor || undefined,
+            limit: validated.limit ?? paginationConfig_1.PAGINATION_CONFIG.DEFAULT_LIMIT,
+            hasMore,
         },
     });
 });

@@ -11,15 +11,20 @@ const router = express_1.default.Router();
 // CREATE + LIST
 router
     .route("/")
-    .post(authenticate_1.authenticateUser, (0, authorize_1.authorizeRoles)("ADMIN"), AppointmentController_1.createAppointmentRecord)
+    .post(authenticate_1.authenticateUser, (0, authorize_1.authorizeRoles)("ADMIN", "RECEPTIONIST"), // Add roles as needed
+AppointmentController_1.createAppointmentRecord)
     .get(AppointmentController_1.getAllAppointmentRecords);
 // SEARCH & FILTER
 router.get("/search", AppointmentController_1.searchAppointmentResults);
 router.get("/filter", AppointmentController_1.filterAppointments);
-// GET / UPDATE / DELETE BY ID
+// Admin endpoint to manually update expired appointments
+router.post("/expired/update", authenticate_1.authenticateUser, (0, authorize_1.authorizeRoles)("ADMIN"), AppointmentController_1.runExpiredAppointmentsUpdate);
+// Cancel appointment (PATCH is more RESTful for status change)
+router.patch("/:id/cancel", authenticate_1.authenticateUser, AppointmentController_1.cancelAppointmentRecord);
+// GET / UPDATE / DELETE
 router
     .route("/:id")
     .get(AppointmentController_1.getAppointmentRecordById)
-    .put(authenticate_1.authenticateUser, (0, authorize_1.authorizeRoles)("ADMIN"), AppointmentController_1.updateAppointmentRecord)
+    .put(authenticate_1.authenticateUser, (0, authorize_1.authorizeRoles)("ADMIN", "RECEPTIONIST"), AppointmentController_1.updateAppointmentRecord)
     .delete(authenticate_1.authenticateUser, (0, authorize_1.authorizeRoles)("ADMIN"), AppointmentController_1.deleteAppointmentRecord);
 exports.default = router;

@@ -12,11 +12,11 @@ const router = express_1.default.Router();
 router
     .route("/")
     .post(authenticate_1.authenticateUser, (0, authorize_1.authorizeRoles)("ADMIN"), BirthController_1.createBirthRecord)
-    .get(BirthController_1.getAllBirth);
+    .get(BirthController_1.getAllBirthRecords);
 // SEARCH & FILTER
 router.get("/search", BirthController_1.searchBirthResults);
 router.get("/filter", BirthController_1.filterBirths);
-// GET / UPDATE / DELETE
+// GET / UPDATE / DELETE BY ID
 router
     .route("/:id")
     .get(BirthController_1.getBirthRecordById)

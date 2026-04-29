@@ -8,9 +8,9 @@ const statusCodes_1 = require("../constants/statusCodes");
 const nurseService_1 = require("../services/nurseService");
 const schemas_1 = require("@hospital/schemas");
 const queryValidation_1 = require("../utils/queryValidation");
+const paginationConfig_1 = require("../lib/paginationConfig");
 exports.createNurseRecord = (0, catchAsyncError_1.catchAsyncError)(async (req, res, next) => {
     const validated = schemas_1.nurseSchema.parse(req.body);
-    // 🔍 Check email uniqueness
     const existingEmail = await (0, nurseService_1.getNurseByEmail)(validated.email);
     if (existingEmail) {
         return next(new errorHandler_1.ErrorHandler("Nurse with this email already exists", statusCodes_1.StatusCodes.CONFLICT));
@@ -24,16 +24,16 @@ exports.createNurseRecord = (0, catchAsyncError_1.catchAsyncError)(async (req, r
     });
 });
 exports.getAllNurseRecords = (0, catchAsyncError_1.catchAsyncError)(async (req, res) => {
-    const { cursor, limit } = req.query;
-    const { data: nurse, nextCursor } = await (0, nurseService_1.getAllNurses)(cursor, limit ? Number(limit) : undefined);
+    const { cursor } = req.query;
+    const result = await (0, nurseService_1.getAllNursesService)(cursor);
     (0, sendResponse_1.sendResponse)(res, {
         success: true,
         statusCode: statusCodes_1.StatusCodes.OK,
         message: "Nurse records fetched",
-        data: nurse,
+        data: result.data,
         pagination: {
-            nextCursor: nextCursor !== null ? String(nextCursor) : undefined,
-            limit: limit ? Number(limit) : 50,
+            nextCursor: result.pagination.nextCursor || undefined,
+            hasMore: result.pagination.hasMore,
         },
     });
 });
@@ -60,7 +60,6 @@ exports.updateNurseRecord = (0, catchAsyncError_1.catchAsyncError)(async (req, r
     }
     const partialSchema = schemas_1.nurseSchema.partial();
     const validatedData = partialSchema.parse(req.body);
-    // 🔍 Email uniqueness check (Nurse table)
     if (validatedData.email) {
         const existingEmail = await (0, nurseService_1.getNurseByEmail)(validatedData.email);
         if (existingEmail && existingEmail.id !== id) {
@@ -90,7 +89,7 @@ exports.deleteNurseRecord = (0, catchAsyncError_1.catchAsyncError)(async (req, r
     (0, sendResponse_1.sendResponse)(res, {
         success: true,
         statusCode: statusCodes_1.StatusCodes.OK,
-        message: "Nurse and access deleted successfully",
+        message: "Nurse deleted successfully",
         data: deletedNurse,
     });
 });
@@ -109,15 +108,16 @@ exports.searchNurseResults = (0, catchAsyncError_1.catchAsyncError)(async (req, 
 });
 exports.filterNurses = (0, catchAsyncError_1.catchAsyncError)(async (req, res) => {
     const validated = schemas_1.nurseFilterSchema.parse(req.query);
-    const { data, nextCursor } = await (0, nurseService_1.filterNursesService)(validated);
+    const { data, nextCursor, hasMore } = await (0, nurseService_1.filterNursesService)(validated);
     (0, sendResponse_1.sendResponse)(res, {
         success: true,
         statusCode: statusCodes_1.StatusCodes.OK,
         message: "Filtered nurses fetched",
         data,
         pagination: {
-            nextCursor: nextCursor !== null ? String(nextCursor) : undefined,
-            limit: validated.limit || 50,
+            nextCursor: nextCursor || undefined,
+            limit: validated.limit ?? paginationConfig_1.PAGINATION_CONFIG.DEFAULT_LIMIT,
+            hasMore,
         },
     });
 });

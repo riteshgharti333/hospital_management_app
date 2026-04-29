@@ -155,11 +155,13 @@ exports.regenerateStaffTempPassword = (0, catchAsyncError_1.catchAsyncError)(asy
 });
 exports.deleteUserRecord = (0, catchAsyncError_1.catchAsyncError)(async (req, res, next) => {
     const { regId } = req.params;
-    if (!regId) {
+    // Extract string from potential array
+    const regIdString = Array.isArray(regId) ? regId[0] : regId;
+    if (!regIdString) {
         return next(new errorHandler_1.ErrorHandler("regId is required", statusCodes_1.StatusCodes.BAD_REQUEST));
     }
     try {
-        const deletedUser = await (0, userService_1.deleteUserByRegId)(regId);
+        const deletedUser = await (0, userService_1.deleteUserByRegId)(regIdString);
         if (!deletedUser) {
             return next(new errorHandler_1.ErrorHandler("User not found", statusCodes_1.StatusCodes.NOT_FOUND));
         }

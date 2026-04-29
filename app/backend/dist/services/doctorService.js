@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.filterDoctorsService = exports.searchDoctor = exports.deleteDoctor = exports.updateDoctor = exports.getDoctorsByDepartment = exports.getDoctorByRegistration = exports.getDoctorById = exports.getAllDoctors = exports.getDoctorByEmail = exports.createDoctor = void 0;
+exports.filterDoctorsService = exports.searchDoctor = exports.deleteDoctor = exports.updateDoctor = exports.getDoctorByRegistration = exports.getDoctorById = exports.getAllDoctors = exports.getDoctorByEmail = exports.createDoctor = void 0;
 const prisma_1 = require("../lib/prisma");
 const pagination_1 = require("../utils/pagination");
 const filterPaginate_1 = require("../utils/filterPaginate");
@@ -35,13 +35,6 @@ const getDoctorByRegistration = async (registrationNo) => {
     return prisma_1.prisma.doctor.findUnique({ where: { registrationNo } });
 };
 exports.getDoctorByRegistration = getDoctorByRegistration;
-const getDoctorsByDepartment = async (department) => {
-    return prisma_1.prisma.doctor.findMany({
-        where: { department },
-        orderBy: { fullName: "asc" },
-    });
-};
-exports.getDoctorsByDepartment = getDoctorsByDepartment;
 const updateDoctor = async (id, data) => {
     return prisma_1.prisma.$transaction(async (tx) => {
         // 1️⃣ Update doctor

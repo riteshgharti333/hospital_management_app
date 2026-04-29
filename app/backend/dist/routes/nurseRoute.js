@@ -16,7 +16,7 @@ router
 // SEARCH & FILTER
 router.get("/search", NurseController_1.searchNurseResults);
 router.get("/filter", NurseController_1.filterNurses);
-// GET / UPDATE / DELETE
+// GET / UPDATE / DELETE BY ID
 router
     .route("/:id")
     .get(NurseController_1.getNurseRecordById)

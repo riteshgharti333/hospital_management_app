@@ -57,14 +57,12 @@ exports.getLedgersByEntityRecord = (0, catchAsyncError_1.catchAsyncError)(async 
         ? entityType[0]
         : entityType;
     const ledgers = await (0, ledgerService_1.getLedgersByEntity)(entityTypeStr);
-    const balance = await (0, ledgerService_1.getCurrentBalance)(entityTypeStr);
     (0, sendResponse_1.sendResponse)(res, {
         success: true,
         statusCode: statusCodes_1.StatusCodes.OK,
         message: "Entity ledger entries fetched",
         data: {
             transactions: ledgers,
-            currentBalance: balance,
         },
     });
 });
@@ -111,7 +109,9 @@ exports.deleteLedgerRecord = (0, catchAsyncError_1.catchAsyncError)(async (req, 
 exports.searchLedgerResultsByEntity = (0, catchAsyncError_1.catchAsyncError)(async (req, res, next) => {
     const { query } = req.query;
     const { entityType } = req.params;
-    const entityTypeString = Array.isArray(entityType) ? entityType[0] : entityType;
+    const entityTypeString = Array.isArray(entityType)
+        ? entityType[0]
+        : entityType;
     const searchTerm = (0, queryValidation_1.validateSearchQuery)(query, next);
     if (!searchTerm)
         return;
@@ -128,7 +128,9 @@ exports.searchLedgerResultsByEntity = (0, catchAsyncError_1.catchAsyncError)(asy
 });
 exports.filterLedgers = (0, catchAsyncError_1.catchAsyncError)(async (req, res) => {
     const { entityType } = req.params;
-    const entityTypeString = Array.isArray(entityType) ? entityType[0] : entityType;
+    const entityTypeString = Array.isArray(entityType)
+        ? entityType[0]
+        : entityType;
     const validated = schemas_1.ledgerFilterSchema.parse(req.query);
     const { data, nextCursor, hasMore } = await (0, ledgerService_1.filterLedgersService)(validated, entityTypeString);
     (0, sendResponse_1.sendResponse)(res, {

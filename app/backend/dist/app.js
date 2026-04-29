@@ -14,15 +14,10 @@ const departmentRoute_1 = __importDefault(require("./routes/departmentRoute"));
 const admissionRoute_1 = __importDefault(require("./routes/admissionRoute"));
 const birthRoute_1 = __importDefault(require("./routes/birthRoute"));
 const patientRoute_1 = __importDefault(require("./routes/patientRoute"));
-const bedRoute_1 = __importDefault(require("./routes/bedRoute"));
-const bedAssignRoute_1 = __importDefault(require("./routes/bedAssignRoute"));
 const appointmentRoute_1 = __importDefault(require("./routes/appointmentRoute"));
 const nurseRoute_1 = __importDefault(require("./routes/nurseRoute"));
 const doctorRoute_1 = __importDefault(require("./routes/doctorRoute"));
-const pharmacistRoute_1 = __importDefault(require("./routes/pharmacistRoute"));
 const prescriptionRoute_1 = __importDefault(require("./routes/prescriptionRoute"));
-const ambulanceRoute_1 = __importDefault(require("./routes/ambulanceRoute"));
-const xrayRoute_1 = __importDefault(require("./routes/xrayRoute"));
 const cashRoute_1 = __importDefault(require("./routes/cashRoute"));
 const bankRoute_1 = __importDefault(require("./routes/bankRoute"));
 const ledgerRoute_1 = __importDefault(require("./routes/ledgerRoute"));
@@ -30,25 +25,8 @@ const ledgerRoute_1 = __importDefault(require("./routes/ledgerRoute"));
 const adminRoutes_1 = __importDefault(require("./routes/adminRoutes"));
 // Password Reset
 const passwordRoutes_1 = __importDefault(require("./routes/passwordRoutes"));
-// ledger
-const patientLedgerRoute_1 = __importDefault(require("./routes/ledgerRoutes/patientLedgerRoute"));
-const bankLedgerRoute_1 = __importDefault(require("./routes/ledgerRoutes/bankLedgerRoute"));
-const cashLedgerRoute_1 = __importDefault(require("./routes/ledgerRoutes/cashLedgerRoute"));
-const diagnosticsLedgerRoute_1 = __importDefault(require("./routes/ledgerRoutes/diagnosticsLedgerRoute"));
-const doctorLedgerRoute_1 = __importDefault(require("./routes/ledgerRoutes/doctorLedgerRoute"));
-const expenseLedgerRoute_1 = __importDefault(require("./routes/ledgerRoutes/expenseLedgerRoute"));
-const insuranceLedgerRoute_1 = __importDefault(require("./routes/ledgerRoutes/insuranceLedgerRoute"));
-const pharmacyLedgerRoute_1 = __importDefault(require("./routes/ledgerRoutes/pharmacyLedgerRoute"));
-const supplierLedgerRoute_1 = __importDefault(require("./routes/ledgerRoutes/supplierLedgerRoute"));
-// item/service
-const brandRoute_1 = __importDefault(require("./routes/itemRoutes/brandRoute"));
-const productRoute_1 = __importDefault(require("./routes/itemRoutes/productRoute"));
-// import productEnteryRoutes from "./routes/itemRoutes/productEntryRoute";
-const ServiceChargesRoute_1 = __importDefault(require("./routes/itemRoutes/ServiceChargesRoute"));
 // transection
 const billRoute_1 = __importDefault(require("./routes/transectionRoutes/billRoute"));
-// import employeeRoutes from "./routes/transectionRoutes/employeeRoute";
-// import voucherRoutes from "./routes/transectionRoutes/voucherRoutes";
 const moneyReceiptRoute_1 = __importDefault(require("./routes/transectionRoutes/moneyReceiptRoute"));
 //
 const dashboardRoute_1 = __importDefault(require("./routes/dashboardRoute"));
@@ -85,38 +63,16 @@ app.use("/api/v1/admission", admissionRoute_1.default);
 app.use("/api/v1/birth", birthRoute_1.default);
 app.use("/api/v1/patient", patientRoute_1.default);
 app.use("/api/v1/department", departmentRoute_1.default);
-app.use("/api/v1/bed", bedRoute_1.default);
-app.use("/api/v1/bed-assign", bedAssignRoute_1.default);
 app.use("/api/v1/appointment", appointmentRoute_1.default);
 app.use("/api/v1/nurse", nurseRoute_1.default);
 app.use("/api/v1/doctor", doctorRoute_1.default);
-app.use("/api/v1/pharmacist", pharmacistRoute_1.default);
 app.use("/api/v1/prescription", prescriptionRoute_1.default);
-app.use("/api/v1/ambulance", ambulanceRoute_1.default);
-app.use("/api/v1/xray", xrayRoute_1.default);
 app.use("/api/v1/cash", cashRoute_1.default);
 app.use("/api/v1/bank", bankRoute_1.default);
 app.use("/api/v1/ledger", ledgerRoute_1.default);
-// ledger
-app.use("/api/v1/ledger/patient-ledger", patientLedgerRoute_1.default);
-app.use("/api/v1/ledger/bank-ledger", bankLedgerRoute_1.default);
-app.use("/api/v1/ledger/cash-ledger", cashLedgerRoute_1.default);
-app.use("/api/v1/ledger/diagnostics-ledger", diagnosticsLedgerRoute_1.default);
-app.use("/api/v1/ledger/doctor-ledger", doctorLedgerRoute_1.default);
-app.use("/api/v1/ledger/expense-ledger", expenseLedgerRoute_1.default);
-app.use("/api/v1/ledger/insurance-ledger", insuranceLedgerRoute_1.default);
-app.use("/api/v1/ledger/pharmacy-ledger", pharmacyLedgerRoute_1.default);
-app.use("/api/v1/ledger/supplier-ledger", supplierLedgerRoute_1.default);
-// item/service
-app.use("/api/v1/brand", brandRoute_1.default);
-app.use("/api/v1/product", productRoute_1.default);
-// app.use("/api/v1/product-entry", productEnteryRoutes);
-app.use("/api/v1/service-charges", ServiceChargesRoute_1.default);
 // transection
 app.use("/api/v1/transection/bill", billRoute_1.default);
-// app.use("/api/v1/transection/voucher", voucherRoutes);
 app.use("/api/v1/transection/money-receipt", moneyReceiptRoute_1.default);
-// app.use("/api/v1/transection/employee", employeeRoutes);
 // Sample Route
 app.get("/", (_req, res) => {
     res.send("Welcome 🚀");

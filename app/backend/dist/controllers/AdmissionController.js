@@ -15,15 +15,6 @@ const paginationConfig_1 = require("../lib/paginationConfig");
 exports.createAdmission = (0, catchAsyncError_1.catchAsyncError)(async (req, res, next) => {
     // 1️⃣ Validate body
     const validated = schemas_1.admissionSchema.parse(req.body);
-    // 2️⃣ Business rule (controller responsibility)
-    const activeAdmission = await (0, admissionService_1.findActiveAdmissionByPatient)(validated.patientId);
-    // if (activeAdmission) {
-    //   return sendResponse(res, {
-    //     success: false,
-    //     statusCode: StatusCodes.BAD_REQUEST,
-    //     message: "Patient already has an active admission",
-    //   });
-    // }
     // 3️⃣ Create admission (DB + ID handled in service)
     const admission = await (0, admissionService_1.createAdmissionService)(validated);
     // 4️⃣ Send response
