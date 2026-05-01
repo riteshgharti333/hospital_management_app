@@ -12,7 +12,7 @@ import {
   MdLocalPharmacy,
 } from "react-icons/md";
 import { useSearchDoctors } from "../../feature/hooks/useDoctor";
-import { useSearchNurses } from "../../feature/hooks/useNurse";
+import { useSearchNurseRecords } from "../../feature/hooks/useNurse";
 
 const UserFormModal = ({
   show,
@@ -37,7 +37,7 @@ const UserFormModal = ({
     searchType === "doctor" && searchTerm.trim().length >= 2 ? searchTerm : ""
   );
 
-  const { data: nurseData, isLoading: loadingNurses } = useSearchNurses(
+  const { data: nurseData, isLoading: loadingNurses } = useSearchNurseRecords(
     searchType === "nurse" && searchTerm.trim().length >= 2 ? searchTerm : ""
   );
 

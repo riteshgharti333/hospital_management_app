@@ -71,7 +71,7 @@ const formFields = [
   },
 ];
 
-const PatientRegister = () => {
+const NewPatient = () => {
   const navigate = useNavigate();
   const {
     register,
@@ -258,4 +258,4 @@ const PatientRegister = () => {
   );
 };
 
-export default PatientRegister;
+export default NewPatient;

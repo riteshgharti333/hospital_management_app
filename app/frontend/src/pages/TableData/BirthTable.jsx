@@ -4,8 +4,8 @@ import { FaPlus } from "react-icons/fa6";
 import Table from "../../components/Table/Table";
 import {
   useGetBirthRecords,
-  useFilterBirth,
-  useSearchBirth,
+  useFilterBirthRecords,
+  useSearchBirthRecords,
 } from "../../feature/hooks/useBirth";
 
 const filterLabels = {
@@ -15,7 +15,7 @@ const filterLabels = {
   toDate: "To Date",
 };
 
-const BirthEntriesTable = () => {
+const BirthTable = () => {
   const [currentCursor, setCurrentCursor] = useState(null);
   const [cursorHistory, setCursorHistory] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
@@ -28,10 +28,10 @@ const BirthEntriesTable = () => {
 
   // Search dataset
   const { data: searchData, isLoading: loadingSearch } =
-    useSearchBirth(searchTerm);
+    useSearchBirthRecords(searchTerm);
 
   // Filter dataset
-  const { data: filterData, isLoading: loadingFilter } = useFilterBirth({
+  const { data: filterData, isLoading: loadingFilter } = useFilterBirthRecords({
     ...filters,
     cursor: currentCursor,
     limit: 50,
@@ -178,4 +178,4 @@ const BirthEntriesTable = () => {
   );
 };
 
-export default BirthEntriesTable;
+export default BirthTable;

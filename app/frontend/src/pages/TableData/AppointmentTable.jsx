@@ -68,7 +68,6 @@ const AppointmentTable = () => {
 
   const columns = useMemo(
     () => [
-      { accessorKey: "id", header: "ID" },
       {
         accessorKey: "appointmentDate",
         header: "Appointment Date",

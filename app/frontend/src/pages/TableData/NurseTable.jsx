@@ -3,9 +3,9 @@ import { Link } from "react-router-dom";
 import { FaPlus } from "react-icons/fa6";
 import Table from "../../components/Table/Table";
 import {
-  useGetNurses,
-  useFilterNurses,
-  useSearchNurses,
+  useGetNurseRecords,
+  useFilterNurseRecords,
+  useSearchNurseRecords,
 } from "../../feature/hooks/useNurse";
 
 const filterLabels = {
@@ -24,15 +24,15 @@ const NurseTable = () => {
 
   // Normal dataset
   const { data: nurseData, isLoading: loadingNurses } =
-    useGetNurses(currentCursor, 50);
+    useGetNurseRecords(currentCursor, 50);
 
   // Search dataset
   const { data: searchData, isLoading: loadingSearch } =
-    useSearchNurses(searchTerm);
+    useSearchNurseRecords(searchTerm);
 
   // Filter dataset
   const { data: filterData, isLoading: loadingFilter } =
-    useFilterNurses({ ...filters, cursor: currentCursor, limit: 50 });
+    useFilterNurseRecords({ ...filters, cursor: currentCursor, limit: 50 });
 
   // Select dataset based on mode
   const getCurrentData = () => {

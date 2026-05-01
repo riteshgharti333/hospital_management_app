@@ -14,7 +14,7 @@ const filterLabels = {
   toDate: "To Date",
 };
 
-const PatientsEntriesTable = () => {
+const PatientsTable = () => {
   const [currentCursor, setCurrentCursor] = useState(null);
   const [cursorHistory, setCursorHistory] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
@@ -171,4 +171,4 @@ const PatientsEntriesTable = () => {
   );
 };
 
-export default PatientsEntriesTable;
+export default PatientsTable;

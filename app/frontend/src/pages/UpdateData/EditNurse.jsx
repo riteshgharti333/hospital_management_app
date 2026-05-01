@@ -13,9 +13,9 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import BackButton from "../../components/BackButton/BackButton";
 import { toast } from "sonner";
 import {
-  useUpdateNurse,
-  useDeleteNurse,
-  useGetNurseById,
+  useUpdateNurseRecord,
+  useDeleteNurseRecord,
+  useGetNurseRecordById,
 } from "../../feature/hooks/useNurse";
 import { useNavigate, useParams } from "react-router-dom";
 import { nurseSchema } from "@hospital/schemas";
@@ -105,9 +105,9 @@ const EditNurse = () => {
   const [editMode, setEditMode] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
 
-  const { data: nurseData, isLoading } = useGetNurseById(id);
-  const { mutateAsync: updateNurse, isPending: isUpdating } = useUpdateNurse();
-  const { mutateAsync: deleteNurse, isPending: isDeleting } = useDeleteNurse();
+  const { data: nurseData, isLoading } = useGetNurseRecordById(id);
+  const { mutateAsync: updateNurse, isPending: isUpdating } = useUpdateNurseRecord();
+  const { mutateAsync: deleteNurse, isPending: isDeleting } = useDeleteNurseRecord();
 
   const {
     register,

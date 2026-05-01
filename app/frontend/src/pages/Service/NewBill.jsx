@@ -25,7 +25,7 @@ import { billSchema } from "@hospital/schemas";
 import { useCreateBill } from "../../feature/transectionHooks/useBill";
 import { useSearchAdmissions } from "../../feature/hooks/useAdmisson";
 
-const NewBillEntry = () => {
+const NewBill = () => {
   const [productData, setProductData] = useState({
     company: "",
     itemOrService: "",
@@ -883,4 +883,4 @@ const onSubmit = async (data) => {
   );
 };
 
-export default NewBillEntry;
+export default NewBill;

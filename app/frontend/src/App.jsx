@@ -24,12 +24,12 @@ import EditAdmission from "./pages/UpdateData/EditAdmission";
 
 /// BIRTH > ALL BIRTH ROUTES
 import BirthRegister from "./pages/Service/BirthRegister";
-import BirthEntriesTable from "./pages/TableData/BirthEntriesTable";
+import BirthTable from "./pages/TableData/BirthTable";
 import EditBirth from "./pages/UpdateData/EditBirth";
 
 /// PATIENT > ALL PATIENT ROUTES
-import PatientRegister from "./pages/Service/PatientRegister";
-import PatientsEntriesTable from "./pages/TableData/PatientsEntriesTable";
+import NewPatient from "./pages/Service/NewPatient";
+import PatientsTable from "./pages/TableData/PatientsTable";
 import EditPatients from "./pages/UpdateData/EditPatients";
 
 /// DEPARTMENT > ALL DEPARTMENT ROUTES
@@ -76,7 +76,7 @@ import CashLedger from "./pages/LadgerTable/CashLedger";
 import BankLedger from "./pages/LadgerTable/BankLedger";
 
 /// TRANSACTION > ALL TRANSACTION ROUTES
-import NewBillEntry from "./pages/Service/NewBillEntry";
+import NewBill from "./pages/Service/NewBill";
 import NewMoneyReceiptEntry from "./pages/Service/NewMoneyReceiptEntry";
 import BillTable from "./pages/TableData/BillTable";
 import MoneyReceiptTable from "./pages/TableData/MoneyReceiptTable";
@@ -134,13 +134,13 @@ function App() {
               <Route path="/admission/:id" element={<EditAdmission />} />
 
               /// BIRTH ROUTES
-              <Route path="/birth-entries" element={<BirthEntriesTable />} />
+              <Route path="/birth-entries" element={<BirthTable />} />
               <Route path="/new-birth-register" element={<BirthRegister />} />
               <Route path="/birth/:id" element={<EditBirth />} />
 
               /// PATIENT ROUTES
-              <Route path="/patients-entries" element={<PatientsEntriesTable />} />
-              <Route path="/new-patient-register" element={<PatientRegister />} />
+              <Route path="/patients-entries" element={<PatientsTable />} />
+              <Route path="/new-patient-register" element={<NewPatient />} />
               <Route path="/patient/:id" element={<EditPatients />} />
 
               /// DEPARTMENT ROUTES
@@ -188,7 +188,7 @@ function App() {
 
               /// TRANSACTION ROUTES
               <Route path="/bills" element={<BillTable />} />
-              <Route path="/new-bill-entry" element={<NewBillEntry />} />
+              <Route path="/new-bill-entry" element={<NewBill />} />
               <Route path="/bill/:id" element={<EditBill />} />
               <Route path="/money-receipts" element={<MoneyReceiptTable />} />
               <Route path="/new-money-receipt-entry" element={<NewMoneyReceiptEntry />} />

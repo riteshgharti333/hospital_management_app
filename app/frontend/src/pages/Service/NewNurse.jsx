@@ -6,7 +6,7 @@ import BackButton from "../../components/BackButton/BackButton";
 import LoadingButton from "../../components/LoadingButton/LoadingButton";
 import { nurseSchema } from "@hospital/schemas";
 import { useNavigate } from "react-router-dom";
-import { useCreateNurse } from "../../feature/hooks/useNurse";
+import { useCreateNurseRecord } from "../../feature/hooks/useNurse";
 
 const formFields = [
   {
@@ -98,7 +98,7 @@ const NewNurse = () => {
     },
   });
 
-  const { mutateAsync, isPending } = useCreateNurse();
+  const { mutateAsync, isPending } = useCreateNurseRecord();
 
   const onSubmit = async (data) => {
     const response = await mutateAsync(data);
