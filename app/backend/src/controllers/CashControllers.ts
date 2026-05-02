@@ -165,20 +165,25 @@ export const deleteCashAccountRecord = catchAsyncError(
   },
 );
 
+
 export const searchCashAccountResults = catchAsyncError(
   async (req: Request, res: Response, next: NextFunction) => {
-    const { query } = req.query;
+    const { query, cursor } = req.query;
 
     const searchTerm = validateSearchQuery(query, next);
     if (!searchTerm) return;
 
-    const cashAccounts = await searchCashAccount(searchTerm);
+    const result = await searchCashAccount(searchTerm as string, cursor as string);
 
     sendResponse(res, {
       success: true,
       statusCode: StatusCodes.OK,
       message: "Search results fetched successfully",
-      data: cashAccounts,
+      data: result.data,
+      pagination: {
+        nextCursor: result.pagination.nextCursor || undefined,
+        hasMore: result.pagination.hasMore,
+      },
     });
   },
 );
@@ -186,17 +191,16 @@ export const searchCashAccountResults = catchAsyncError(
 export const filterCashAccounts = catchAsyncError(async (req, res) => {
   const validated = cashFilterSchema.parse(req.query);
 
-  const { data, nextCursor, hasMore } = await filterCashAccountsService(validated);
+  const result = await filterCashAccountsService(validated);
 
   sendResponse(res, {
     success: true,
     statusCode: StatusCodes.OK,
     message: "Filtered cash accounts fetched",
-    data,
+    data: result.data,
     pagination: {
-      nextCursor: nextCursor || undefined,
-      limit: validated.limit ?? PAGINATION_CONFIG.DEFAULT_LIMIT,
-      hasMore,
+      nextCursor: result.nextCursor || undefined,
+      hasMore: result.hasMore,
     },
   });
 });

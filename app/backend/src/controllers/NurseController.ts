@@ -140,20 +140,25 @@ export const deleteNurseRecord = catchAsyncError(
   }
 );
 
+
 export const searchNurseResults = catchAsyncError(
   async (req: Request, res: Response, next: NextFunction) => {
-    const { query } = req.query;
+    const { query, cursor } = req.query;
 
     const searchTerm = validateSearchQuery(query, next);
     if (!searchTerm) return;
 
-    const nurses = await searchNurse(searchTerm);
+    const result = await searchNurse(searchTerm as string, cursor as string);
 
     sendResponse(res, {
       success: true,
       statusCode: StatusCodes.OK,
       message: "Search results fetched successfully",
-      data: nurses,
+      data: result.data,
+      pagination: {
+        nextCursor: result.pagination.nextCursor || undefined,
+        hasMore: result.pagination.hasMore,
+      },
     });
   }
 );
@@ -161,17 +166,16 @@ export const searchNurseResults = catchAsyncError(
 export const filterNurses = catchAsyncError(async (req, res) => {
   const validated = nurseFilterSchema.parse(req.query);
 
-  const { data, nextCursor, hasMore } = await filterNursesService(validated);
+  const result = await filterNursesService(validated);
 
   sendResponse(res, {
     success: true,
     statusCode: StatusCodes.OK,
     message: "Filtered nurses fetched",
-    data,
+    data: result.data,
     pagination: {
-      nextCursor: nextCursor || undefined,
-      limit: validated.limit ?? PAGINATION_CONFIG.DEFAULT_LIMIT,
-      hasMore,
+      nextCursor: result.nextCursor || undefined,
+      hasMore: result.hasMore,
     },
   });
 });

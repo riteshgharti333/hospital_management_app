@@ -24,7 +24,7 @@ const AdmissionTable = () => {
 
   // Normal admissions data with pagination
   const { data: admissionsData, isLoading: admissionsLoading } =
-    useGetAdmissions(currentCursor, 50);
+    useGetAdmissions();
 
   // Search admissions data
   const { data: searchData, isLoading: searchLoading } =

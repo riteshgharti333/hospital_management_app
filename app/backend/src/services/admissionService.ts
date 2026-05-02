@@ -36,26 +36,18 @@ export const findActiveAdmissionByPatient = async (patientId: number) => {
   });
 };
 
-export const getAllAdmissionsService = async (
-  cursor?: string,
-  limit?: number,
-) => {
+export const getAllAdmissionsService = async (cursor?: string) => {
   return cursorPaginate(
     prisma,
     {
       model: "admission",
-      limit: limit || 50,
-      cacheExpiry: 600,
-
-      // ⚠️ IMPORTANT: must match pagination order
-      // (your cursorPaginate uses createdAt + id)
 
       select: {
         id: true,
         hospitalAdmissionId: true,
         admissionDate: true,
         dischargeDate: true,
-        createdAt: true, 
+        createdAt: true,
 
         patient: {
           select: {
@@ -76,7 +68,7 @@ export const getAllAdmissionsService = async (
         },
       },
     },
-    cursor, // ✅ string cursor (createdAt|id)
+    cursor,
   );
 };
 
@@ -97,6 +89,7 @@ export const updateAdmission = async (
 export const deleteAdmission = async (id: number) => {
   return prisma.admission.delete({ where: { id } });
 };
+
 
 export const searchAdmissions = createSearchService(prisma, {
   tableName: "Admission",

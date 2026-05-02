@@ -103,11 +103,7 @@ export const departmentSchema = z.object({
 });
 
 // APPOINTMENT SCHEMAS
-export const AppointmentStatus = z.enum([
-  "BOOKED",
-  "CANCELLED",
-  "EXPIRED",
-]);
+export const AppointmentStatus = z.enum(["BOOKED", "CANCELLED", "EXPIRED"]);
 
 export const appointmentSchema = z.object({
   appointmentDate: z
@@ -549,4 +545,3 @@ export const moneyReceiptFilterSchema = z.object({
   status: z.enum(["Active", "Cancelled", "Refunded"]).optional(),
   ...baseFilterSchema,
 });
-

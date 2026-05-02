@@ -11,33 +11,53 @@ import {
 import { toast } from "sonner";
 import { getErrorMessage } from "../../utils/errorUtils";
 
+
 // Normal doctors
-export const useGetDoctors = (cursor = null, limit = 50) => {
+export const useGetDoctors = (cursor) => {
   return useQuery({
-    queryKey: ["doctor", cursor, limit],
+    queryKey: ["doctor", cursor],
     queryFn: async () => {
-      const { data } = await getAllDoctorsAPI(cursor, limit);
+      const { data } = await getAllDoctorsAPI(cursor);
       return data || { data: [], pagination: {} };
     },
-    keepPreviousData: false,
-    staleTime: 0,          
+    keepPreviousData: true,
+    staleTime: 0,
     retry: 1,
+    enabled: true,
   });
 };
 
-// Filter doctors
-export const useFilterDoctors = (filters) => {
+// Filter doctors with cursor
+export const useFilterDoctors = (filters, cursor) => {
   return useQuery({
-    queryKey: ["doctor-filter", filters],
+    queryKey: ["doctor-filter", filters, cursor],
     queryFn: async () => {
-      const { data } = await filterDoctorAPI(filters);
+      const { data } = await filterDoctorAPI(filters, cursor);
       return data || { data: [], pagination: {} };
     },
-    enabled: !!filters,
+    enabled: !!filters && Object.keys(filters).length > 0,
     retry: 1,
-    onError: (error) => toast.error(getErrorMessage(error)),
+    keepPreviousData: true,
   });
 };
+
+// Search doctors with cursor
+export const useSearchDoctors = (searchTerm, cursor) => {
+  return useQuery({
+    queryKey: ["doctor-search", searchTerm, cursor],
+    queryFn: async () => {
+      if (!searchTerm || searchTerm.length < 2) {
+        return { data: [], pagination: {} };
+      }
+      const { data } = await searchDoctorAPI(searchTerm, cursor);
+      return data || { data: [], pagination: {} };
+    },
+    enabled: !!searchTerm && searchTerm.length >= 2,
+    retry: 1,
+    keepPreviousData: true,
+  });
+};
+
 
 // FETCH DOCTOR BY ID
 export const useGetDoctorById = (id) => {
@@ -92,16 +112,3 @@ export const useDeleteDoctor = () => {
   });
 };
 
-export const useSearchDoctors = (searchTerm) => {
-  return useQuery({
-    queryKey: ["doctor-search", searchTerm],
-    queryFn: async () => {
-      if (!searchTerm) return [];
-      const { data } = await searchDoctorAPI(searchTerm);
-      return data?.data || [];
-    },
-    enabled: !!searchTerm,
-    retry: 1,
-    onError: (err) => toast.error(getErrorMessage(err)),
-  });
-};

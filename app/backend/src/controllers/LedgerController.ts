@@ -169,7 +169,7 @@ export const deleteLedgerRecord = catchAsyncError(
 
 export const searchLedgerResultsByEntity = catchAsyncError(
   async (req: Request, res: Response, next: NextFunction) => {
-    const { query } = req.query;
+    const { query, cursor } = req.query;
     const { entityType } = req.params;
     const entityTypeString = Array.isArray(entityType)
       ? entityType[0]
@@ -179,10 +179,10 @@ export const searchLedgerResultsByEntity = catchAsyncError(
     if (!searchTerm) return;
 
     // Get search results
-    const allResults = await searchLedger(searchTerm);
+    const result = await searchLedger(searchTerm as string, cursor as string);
 
     // Filter by entityType
-    const filteredResults = allResults.filter(
+    const filteredResults = result.data.filter(
       (ledger: any) => ledger.entityType === entityTypeString,
     );
 
@@ -191,6 +191,10 @@ export const searchLedgerResultsByEntity = catchAsyncError(
       statusCode: StatusCodes.OK,
       message: `Search results fetched successfully for ${entityTypeString} ledgers`,
       data: filteredResults,
+      pagination: {
+        nextCursor: result.pagination.nextCursor || undefined,
+        hasMore: result.pagination.hasMore,
+      },
     });
   },
 );
@@ -203,20 +207,16 @@ export const filterLedgers = catchAsyncError(async (req, res) => {
 
   const validated = ledgerFilterSchema.parse(req.query);
 
-  const { data, nextCursor, hasMore } = await filterLedgersService(
-    validated,
-    entityTypeString,
-  );
+  const result = await filterLedgersService(validated, entityTypeString);
 
   sendResponse(res, {
     success: true,
     statusCode: StatusCodes.OK,
     message: "Filtered ledger entries fetched",
-    data,
+    data: result.data,
     pagination: {
-      nextCursor: nextCursor || undefined,
-      limit: validated.limit ?? PAGINATION_CONFIG.DEFAULT_LIMIT,
-      hasMore,
+      nextCursor: result.nextCursor || undefined,
+      hasMore: result.hasMore,
     },
   });
 });

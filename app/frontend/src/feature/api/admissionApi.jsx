@@ -3,8 +3,8 @@ import axiosInstance from "../../utils/axiosInstance";
 export const createAdmissionAPI = (data) =>
   axiosInstance.post("/admission/", data);
 
-export const getAllAdmissionAPI = (cursor, limit = 50) => 
-  axiosInstance.get("/admission/", { params: { cursor, limit } });
+export const getAllAdmissionAPI = () => 
+  axiosInstance.get("/admission/");
 
 export const getAdmissionByIdAPI = (id) =>
   axiosInstance.get(`/admission/${id}`);

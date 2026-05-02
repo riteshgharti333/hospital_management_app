@@ -171,20 +171,25 @@ export const deleteBankAccountRecord = catchAsyncError(
   }
 );
 
+
 export const searchBankAccountResults = catchAsyncError(
   async (req: Request, res: Response, next: NextFunction) => {
-    const { query } = req.query;
+    const { query, cursor } = req.query;
 
     const searchTerm = validateSearchQuery(query, next);
     if (!searchTerm) return;
 
-    const bankAccounts = await searchBankAccount(searchTerm);
+    const result = await searchBankAccount(searchTerm as string, cursor as string);
 
     sendResponse(res, {
       success: true,
       statusCode: StatusCodes.OK,
       message: "Search results fetched successfully",
-      data: bankAccounts,
+      data: result.data,
+      pagination: {
+        nextCursor: result.pagination.nextCursor || undefined,
+        hasMore: result.pagination.hasMore,
+      },
     });
   }
 );
@@ -192,19 +197,16 @@ export const searchBankAccountResults = catchAsyncError(
 export const filterBankAccounts = catchAsyncError(async (req, res) => {
   const validated = bankFilterSchema.parse(req.query);
 
-  const { data, nextCursor, hasMore } = await filterBankAccountsService(
-    validated
-  );
+  const result = await filterBankAccountsService(validated);
 
   sendResponse(res, {
     success: true,
     statusCode: StatusCodes.OK,
     message: "Filtered bank accounts fetched",
-    data,
+    data: result.data,
     pagination: {
-      nextCursor: nextCursor || undefined,
-      limit: validated.limit ?? PAGINATION_CONFIG.DEFAULT_LIMIT,
-      hasMore,
+      nextCursor: result.nextCursor || undefined,
+      hasMore: result.hasMore,
     },
   });
 });

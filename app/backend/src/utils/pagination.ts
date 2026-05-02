@@ -1,6 +1,7 @@
 import { PrismaClient } from "@prisma/client";
 import { upstashGet, upstashSet } from "./upstashRedisRest";
 import { getCacheVersion } from "./cacheVersion";
+import { PAGINATION_CONFIG } from "../lib/paginationConfig";
 
 const memoryCache = new Map<
   string,
@@ -11,13 +12,8 @@ const memoryCache = new Map<
   }
 >();
 
-console.log(process.env.UPSTASH_REDIS_REST_URL);
-
 const MEMORY_CACHE_TTL = 30000;
 const MAX_MEMORY_ENTRIES = 1000;
-
-const DEFAULT_LIMIT = 50;
-const MAX_LIMIT = 100; // ✅ prevent abuse
 
 type PaginationOptions<T extends keyof PrismaClient> = {
   model: T;
@@ -32,7 +28,7 @@ export async function cursorPaginate<T extends keyof PrismaClient, R = any>(
   prisma: PrismaClient,
   options: PaginationOptions<T>,
   rawCursor?: unknown, // ✅ safer input
-  extraWhere?: any
+  extraWhere?: any,
 ): Promise<{
   data: R[];
   pagination: { nextCursor: string | null; hasMore: boolean };
@@ -49,23 +45,43 @@ export async function cursorPaginate<T extends keyof PrismaClient, R = any>(
   const modelName = String(model).toLowerCase();
 
   // ✅ LIMIT CONTROL
-  let limit = options.limit ?? DEFAULT_LIMIT;
-  if (limit > MAX_LIMIT) limit = MAX_LIMIT;
+  let limit = options.limit ?? PAGINATION_CONFIG.DEFAULT_LIMIT;
+  if (limit > PAGINATION_CONFIG.MAX_LIMIT) limit = PAGINATION_CONFIG.MAX_LIMIT;
 
   // ✅ Use normalized modelName for cache version
   const version = await getCacheVersion(modelName);
 
-  // ✅ SAFE CURSOR
+  // ✅ PARSE CURSOR WITH COUNT TRACKING
+  let cursorDate: Date | null = null;
+  let cursorId: number | null = null;
+  let currentCount = 0;
+
   const cursor =
     typeof rawCursor === "string" && rawCursor.includes("|")
       ? rawCursor
       : undefined;
 
+  if (cursor) {
+    const parts = cursor.split("|");
+    const date = parts[0];
+    const id = parts[1];
+    const countFromCursor = Number(parts[2] || 0);
+
+    const parsedDate = new Date(date);
+    const parsedId = Number(id);
+
+    if (!isNaN(parsedDate.getTime()) && !isNaN(parsedId)) {
+      cursorDate = parsedDate;
+      cursorId = parsedId;
+      currentCount = countFromCursor;
+    }
+  }
+
   const safeCursor = cursor ? encodeURIComponent(cursor) : "0";
 
   // ✅ Use normalized modelName in cache key
   const cacheKey = `p:${modelName}:v:${version}:c:${safeCursor}:l:${limit}:o:${encodeURIComponent(
-    JSON.stringify(orderBy)
+    JSON.stringify(orderBy),
   )}`;
 
   // ✅ MEMORY CACHE
@@ -90,26 +106,6 @@ export async function cursorPaginate<T extends keyof PrismaClient, R = any>(
     console.log("🔥 DB QUERY:", modelName);
   }
 
-  // ✅ SAFE CURSOR PARSING
-  let cursorDate: Date | null = null;
-  let cursorId: number | null = null;
-
-  if (cursor) {
-    const [date, id] = cursor.split("|");
-
-    const parsedDate = new Date(date);
-    const parsedId = Number(id);
-
-    if (!isNaN(parsedDate.getTime()) && !isNaN(parsedId)) {
-      cursorDate = parsedDate;
-      cursorId = parsedId;
-    } else {
-      // invalid cursor → ignore safely
-      cursorDate = null;
-      cursorId = null;
-    }
-  }
-
   // ✅ WHERE CONDITION
   const whereCondition = {
     ...(extraWhere || {}),
@@ -118,10 +114,7 @@ export async function cursorPaginate<T extends keyof PrismaClient, R = any>(
           OR: [
             { createdAt: { lt: cursorDate } },
             {
-              AND: [
-                { createdAt: cursorDate },
-                { id: { lt: cursorId } },
-              ],
+              AND: [{ createdAt: cursorDate }, { id: { lt: cursorId } }],
             },
           ],
         }
@@ -137,14 +130,28 @@ export async function cursorPaginate<T extends keyof PrismaClient, R = any>(
     ...(include ? { include } : {}),
   });
 
-  const hasMore = data.length > limit;
-  const results = hasMore ? data.slice(0, limit) : data;
+  // ✅ Check if there are more records after this fetch
+  const hasMoreData = data.length > limit;
+
+  // ✅ Get the actual results (limit them to the requested page size)
+  const results = hasMoreData ? data.slice(0, limit) : data;
+
+  // ✅ Update the count of records sent to client
+  const newCount = currentCount + results.length;
+
+  // ✅ Enforce the 300 record limit
+  let hasMore = hasMoreData;
+  if (newCount >= PAGINATION_CONFIG.MAX_BROWSABLE) {
+    hasMore = false;
+  }
 
   let nextCursor: string | null = null;
 
+  // ✅ Only generate next cursor if we have more data AND we haven't reached the limit
   if (hasMore && results.length > 0) {
     const lastItem = results[results.length - 1];
-    nextCursor = `${lastItem.createdAt.toISOString()}|${lastItem.id}`;
+    // ✅ Include the count in the cursor
+    nextCursor = `${lastItem.createdAt.toISOString()}|${lastItem.id}|${newCount}`;
   }
 
   const response = {

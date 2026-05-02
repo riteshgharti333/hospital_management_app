@@ -11,11 +11,11 @@ import {
 import { toast } from "sonner";
 import { getErrorMessage } from "../../utils/errorUtils";
 
-export const useGetAdmissions = (cursor, limit = 50) => {
+export const useGetAdmissions = () => {
   return useQuery({
-    queryKey: ["admission", cursor, limit],
+    queryKey: ["admission"],
     queryFn: async () => {
-      const { data } = await getAllAdmissionAPI(cursor, limit);
+      const { data } = await getAllAdmissionAPI();
       return data || { data: [], pagination: {} };
     },
     retry: 1,
@@ -42,7 +42,7 @@ export const useCreateAdmission = () => {
     mutationFn: createAdmissionAPI,
     onSuccess: (response) => {
       toast.success(
-        response?.data?.message || "Admission created successfully"
+        response?.data?.message || "Admission created successfully",
       );
       queryClient.invalidateQueries({ queryKey: ["admission"] });
     },
@@ -56,7 +56,7 @@ export const useUpdateAdmission = () => {
     mutationFn: ({ id, data }) => updateAdmissionAPI(id, data),
     onSuccess: (response) => {
       toast.success(
-        response?.data?.message || "Admission updated successfully"
+        response?.data?.message || "Admission updated successfully",
       );
       queryClient.invalidateQueries({ queryKey: ["admission"] });
     },
@@ -70,7 +70,7 @@ export const useDeleteAdmission = () => {
     mutationFn: deleteAdmissionAPI,
     onSuccess: (response) => {
       toast.success(
-        response?.data?.message || "Admission deleted successfully"
+        response?.data?.message || "Admission deleted successfully",
       );
       queryClient.invalidateQueries({ queryKey: ["admission"] });
     },

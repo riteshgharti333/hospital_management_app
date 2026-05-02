@@ -15,8 +15,6 @@ import {
 } from "../services/patientService";
 import { patientFilterSchema, patientSchema } from "@hospital/schemas";
 import { validateSearchQuery } from "../utils/queryValidation";
-import { PAGINATION_CONFIG } from "../lib/paginationConfig";
-
 export const createPatientRecord = catchAsyncError(
   async (req: Request, res: Response, next: NextFunction) => {
     const validated = patientSchema.parse(req.body);
@@ -118,20 +116,25 @@ export const deletePatientRecord = catchAsyncError(
 
 ///
 
+
 export const searchPatientResults = catchAsyncError(
   async (req: Request, res: Response, next: NextFunction) => {
-    const { query } = req.query;
+    const { query, cursor } = req.query;
 
     const searchTerm = validateSearchQuery(query, next);
     if (!searchTerm) return;
 
-    const admissions = await searchPatient(searchTerm);
+    const result = await searchPatient(searchTerm as string, cursor as string);
 
     sendResponse(res, {
       success: true,
       statusCode: StatusCodes.OK,
       message: "Search results fetched successfully",
-      data: admissions,
+      data: result.data,
+      pagination: {
+        nextCursor: result.pagination.nextCursor || undefined,
+        hasMore: result.pagination.hasMore,
+      },
     });
   },
 );
@@ -139,17 +142,16 @@ export const searchPatientResults = catchAsyncError(
 export const filterPatients = catchAsyncError(async (req, res) => {
   const validated = patientFilterSchema.parse(req.query);
 
-  const { data, nextCursor, hasMore } = await filterPatientsService(validated);
+  const result = await filterPatientsService(validated);
 
   sendResponse(res, {
     success: true,
     statusCode: StatusCodes.OK,
     message: "Filtered patients fetched",
-    data,
+    data: result.data,
     pagination: {
-      nextCursor: nextCursor || undefined,
-      limit: validated.limit ?? PAGINATION_CONFIG.DEFAULT_LIMIT,
-      hasMore,
+      nextCursor: result.nextCursor || undefined,
+      hasMore: result.hasMore,
     },
   });
 });

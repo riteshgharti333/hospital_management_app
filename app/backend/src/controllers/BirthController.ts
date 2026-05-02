@@ -116,20 +116,26 @@ export const deleteBirthRecord = catchAsyncError(
   },
 );
 
+
+
 export const searchBirthResults = catchAsyncError(
   async (req: Request, res: Response, next: NextFunction) => {
-    const { query } = req.query;
+    const { query, cursor } = req.query;
 
     const searchTerm = validateSearchQuery(query, next);
     if (!searchTerm) return;
 
-    const births = await searchBirth(searchTerm);
+    const result = await searchBirth(searchTerm as string, cursor as string);
 
     sendResponse(res, {
       success: true,
       statusCode: StatusCodes.OK,
       message: "Search results fetched successfully",
-      data: births,
+      data: result.data,
+      pagination: {
+        nextCursor: result.pagination.nextCursor || undefined,
+        hasMore: result.pagination.hasMore,
+      },
     });
   },
 );
@@ -137,17 +143,16 @@ export const searchBirthResults = catchAsyncError(
 export const filterBirths = catchAsyncError(async (req, res) => {
   const validated = birthFilterSchema.parse(req.query);
 
-  const { data, nextCursor, hasMore } = await filterBirthsService(validated);
+  const result = await filterBirthsService(validated);
 
   sendResponse(res, {
     success: true,
     statusCode: StatusCodes.OK,
     message: "Filtered births fetched",
-    data,
+    data: result.data,
     pagination: {
-      nextCursor: nextCursor || undefined,
-      limit: validated.limit ?? PAGINATION_CONFIG.DEFAULT_LIMIT,
-      hasMore,
+      nextCursor: result.nextCursor || undefined,
+      hasMore: result.hasMore,
     },
   });
 });

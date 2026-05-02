@@ -14,7 +14,7 @@ import {
   filterPrescriptionsService,
   getPrescriptionsByAdmission,
 } from "../services/prescriptionService";
-import { prescriptionSchema } from "@hospital/schemas";
+import { prescriptionFilterSchema, prescriptionSchema } from "@hospital/schemas";
 import { validateSearchQuery } from "../utils/queryValidation";
 import { PAGINATION_CONFIG } from "../lib/paginationConfig";
 import { uploadFileToS3 } from "../aws/s3.service";
@@ -186,49 +186,39 @@ export const deletePrescriptionRecord = catchAsyncError(
 
 export const searchPrescriptionResults = catchAsyncError(
   async (req: Request, res: Response, next: NextFunction) => {
-    const { query } = req.query;
+    const { query, cursor } = req.query;
 
     const searchTerm = validateSearchQuery(query, next);
     if (!searchTerm) return;
 
-    const prescriptions = await searchPrescription(searchTerm);
+    const result = await searchPrescription(searchTerm as string, cursor as string);
 
     sendResponse(res, {
       success: true,
       statusCode: StatusCodes.OK,
       message: "Search results fetched successfully",
-      data: prescriptions,
+      data: result.data,
+      pagination: {
+        nextCursor: result.pagination.nextCursor || undefined,
+        hasMore: result.pagination.hasMore,
+      },
     });
   },
 );
 
 export const filterPrescriptions = catchAsyncError(async (req, res) => {
-  const filterSchema = z.object({
-    fromDate: z.string().datetime().optional(),
-    toDate: z.string().datetime().optional(),
-    status: z.enum(["ACTIVE", "COMPLETED", "CANCELLED"]).optional(),
-    admissionId: z.coerce.number().optional(),
-    cursor: z.string().optional(),
-    limit: z.coerce.number().optional(),
-  });
+  const validated = prescriptionFilterSchema.parse(req.query);
 
-  const validated = filterSchema.parse(req.query);
-
-  const { data, nextCursor, hasMore } = await filterPrescriptionsService({
-    ...validated,
-    fromDate: validated.fromDate ? new Date(validated.fromDate) : undefined,
-    toDate: validated.toDate ? new Date(validated.toDate) : undefined,
-  });
+  const result = await filterPrescriptionsService(validated);
 
   sendResponse(res, {
     success: true,
     statusCode: StatusCodes.OK,
     message: "Filtered prescriptions fetched",
-    data,
+    data: result.data,
     pagination: {
-      nextCursor: nextCursor || undefined,
-      limit: validated.limit ?? PAGINATION_CONFIG.DEFAULT_LIMIT,
-      hasMore,
+      nextCursor: result.nextCursor || undefined,
+      hasMore: result.hasMore,
     },
   });
 });

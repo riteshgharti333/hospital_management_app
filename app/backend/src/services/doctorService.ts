@@ -109,6 +109,7 @@ export const deleteDoctor = async (id: number) => {
   return deletedDoctor;
 };
 
+
 export const searchDoctor = createSearchService(prisma, {
   tableName: "Doctor",
   exactFields: ["fullName", "mobileNumber", "registrationNo"],
@@ -125,6 +126,7 @@ export const searchDoctor = createSearchService(prisma, {
     "createdAt",
     "email",
   ],
+  sortField: "createdAt",
 });
 
 type FilterDoctorParams = {
@@ -132,11 +134,10 @@ type FilterDoctorParams = {
   toDate?: Date;
   status?: string;
   cursor?: string;
-  limit?: number;
 };
 
 export const filterDoctorsService = async (params: FilterDoctorParams) => {
-  const { fromDate, toDate, status, cursor, limit } = params;
+  const { fromDate, toDate, status, cursor } = params;
 
   const where: Record<string, any> = {};
 
@@ -160,7 +161,6 @@ export const filterDoctorsService = async (params: FilterDoctorParams) => {
     prisma,
     {
       model: "doctor",
-      limit,
       // 🔥 Optional optimization
       // select: {
       //   id: true,

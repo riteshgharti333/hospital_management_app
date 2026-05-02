@@ -128,17 +128,21 @@ export const deleteMoneyReceiptRecord = catchAsyncError(
 
 export const searchMoneyReceiptResults = catchAsyncError(
   async (req, res, next) => {
-    const { query } = req.query;
+    const { query, cursor } = req.query;
     const searchTerm = validateSearchQuery(query, next);
     if (!searchTerm) return;
 
-    const receipts = await searchMoneyReceipts(searchTerm);
+    const result = await searchMoneyReceipts(searchTerm as string, cursor as string);
 
     sendResponse(res, {
       success: true,
       statusCode: StatusCodes.OK,
       message: "Search results fetched successfully",
-      data: receipts,
+      data: result.data,
+      pagination: {
+        nextCursor: result.pagination.nextCursor || undefined,
+        hasMore: result.pagination.hasMore,
+      },
     });
   },
 );
@@ -146,18 +150,16 @@ export const searchMoneyReceiptResults = catchAsyncError(
 export const filterMoneyReceipts = catchAsyncError(async (req, res) => {
   const validated = moneyReceiptFilterSchema.parse(req.query);
 
-  const { data, nextCursor, hasMore } =
-    await filterMoneyReceiptsService(validated);
+  const result = await filterMoneyReceiptsService(validated);
 
   sendResponse(res, {
     success: true,
     statusCode: StatusCodes.OK,
     message: "Filtered money receipts fetched",
-    data,
+    data: result.data,
     pagination: {
-      nextCursor: nextCursor || undefined,
-      limit: validated.limit ?? PAGINATION_CONFIG.DEFAULT_LIMIT,
-      hasMore,
+      nextCursor: result.nextCursor || undefined,
+      hasMore: result.hasMore,
     },
   });
 });

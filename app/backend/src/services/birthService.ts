@@ -77,7 +77,7 @@ type FilterBirthParams = {
 };
 
 export const filterBirthsService = async (params: FilterBirthParams) => {
-  const { fromDate, toDate, babySex, deliveryType, cursor, limit } = params;
+  const { fromDate, toDate, babySex, deliveryType, cursor } = params;
 
   const where: Record<string, any> = {};
 
@@ -106,7 +106,6 @@ export const filterBirthsService = async (params: FilterBirthParams) => {
     prisma,
     {
       model: "birth",
-      limit,
     },
     cursor,
     where,

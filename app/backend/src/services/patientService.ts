@@ -63,17 +63,14 @@ export const deletePatient = async (id: number) => {
   return patient;
 };
 
-const commonSearchFields = [
-  "fullName",
-  "mobileNumber",
-  "aadhaarNumber",
-  "hospitalPatientId",
-];
-
-
 export const searchPatient = createSearchService(prisma, {
   tableName: "Patient",
-  exactFields: ["fullName", "mobileNumber", "aadhaarNumber", "hospitalPatientId"],
+  exactFields: [
+    "fullName",
+    "mobileNumber",
+    "aadhaarNumber",
+    "hospitalPatientId",
+  ],
   prefixFields: ["fullName"],
   similarFields: ["fullName", "address"],
   selectFields: [
@@ -88,7 +85,6 @@ export const searchPatient = createSearchService(prisma, {
   ],
 });
 
-
 type FilterPatientParams = {
   fromDate?: Date;
   toDate?: Date;
@@ -97,10 +93,8 @@ type FilterPatientParams = {
   limit?: number;
 };
 
-export const filterPatientsService = async (
-  params: FilterPatientParams
-) => {
-  const { fromDate, toDate, gender, cursor, limit } = params;
+export const filterPatientsService = async (params: FilterPatientParams) => {
+  const { fromDate, toDate, gender, cursor } = params;
 
   const where: Record<string, any> = {};
 
@@ -122,9 +116,8 @@ export const filterPatientsService = async (
     prisma,
     {
       model: "patient",
-      limit,
     },
     cursor,
-    where
+    where,
   );
 };

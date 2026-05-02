@@ -165,39 +165,48 @@ export const deleteDoctorRecord = catchAsyncError(
   },
 );
 
+
+
 export const searchDoctorResults = catchAsyncError(
   async (req: Request, res: Response, next: NextFunction) => {
-    const { query } = req.query;
+    const { query, cursor } = req.query;
 
     const searchTerm = validateSearchQuery(query, next);
     if (!searchTerm) return;
-
-    const doctors = await searchDoctor(searchTerm);
+    
+    const result = await searchDoctor(
+      searchTerm as string,
+      cursor as string
+    );
 
     sendResponse(res, {
       success: true,
       statusCode: StatusCodes.OK,
       message: "Search results fetched successfully",
-      data: doctors,
+      data: result.data,
+      pagination: {
+        nextCursor: result.pagination.nextCursor || undefined, // Convert null to undefined
+        hasMore: result.pagination.hasMore,
+      },
     });
   },
-); 
+);
+
 
 export const filterDoctors = catchAsyncError(async (req, res) => {
   const validated = doctorFilterSchema.parse(req.query);
 
-  const { data, nextCursor, hasMore } = await filterDoctorsService(validated);
+  const result = await filterDoctorsService(validated);
 
   sendResponse(res, {
     success: true,
     statusCode: StatusCodes.OK,
     message: "Filtered doctors fetched",
-    data,
+    data: result.data,
     pagination: {
-      nextCursor: nextCursor || undefined,
-      limit: validated.limit ?? PAGINATION_CONFIG.DEFAULT_LIMIT,
-      hasMore,
+      nextCursor: result.nextCursor || undefined,
+      hasMore: result.hasMore,
     },
   });
 });
- 
+   

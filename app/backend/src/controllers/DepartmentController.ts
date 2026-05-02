@@ -197,20 +197,25 @@ export const deleteDepartmentRecord = catchAsyncError(
   },
 );
 
+
 export const searchDepartmentResults = catchAsyncError(
   async (req: Request, res: Response, next: NextFunction) => {
-    const { query } = req.query;
+    const { query, cursor } = req.query;
 
     const searchTerm = validateSearchQuery(query, next);
     if (!searchTerm) return;
 
-    const departments = await searchDepartment(searchTerm);
+    const result = await searchDepartment(searchTerm as string, cursor as string);
 
     sendResponse(res, {
       success: true,
       statusCode: StatusCodes.OK,
       message: "Search results fetched successfully",
-      data: departments,
+      data: result.data,
+      pagination: {
+        nextCursor: result.pagination.nextCursor || undefined,
+        hasMore: result.pagination.hasMore,
+      },
     });
   },
 );
@@ -218,18 +223,16 @@ export const searchDepartmentResults = catchAsyncError(
 export const filterDepartments = catchAsyncError(async (req, res) => {
   const validated = departmentFilterSchema.parse(req.query);
 
-  const { data, nextCursor, hasMore } =
-    await filterDepartmentsService(validated);
+  const result = await filterDepartmentsService(validated);
 
   sendResponse(res, {
     success: true,
     statusCode: StatusCodes.OK,
     message: "Filtered departments fetched",
-    data,
+    data: result.data,
     pagination: {
-      nextCursor: nextCursor || undefined,
-      limit: validated.limit ?? PAGINATION_CONFIG.DEFAULT_LIMIT,
-      hasMore,
+      nextCursor: result.nextCursor || undefined,
+      hasMore: result.hasMore,
     },
   });
 });

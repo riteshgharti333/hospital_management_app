@@ -24,8 +24,6 @@ export const createAdmission = catchAsyncError(
     // 1️⃣ Validate body
     const validated = admissionSchema.parse(req.body);
 
-   
-
     // 3️⃣ Create admission (DB + ID handled in service)
     const admission = await createAdmissionService(validated);
 
@@ -151,15 +149,15 @@ export const searchAdmissionsResults = catchAsyncError(
         const [patient, doctor] = await Promise.all([
           prisma.patient.findUnique({
             where: { id: admission.patientId },
-            select: { 
+            select: {
               id: true,
               fullName: true,
               gender: true,
               mobileNumber: true,
               aadhaarNumber: true,
               hospitalPatientId: true,
-              address:true
-            }, 
+              address: true,
+            },
           }),
           prisma.doctor.findUnique({
             where: { id: admission.doctorId },
@@ -178,7 +176,7 @@ export const searchAdmissionsResults = catchAsyncError(
 
     // 2️⃣ Patient search
     const patients = await searchPatient(searchTerm);
-    const patientIds = patients.map((p) => p.id);
+    const patientIds = patients.results.map((p) => p.id);
 
     // 3️⃣ Admissions via patients (already has include)
     const admissionsViaPatients = patientIds.length
@@ -222,6 +220,10 @@ export const searchAdmissionsResults = catchAsyncError(
       statusCode: StatusCodes.OK,
       message: "Admission search results fetched successfully",
       data: mergedResults,
+      pagination: {
+        nextCursor: undefined, // No cursor for merged results
+        hasMore: false,
+      },
     });
   },
 );
@@ -241,7 +243,6 @@ export const filterAdmissions = catchAsyncError(async (req, res) => {
     data,
     pagination: {
       nextCursor: nextCursor || undefined,
-      limit: validated.limit ?? PAGINATION_CONFIG.DEFAULT_LIMIT,
       hasMore,
     },
   });
