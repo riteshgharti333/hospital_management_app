@@ -1,14 +1,13 @@
-import { useState, useEffect, useMemo } from "react";
+import { useMemo } from "react";
 import { Link } from "react-router-dom";
-import { FaPlus } from "react-icons/fa";
-
+import { FaPlus } from "react-icons/fa6";
 import Table from "../../components/Table/Table";
-
 import {
   useGetBills,
   useSearchBills,
   useFilterBills,
 } from "../../feature/transectionHooks/useBill";
+import { useTableController } from "../../feature/hooks/useTableController";
 
 const filterLabels = {
   billType: "Bill Type",
@@ -19,58 +18,13 @@ const filterLabels = {
 };
 
 const BillTable = () => {
-  const [currentCursor, setCurrentCursor] = useState(null);
-  const [cursorHistory, setCursorHistory] = useState([]);
-  const [searchTerm, setSearchTerm] = useState("");
-  const [filters, setFilters] = useState({});
-  const [mode, setMode] = useState("normal"); // normal | search | filter
-
-  // ⬇ NORMAL BILL FETCHING
-  const { data: billsData, isLoading: billsLoading } = useGetBills(
-    currentCursor,
-    50
-  );
-
-  // ⬇ SEARCH BILL
-  const { data: searchData, isLoading: searchLoading } =
-    useSearchBills(searchTerm);
-
-  // ⬇ FILTER BILL
-  const { data: filterData, isLoading: filterLoading } = useFilterBills({
-    ...filters,
-    cursor: currentCursor,
-    limit: 50,
+  // Controller handles ALL logic
+  const controller = useTableController({
+    normalDataHook: useGetBills,
+    searchDataHook: useSearchBills,
+    filterDataHook: useFilterBills,
   });
 
-  // ⬇ SELECT ACTIVE DATA SOURCE
-  const getCurrentData = () => {
-    switch (mode) {
-      case "search":
-        return { data: searchData || [], pagination: null };
-      case "filter":
-        return filterData || { data: [], pagination: {} };
-      default:
-        return billsData || { data: [], pagination: {} };
-    }
-  };
-
-  const data = getCurrentData();
-  const isLoading = billsLoading || searchLoading || filterLoading;
-
-  // Mode switching logic
-  useEffect(() => {
-    if (searchTerm) {
-      setMode("search");
-      setCurrentCursor(null);
-      setCursorHistory([]);
-    } else if (Object.keys(filters).length > 0) {
-      setMode("filter");
-    } else {
-      setMode("normal");
-    }
-  }, [searchTerm, filters]);
-
-  // Columns
   const columns = useMemo(
     () => [
       {
@@ -97,7 +51,6 @@ const BillTable = () => {
         header: "Status",
         cell: (info) => {
           const value = info.getValue();
-
           const colorMap = {
             Pending: "bg-yellow-100 text-yellow-700",
             PartiallyPaid: "bg-blue-100 text-blue-700",
@@ -105,17 +58,15 @@ const BillTable = () => {
             Cancelled: "bg-red-100 text-red-700",
             Refunded: "bg-purple-100 text-purple-700",
           };
-
           return (
             <span
-              className={`px-2 py-1 rounded text-xs font-medium ${colorMap[value]}`}
+              className={`px-2 py-1 rounded text-xs font-medium ${colorMap[value] || ""}`}
             >
               {value}
             </span>
           );
         },
       },
-
       {
         accessorKey: "admissionDate",
         header: "Admission Date",
@@ -131,64 +82,24 @@ const BillTable = () => {
         },
       },
     ],
-    []
+    [],
   );
 
-  // Pagination handlers
-  const handleNextPage = () => {
-    if (data?.pagination?.nextCursor) {
-      setCursorHistory((prev) => [...prev, currentCursor]);
-      setCurrentCursor(data.pagination.nextCursor);
-    }
-  };
-
-  const handlePrevPage = () => {
-    if (cursorHistory.length > 0) {
-      const previousCursor = cursorHistory.pop();
-      setCursorHistory([...cursorHistory]);
-      setCurrentCursor(previousCursor);
-    }
-  };
-
-  // Filter handlers
-  const handleApplyFilters = (newFilters) => {
-    setFilters(newFilters);
-    setCurrentCursor(null);
-    setCursorHistory([]);
-  };
-
-  const handleClearFilters = () => {
-    setFilters({});
-    setSearchTerm("");
-    setMode("normal");
-    setCurrentCursor(null);
-    setCursorHistory([]);
-  };
-
   return (
-    <div>
-      {/* HEADER */}
+    <div className="">
       <div className="flex justify-between items-center mb-4">
         <h2 className="text-2xl font-bold text-gray-800">Bills</h2>
-
-        <Link
-          className="btn-primary flex items-center gap-2"
-          to="/new-bill-entry"
-        >
+        <Link className="btn-primary" to="/new-bill-entry">
           <FaPlus /> New Bill
         </Link>
       </div>
 
-      {/* FULL FEATURED TABLE */}
       <Table
-        data={data?.data || []}
+        {...controller}
         columns={columns}
         path="bill"
-        loading={isLoading}
         searchConfig={{
           placeholder: "Search by Admission No, Name, Mobile...",
-          searchTerm,
-          onSearchChange: setSearchTerm,
         }}
         filtersConfig={[
           {
@@ -215,19 +126,17 @@ const BillTable = () => {
               "Refunded",
             ],
           },
-          { key: "fromDate", label: "From Date", type: "date" },
-          { key: "toDate", label: "To Date", type: "date" },
+          {
+            key: "fromDate",
+            label: "From Date",
+            type: "date",
+          },
+          {
+            key: "toDate",
+            label: "To Date",
+            type: "date",
+          },
         ]}
-        pagination={{
-          hasPrevious: cursorHistory.length > 0 && mode !== "search",
-          hasNext: !!data?.pagination?.nextCursor && mode !== "search",
-          currentPage: cursorHistory.length,
-        }}
-        onNextPage={handleNextPage}
-        onPrevPage={handlePrevPage}
-        onApplyFilters={handleApplyFilters}
-        onClearFilters={handleClearFilters}
-        activeFilters={filters}
         filterLabels={filterLabels}
       />
     </div>

@@ -7,16 +7,13 @@ import {
   filterAdmissionsService,
   getAllAdmissionsService,
   searchAdmissions,
-  findActiveAdmissionByPatient,
   createAdmissionService,
 } from "../services/admissionService";
 
 import { admissionFilterSchema, admissionSchema } from "@hospital/schemas";
 import { validateSearchQuery } from "../utils/queryValidation";
-import { searchPatient } from "../services/patientService";
 import { prisma } from "../lib/prisma";
-import { PAGINATION_CONFIG } from "../lib/paginationConfig";
-
+  
 // CREATE
 
 export const createAdmission = catchAsyncError(
@@ -134,95 +131,25 @@ export const deleteAdmission = catchAsyncError(
 
 //////////// SEARCH ADMISSIONS
 
+
+
 export const searchAdmissionsResults = catchAsyncError(
   async (req: Request, res: Response, next: NextFunction) => {
-    const { query } = req.query;
+    const { query, cursor } = req.query;
+
     const searchTerm = validateSearchQuery(query, next);
     if (!searchTerm) return;
 
-    // 1️⃣ Direct admission search (admissionId etc.)
-    const admissionsDirect = await searchAdmissions(searchTerm);
-
-    // Enrich direct admissions with patient and doctor data
-    const enrichedDirectAdmissions = await Promise.all(
-      admissionsDirect.map(async (admission: any) => {
-        const [patient, doctor] = await Promise.all([
-          prisma.patient.findUnique({
-            where: { id: admission.patientId },
-            select: {
-              id: true,
-              fullName: true,
-              gender: true,
-              mobileNumber: true,
-              aadhaarNumber: true,
-              hospitalPatientId: true,
-              address: true,
-            },
-          }),
-          prisma.doctor.findUnique({
-            where: { id: admission.doctorId },
-            select: {
-              id: true,
-              fullName: true,
-              specialization: true,
-              mobileNumber: true,
-            },
-          }),
-        ]);
-
-        return { ...admission, patient, doctor };
-      }),
-    );
-
-    // 2️⃣ Patient search
-    const patients = await searchPatient(searchTerm);
-    const patientIds = patients.results.map((p) => p.id);
-
-    // 3️⃣ Admissions via patients (already has include)
-    const admissionsViaPatients = patientIds.length
-      ? await prisma.admission.findMany({
-          where: {
-            patientId: { in: patientIds },
-          },
-          include: {
-            patient: {
-              select: {
-                id: true,
-                hospitalPatientId: true,
-                fullName: true,
-                gender: true,
-                mobileNumber: true,
-                aadhaarNumber: true,
-              },
-            },
-            doctor: {
-              select: {
-                id: true,
-                fullName: true,
-                specialization: true,
-              },
-            },
-          },
-          orderBy: { createdAt: "desc" },
-        })
-      : [];
-
-    // 4️⃣ Merge + deduplicate by admission.id
-    const mergedMap = new Map<number, any>();
-
-    enrichedDirectAdmissions.forEach((a: any) => mergedMap.set(a.id, a));
-    admissionsViaPatients.forEach((a: any) => mergedMap.set(a.id, a));
-
-    const mergedResults = Array.from(mergedMap.values());
+    const result = await searchAdmissions(searchTerm as string, cursor as string);
 
     sendResponse(res, {
       success: true,
       statusCode: StatusCodes.OK,
-      message: "Admission search results fetched successfully",
-      data: mergedResults,
+      message: "Search results fetched successfully",
+      data: result.data,
       pagination: {
-        nextCursor: undefined, // No cursor for merged results
-        hasMore: false,
+        nextCursor: result.pagination.nextCursor || undefined,
+        hasMore: result.pagination.hasMore,
       },
     });
   },

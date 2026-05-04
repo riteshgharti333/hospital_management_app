@@ -12,36 +12,53 @@ import {
 import { toast } from "sonner";
 import { getErrorMessage } from "../../utils/errorUtils";
 
-// Normal ledger entries
-export const useGetLedgers = (cursor = null, limit = 50) => {
+// Get ledgers by entity with cursor pagination
+export const useGetLedgersByEntity = (entityType, cursor) => {
   return useQuery({
-    queryKey: ["ledger", cursor, limit],
+    queryKey: ["ledger", entityType, cursor],
     queryFn: async () => {
-      const { data } = await getAllLedgersAPI(cursor, limit);
-      return data || { data: [], pagination: {} };
+      const { data } = await getLedgersByEntityAPI(entityType, cursor);
+      return data || { transactions: [], pagination: {}, currentBalance: 0 };
     },
-    keepPreviousData: false,
+    keepPreviousData: true,
     staleTime: 0,
     retry: 1,
+    enabled: !!entityType,
   });
 };
 
-// Filter ledger entries hook
-// Filter ledger entries hook
-export const useFilterLedgers = (entityType, filters) => {
+// Search ledgers by entity with cursor
+export const useSearchLedgersByEntity = (entityType, searchTerm, cursor) => {
   return useQuery({
-    queryKey: ["ledger-filter", entityType, filters],
+    queryKey: ["ledger-search", entityType, searchTerm, cursor],
     queryFn: async () => {
-      const { data } = await filterLedgerAPI(entityType, filters);
-      return {
-        transactions: data?.data || [],  // data.data is the array
-        pagination: data?.pagination || {},
-        currentBalance: null  // Filter doesn't return currentBalance
-      };
+      if (!searchTerm || searchTerm.length < 2) {
+        return { data: [], pagination: {} };
+      }
+      const { data } = await searchLedgerByEntityAPI(
+        entityType,
+        searchTerm,
+        cursor,
+      );
+      return data || { data: [], pagination: {} };
     },
-    enabled: !!entityType && Object.keys(filters || {}).length > 0,
+    enabled: !!entityType && !!searchTerm && searchTerm.length >= 2,
     retry: 1,
-    onError: (error) => toast.error(getErrorMessage(error)),
+    keepPreviousData: true,
+  });
+};
+
+// Filter ledgers by entity with cursor
+export const useFilterLedgers = (entityType, filters, cursor) => {
+  return useQuery({
+    queryKey: ["ledger-filter", entityType, filters, cursor],
+    queryFn: async () => {
+      const { data } = await filterLedgerAPI(entityType, filters, cursor);
+      return data || { transactions: [], pagination: {}, currentBalance: 0 };
+    },
+    enabled: !!entityType && !!filters && Object.keys(filters).length > 0,
+    retry: 1,
+    keepPreviousData: true,
   });
 };
 
@@ -59,19 +76,7 @@ export const useGetLedgerById = (id) => {
   });
 };
 
-// FETCH LEDGERS BY ENTITY
-export const useGetLedgersByEntity = (entityType) => {
-  return useQuery({
-    queryKey: ["ledger", entityType],
-    queryFn: async () => {
-      const { data } = await getLedgersByEntityAPI(entityType);
-      return data?.data || { transactions: [], currentBalance: 0 };
-    },
-    enabled: !!entityType,
-    retry: 1,
-    onError: (error) => toast.error(getErrorMessage(error)),
-  });
-};
+
 
 // CREATE LEDGER
 export const useCreateLedger = () => {
@@ -115,20 +120,5 @@ export const useDeleteLedger = () => {
       queryClient.invalidateQueries({ queryKey: ["ledger"] });
     },
     onError: (error) => toast.error(getErrorMessage(error)),
-  });
-};
-
-// SEARCH LEDGERS BY ENTITY (Hook definition - only once)
-export const useSearchLedgersByEntity = (entityType, searchTerm) => {
-  return useQuery({
-    queryKey: ["ledger-search", entityType, searchTerm],
-    queryFn: async () => {
-      if (!searchTerm || searchTerm.length < 2) return [];
-      const { data } = await searchLedgerByEntityAPI(entityType, searchTerm);
-      return data?.data || [];
-    },
-    enabled: !!entityType && !!searchTerm && searchTerm.length >= 2,
-    retry: 1,
-    onError: (err) => toast.error(getErrorMessage(err)),
   });
 };

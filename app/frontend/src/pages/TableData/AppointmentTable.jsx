@@ -1,4 +1,4 @@
-import { useMemo, useState, useEffect } from "react";
+import { useMemo } from "react";
 import { Link } from "react-router-dom";
 import { FaPlus } from "react-icons/fa6";
 import Table from "../../components/Table/Table";
@@ -7,6 +7,7 @@ import {
   useFilterAppointments,
   useSearchAppointments,
 } from "../../feature/hooks/useAppointment";
+import { useTableController } from "../../feature/hooks/useTableController";
 
 const filterLabels = {
   status: "Status",
@@ -15,56 +16,12 @@ const filterLabels = {
 };
 
 const AppointmentTable = () => {
-  const [currentCursor, setCurrentCursor] = useState(null);
-  const [cursorHistory, setCursorHistory] = useState([]);
-  const [searchTerm, setSearchTerm] = useState("");
-  const [filters, setFilters] = useState({});
-  const [mode, setMode] = useState("normal"); // normal | search | filter
-
-  // Normal dataset
-  const { data: appointmentData, isLoading: loadingAppointments } =
-    useGetAppointments(currentCursor, 50);
-
-  console.log(appointmentData);
-
-  // Search dataset
-  const { data: searchData, isLoading: loadingSearch } =
-    useSearchAppointments(searchTerm);
-
-  // Filter dataset
-  const { data: filterData, isLoading: loadingFilter } = useFilterAppointments({
-    ...filters,
-    cursor: currentCursor,
-    limit: 50,
+  // Controller handles ALL logic
+  const controller = useTableController({
+    normalDataHook: useGetAppointments,
+    searchDataHook: useSearchAppointments,
+    filterDataHook: useFilterAppointments,
   });
-
-  // Select dataset based on mode
-  const getCurrentData = () => {
-    switch (mode) {
-      case "search":
-        return { data: searchData || [], pagination: null };
-      case "filter":
-        return filterData || { data: [], pagination: {} };
-      default:
-        return appointmentData || { data: [], pagination: {} };
-    }
-  };
-
-  const data = getCurrentData();
-  const isLoading = loadingAppointments || loadingSearch || loadingFilter;
-
-  // Mode switching logic
-  useEffect(() => {
-    if (searchTerm) {
-      setMode("search");
-      setCurrentCursor(null);
-      setCursorHistory([]);
-    } else if (Object.keys(filters).length > 0) {
-      setMode("filter");
-    } else {
-      setMode("normal");
-    }
-  }, [searchTerm, filters]);
 
   const columns = useMemo(
     () => [
@@ -73,14 +30,19 @@ const AppointmentTable = () => {
         header: "Appointment Date",
         cell: (info) => {
           const date = new Date(info.getValue());
-          return date.toLocaleDateString();
+          return isNaN(date)
+            ? info.getValue()
+            : date.toLocaleDateString("en-GB", {
+                day: "2-digit",
+                month: "short",
+                year: "numeric",
+              });
         },
       },
       { accessorKey: "appointmentTime", header: "Appointment Time" },
       {
         accessorKey: "doctor.fullName",
         header: "Doctor Name",
-        accessorFn: (row) => row.doctor?.fullName || "N/A",
       },
       {
         accessorKey: "status",
@@ -110,37 +72,8 @@ const AppointmentTable = () => {
         },
       },
     ],
-    [],
+    []
   );
-
-  const handleNextPage = () => {
-    if (data?.pagination?.nextCursor && mode !== "search") {
-      setCursorHistory((prev) => [...prev, currentCursor]);
-      setCurrentCursor(data.pagination.nextCursor);
-    }
-  };
-
-  const handlePrevPage = () => {
-    if (cursorHistory.length > 0) {
-      const previousCursor = cursorHistory[cursorHistory.length - 1];
-      setCursorHistory((prev) => prev.slice(0, -1));
-      setCurrentCursor(previousCursor);
-    }
-  };
-
-  const handleApplyFilters = (newFilters) => {
-    setFilters(newFilters);
-    setCurrentCursor(null);
-    setCursorHistory([]);
-  };
-
-  const handleClearFilters = () => {
-    setFilters({});
-    setSearchTerm("");
-    setMode("normal");
-    setCurrentCursor(null);
-    setCursorHistory([]);
-  };
 
   return (
     <div className="">
@@ -152,14 +85,11 @@ const AppointmentTable = () => {
       </div>
 
       <Table
-        data={data?.data || []}
+        {...controller}
         columns={columns}
         path="appointment"
-        loading={isLoading}
         searchConfig={{
           placeholder: "Search by Doctor Name",
-          searchTerm,
-          onSearchChange: setSearchTerm,
         }}
         filtersConfig={[
           {
@@ -168,21 +98,17 @@ const AppointmentTable = () => {
             type: "select",
             options: ["BOOKED", "CANCELLED", "EXPIRED"],
           },
-          { key: "fromDate", label: "From Date", type: "date" },
-          { key: "toDate", label: "To Date", type: "date" },
+          {
+            key: "fromDate",
+            label: "From Date",
+            type: "date",
+          },
+          {
+            key: "toDate",
+            label: "To Date",
+            type: "date",
+          },
         ]}
-        pagination={{
-          hasPrevious: cursorHistory.length > 0 && mode !== "search",
-          hasNext: !!data?.pagination?.nextCursor && mode !== "search",
-          currentPage: cursorHistory.length,
-          total: data?.pagination?.total,
-          mode,
-        }}
-        onNextPage={handleNextPage}
-        onPrevPage={handlePrevPage}
-        onApplyFilters={handleApplyFilters}
-        onClearFilters={handleClearFilters}
-        activeFilters={filters}
         filterLabels={filterLabels}
       />
     </div>

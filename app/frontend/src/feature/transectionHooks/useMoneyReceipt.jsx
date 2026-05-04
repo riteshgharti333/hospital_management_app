@@ -11,18 +11,22 @@ import {
 import { toast } from "sonner";
 import { getErrorMessage } from "../../utils/errorUtils";
 
-export const useGetMoneyReceipts = (cursor, limit = 50) => {
+// Normal money receipts with cursor pagination
+export const useGetMoneyReceipts = (cursor) => {
   return useQuery({
-    queryKey: ["moneyReceipt", cursor, limit],
+    queryKey: ["moneyReceipt", cursor],
     queryFn: async () => {
-      const { data } = await getAllMoneyReceiptsAPI(cursor, limit);
+      const { data } = await getAllMoneyReceiptsAPI(cursor);
       return data || { data: [], pagination: {} };
     },
+    keepPreviousData: true,
+    staleTime: 0,
     retry: 1,
-    onError: (error) => toast.error(getErrorMessage(error)),
+    enabled: true,
   });
 };
 
+// Get money receipt by ID (keep this as is - it's for detail view)
 export const useGetMoneyReceiptById = (id) => {
   return useQuery({
     queryKey: ["moneyReceipt", id],
@@ -31,7 +35,37 @@ export const useGetMoneyReceiptById = (id) => {
       return data.data;
     },
     enabled: !!id,
-    onError: (error) => toast.error(getErrorMessage(error)),
+  });
+};
+
+// Search money receipts with cursor
+export const useSearchMoneyReceipts = (searchTerm, cursor) => {
+  return useQuery({
+    queryKey: ["moneyReceipt-search", searchTerm, cursor],
+    queryFn: async () => {
+      if (!searchTerm || searchTerm.length < 2) {
+        return { data: [], pagination: {} };
+      }
+      const { data } = await searchMoneyReceiptAPI(searchTerm, cursor);
+      return data || { data: [], pagination: {} };
+    },
+    enabled: !!searchTerm && searchTerm.length >= 2,
+    retry: 1,
+    keepPreviousData: true,
+  });
+};
+
+// Filter money receipts with cursor
+export const useFilterMoneyReceipts = (filters, cursor) => {
+  return useQuery({
+    queryKey: ["moneyReceipt-filter", filters, cursor],
+    queryFn: async () => {
+      const { data } = await filterMoneyReceiptAPI(filters, cursor);
+      return data || { data: [], pagination: {} };
+    },
+    enabled: !!filters && Object.keys(filters).length > 0,
+    retry: 1,
+    keepPreviousData: true,
   });
 };
 
@@ -71,34 +105,5 @@ export const useDeleteMoneyReceipt = () => {
       queryClient.invalidateQueries({ queryKey: ["moneyReceipt"] });
     },
     onError: (error) => toast.error(getErrorMessage(error)),
-  });
-};
-
-// SEARCH
-export const useSearchMoneyReceipts = (searchTerm) => {
-  return useQuery({
-    queryKey: ["moneyReceipt", "search", searchTerm],
-    queryFn: async () => {
-      if (!searchTerm) return [];
-      const { data } = await searchMoneyReceiptAPI(searchTerm);
-      return data?.data || [];
-    },
-    enabled: !!searchTerm,
-    retry: 1,
-    onError: (err) => toast.error(getErrorMessage(err)),
-  });
-};
-
-// FILTER
-export const useFilterMoneyReceipts = (filters) => {
-  return useQuery({
-    queryKey: ["moneyReceipt", "filter", filters],
-    queryFn: async () => {
-      const { data } = await filterMoneyReceiptAPI(filters);
-      return data || { data: [], pagination: {} };
-    },
-    enabled: !!filters,
-    retry: 1,
-    onError: (err) => toast.error(getErrorMessage(err)),
   });
 };

@@ -1,13 +1,13 @@
-import { useMemo, useState, useEffect } from "react";
-import { FaPlus } from "react-icons/fa";
+import { useMemo } from "react";
+import { FaPlus } from "react-icons/fa6";
 import { Link } from "react-router-dom";
 import Table from "../../components/Table/Table";
-
 import {
   useGetMoneyReceipts,
   useSearchMoneyReceipts,
   useFilterMoneyReceipts,
 } from "../../feature/transectionHooks/useMoneyReceipt";
+import { useTableController } from "../../feature/hooks/useTableController";
 
 const filterLabels = {
   paymentMode: "Payment Mode",
@@ -17,55 +17,12 @@ const filterLabels = {
 };
 
 const MoneyReceiptTable = () => {
-  const [searchTerm, setSearchTerm] = useState("");
-  const [filters, setFilters] = useState({});
-  const [mode, setMode] = useState("normal");
-  const [currentCursor, setCurrentCursor] = useState(null);
-  const [cursorHistory, setCursorHistory] = useState([]);
-
-  // NORMAL GET
-  const {
-    data: receiptsData,
-    isLoading: loadingReceipts,
-  } = useGetMoneyReceipts(currentCursor, 50);
-
-  // SEARCH GET
-  const {
-    data: searchData,
-    isLoading: loadingSearch,
-  } = useSearchMoneyReceipts(searchTerm);
-
-  // FILTER GET
-  const {
-    data: filterData,
-    isLoading: loadingFilter,
-  } = useFilterMoneyReceipts({
-    ...filters,
-    cursor: currentCursor,
-    limit: 50,
+  // Controller handles ALL logic
+  const controller = useTableController({
+    normalDataHook: useGetMoneyReceipts,
+    searchDataHook: useSearchMoneyReceipts,
+    filterDataHook: useFilterMoneyReceipts,
   });
-
-  // Determine which dataset to use
-  const finalData = (() => {
-    if (mode === "search") return { data: searchData || [], pagination: null };
-    if (mode === "filter")
-      return filterData || { data: [], pagination: {} };
-    return receiptsData || { data: [], pagination: {} };
-  })();
-
-  const isLoading = loadingReceipts || loadingSearch || loadingFilter;
-
-  useEffect(() => {
-    if (searchTerm) {
-      setMode("search");
-      setCurrentCursor(null);
-      setCursorHistory([]);
-    } else if (Object.keys(filters).length > 0) {
-      setMode("filter");
-    } else {
-      setMode("normal");
-    }
-  }, [searchTerm, filters]);
 
   const columns = useMemo(
     () => [
@@ -73,8 +30,14 @@ const MoneyReceiptTable = () => {
         accessorKey: "date",
         header: "Date",
         cell: (info) => {
-          const value = new Date(info.getValue());
-          return value.toLocaleDateString("en-GB");
+          const date = new Date(info.getValue());
+          return isNaN(date)
+            ? info.getValue()
+            : date.toLocaleDateString("en-GB", {
+                day: "2-digit",
+                month: "short",
+                year: "numeric",
+              });
         },
       },
       { accessorKey: "patientName", header: "Patient" },
@@ -82,7 +45,10 @@ const MoneyReceiptTable = () => {
       {
         accessorKey: "amount",
         header: "Amount (₹)",
-        cell: (info) => `₹${info.getValue()}`,
+        cell: (info) => {
+          const amount = parseFloat(info.getValue()).toFixed(2);
+          return <span className="font-medium">₹ {amount}</span>;
+        },
       },
       {
         accessorKey: "paymentMode",
@@ -96,7 +62,6 @@ const MoneyReceiptTable = () => {
             Cheque: "bg-green-100 text-green-800",
             Other: "bg-gray-100 text-gray-800",
           };
-
           return (
             <span
               className={`px-2 py-1 rounded text-xs font-medium ${
@@ -134,38 +99,8 @@ const MoneyReceiptTable = () => {
     []
   );
 
-  const handleNextPage = () => {
-    if (finalData?.pagination?.nextCursor) {
-      setCursorHistory((prev) => [...prev, currentCursor]);
-      setCurrentCursor(finalData.pagination.nextCursor);
-    }
-  };
-
-  const handlePrevPage = () => {
-    if (cursorHistory.length > 0) {
-      const prevCursor = cursorHistory[cursorHistory.length - 1];
-      setCursorHistory((prev) => prev.slice(0, -1));
-      setCurrentCursor(prevCursor);
-    }
-  };
-
-  const handleApplyFilters = (newFilters) => {
-    setFilters(newFilters);
-    setCurrentCursor(null);
-  };
-
-  const handleClearFilters = () => {
-    setFilters({});
-    setSearchTerm("");
-    setMode("normal");
-    setCurrentCursor(null);
-    setCursorHistory([]);
-  };
-
-
   return (
-    <div>
-      {/* Header */}
+    <div className="">
       <div className="flex justify-between items-center mb-4">
         <h2 className="text-2xl font-bold text-gray-800">Money Receipts</h2>
         <Link className="btn-primary" to="/new-money-receipt-entry">
@@ -173,16 +108,12 @@ const MoneyReceiptTable = () => {
         </Link>
       </div>
 
-      {/* TABLE */}
       <Table
-        data={finalData.data}
+        {...controller}
         columns={columns}
         path="money-receipt"
-        loading={isLoading}
         searchConfig={{
           placeholder: "Search by Name, Mobile or Admission No...",
-          searchTerm,
-          onSearchChange: setSearchTerm,
         }}
         filtersConfig={[
           {
@@ -203,19 +134,17 @@ const MoneyReceiptTable = () => {
             type: "select",
             options: ["Active", "Cancelled", "Refunded"],
           },
-          { key: "fromDate", label: "From Date", type: "date" },
-          { key: "toDate", label: "To Date", type: "date" },
+          {
+            key: "fromDate",
+            label: "From Date",
+            type: "date",
+          },
+          {
+            key: "toDate",
+            label: "To Date",
+            type: "date",
+          },
         ]}
-        pagination={{
-          hasPrevious: cursorHistory.length > 0 && mode !== "search",
-          hasNext: !!finalData?.pagination?.nextCursor && mode !== "search",
-          currentPage: cursorHistory.length,
-        }}
-        onNextPage={handleNextPage}
-        onPrevPage={handlePrevPage}
-        onApplyFilters={handleApplyFilters}
-        onClearFilters={handleClearFilters}
-        activeFilters={filters}
         filterLabels={filterLabels}
       />
     </div>

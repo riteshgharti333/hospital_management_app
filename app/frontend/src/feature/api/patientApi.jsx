@@ -3,14 +3,27 @@ import axiosInstance from "../../utils/axiosInstance";
 export const createPatientRecordAPI = (data) =>
   axiosInstance.post("/patient", data);
 
-export const getAllPatientsAPI = (cursor, limit) =>
+export const getAllPatientsAPI = (cursor) =>
   axiosInstance.get("/patient", {
-    params: { cursor, limit },
+    params: {
+      cursor: cursor || undefined,
+    },
   });
 
-export const filterPatientAPI = (filters) =>
+export const searchPatientAPI = (searchTerm, cursor) =>
+  axiosInstance.get(`/patient/search`, {
+    params: {
+      query: searchTerm,
+      cursor: cursor || undefined,
+    },
+  });
+
+export const filterPatientAPI = (filters, cursor) =>
   axiosInstance.get("/patient/filter", {
-    params: filters,
+    params: {
+      ...filters,
+      cursor: cursor || undefined,
+    },
   });
 
 export const getPatientRecordByIdAPI = (id) =>
@@ -21,8 +34,3 @@ export const updatePatientRecordAPI = (id, data) =>
 
 export const deletePatientRecordAPI = (id) =>
   axiosInstance.delete(`/patient/${id}`);
-
-export const searchPatientAPI = (searchTerm) =>
-  axiosInstance.get(`/patient/search`, {
-    params: { query: searchTerm },
-  });

@@ -4,25 +4,31 @@ import axiosInstance from "../../utils/axiosInstance";
 export const createAppointmentAPI = (data) =>
   axiosInstance.post("/appointment", data);
 
+
 // GET ALL (paginated)
-export const getAllAppointmentsAPI = (cursor, limit) =>
+export const getAllAppointmentsAPI = (cursor) =>
   axiosInstance.get("/appointment", {
     params: {
-      cursor: cursor ? encodeURIComponent(cursor) : undefined,
-      limit,
+      cursor: cursor || undefined,
+    },
+  });
+
+// SEARCH
+export const searchAppointmentAPI = (searchTerm, cursor) =>
+  axiosInstance.get("/appointment/search", {
+    params: {
+      query: searchTerm,
+      cursor: cursor || undefined,
     },
   });
 
 // FILTER
-export const filterAppointmentAPI = (filters) =>
+export const filterAppointmentAPI = (filters, cursor) =>
   axiosInstance.get("/appointment/filter", {
-    params: filters,
-  });
-
-// SEARCH
-export const searchAppointmentAPI = (searchTerm) =>
-  axiosInstance.get("/appointment/search", {
-    params: { query: searchTerm },
+    params: {
+      ...filters,
+      cursor: cursor || undefined,
+    },
   });
 
 // GET BY ID

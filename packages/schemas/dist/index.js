@@ -77,15 +77,11 @@ exports.DepartmentNameEnum = zod_1.z.enum([
 exports.departmentSchema = zod_1.z.object({
     name: exports.DepartmentNameEnum,
     description: zod_1.z.string().optional(),
-    headId: zod_1.z.coerce.number().int().positive("Valid doctor ID is required"),
+    doctorId: zod_1.z.coerce.number().int().positive("Valid doctor ID is required"),
     status: exports.DepartmentStatusEnum.optional().default("ACTIVE"),
 });
 // APPOINTMENT SCHEMAS
-exports.AppointmentStatus = zod_1.z.enum([
-    "BOOKED",
-    "CANCELLED",
-    "EXPIRED",
-]);
+exports.AppointmentStatus = zod_1.z.enum(["BOOKED", "CANCELLED", "EXPIRED"]);
 exports.appointmentSchema = zod_1.z.object({
     appointmentDate: zod_1.z
         .string()

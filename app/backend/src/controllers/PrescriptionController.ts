@@ -14,41 +14,50 @@ import {
   filterPrescriptionsService,
   getPrescriptionsByAdmission,
 } from "../services/prescriptionService";
-import { prescriptionFilterSchema, prescriptionSchema } from "@hospital/schemas";
+import {
+  prescriptionFilterSchema,
+  prescriptionSchema,
+} from "@hospital/schemas";
 import { validateSearchQuery } from "../utils/queryValidation";
 import { PAGINATION_CONFIG } from "../lib/paginationConfig";
 import { uploadFileToS3 } from "../aws/s3.service";
 
-
 export const createPrescriptionRecord = catchAsyncError(
   async (req: Request, res: Response, next: NextFunction) => {
     // Parse medicines if string
-    if (req.body.medicines && typeof req.body.medicines === 'string') {
+    if (req.body.medicines && typeof req.body.medicines === "string") {
       req.body.medicines = JSON.parse(req.body.medicines);
     }
-    
+
     // Clean and trim string fields
     if (req.body.status) {
       req.body.status = req.body.status.trim();
     }
-    
+
     if (req.body.notes) {
       req.body.notes = req.body.notes.trim();
     }
 
     // Remove empty fields
-    if (req.body.prescriptionDate === '') {
+    if (req.body.prescriptionDate === "") {
       delete req.body.prescriptionDate;
     }
 
     // Ensure admissionId is a valid number
-    if (!req.body.admissionId || req.body.admissionId === '') {
-      return next(new ErrorHandler("Admission ID is required", StatusCodes.BAD_REQUEST));
+    if (!req.body.admissionId || req.body.admissionId === "") {
+      return next(
+        new ErrorHandler("Admission ID is required", StatusCodes.BAD_REQUEST),
+      );
     }
-    
+
     const admissionId = Number(req.body.admissionId);
     if (isNaN(admissionId)) {
-      return next(new ErrorHandler("Admission ID must be a valid number", StatusCodes.BAD_REQUEST));
+      return next(
+        new ErrorHandler(
+          "Admission ID must be a valid number",
+          StatusCodes.BAD_REQUEST,
+        ),
+      );
     }
     req.body.admissionId = admissionId;
 
@@ -98,7 +107,9 @@ export const getPrescriptionRecordById = catchAsyncError(
 
     const prescription = await getPrescriptionById(id);
     if (!prescription) {
-      return next(new ErrorHandler("Prescription not found", StatusCodes.NOT_FOUND));
+      return next(
+        new ErrorHandler("Prescription not found", StatusCodes.NOT_FOUND),
+      );
     }
 
     sendResponse(res, {
@@ -115,7 +126,9 @@ export const getPrescriptionRecordById = catchAsyncError(
 export const uploadPrescriptionDoc = catchAsyncError(
   async (req: Request, res: Response, next: NextFunction) => {
     if (!req.file) {
-      return next(new ErrorHandler("No file uploaded", StatusCodes.BAD_REQUEST));
+      return next(
+        new ErrorHandler("No file uploaded", StatusCodes.BAD_REQUEST),
+      );
     }
 
     const { url } = await uploadFileToS3(req.file);
@@ -132,12 +145,12 @@ export const uploadPrescriptionDoc = catchAsyncError(
 export const updatePrescriptionRecord = catchAsyncError(
   async (req: Request, res: Response, next: NextFunction) => {
     const id = Number(req.params.id);
-    
+
     // Parse medicines if string
-    if (req.body.medicines && typeof req.body.medicines === 'string') {
+    if (req.body.medicines && typeof req.body.medicines === "string") {
       req.body.medicines = JSON.parse(req.body.medicines);
     }
-    
+
     // Convert admissionId to number
     if (req.body.admissionId) {
       req.body.admissionId = Number(req.body.admissionId);
@@ -172,7 +185,9 @@ export const deletePrescriptionRecord = catchAsyncError(
 
     const deletedPrescription = await deletePrescription(id);
     if (!deletedPrescription) {
-      return next(new ErrorHandler("Prescription not found", StatusCodes.NOT_FOUND));
+      return next(
+        new ErrorHandler("Prescription not found", StatusCodes.NOT_FOUND),
+      );
     }
 
     sendResponse(res, {
@@ -191,7 +206,10 @@ export const searchPrescriptionResults = catchAsyncError(
     const searchTerm = validateSearchQuery(query, next);
     if (!searchTerm) return;
 
-    const result = await searchPrescription(searchTerm as string, cursor as string);
+    const result = await searchPrescription(
+      searchTerm as string,
+      cursor as string,
+    );
 
     sendResponse(res, {
       success: true,
@@ -227,7 +245,9 @@ export const getPrescriptionsByAdmissionId = catchAsyncError(
   async (req: Request, res: Response, next: NextFunction) => {
     const admissionId = Number(req.params.admissionId);
     if (isNaN(admissionId)) {
-      return next(new ErrorHandler("Invalid Admission ID", StatusCodes.BAD_REQUEST));
+      return next(
+        new ErrorHandler("Invalid Admission ID", StatusCodes.BAD_REQUEST),
+      );
     }
 
     const prescriptions = await getPrescriptionsByAdmission(admissionId);

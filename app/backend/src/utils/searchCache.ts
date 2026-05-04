@@ -9,6 +9,8 @@ interface SearchConfig {
   sortField?: string;
   maxResults?: number;
   selectFields?: string[];
+  relationFields?: Record<string, string[]>;
+  include?: Record<string, any>;
 }
 
 interface SearchResult {
@@ -87,32 +89,94 @@ export const createSearchService = (
 
     const escapeField = (f: string) => `"${f}"`;
 
+    // Helper to get the correct Prisma model name
+    const getModelName = (relation: string): string => {
+      const modelName = relation.charAt(0).toUpperCase() + relation.slice(1);
+      return modelName;
+    };
+
+    // Helper to escape relation fields
+    const escapeRelationField = (relation: string, field: string) => {
+      const modelName = getModelName(relation);
+      return `"${modelName}"."${field}"`;
+    };
+
     // =========================
     // BUILD WHERE CLAUSE
     // =========================
     let whereClause = "";
 
+    // Collect all search fields including relation fields
+    const getAllSearchFields = () => {
+      const fields: {
+        type: "exact" | "prefix" | "similar";
+        expression: string;
+        paramIndex?: number;
+      }[] = [];
+
+      // Main table fields
+      config.exactFields?.forEach((f: string) =>
+        fields.push({ type: "exact", expression: `LOWER(${escapeField(f)})` }),
+      );
+      config.prefixFields?.forEach((f: string) =>
+        fields.push({ type: "prefix", expression: `LOWER(${escapeField(f)})` }),
+      );
+      if (useSimilarity) {
+        config.similarFields?.forEach((f: string) =>
+          fields.push({
+            type: "similar",
+            expression: `LOWER(${escapeField(f)})`,
+          }),
+        );
+      }
+
+      // Relation fields
+      if (config.relationFields) {
+        Object.entries(config.relationFields).forEach(
+          ([relation, relationFieldList]) => {
+            relationFieldList.forEach((f: string) => {
+              fields.push({
+                type: "exact",
+                expression: `LOWER(${escapeRelationField(relation, f)})`,
+              });
+              fields.push({
+                type: "prefix",
+                expression: `LOWER(${escapeRelationField(relation, f)})`,
+              });
+              if (useSimilarity) {
+                fields.push({
+                  type: "similar",
+                  expression: `LOWER(${escapeRelationField(relation, f)})`,
+                });
+              }
+            });
+          },
+        );
+      }
+
+      return fields;
+    };
+
+    // Get all search fields to build the query
+    const searchFields = getAllSearchFields();
+
     if (isMultiWord) {
       const wordConditions = searchWords
         .map((word) => {
-          const exactChecks = config.exactFields.length
-            ? config.exactFields
-                .map((f) => `LOWER(${escapeField(f)}) = '${word}'`)
-                .join(" OR ")
-            : "";
+          const exactChecks = searchFields
+            .filter((f) => f.type === "exact")
+            .map((f) => `${f.expression} = '${word}'`)
+            .join(" OR ");
 
-          const prefixChecks = config.prefixFields.length
-            ? config.prefixFields
-                .map((f) => `LOWER(${escapeField(f)}) LIKE '${word}%'`)
-                .join(" OR ")
-            : "";
+          const prefixChecks = searchFields
+            .filter((f) => f.type === "prefix")
+            .map((f) => `${f.expression} LIKE '${word}%'`)
+            .join(" OR ");
 
-          const similarChecks =
-            useSimilarity && config.similarFields.length
-              ? config.similarFields
-                  .map((f) => `LOWER(${escapeField(f)}) % '${word}'`)
-                  .join(" OR ")
-              : "";
+          const similarChecks = searchFields
+            .filter((f) => f.type === "similar")
+            .map((f) => `${f.expression} % '${word}'`)
+            .join(" OR ");
 
           const allChecks = [exactChecks, prefixChecks, similarChecks]
             .filter(Boolean)
@@ -124,24 +188,22 @@ export const createSearchService = (
 
       whereClause = wordConditions;
     } else {
-      const exactConditions = config.exactFields.length
-        ? config.exactFields
-            .map((f) => `LOWER(${escapeField(f)}) = $1`)
-            .join(" OR ")
-        : "";
+      let paramCounter = 1;
 
-      const prefixConditions = config.prefixFields.length
-        ? config.prefixFields
-            .map((f) => `LOWER(${escapeField(f)}) LIKE $2`)
-            .join(" OR ")
-        : "";
+      const exactConditions = searchFields
+        .filter((f) => f.type === "exact")
+        .map((f) => `${f.expression} = $${paramCounter++}`)
+        .join(" OR ");
 
-      const similarConditions =
-        useSimilarity && config.similarFields.length
-          ? config.similarFields
-              .map((f) => `LOWER(${escapeField(f)}) % $3`)
-              .join(" OR ")
-          : "";
+      const prefixConditions = searchFields
+        .filter((f) => f.type === "prefix")
+        .map((f) => `${f.expression} LIKE $${paramCounter++}`)
+        .join(" OR ");
+
+      const similarConditions = searchFields
+        .filter((f) => f.type === "similar")
+        .map((f) => `${f.expression} % $${paramCounter++}`)
+        .join(" OR ");
 
       const whereParts: string[] = [];
       if (exactConditions) whereParts.push(`(${exactConditions})`);
@@ -163,7 +225,7 @@ export const createSearchService = (
 
     // =========================
     // CURSOR CONDITION
-    // ========================= 
+    // =========================
 
     let cursorCondition = "";
     if (cursorDate !== null && cursorId !== null) {
@@ -177,27 +239,28 @@ export const createSearchService = (
         )
       `;
     }
+
     // =========================
     // RANKING LOGIC
     // =========================
     let caseWhen: string[] = [];
     if (!isMultiWord) {
-      const exactConditions = config.exactFields.length
-        ? config.exactFields
-            .map((f) => `LOWER(${escapeField(f)}) = $1`)
-            .join(" OR ")
-        : "";
-      const prefixConditions = config.prefixFields.length
-        ? config.prefixFields
-            .map((f) => `LOWER(${escapeField(f)}) LIKE $2`)
-            .join(" OR ")
-        : "";
-      const similarConditions =
-        useSimilarity && config.similarFields.length
-          ? config.similarFields
-              .map((f) => `LOWER(${escapeField(f)}) % $3`)
-              .join(" OR ")
-          : "";
+      let paramCounter = 1;
+
+      const exactConditions = searchFields
+        .filter((f) => f.type === "exact")
+        .map((f) => `${f.expression} = $${paramCounter++}`)
+        .join(" OR ");
+
+      const prefixConditions = searchFields
+        .filter((f) => f.type === "prefix")
+        .map((f) => `${f.expression} LIKE $${paramCounter++}`)
+        .join(" OR ");
+
+      const similarConditions = searchFields
+        .filter((f) => f.type === "similar")
+        .map((f) => `${f.expression} % $${paramCounter++}`)
+        .join(" OR ");
 
       if (exactConditions) caseWhen.push(`WHEN ${exactConditions} THEN 1`);
       if (prefixConditions) caseWhen.push(`WHEN ${prefixConditions} THEN 2`);
@@ -208,17 +271,66 @@ export const createSearchService = (
     const caseExpr = caseWhen.length
       ? `CASE ${caseWhen.join(" ")} END AS priority`
       : "1 AS priority";
+
     const similarityExpr =
-      !isMultiWord && useSimilarity && config.similarFields.length
-        ? `GREATEST(${config.similarFields.map((f) => `similarity(LOWER(${escapeField(f)}), $3)`).join(", ")}) AS rank_score`
+      !isMultiWord &&
+      useSimilarity &&
+      (config.similarFields.length > 0 ||
+        (config.relationFields &&
+          Object.values(config.relationFields).some(
+            (fields) => fields.length > 0,
+          )))
+        ? `GREATEST(${(() => {
+            const similarExprs: string[] = [];
+            let paramCounter = 1;
+
+            config.similarFields?.forEach((f: string) => {
+              similarExprs.push(
+                `similarity(LOWER(${escapeField(f)}), $${paramCounter++})`,
+              );
+            });
+
+            if (config.relationFields) {
+              Object.entries(config.relationFields).forEach(
+                ([relation, fields]) => {
+                  fields.forEach((f: string) => {
+                    similarExprs.push(
+                      `similarity(LOWER(${escapeRelationField(relation, f)}), $${paramCounter++})`,
+                    );
+                  });
+                },
+              );
+            }
+
+            return similarExprs.length > 0 ? similarExprs.join(", ") : "0";
+          })()}) AS rank_score`
         : `0 AS rank_score`;
+
+    // =========================
+    // BUILD JOINS FOR RELATION FIELDS
+    // =========================
+    let joinClauses = "";
+    if (config.relationFields) {
+      Object.keys(config.relationFields).forEach((relation) => {
+        const modelName = getModelName(relation);
+        joinClauses += `
+          LEFT JOIN "${modelName}" ON "${config.tableName}"."${relation}Id" = "${modelName}"."id"
+        `;
+      });
+    }
 
     // =========================
     // SELECT FIELDS
     // =========================
-    const selectFields = config.selectFields?.length
-      ? config.selectFields.map((f) => `"${f}"`).join(", ")
-      : "*";
+    // If include is specified, we only need IDs from SQL (relations fetched later)
+    // Otherwise, select all requested fields
+    const selectFields = config.include
+      ? `"${config.tableName}".id`
+      : config.selectFields?.length
+        ? config.selectFields
+            .map((f) => `"${config.tableName}"."${f}"`)
+            .join(", ")
+        : `"${config.tableName}".*`;
 
     // =========================
     // FINAL QUERY WITH PAGINATION
@@ -228,9 +340,10 @@ export const createSearchService = (
              ${caseExpr},
              ${similarityExpr}
       FROM "${config.tableName}"
+      ${joinClauses}
       WHERE (${whereClause})
       ${cursorCondition}
-      ORDER BY "${config.sortField || "createdAt"}" DESC, id DESC
+      ORDER BY "${config.tableName}"."${config.sortField || "createdAt"}" DESC, "${config.tableName}".id DESC
       LIMIT ${safeLimit + 1}
     `;
 
@@ -239,12 +352,24 @@ export const createSearchService = (
     if (isMultiWord) {
       results = await prisma.$queryRawUnsafe<any[]>(query);
     } else {
-      results = await prisma.$queryRawUnsafe<any[]>(
-        query,
-        normalizedTerm,
-        `${normalizedTerm}%`,
-        normalizedTerm,
-      );
+      // Build parameters array for single word search
+      const params: string[] = [];
+
+      // Count parameters needed
+      const exactCount = searchFields.filter((f) => f.type === "exact").length;
+      const prefixCount = searchFields.filter(
+        (f) => f.type === "prefix",
+      ).length;
+      const similarCount = searchFields.filter(
+        (f) => f.type === "similar",
+      ).length;
+
+      // Add parameters in order: exact, prefix, similar
+      for (let i = 0; i < exactCount; i++) params.push(normalizedTerm);
+      for (let i = 0; i < prefixCount; i++) params.push(`${normalizedTerm}%`);
+      for (let i = 0; i < similarCount; i++) params.push(normalizedTerm);
+
+      results = await prisma.$queryRawUnsafe<any[]>(query, ...params);
     }
 
     // =========================
@@ -275,6 +400,45 @@ export const createSearchService = (
     }
 
     // =========================
+    // FETCH FULL DATA WITH RELATIONS (only if include is specified)
+    // =========================
+    let finalData = paginatedResults;
+
+    if (config.include && paginatedResults.length > 0) {
+      const ids = paginatedResults.map((item: any) => item.id);
+
+      // Get the Prisma model name (lowercase first letter)
+      const modelName =
+        config.tableName.charAt(0).toLowerCase() + config.tableName.slice(1);
+
+      // Fetch full data with relations
+      const fullResults = await (prisma as any)[modelName].findMany({
+        where: {
+          id: {
+            in: ids,
+          },
+        },
+        include: config.include,
+      });
+
+      // Create a map for quick lookup
+      const dataMap = new Map(fullResults.map((item: any) => [item.id, item]));
+
+      // Merge search metadata with full data while maintaining order
+      finalData = paginatedResults.map((searchItem: any) => {
+        const fullItem = dataMap.get(searchItem.id);
+        if (fullItem) {
+          return {
+            ...fullItem,
+            priority: searchItem.priority,
+            rank_score: searchItem.rank_score,
+          };
+        }
+        return searchItem;
+      });
+    }
+
+    // =========================
     // Performance logging
     // =========================
     const duration = performance.now() - start;
@@ -285,7 +449,7 @@ export const createSearchService = (
     }
 
     return {
-      data: paginatedResults,
+      data: finalData,
       pagination: {
         nextCursor,
         hasMore,

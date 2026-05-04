@@ -11,17 +11,52 @@ import {
 import { toast } from "sonner";
 import { getErrorMessage } from "../../utils/errorUtils";
 
-export const useGetBills = (cursor, limit = 50) => {
+// Normal bills with cursor pagination
+export const useGetBills = (cursor) => {
   return useQuery({
-    queryKey: ["bills", cursor, limit],
+    queryKey: ["bills", cursor],
     queryFn: async () => {
-      const { data } = await getAllBillsAPI(cursor, limit);
+      const { data } = await getAllBillsAPI(cursor);
       return data || { data: [], pagination: {} };
     },
+    keepPreviousData: true,
+    staleTime: 0,
     retry: 1,
-    onError: (error) => toast.error(getErrorMessage(error)),
+    enabled: true,
   });
 };
+
+// Search bills with cursor
+export const useSearchBills = (searchTerm, cursor) => {
+  return useQuery({
+    queryKey: ["bill-search", searchTerm, cursor],
+    queryFn: async () => {
+      if (!searchTerm || searchTerm.length < 2) {
+        return { data: [], pagination: {} };
+      }
+      const { data } = await searchBillsAPI(searchTerm, cursor);
+      return data || { data: [], pagination: {} };
+    },
+    enabled: !!searchTerm && searchTerm.length >= 2,
+    retry: 1,
+    keepPreviousData: true,
+  });
+};
+
+// Filter bills with cursor
+export const useFilterBills = (filters, cursor) => {
+  return useQuery({
+    queryKey: ["bill-filter", filters, cursor],
+    queryFn: async () => {
+      const { data } = await filterBillsAPI(filters, cursor);
+      return data || { data: [], pagination: {} };
+    },
+    enabled: !!filters && Object.keys(filters).length > 0,
+    retry: 1,
+    keepPreviousData: true,
+  });
+};
+
 
 export const useGetBillById = (id) => {
   return useQuery({
@@ -71,29 +106,3 @@ export const useDeleteBill = () => {
   });
 };
 
-export const useSearchBills = (searchTerm) => {
-  return useQuery({
-    queryKey: ["bill-search", searchTerm],
-    queryFn: async () => {
-      if (!searchTerm) return [];
-      const { data } = await searchBillsAPI(searchTerm);
-      return data?.data || [];
-    },
-    enabled: !!searchTerm,
-    retry: 1,
-    onError: (e) => toast.error(getErrorMessage(e)),
-  });
-};
-
-export const useFilterBills = (filters) => {
-  return useQuery({
-    queryKey: ["bill-filter", filters],
-    queryFn: async () => {
-      const { data } = await filterBillsAPI(filters);
-      return data || { data: [], pagination: {} };
-    },
-    enabled: !!filters,
-    retry: 1,
-    onError: (e) => toast.error(getErrorMessage(e)),
-  });
-};

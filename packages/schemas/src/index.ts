@@ -97,7 +97,7 @@ export const departmentSchema = z.object({
 
   description: z.string().optional(),
 
-  headId: z.coerce.number().int().positive("Valid doctor ID is required"),
+  doctorId: z.coerce.number().int().positive("Valid doctor ID is required"),
 
   status: DepartmentStatusEnum.optional().default("ACTIVE"),
 });

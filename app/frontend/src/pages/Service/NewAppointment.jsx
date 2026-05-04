@@ -27,10 +27,13 @@ const NewAppointment = () => {
   const [searchDoctorQuery, setSearchDoctorQuery] = useState("");
   const [selectedDoctor, setSelectedDoctor] = useState(null);
 
-  const { data: doctorSearchResults, isLoading: searchingDoctors } =
-    useSearchDoctors(searchDoctorQuery, {
-      enabled: searchDoctorQuery.length >= 2,
-    });
+ 
+
+      const { data: searchResponse, isLoading: searchingDoctors } =
+      useSearchDoctors(searchDoctorQuery);
+    
+      const doctorSearchResults = searchResponse?.data || [];
+    
 
   const {
     register,

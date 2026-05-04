@@ -11,31 +11,49 @@ import {
 import { toast } from "sonner";
 import { getErrorMessage } from "../../utils/errorUtils";
 
-// Normal cash accounts
-export const useGetCashAccounts = (cursor = null, limit = 50) => {
+// Normal cash accounts with cursor pagination
+export const useGetCashAccounts = (cursor) => {
   return useQuery({
-    queryKey: ["cash", cursor, limit],
+    queryKey: ["cash", cursor],
     queryFn: async () => {
-      const { data } = await getAllCashAPI(cursor, limit);
+      const { data } = await getAllCashAPI(cursor);
       return data || { data: [], pagination: {} };
     },
-    keepPreviousData: false,
+    keepPreviousData: true,
     staleTime: 0,
     retry: 1,
+    enabled: true,
   });
 };
 
-// Filter cash accounts
-export const useFilterCashAccounts = (filters) => {
+// Search cash accounts with cursor
+export const useSearchCashAccounts = (searchTerm, cursor) => {
   return useQuery({
-    queryKey: ["cash-filter", filters],
+    queryKey: ["cash-search", searchTerm, cursor],
     queryFn: async () => {
-      const { data } = await filterCashAPI(filters);
+      if (!searchTerm || searchTerm.length < 2) {
+        return { data: [], pagination: {} };
+      }
+      const { data } = await searchCashAPI(searchTerm, cursor);
       return data || { data: [], pagination: {} };
     },
-    enabled: !!filters,
+    enabled: !!searchTerm && searchTerm.length >= 2,
     retry: 1,
-    onError: (error) => toast.error(getErrorMessage(error)),
+    keepPreviousData: true,
+  });
+};
+
+// Filter cash accounts with cursor
+export const useFilterCashAccounts = (filters, cursor) => {
+  return useQuery({
+    queryKey: ["cash-filter", filters, cursor],
+    queryFn: async () => {
+      const { data } = await filterCashAPI(filters, cursor);
+      return data || { data: [], pagination: {} };
+    },
+    enabled: !!filters && Object.keys(filters).length > 0,
+    retry: 1,
+    keepPreviousData: true,
   });
 };
 
@@ -59,7 +77,9 @@ export const useCreateCashAccount = () => {
   return useMutation({
     mutationFn: createCashAPI,
     onSuccess: (response) => {
-      toast.success(response?.data?.message || "Cash account created successfully");
+      toast.success(
+        response?.data?.message || "Cash account created successfully",
+      );
       queryClient.invalidateQueries({ queryKey: ["cash"] });
     },
     onError: (error) => toast.error(getErrorMessage(error)),
@@ -72,7 +92,9 @@ export const useUpdateCashAccount = () => {
   return useMutation({
     mutationFn: ({ id, data }) => updateCashAPI(id, data),
     onSuccess: (response) => {
-      toast.success(response?.data?.message || "Cash account updated successfully");
+      toast.success(
+        response?.data?.message || "Cash account updated successfully",
+      );
       queryClient.invalidateQueries({ queryKey: ["cash"] });
     },
     onError: (error) => toast.error(getErrorMessage(error)),
@@ -85,24 +107,11 @@ export const useDeleteCashAccount = () => {
   return useMutation({
     mutationFn: deleteCashAPI,
     onSuccess: (response) => {
-      toast.success(response?.data?.message || "Cash account deleted successfully");
+      toast.success(
+        response?.data?.message || "Cash account deleted successfully",
+      );
       queryClient.invalidateQueries({ queryKey: ["cash"] });
     },
     onError: (error) => toast.error(getErrorMessage(error)),
-  });
-};
-
-// SEARCH CASH ACCOUNTS
-export const useSearchCashAccounts = (searchTerm) => {
-  return useQuery({
-    queryKey: ["cash-search", searchTerm],
-    queryFn: async () => {
-      if (!searchTerm) return [];
-      const { data } = await searchCashAPI(searchTerm);
-      return data?.data || [];
-    },
-    enabled: !!searchTerm,
-    retry: 1,
-    onError: (err) => toast.error(getErrorMessage(err)),
   });
 };

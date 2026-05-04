@@ -170,8 +170,8 @@ model Department {
   description String?
   status      DepartmentStatus @default(ACTIVE)
 
-  headId      Int      @unique
-  head        Doctor   @relation("DepartmentHead", fields: [headId], references: [id])
+  doctorId      Int      @unique
+  head        Doctor   @relation("DepartmentHead", fields: [doctorId], references: [id])
 
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt

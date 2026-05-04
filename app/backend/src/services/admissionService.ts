@@ -90,12 +90,37 @@ export const deleteAdmission = async (id: number) => {
   return prisma.admission.delete({ where: { id } });
 };
 
-
 export const searchAdmissions = createSearchService(prisma, {
   tableName: "Admission",
+
   exactFields: ["hospitalAdmissionId"],
+
   prefixFields: [],
+
   similarFields: [],
+
+  relationFields: {
+    patient: ["fullName"],
+  },
+
+  include: {
+    patient: {
+      select: {
+        id: true,
+        fullName: true,
+        hospitalPatientId: true,
+        mobileNumber: true,
+      },
+    }, 
+    doctor: {
+      select: {
+        id: true,
+        fullName: true,
+      },
+    },
+  },
+
+  sortField: "createdAt",
 });
 
 /// Filter

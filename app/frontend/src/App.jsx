@@ -100,7 +100,11 @@ function App() {
     <div className="app">
       <NetworkProvider>
         <BrowserRouter>
-          <Toaster position="top-center" richColors />
+          <Toaster
+            position="top-right"
+            richColors
+            style={{ zIndex: 2147483647 }} // max safe z-index
+          />
           <Routes>
             /// LANDING PAGE
             <Route path="/medi-care" element={<LandingPage />} />

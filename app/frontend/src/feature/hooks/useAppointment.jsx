@@ -15,46 +15,50 @@ import {
 import { toast } from "sonner";
 import { getErrorMessage } from "../../utils/errorUtils";
 
-// GET ALL
-export const useGetAppointments = (cursor = null, limit = 50) => {
+
+// GET ALL with cursor pagination
+export const useGetAppointments = (cursor) => {
   return useQuery({
-    queryKey: ["appointment", cursor, limit],
+    queryKey: ["appointment", cursor],
     queryFn: async () => {
-      const { data } = await getAllAppointmentsAPI(cursor, limit);
+      const { data } = await getAllAppointmentsAPI(cursor);
       return data || { data: [], pagination: {} };
     },
-    keepPreviousData: false,
+    keepPreviousData: true,
     staleTime: 0,
     retry: 1,
+    enabled: true,
   });
 };
 
-// FILTER
-export const useFilterAppointments = (filters) => {
+// SEARCH with cursor
+export const useSearchAppointments = (searchTerm, cursor) => {
   return useQuery({
-    queryKey: ["appointment-filter", filters],
+    queryKey: ["appointment-search", searchTerm, cursor],
     queryFn: async () => {
-      const { data } = await filterAppointmentAPI(filters);
+      if (!searchTerm || searchTerm.length < 2) {
+        return { data: [], pagination: {} };
+      }
+      const { data } = await searchAppointmentAPI(searchTerm, cursor);
       return data || { data: [], pagination: {} };
     },
-    enabled: !!filters,
+    enabled: !!searchTerm && searchTerm.length >= 2,
     retry: 1,
-    onError: (error) => toast.error(getErrorMessage(error)),
+    keepPreviousData: true,
   });
 };
 
-// SEARCH
-export const useSearchAppointments = (searchTerm) => {
+// FILTER with cursor
+export const useFilterAppointments = (filters, cursor) => {
   return useQuery({
-    queryKey: ["appointment-search", searchTerm],
+    queryKey: ["appointment-filter", filters, cursor],
     queryFn: async () => {
-      if (!searchTerm) return [];
-      const { data } = await searchAppointmentAPI(searchTerm);
-      return data?.data || [];
+      const { data } = await filterAppointmentAPI(filters, cursor);
+      return data || { data: [], pagination: {} };
     },
-    enabled: !!searchTerm,
+    enabled: !!filters && Object.keys(filters).length > 0,
     retry: 1,
-    onError: (err) => toast.error(getErrorMessage(err)),
+    keepPreviousData: true,
   });
 };
 

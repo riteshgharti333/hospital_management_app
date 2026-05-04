@@ -31,14 +31,14 @@ const Table = ({
   currentPage = 0,
   searchTerm = "",
   filters = {},
-  
+
   // Actions
   onNextPage,
   onPrevPage,
   onApplyFilters,
   onClearFilters,
   onSearchChange,
-  
+
   // UI Config
   columns,
   path,
@@ -48,7 +48,8 @@ const Table = ({
   ledger,
 }) => {
   const navigate = useNavigate();
-  
+  console.log("table");
+
   // Local UI state
   const [showFilter, setShowFilter] = useState(false);
   const [localFilters, setLocalFilters] = useState(filters);
@@ -77,7 +78,7 @@ const Table = ({
   }, [searchTerm]);
 
   const handleLocalFilterChange = (key, value) => {
-    setLocalFilters(prev => {
+    setLocalFilters((prev) => {
       const newFilters = { ...prev };
       if (value === "" || value === "All") {
         delete newFilters[key];
@@ -161,7 +162,10 @@ const Table = ({
           <FiSearch className="absolute left-3 top-2.5 text-gray-400" />
           <input
             type="text"
-            placeholder={searchConfig.placeholder || "Search records... (min. 2 characters)"}
+            placeholder={
+              searchConfig.placeholder ||
+              "Search records... (min. 2 characters)"
+            }
             value={debouncedTerm}
             onChange={(e) => setDebouncedTerm(e.target.value)}
             className="block w-full pl-10 pr-3 py-2 border border-gray-300 outline-none rounded-lg focus:ring-1 focus:ring-blue-500 focus:border-blue-500 text-[12px]"
@@ -184,11 +188,18 @@ const Table = ({
                 } else {
                   displayValue = value
                     .split("_")
-                    .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+                    .map(
+                      (word) =>
+                        word.charAt(0).toUpperCase() +
+                        word.slice(1).toLowerCase(),
+                    )
                     .join(" ");
                 }
                 return (
-                  <span key={key} className="inline-flex items-center px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded-full">
+                  <span
+                    key={key}
+                    className="inline-flex items-center px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded-full"
+                  >
                     {filterLabels[key] || key}: {displayValue}
                     <button
                       onClick={() => {
@@ -227,9 +238,14 @@ const Table = ({
               {showFilter && (
                 <div className="absolute right-0 mt-2 w-80 bg-white border border-gray-200 rounded-lg shadow-lg p-4 z-50">
                   <div className="flex justify-between items-center mb-3">
-                    <h3 className="text-sm font-semibold text-gray-700">Filter Options</h3>
+                    <h3 className="text-sm font-semibold text-gray-700">
+                      Filter Options
+                    </h3>
                     {hasActiveFilters && (
-                      <button onClick={handleClearAllFilters} className="text-xs text-red-600 hover:text-red-800">
+                      <button
+                        onClick={handleClearAllFilters}
+                        className="text-xs text-red-600 hover:text-red-800"
+                      >
                         Clear All
                       </button>
                     )}
@@ -237,16 +253,22 @@ const Table = ({
 
                   {filtersConfig.map((filter) => (
                     <div key={filter.key} className="mb-3">
-                      <label className="block text-xs text-gray-500 mb-1">{filter.label}</label>
+                      <label className="block text-xs text-gray-500 mb-1">
+                        {filter.label}
+                      </label>
                       {filter.type === "select" ? (
                         <select
                           className="w-full border border-gray-300 rounded-lg p-2 text-sm focus:ring-2 focus:ring-blue-500"
                           value={localFilters[filter.key] || ""}
-                          onChange={(e) => handleLocalFilterChange(filter.key, e.target.value)}
+                          onChange={(e) =>
+                            handleLocalFilterChange(filter.key, e.target.value)
+                          }
                         >
                           <option value="">All</option>
                           {filter.options?.map((opt) => (
-                            <option key={opt} value={opt}>{capitalize(opt)}</option>
+                            <option key={opt} value={opt}>
+                              {capitalize(opt)}
+                            </option>
                           ))}
                         </select>
                       ) : filter.type === "date" ? (
@@ -254,7 +276,9 @@ const Table = ({
                           type="date"
                           className="w-full border border-gray-300 rounded-lg p-2 text-sm focus:ring-2 focus:ring-blue-500"
                           value={localFilters[filter.key] || ""}
-                          onChange={(e) => handleLocalFilterChange(filter.key, e.target.value)}
+                          onChange={(e) =>
+                            handleLocalFilterChange(filter.key, e.target.value)
+                          }
                         />
                       ) : (
                         <input
@@ -262,21 +286,28 @@ const Table = ({
                           placeholder={filter.placeholder || ""}
                           className="w-full border border-gray-300 rounded-lg p-2 text-sm focus:ring-2 focus:ring-blue-500"
                           value={localFilters[filter.key] || ""}
-                          onChange={(e) => handleLocalFilterChange(filter.key, e.target.value)}
+                          onChange={(e) =>
+                            handleLocalFilterChange(filter.key, e.target.value)
+                          }
                         />
                       )}
                     </div>
                   ))}
 
                   <div className="flex justify-end gap-2">
-                    <button onClick={handleCancelFilters} className="px-3 py-1.5 text-sm text-gray-600 hover:text-gray-800">
+                    <button
+                      onClick={handleCancelFilters}
+                      className="px-3 py-1.5 text-sm text-gray-600 hover:text-gray-800"
+                    >
                       Cancel
                     </button>
                     <button
                       onClick={handleApplyLocalFilters}
                       disabled={!filtersChanged}
                       className={`px-4 py-1.5 text-sm text-white rounded-lg ${
-                        filtersChanged ? "bg-blue-600 hover:bg-blue-700" : "bg-gray-300 cursor-not-allowed"
+                        filtersChanged
+                          ? "bg-blue-600 hover:bg-blue-700"
+                          : "bg-gray-300 cursor-not-allowed"
                       }`}
                     >
                       Apply
@@ -299,8 +330,14 @@ const Table = ({
                 {table.getHeaderGroups().map((headerGroup) => (
                   <tr key={headerGroup.id}>
                     {headerGroup.headers.map((header) => (
-                      <th key={header.id} className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">
-                        {flexRender(header.column.columnDef.header, header.getContext())}
+                      <th
+                        key={header.id}
+                        className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider"
+                      >
+                        {flexRender(
+                          header.column.columnDef.header,
+                          header.getContext(),
+                        )}
                       </th>
                     ))}
                   </tr>
@@ -315,15 +352,24 @@ const Table = ({
                       className="hover:bg-blue-50 cursor-pointer transition-colors duration-150"
                     >
                       {row.getVisibleCells().map((cell) => (
-                        <td key={cell.id} className="px-6 py-4 text-sm whitespace-nowrap">
-                          {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                        <td
+                          key={cell.id}
+                          className="px-6 py-4 text-sm whitespace-nowrap"
+                        >
+                          {flexRender(
+                            cell.column.columnDef.cell,
+                            cell.getContext(),
+                          )}
                         </td>
                       ))}
                     </tr>
                   ))
                 ) : (
                   <tr className="h-[50vh]">
-                    <td colSpan={columns.length} className="px-6 py-12 text-center text-gray-500">
+                    <td
+                      colSpan={columns.length}
+                      className="px-6 py-12 text-center text-gray-500"
+                    >
                       No records found
                     </td>
                   </tr>
@@ -337,21 +383,40 @@ const Table = ({
             <div className="px-6 py-3 flex items-center justify-between border-t border-gray-200 bg-gray-50">
               <div className="hidden sm:block">
                 <p className="text-sm text-gray-700">
-                  Showing {range ? `${range.start}–${range.end}` : `0–${data.length}`}
+                  Showing{" "}
+                  {range ? `${range.start}–${range.end}` : `0–${data.length}`}
                 </p>
               </div>
               <div className="flex items-center space-x-2">
-                <button onClick={onPrevPage} disabled={!hasPrevious} className="p-2 rounded-lg border border-gray-300 bg-white hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed">
+                <button
+                  onClick={onPrevPage}
+                  disabled={!hasPrevious}
+                  className="p-2 rounded-lg border border-gray-300 bg-white hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
                   <FiChevronsLeft size={16} />
                 </button>
-                <button onClick={onPrevPage} disabled={!hasPrevious} className="p-2 rounded-lg border border-gray-300 bg-white hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed">
+                <button
+                  onClick={onPrevPage}
+                  disabled={!hasPrevious}
+                  className="p-2 rounded-lg border border-gray-300 bg-white hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
                   <FiChevronLeft size={16} />
                 </button>
-                <span className="text-sm text-gray-700 px-2">Page {currentPage + 1}</span>
-                <button onClick={onNextPage} disabled={!hasNext} className="p-2 rounded-lg border border-gray-300 bg-white hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed">
+                <span className="text-sm text-gray-700 px-2">
+                  Page {currentPage + 1}
+                </span>
+                <button
+                  onClick={onNextPage}
+                  disabled={!hasNext}
+                  className="p-2 rounded-lg border border-gray-300 bg-white hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
                   <FiChevronRight size={16} />
                 </button>
-                <button onClick={onNextPage} disabled={!hasNext} className="p-2 rounded-lg border border-gray-300 bg-white hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed">
+                <button
+                  onClick={onNextPage}
+                  disabled={!hasNext}
+                  className="p-2 rounded-lg border border-gray-300 bg-white hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
                   <FiChevronsRight size={16} />
                 </button>
               </div>
@@ -365,7 +430,10 @@ const Table = ({
                 {mode === "search" ? "Search" : "Filter"} results:{" "}
                 <span className="font-medium">{data.length}</span> records found
                 {mode === "search" && searchTerm && searchTerm.length >= 2 && (
-                  <span> for "<span className="font-medium">{searchTerm}</span>"</span>
+                  <span>
+                    {" "}
+                    for "<span className="font-medium">{searchTerm}</span>"
+                  </span>
                 )}
               </p>
             </div>

@@ -7,7 +7,7 @@ import { createSearchService } from "../utils/searchCache";
 export type DepartmentInput = {
   name: string;
   description?: string;
-  headId: number;
+  doctorId: number;
   status?: "ACTIVE" | "INACTIVE";
 };
 
@@ -29,13 +29,13 @@ export const getAllDepartments = async (cursor?: string) => {
     prisma,
     {
       model: "department",
-     include: {
-      head: {
-        select: {
-          fullName: true  
-        }
-      }
-    }
+      include: {
+        head: {
+          select: {
+            fullName: true,
+          },
+        },
+      },
     },
     cursor,
   );
@@ -80,6 +80,21 @@ export const searchDepartment = createSearchService(prisma, {
   exactFields: ["name"],
   prefixFields: ["name"],
   similarFields: ["name", "description"],
+
+  relationFields: {
+    doctor: ["fullName"],
+  },
+
+  include: {
+    head: {
+      select: {
+        id: true,
+        fullName: true,
+      },
+    },
+  },
+
+  sortField: "createdAt",
 });
 
 type FilterDepartmentParams = {
@@ -93,7 +108,7 @@ type FilterDepartmentParams = {
 export const filterDepartmentsService = async (
   params: FilterDepartmentParams,
 ) => {
-  const { fromDate, toDate, status, cursor, limit } = params;
+  const { fromDate, toDate, status, cursor } = params;
 
   const where: Record<string, any> = {};
 
@@ -114,14 +129,6 @@ export const filterDepartmentsService = async (
     prisma,
     {
       model: "department",
-      limit,
-      // 🔥 Optional optimization
-      // select: {
-      //   id: true,
-      //   fullName: true,
-      //   status: true,
-      //   createdAt: true,
-      // },
     },
     cursor,
     where,

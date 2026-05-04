@@ -54,7 +54,7 @@ export const useSearchDoctors = (searchTerm, cursor) => {
     },
     enabled: !!searchTerm && searchTerm.length >= 2,
     retry: 1,
-    keepPreviousData: true,
+    keepPreviousData: true, 
   });
 };
 

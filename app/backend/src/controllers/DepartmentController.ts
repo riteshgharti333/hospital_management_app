@@ -38,7 +38,7 @@ export const createDepartmentRecord = catchAsyncError(
 
     // Check if doctor is already assigned to a department
     const existingHead = await prisma.department.findUnique({
-      where: { headId: validated.headId },
+      where: { doctorId: validated.doctorId },
     });
 
     if (existingHead) {
@@ -145,11 +145,11 @@ export const updateDepartmentRecord = catchAsyncError(
     }
 
     // 🔴 Check doctor already assigned (exclude current)
-    if (validatedData.headId) {
+    if (validatedData.doctorId) {
       const existingHead = await prisma.department.findFirst({
         where: {
-          headId: validatedData.headId,
-          NOT: { id },
+          doctorId: validatedData.doctorId,
+          NOT: { id }, 
         },
       });
 
@@ -197,7 +197,6 @@ export const deleteDepartmentRecord = catchAsyncError(
   },
 );
 
-
 export const searchDepartmentResults = catchAsyncError(
   async (req: Request, res: Response, next: NextFunction) => {
     const { query, cursor } = req.query;
@@ -205,7 +204,10 @@ export const searchDepartmentResults = catchAsyncError(
     const searchTerm = validateSearchQuery(query, next);
     if (!searchTerm) return;
 
-    const result = await searchDepartment(searchTerm as string, cursor as string);
+    const result = await searchDepartment(
+      searchTerm as string,
+      cursor as string,
+    );
 
     sendResponse(res, {
       success: true,

@@ -11,31 +11,49 @@ import {
 import { toast } from "sonner";
 import { getErrorMessage } from "../../utils/errorUtils";
 
-// Normal banks
-export const useGetBanks = (cursor = null, limit = 50) => {
+// Normal banks with cursor pagination
+export const useGetBanks = (cursor) => {
   return useQuery({
-    queryKey: ["bank", cursor, limit],
+    queryKey: ["bank", cursor],
     queryFn: async () => {
-      const { data } = await getAllBanksAPI(cursor, limit);
+      const { data } = await getAllBanksAPI(cursor);
       return data || { data: [], pagination: {} };
     },
-    keepPreviousData: false,
+    keepPreviousData: true,
     staleTime: 0,
     retry: 1,
+    enabled: true,
   });
 };
 
-// Filter banks
-export const useFilterBanks = (filters) => {
+// Search banks with cursor
+export const useSearchBanks = (searchTerm, cursor) => {
   return useQuery({
-    queryKey: ["bank-filter", filters],
+    queryKey: ["bank-search", searchTerm, cursor],
     queryFn: async () => {
-      const { data } = await filterBankAPI(filters);
+      if (!searchTerm || searchTerm.length < 2) {
+        return { data: [], pagination: {} };
+      }
+      const { data } = await searchBankAPI(searchTerm, cursor);
       return data || { data: [], pagination: {} };
     },
-    enabled: !!filters,
+    enabled: !!searchTerm && searchTerm.length >= 2,
     retry: 1,
-    onError: (error) => toast.error(getErrorMessage(error)),
+    keepPreviousData: true,
+  });
+};
+
+// Filter banks with cursor
+export const useFilterBanks = (filters, cursor) => {
+  return useQuery({
+    queryKey: ["bank-filter", filters, cursor],
+    queryFn: async () => {
+      const { data } = await filterBankAPI(filters, cursor);
+      return data || { data: [], pagination: {} };
+    },
+    enabled: !!filters && Object.keys(filters).length > 0,
+    retry: 1,
+    keepPreviousData: true,
   });
 };
 
@@ -59,7 +77,9 @@ export const useCreateBank = () => {
   return useMutation({
     mutationFn: createBankAPI,
     onSuccess: (response) => {
-      toast.success(response?.data?.message || "Bank account created successfully");
+      toast.success(
+        response?.data?.message || "Bank account created successfully",
+      );
       queryClient.invalidateQueries({ queryKey: ["bank"] });
     },
     onError: (error) => toast.error(getErrorMessage(error)),
@@ -72,7 +92,9 @@ export const useUpdateBank = () => {
   return useMutation({
     mutationFn: ({ id, data }) => updateBankAPI(id, data),
     onSuccess: (response) => {
-      toast.success(response?.data?.message || "Bank account updated successfully");
+      toast.success(
+        response?.data?.message || "Bank account updated successfully",
+      );
       queryClient.invalidateQueries({ queryKey: ["bank"] });
     },
     onError: (error) => toast.error(getErrorMessage(error)),
@@ -85,24 +107,11 @@ export const useDeleteBank = () => {
   return useMutation({
     mutationFn: deleteBankAPI,
     onSuccess: (response) => {
-      toast.success(response?.data?.message || "Bank account deleted successfully");
+      toast.success(
+        response?.data?.message || "Bank account deleted successfully",
+      );
       queryClient.invalidateQueries({ queryKey: ["bank"] });
     },
     onError: (error) => toast.error(getErrorMessage(error)),
-  });
-};
-
-// SEARCH BANKS
-export const useSearchBanks = (searchTerm) => {
-  return useQuery({
-    queryKey: ["bank-search", searchTerm],
-    queryFn: async () => {
-      if (!searchTerm) return [];
-      const { data } = await searchBankAPI(searchTerm);
-      return data?.data || [];
-    },
-    enabled: !!searchTerm,
-    retry: 1,
-    onError: (err) => toast.error(getErrorMessage(err)),
   });
 };

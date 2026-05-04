@@ -1,4 +1,4 @@
-import React, { useMemo, useState, useEffect } from "react";
+import { useMemo } from "react";
 import { Link } from "react-router-dom";
 import { FaPlus } from "react-icons/fa6";
 import Table from "../../components/Table/Table";
@@ -7,77 +7,23 @@ import {
   useFilterLedgers,
   useSearchLedgersByEntity,
 } from "../../feature/hooks/useLedger";
+import { useTableController } from "../../feature/hooks/useTableController";
 
 const filterLabels = {
   amountType: "Transaction Type",
+  paymentMode: "Payment Mode",
   fromDate: "From Date",
   toDate: "To Date",
-  paymentMode: "Payment Mode",
 };
 
 const BankLedger = () => {
-  const [currentCursor, setCurrentCursor] = useState(null);
-  const [cursorHistory, setCursorHistory] = useState([]);
-  const [searchTerm, setSearchTerm] = useState("");
-  const [filters, setFilters] = useState({});
-  const [mode, setMode] = useState("normal"); // normal | search | filter
-
-  // Normal dataset
-  const { data: ledgerData, isLoading: ledgerLoading } =
-    useGetLedgersByEntity("BANK");
-
-  // Search dataset
-  const { data: searchData, isLoading: searchLoading } =
-    useSearchLedgersByEntity("BANK", searchTerm);
-
-  // Filter dataset
-  const { data: filterData, isLoading: filterLoading } = useFilterLedgers(
-    "BANK",
-    {
-      ...filters,
-      cursor: currentCursor,
-      limit: 50,
-    },
-  );
-
-  console.log(filterData);
-
-  // Select dataset based on mode
-  const getCurrentData = () => {
-    switch (mode) {
-      case "search":
-        return { data: searchData || [], pagination: null };
-      case "filter":
-        return filterData || { data: [], pagination: {} };
-      default:
-        return ledgerData || { transactions: [], pagination: {} };
-    }
-  };
-
-  const currentData = getCurrentData();
-  const data =
-    mode === "normal" || mode === "filter"
-      ? currentData?.transactions || []
-      : currentData?.data || [];
-  const pagination = currentData?.pagination || {};
-  const currentBalance =
-    mode === "normal" || mode === "filter"
-      ? currentData?.currentBalance || 0
-      : null;
-  const isLoading = ledgerLoading || searchLoading || filterLoading;
-
-  // Mode switching logic
-  useEffect(() => {
-    if (searchTerm) {
-      setMode("search");
-      setCurrentCursor(null);
-      setCursorHistory([]);
-    } else if (Object.keys(filters).length > 0) {
-      setMode("filter");
-    } else {
-      setMode("normal");
-    }
-  }, [searchTerm, filters]);
+  // Controller handles ALL logic with entity type
+  const controller = useTableController({
+    normalDataHook: useGetLedgersByEntity,
+    searchDataHook: useSearchLedgersByEntity,
+    filterDataHook: useFilterLedgers,
+    entityType: "BANK", // Pass entity type here
+  });
 
   const columns = useMemo(
     () => [
@@ -117,13 +63,11 @@ const BankLedger = () => {
             value === "DEBIT"
               ? "bg-red-100 text-red-700"
               : "bg-green-100 text-green-700";
-
+          
           const displayText = value === "CREDIT" ? "Credit" : "Debit";
-
+          
           return (
-            <span
-              className={`px-2 py-1 rounded text-xs font-medium ${classes}`}
-            >
+            <span className={`px-2 py-1 rounded text-xs font-medium ${classes}`}>
               {displayText}
             </span>
           );
@@ -162,7 +106,7 @@ const BankLedger = () => {
         cell: (info) => {
           const mode = info.getValue();
           if (!mode) return "-";
-
+          
           const colorMap = {
             CASH: "bg-green-100 text-green-700",
             CARD: "bg-blue-100 text-blue-700",
@@ -170,16 +114,14 @@ const BankLedger = () => {
             BANK_TRANSFER: "bg-orange-100 text-orange-700",
             CHEQUE: "bg-yellow-100 text-yellow-700",
           };
-
+          
           const displayText = mode
             .split("_")
             .map((word) => word.charAt(0) + word.slice(1).toLowerCase())
             .join(" ");
-
+          
           return (
-            <span
-              className={`px-2 py-1 rounded text-xs font-medium ${colorMap[mode] || "bg-gray-100 text-gray-700"}`}
-            >
+            <span className={`px-2 py-1 rounded text-xs font-medium ${colorMap[mode] || "bg-gray-100 text-gray-700"}`}>
               {displayText}
             </span>
           );
@@ -200,83 +142,21 @@ const BankLedger = () => {
         },
       },
     ],
-    [],
+    []
   );
 
-  const handleNextPage = () => {
-    if (pagination?.nextCursor && mode !== "search") {
-      setCursorHistory((prev) => [...prev, currentCursor]);
-      setCurrentCursor(pagination.nextCursor);
-    }
-  };
-
-  const handlePrevPage = () => {
-    if (cursorHistory.length > 0) {
-      const previousCursor = cursorHistory[cursorHistory.length - 1];
-      setCursorHistory((prev) => prev.slice(0, -1));
-      setCurrentCursor(previousCursor);
-    }
-  };
-
-  const handleApplyFilters = (newFilters) => {
-    const processedFilters = { ...newFilters };
-
-    // Convert display values back to API enum values
-    if (processedFilters.amountType === "Credit") {
-      processedFilters.amountType = "CREDIT";
-    } else if (processedFilters.amountType === "Debit") {
-      processedFilters.amountType = "DEBIT";
-    }
-
-    // Payment mode mapping
-    const paymentModeMap = {
-      Cash: "CASH",
-      Card: "CARD",
-      UPI: "UPI",
-      "Bank Transfer": "BANK_TRANSFER",
-      Cheque: "CHEQUE",
-    };
-
-    if (
-      processedFilters.paymentMode &&
-      paymentModeMap[processedFilters.paymentMode]
-    ) {
-      processedFilters.paymentMode =
-        paymentModeMap[processedFilters.paymentMode];
-    }
-
-    // Remove empty values
-    Object.keys(processedFilters).forEach((key) => {
-      if (processedFilters[key] === "" || processedFilters[key] === undefined) {
-        delete processedFilters[key];
-      }
-    });
-
-    setFilters(processedFilters);
-    setCurrentCursor(null);
-    setCursorHistory([]);
-  };
-
-  const handleClearFilters = () => {
-    setFilters({});
-    setSearchTerm("");
-    setMode("normal");
-    setCurrentCursor(null);
-    setCursorHistory([]);
-  };
-
   return (
-    <div>
+    <div className="">
       <div className="flex justify-between items-center mb-4">
         <div>
-          <h2 className="text-2xl font-bold text-gray-800 flex items-center">
+          <h2 className="text-2xl font-bold text-gray-800">
             Bank Ledger
           </h2>
-          {mode !== "search" && currentBalance !== null && (
+          {controller.currentBalance !== null && controller.currentBalance !== undefined && (
             <p className="text-sm text-gray-600 mt-1">
               Current Balance:{" "}
               <span className="font-semibold text-green-600">
-                ₹ {parseFloat(currentBalance).toFixed(2)}
+                ₹ {parseFloat(controller.currentBalance).toFixed(2)}
               </span>
             </p>
           )}
@@ -287,15 +167,12 @@ const BankLedger = () => {
       </div>
 
       <Table
-        data={data || []}
+        {...controller}
         columns={columns}
         path="bank-ledger"
         ledger={true}
-        loading={isLoading}
         searchConfig={{
           placeholder: "Search by transaction code...",
-          searchTerm,
-          onSearchChange: setSearchTerm,
         }}
         filtersConfig={[
           {
@@ -310,21 +187,17 @@ const BankLedger = () => {
             type: "select",
             options: ["Cash", "Card", "UPI", "Bank Transfer", "Cheque"],
           },
-          { key: "fromDate", label: "From Date", type: "date" },
-          { key: "toDate", label: "To Date", type: "date" },
+          {
+            key: "fromDate",
+            label: "From Date",
+            type: "date",
+          },
+          {
+            key: "toDate",
+            label: "To Date",
+            type: "date",
+          },
         ]}
-        pagination={{
-          hasPrevious: cursorHistory.length > 0 && mode !== "search",
-          hasNext: !!pagination?.nextCursor && mode !== "search",
-          currentPage: cursorHistory.length,
-          total: pagination?.total,
-          mode,
-        }}
-        onNextPage={handleNextPage}
-        onPrevPage={handlePrevPage}
-        onApplyFilters={handleApplyFilters}
-        onClearFilters={handleClearFilters}
-        activeFilters={filters}
         filterLabels={filterLabels}
       />
     </div>

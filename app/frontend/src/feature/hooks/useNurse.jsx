@@ -11,34 +11,51 @@ import {
 import { toast } from "sonner";
 import { getErrorMessage } from "../../utils/errorUtils";
 
-// Normal nurse records list
-export const useGetNurseRecords = (cursor = null, limit = 50) => {
+// Normal nurse records with cursor pagination
+export const useGetNurseRecords = (cursor) => {
   return useQuery({
-    queryKey: ["nurse", cursor, limit],
+    queryKey: ["nurse", cursor],
     queryFn: async () => {
-      const { data } = await getAllNurseRecordsAPI(cursor, limit);
+      const { data } = await getAllNurseRecordsAPI(cursor);
       return data || { data: [], pagination: {} };
     },
-    keepPreviousData: false,
-    staleTime: 0,          
+    keepPreviousData: true,
+    staleTime: 0,
     retry: 1,
+    enabled: true,
   });
 };
 
-// Filter nurse records
-export const useFilterNurseRecords = (filters) => {
+// Search nurse records with cursor
+export const useSearchNurseRecords = (searchTerm, cursor) => {
   return useQuery({
-    queryKey: ["nurse-filter", filters],
+    queryKey: ["nurse-search", searchTerm, cursor],
     queryFn: async () => {
-      const { data } = await filterNurseRecordsAPI(filters);
+      if (!searchTerm || searchTerm.length < 2) {
+        return { data: [], pagination: {} };
+      }
+      const { data } = await searchNurseRecordsAPI(searchTerm, cursor);
       return data || { data: [], pagination: {} };
     },
-    enabled: !!filters,
+    enabled: !!searchTerm && searchTerm.length >= 2,
     retry: 1,
-    onError: (error) => toast.error(getErrorMessage(error)),
+    keepPreviousData: true,
   });
 };
 
+// Filter nurse records with cursor
+export const useFilterNurseRecords = (filters, cursor) => {
+  return useQuery({
+    queryKey: ["nurse-filter", filters, cursor],
+    queryFn: async () => {
+      const { data } = await filterNurseRecordsAPI(filters, cursor);
+      return data || { data: [], pagination: {} };
+    },
+    enabled: !!filters && Object.keys(filters).length > 0,
+    retry: 1,
+    keepPreviousData: true,
+  });
+};
 // FETCH NURSE RECORD BY ID
 export const useGetNurseRecordById = (id) => {
   return useQuery({
@@ -59,7 +76,9 @@ export const useCreateNurseRecord = () => {
   return useMutation({
     mutationFn: createNurseRecordAPI,
     onSuccess: (response) => {
-      toast.success(response?.data?.message || "Nurse record created successfully");
+      toast.success(
+        response?.data?.message || "Nurse record created successfully",
+      );
       queryClient.invalidateQueries({ queryKey: ["nurse"] });
     },
     onError: (error) => toast.error(getErrorMessage(error)),
@@ -72,7 +91,9 @@ export const useUpdateNurseRecord = () => {
   return useMutation({
     mutationFn: ({ id, data }) => updateNurseRecordAPI(id, data),
     onSuccess: (response) => {
-      toast.success(response?.data?.message || "Nurse record updated successfully");
+      toast.success(
+        response?.data?.message || "Nurse record updated successfully",
+      );
       queryClient.invalidateQueries({ queryKey: ["nurse"] });
     },
     onError: (error) => toast.error(getErrorMessage(error)),
@@ -85,24 +106,11 @@ export const useDeleteNurseRecord = () => {
   return useMutation({
     mutationFn: deleteNurseRecordAPI,
     onSuccess: (response) => {
-      toast.success(response?.data?.message || "Nurse record deleted successfully");
+      toast.success(
+        response?.data?.message || "Nurse record deleted successfully",
+      );
       queryClient.invalidateQueries({ queryKey: ["nurse"] });
     },
     onError: (error) => toast.error(getErrorMessage(error)),
-  });
-};
-
-// SEARCH NURSE RECORDS
-export const useSearchNurseRecords = (searchTerm) => {
-  return useQuery({
-    queryKey: ["nurse-search", searchTerm],
-    queryFn: async () => {
-      if (!searchTerm) return [];
-      const { data } = await searchNurseRecordsAPI(searchTerm);
-      return data?.data || [];
-    },
-    enabled: !!searchTerm,
-    retry: 1,
-    onError: (err) => toast.error(getErrorMessage(err)),
   });
 };

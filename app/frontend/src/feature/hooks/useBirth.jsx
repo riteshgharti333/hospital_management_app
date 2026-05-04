@@ -11,31 +11,50 @@ import {
 import { toast } from "sonner";
 import { getErrorMessage } from "../../utils/errorUtils";
 
-// Normal birth records list
-export const useGetBirthRecords = (cursor = null, limit = 50) => {
+
+// Normal birth records with cursor pagination
+export const useGetBirthRecords = (cursor) => {
   return useQuery({
-    queryKey: ["birth", cursor, limit],
+    queryKey: ["birth", cursor],
     queryFn: async () => {
-      const { data } = await getAllBirthRecordsAPI(cursor, limit);
+      const { data } = await getAllBirthRecordsAPI(cursor);
       return data || { data: [], pagination: {} };
     },
-    keepPreviousData: false,
-    staleTime: 0,          
+    keepPreviousData: true,
+    staleTime: 0,
     retry: 1,
+    enabled: true,
   });
 };
 
-// Filter birth records
-export const useFilterBirthRecords = (filters) => {
+// Search birth records with cursor
+export const useSearchBirthRecords = (searchTerm, cursor) => {
   return useQuery({
-    queryKey: ["birth-filter", filters],
+    queryKey: ["birth-search", searchTerm, cursor],
     queryFn: async () => {
-      const { data } = await filterBirthRecordsAPI(filters);
+      if (!searchTerm || searchTerm.length < 2) {
+        return { data: [], pagination: {} };
+      }
+      const { data } = await searchBirthRecordsAPI(searchTerm, cursor);
       return data || { data: [], pagination: {} };
     },
-    enabled: !!filters,
+    enabled: !!searchTerm && searchTerm.length >= 2,
     retry: 1,
-    onError: (error) => toast.error(getErrorMessage(error)),
+    keepPreviousData: true,
+  });
+};
+
+// Filter birth records with cursor
+export const useFilterBirthRecords = (filters, cursor) => {
+  return useQuery({
+    queryKey: ["birth-filter", filters, cursor],
+    queryFn: async () => {
+      const { data } = await filterBirthRecordsAPI(filters, cursor);
+      return data || { data: [], pagination: {} };
+    },
+    enabled: !!filters && Object.keys(filters).length > 0,
+    retry: 1,
+    keepPreviousData: true,
   });
 };
 
@@ -92,17 +111,3 @@ export const useDeleteBirthRecord = () => {
   });
 };
 
-// SEARCH BIRTH RECORDS
-export const useSearchBirthRecords = (searchTerm) => {
-  return useQuery({
-    queryKey: ["birth-search", searchTerm],
-    queryFn: async () => {
-      if (!searchTerm) return [];
-      const { data } = await searchBirthRecordsAPI(searchTerm);
-      return data?.data || [];
-    },
-    enabled: !!searchTerm,
-    retry: 1,
-    onError: (err) => toast.error(getErrorMessage(err)),
-  });
-};

@@ -10,26 +10,7 @@ import LoadingButton from "../../components/LoadingButton/LoadingButton";
 import { useNavigate } from "react-router-dom";
 import { useSearchDoctors } from "../../feature/hooks/useDoctor";
 
-// Department Status Enum
-export const DepartmentStatusEnum = z.enum(["ACTIVE", "INACTIVE"]);
-
-// Department Name Enum
-export const DepartmentNameEnum = z.enum([
-  "CARDIOLOGY",
-  "NEUROLOGY",
-  "ORTHOPEDICS",
-  "PEDIATRICS",
-  "DERMATOLOGY",
-  "GENERAL",
-]);
-
-// Schema for department
-export const departmentSchema = z.object({
-  name: DepartmentNameEnum,
-  description: z.string().optional(),
-  headId: z.number().min(1, "Please select a department head"),
-  status: DepartmentStatusEnum.default("ACTIVE"),
-});
+import { DepartmentNameEnum, departmentSchema } from "@hospital/schemas";
 
 const NewDepartment = () => {
   const navigate = useNavigate();
@@ -37,10 +18,12 @@ const NewDepartment = () => {
   const [searchDoctorQuery, setSearchDoctorQuery] = useState("");
   const [selectedDoctor, setSelectedDoctor] = useState(null);
 
-  const { data: doctorSearchResults, isLoading: searchingDoctors } =
-    useSearchDoctors(searchDoctorQuery, {
-      enabled: searchDoctorQuery.length >= 2,
-    });
+
+  const { data: searchResponse, isLoading: searchingDoctors } =
+  useSearchDoctors(searchDoctorQuery);
+
+  const doctorSearchResults = searchResponse?.data || [];
+
 
   const {
     register,
@@ -54,7 +37,7 @@ const NewDepartment = () => {
     defaultValues: {
       name: "",
       description: "",
-      headId: null,
+      doctorId: null,
       status: "ACTIVE",
     },
   });
@@ -66,30 +49,30 @@ const NewDepartment = () => {
 
   // Handle doctor selection from search
   const handleDoctorSelect = (doctor) => {
-    setValue("headId", doctor.id);
+    setValue("doctorId", doctor.id);
     setSelectedDoctor({
       id: doctor.id,
       name: doctor.fullName || doctor.doctorName || doctor.name,
       specialization: doctor.specialization,
     });
-    trigger("headId");
+    trigger("doctorId");
     setShowDoctorSearch(false);
     setSearchDoctorQuery("");
   };
 
   const onSubmit = async (data) => {
-    // Prepare submission data with headId as number
+    // Prepare submission data with doctorId as number
     const submissionData = {
       name: data.name,
       description: data.description || "",
-      headId: data.headId,
+      doctorId: data.doctorId,
       status: data.status,
     };
 
     console.log("Submitting department data:", submissionData);
 
     const response = await mutateAsync(submissionData);
-    
+
     if (response?.data?.success) {
       toast.success(response?.data?.message);
       navigate(`/department/${response.data.data.id}`);
@@ -99,7 +82,10 @@ const NewDepartment = () => {
   // Handle click outside to close search results
   useEffect(() => {
     const handleClickOutside = (event) => {
-      if (showDoctorSearch && !event.target.closest('.doctor-search-container')) {
+      if (
+        showDoctorSearch &&
+        !event.target.closest(".doctor-search-container")
+      ) {
         setShowDoctorSearch(false);
       }
     };
@@ -112,7 +98,9 @@ const NewDepartment = () => {
   const SearchResults = ({ results, loading, onSelect }) => (
     <div className="absolute z-10 mt-1 w-full bg-white border border-gray-300 rounded-lg shadow-lg max-h-60 overflow-y-auto">
       {loading ? (
-        <div className="p-3 text-center text-gray-500">Searching doctors...</div>
+        <div className="p-3 text-center text-gray-500">
+          Searching doctors...
+        </div>
       ) : results?.length > 0 ? (
         results.map((doctor, index) => (
           <div
@@ -124,7 +112,10 @@ const NewDepartment = () => {
               {doctor.fullName || doctor.doctorName || doctor.name}
             </div>
             <div className="text-sm text-gray-600 flex justify-between">
-              <span>ID: {doctor.registrationNo || doctor.doctorId || `D-${doctor.id}`}</span>
+              <span>
+                ID:{" "}
+                {doctor.registrationNo || doctor.doctorId || `D-${doctor.id}`}
+              </span>
               <span>{doctor.specialization}</span>
             </div>
           </div>
@@ -196,7 +187,9 @@ const NewDepartment = () => {
                 </div>
               </div>
               {errors.name && (
-                <p className="text-red-600 text-sm mt-1">{errors.name.message}</p>
+                <p className="text-red-600 text-sm mt-1">
+                  {errors.name.message}
+                </p>
               )}
             </div>
 
@@ -217,7 +210,7 @@ const NewDepartment = () => {
                   onFocus={() => setShowDoctorSearch(true)}
                   placeholder="Search by Doctor Name or Registration No..."
                   className={`block w-full px-4 py-2 border rounded-lg focus:ring-blue-500 focus:border-blue-500 pl-10 ${
-                    errors.headId ? "border-red-500" : "border-gray-300"
+                    errors.doctorId ? "border-red-500" : "border-gray-300"
                   }`}
                 />
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -231,21 +224,24 @@ const NewDepartment = () => {
                   />
                 )}
               </div>
-              
+
               {/* Show selected doctor name */}
               {selectedDoctor && (
                 <div className="mt-2 p-2 bg-blue-50 rounded-lg border border-blue-200">
                   <div className="text-sm text-gray-700">
-                    <span className="font-medium">Selected Head:</span> {selectedDoctor.name}
+                    <span className="font-medium">Selected Head:</span>{" "}
+                    {selectedDoctor.name}
                   </div>
                   <div className="text-xs text-gray-500 mt-1">
                     Specialization: {selectedDoctor.specialization}
                   </div>
                 </div>
               )}
-              
-              {errors.headId && (
-                <p className="text-red-600 text-sm mt-1">{errors.headId.message}</p>
+
+              {errors.doctorId && (
+                <p className="text-red-600 text-sm mt-1">
+                  {errors.doctorId.message}
+                </p>
               )}
             </div>
 

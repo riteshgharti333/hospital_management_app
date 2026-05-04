@@ -11,15 +11,48 @@ import {
 import { toast } from "sonner";
 import { getErrorMessage } from "../../utils/errorUtils";
 
-export const useGetAdmissions = () => {
+
+// Updated Admission Hooks
+export const useGetAdmissions = (cursor) => {
   return useQuery({
-    queryKey: ["admission"],
+    queryKey: ["admission", cursor],
     queryFn: async () => {
-      const { data } = await getAllAdmissionAPI();
+      const { data } = await getAllAdmissionAPI(cursor);
       return data || { data: [], pagination: {} };
     },
+    keepPreviousData: true,
+    staleTime: 0,
     retry: 1,
-    onError: (error) => toast.error(getErrorMessage(error)),
+    enabled: true,
+  });
+};
+
+export const useSearchAdmissions = (searchTerm, cursor) => {
+  return useQuery({
+    queryKey: ["admission-search", searchTerm, cursor],
+    queryFn: async () => {
+      if (!searchTerm || searchTerm.length < 2) {
+        return { data: [], pagination: {} };
+      }
+      const { data } = await searchAdmissionAPI(searchTerm, cursor);
+      return data || { data: [], pagination: {} };
+    },
+    enabled: !!searchTerm && searchTerm.length >= 2,
+    retry: 1,
+    keepPreviousData: true,
+  });
+};
+
+export const useFilterAdmissions = (filters, cursor) => {
+  return useQuery({
+    queryKey: ["admission-filter", filters, cursor],
+    queryFn: async () => {
+      const { data } = await filterAdmissionsAPI(filters, cursor);
+      return data || { data: [], pagination: {} };
+    },
+    enabled: !!filters && Object.keys(filters).length > 0,
+    retry: 1,
+    keepPreviousData: true,
   });
 };
 
@@ -78,29 +111,4 @@ export const useDeleteAdmission = () => {
   });
 };
 
-export const useSearchAdmissions = (searchTerm) => {
-  return useQuery({
-    queryKey: ["admission-search", searchTerm],
-    queryFn: async () => {
-      if (!searchTerm) return [];
-      const { data } = await searchAdmissionAPI(searchTerm);
-      return data?.data || [];
-    },
-    enabled: !!searchTerm,
-    retry: 1,
-    onError: (error) => toast.error(getErrorMessage(error)),
-  });
-};
 
-export const useFilterAdmissions = (filters) => {
-  return useQuery({
-    queryKey: ["admission-filter", filters],
-    queryFn: async () => {
-      const { data } = await filterAdmissionsAPI(filters);
-      return data || { data: [], pagination: {} };
-    },
-    enabled: !!filters, // only run if filters exist
-    retry: 1,
-    onError: (error) => toast.error(getErrorMessage(error)),
-  });
-};

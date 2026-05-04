@@ -11,32 +11,51 @@ import {
 import { toast } from "sonner";
 import { getErrorMessage } from "../../utils/errorUtils";
 
-export const useGetPatients = (cursor = null, limit = 50) => {
+// Normal patients with cursor pagination
+export const useGetPatients = (cursor) => {
   return useQuery({
-    queryKey: ["patient", cursor, limit],
+    queryKey: ["patient", cursor],
     queryFn: async () => {
-      const { data } = await getAllPatientsAPI(cursor, limit);
-      return data || { data: [], pagination: {} }; // normalized like admissions
+      const { data } = await getAllPatientsAPI(cursor);
+      return data || { data: [], pagination: {} };
     },
+    keepPreviousData: true,
+    staleTime: 0,
     retry: 1,
-    onError: (error) => toast.error(getErrorMessage(error)),
+    enabled: true,
   });
 };
 
-// 🔹 Filter Patient List
-export const useFilterPatients = (filters) => {
+// Search patients with cursor
+export const useSearchPatients = (searchTerm, cursor) => {
   return useQuery({
-    queryKey: ["patient-filter", filters],
+    queryKey: ["patient-search", searchTerm, cursor],
     queryFn: async () => {
-      const { data } = await filterPatientAPI(filters);
-      return data || { data: [], pagination: {} }; // same structure
+      if (!searchTerm || searchTerm.length < 2) {
+        return { data: [], pagination: {} };
+      }
+      const { data } = await searchPatientAPI(searchTerm, cursor);
+      return data || { data: [], pagination: {} };
     },
-    enabled: !!filters,
+    enabled: !!searchTerm && searchTerm.length >= 2,
     retry: 1,
-    onError: (error) => toast.error(getErrorMessage(error)),
+    keepPreviousData: true,
   });
 };
 
+// Filter patients with cursor
+export const useFilterPatients = (filters, cursor) => {
+  return useQuery({
+    queryKey: ["patient-filter", filters, cursor],
+    queryFn: async () => {
+      const { data } = await filterPatientAPI(filters, cursor);
+      return data || { data: [], pagination: {} };
+    },
+    enabled: !!filters && Object.keys(filters).length > 0,
+    retry: 1,
+    keepPreviousData: true,
+  });
+};
 //  Fetch a single patient record by ID
 export const useGetPatientById = (id) => {
   return useQuery({
@@ -90,16 +109,4 @@ export const useDeletePatient = () => {
   });
 };
 
-export const useSearchPatients = (searchTerm) => {
-  return useQuery({
-    queryKey: ["patient-search", searchTerm],
-    queryFn: async () => {
-      if (!searchTerm) return [];
-      const { data } = await searchPatientAPI(searchTerm);
-      return data?.data || [];
-    },
-    enabled: !!searchTerm,
-    retry: 1,
-    onError: (error) => toast.error(getErrorMessage(error)),
-  });
-};
+

@@ -11,46 +11,49 @@ import {
 import { toast } from "sonner";
 import { getErrorMessage } from "../../utils/errorUtils";
 
-// GET ALL
-export const useGetDepartments = (cursor = null, limit = 50) => {
+// GET ALL with cursor pagination
+export const useGetDepartments = (cursor) => {
   return useQuery({
-    queryKey: ["department", cursor, limit],
+    queryKey: ["department", cursor],
     queryFn: async () => {
-      const { data } = await getAllDepartmentsAPI(cursor, limit);
+      const { data } = await getAllDepartmentsAPI(cursor);
       return data || { data: [], pagination: {} };
     },
-    keepPreviousData: false,
+    keepPreviousData: true,
     staleTime: 0,
     retry: 1,
+    enabled: true,
   });
 };
 
-// FILTER
-export const useFilterDepartments = (filters) => {
+// SEARCH with cursor
+export const useSearchDepartments = (searchTerm, cursor) => {
   return useQuery({
-    queryKey: ["department-filter", filters],
+    queryKey: ["department-search", searchTerm, cursor],
     queryFn: async () => {
-      const { data } = await filterDepartmentAPI(filters);
+      if (!searchTerm || searchTerm.length < 2) {
+        return { data: [], pagination: {} };
+      }
+      const { data } = await searchDepartmentAPI(searchTerm, cursor);
       return data || { data: [], pagination: {} };
     },
-    enabled: !!filters,
+    enabled: !!searchTerm && searchTerm.length >= 2,
     retry: 1,
-    onError: (error) => toast.error(getErrorMessage(error)),
+    keepPreviousData: true,
   });
 };
 
-// SEARCH
-export const useSearchDepartments = (searchTerm) => {
+// FILTER with cursor
+export const useFilterDepartments = (filters, cursor) => {
   return useQuery({
-    queryKey: ["department-search", searchTerm],
+    queryKey: ["department-filter", filters, cursor],
     queryFn: async () => {
-      if (!searchTerm) return [];
-      const { data } = await searchDepartmentAPI(searchTerm);
-      return data?.data || [];
+      const { data } = await filterDepartmentAPI(filters, cursor);
+      return data || { data: [], pagination: {} };
     },
-    enabled: !!searchTerm,
+    enabled: !!filters && Object.keys(filters).length > 0,
     retry: 1,
-    onError: (err) => toast.error(getErrorMessage(err)),
+    keepPreviousData: true,
   });
 };
 
@@ -75,7 +78,7 @@ export const useCreateDepartment = () => {
     mutationFn: createDepartmentAPI,
     onSuccess: (response) => {
       toast.success(
-        response?.data?.message || "Department created successfully"
+        response?.data?.message || "Department created successfully",
       );
       queryClient.invalidateQueries({ queryKey: ["department"] });
     },
@@ -90,7 +93,7 @@ export const useUpdateDepartment = () => {
     mutationFn: ({ id, data }) => updateDepartmentAPI(id, data),
     onSuccess: (response) => {
       toast.success(
-        response?.data?.message || "Department updated successfully"
+        response?.data?.message || "Department updated successfully",
       );
       queryClient.invalidateQueries({ queryKey: ["department"] });
     },
@@ -105,7 +108,7 @@ export const useDeleteDepartment = () => {
     mutationFn: deleteDepartmentAPI,
     onSuccess: (response) => {
       toast.success(
-        response?.data?.message || "Department deleted successfully"
+        response?.data?.message || "Department deleted successfully",
       );
       queryClient.invalidateQueries({ queryKey: ["department"] });
     },

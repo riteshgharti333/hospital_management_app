@@ -101,16 +101,16 @@ export declare const DepartmentNameEnum: z.ZodEnum<["CARDIOLOGY", "NEUROLOGY", "
 export declare const departmentSchema: z.ZodObject<{
     name: z.ZodEnum<["CARDIOLOGY", "NEUROLOGY", "ORTHOPEDICS", "PEDIATRICS", "DERMATOLOGY", "GENERAL"]>;
     description: z.ZodOptional<z.ZodString>;
-    headId: z.ZodNumber;
+    doctorId: z.ZodNumber;
     status: z.ZodDefault<z.ZodOptional<z.ZodEnum<["ACTIVE", "INACTIVE"]>>>;
 }, "strip", z.ZodTypeAny, {
     status: "ACTIVE" | "INACTIVE";
     name: "CARDIOLOGY" | "NEUROLOGY" | "ORTHOPEDICS" | "PEDIATRICS" | "DERMATOLOGY" | "GENERAL";
-    headId: number;
+    doctorId: number;
     description?: string | undefined;
 }, {
     name: "CARDIOLOGY" | "NEUROLOGY" | "ORTHOPEDICS" | "PEDIATRICS" | "DERMATOLOGY" | "GENERAL";
-    headId: number;
+    doctorId: number;
     status?: "ACTIVE" | "INACTIVE" | undefined;
     description?: string | undefined;
 }>;

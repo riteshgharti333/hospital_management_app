@@ -14,30 +14,49 @@ import { toast } from "sonner";
 import { getErrorMessage } from "../../utils/errorUtils";
 
 // GET ALL PRESCRIPTIONS (with pagination)
-export const useGetPrescriptions = (cursor = null, limit = 50) => {
+// GET ALL with cursor pagination
+export const useGetPrescriptions = (cursor) => {
   return useQuery({
-    queryKey: ["prescription", cursor, limit],
+    queryKey: ["prescription", cursor],
     queryFn: async () => {
-      const { data } = await getAllPrescriptionsAPI(cursor, limit);
+      const { data } = await getAllPrescriptionsAPI(cursor);
       return data || { data: [], pagination: {} };
     },
-    keepPreviousData: false,
+    keepPreviousData: true,
     staleTime: 0,
     retry: 1,
+    enabled: true,
   });
 };
 
-// FILTER PRESCRIPTIONS
-export const useFilterPrescriptions = (filters) => {
+// SEARCH with cursor
+export const useSearchPrescriptions = (searchTerm, cursor) => {
   return useQuery({
-    queryKey: ["prescription-filter", filters],
+    queryKey: ["prescription-search", searchTerm, cursor],
     queryFn: async () => {
-      const { data } = await filterPrescriptionsAPI(filters);
+      if (!searchTerm || searchTerm.length < 2) {
+        return { data: [], pagination: {} };
+      }
+      const { data } = await searchPrescriptionsAPI(searchTerm, cursor);
       return data || { data: [], pagination: {} };
     },
-    enabled: !!filters,
+    enabled: !!searchTerm && searchTerm.length >= 2,
     retry: 1,
-    onError: (error) => toast.error(getErrorMessage(error)),
+    keepPreviousData: true,
+  });
+};
+
+// FILTER with cursor
+export const useFilterPrescriptions = (filters, cursor) => {
+  return useQuery({
+    queryKey: ["prescription-filter", filters, cursor],
+    queryFn: async () => {
+      const { data } = await filterPrescriptionsAPI(filters, cursor);
+      return data || { data: [], pagination: {} };
+    },
+    enabled: !!filters && Object.keys(filters).length > 0,
+    retry: 1,
+    keepPreviousData: true,
   });
 };
 
@@ -94,20 +113,7 @@ export const useDeletePrescription = () => {
   });
 };
 
-// SEARCH PRESCRIPTIONS
-export const useSearchPrescriptions = (searchTerm) => {
-  return useQuery({
-    queryKey: ["prescription-search", searchTerm],
-    queryFn: async () => {
-      if (!searchTerm) return [];
-      const { data } = await searchPrescriptionsAPI(searchTerm);
-      return data?.data || [];
-    },
-    enabled: !!searchTerm,
-    retry: 1,
-    onError: (err) => toast.error(getErrorMessage(err)),
-  });
-};
+
 
 // GET PRESCRIPTIONS BY ADMISSION ID
 export const useGetPrescriptionsByAdmissionId = (admissionId) => {

@@ -61,7 +61,7 @@ const EditDepartment = () => {
     defaultValues: {
       name: "",
       description: "",
-      headId: null,
+      doctorId: null,
       status: "ACTIVE",
     },
   });
@@ -74,7 +74,7 @@ const EditDepartment = () => {
       reset({
         name: departmentData.name,
         description: departmentData.description || "",
-        headId: departmentData.headId,
+        doctorId: departmentData.doctorId,
         status: departmentData.status,
       });
       
@@ -94,7 +94,7 @@ const EditDepartment = () => {
       const submissionData = {
         name: formData.name,
         description: formData.description || "",
-        headId: formData.headId,
+        doctorId: formData.doctorId,
         status: formData.status,
       };
       
@@ -120,7 +120,7 @@ const EditDepartment = () => {
     reset({
       name: departmentData.name,
       description: departmentData.description || "",
-      headId: departmentData.headId,
+      doctorId: departmentData.doctorId,
       status: departmentData.status,
     });
     setSelectedDoctor(departmentData.head ? {
@@ -148,13 +148,13 @@ const EditDepartment = () => {
 
   // Handle doctor selection from search
   const handleDoctorSelect = (doctor) => {
-    setValue("headId", doctor.id);
+    setValue("doctorId", doctor.id);
     setSelectedDoctor({
       id: doctor.id,
       name: doctor.fullName || doctor.doctorName || doctor.name,
       specialization: doctor.specialization,
     });
-    trigger("headId");
+    trigger("doctorId");
     setShowDoctorSearch(false);
     setSearchDoctorQuery("");
   };
@@ -296,7 +296,7 @@ const EditDepartment = () => {
                   placeholder={editMode ? "Search by Doctor Name or Registration No..." : "Search disabled in view mode"}
                   disabled={!editMode}
                   className={`block w-full px-4 py-2 border rounded-lg focus:ring-blue-500 focus:border-blue-500 pl-10 ${
-                    errors.headId ? "border-red-500" : "border-gray-300"
+                    errors.doctorId ? "border-red-500" : "border-gray-300"
                   } ${getDisabledStyles(!editMode)}`}
                 />
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -323,10 +323,10 @@ const EditDepartment = () => {
                 </div>
               )}
               
-              {!selectedDoctor && formValues.headId && (
+              {!selectedDoctor && formValues.doctorId && (
                 <div className="mt-2 p-2 bg-yellow-50 rounded-lg border border-yellow-200">
                   <div className="text-sm text-gray-700">
-                    <span className="font-medium">Head ID:</span> {formValues.headId}
+                    <span className="font-medium">Head ID:</span> {formValues.doctorId}
                   </div>
                   <div className="text-xs text-gray-500 mt-1">
                     Doctor details will be shown after selection
@@ -334,8 +334,8 @@ const EditDepartment = () => {
                 </div>
               )}
               
-              {errors.headId && (
-                <p className="text-red-600 text-sm mt-1">{errors.headId.message}</p>
+              {errors.doctorId && (
+                <p className="text-red-600 text-sm mt-1">{errors.doctorId.message}</p>
               )}
             </div>
 

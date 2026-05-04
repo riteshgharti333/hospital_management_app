@@ -2,7 +2,7 @@ import axiosInstance from "../../utils/axiosInstance";
 
 export const createDoctorAPI = (data) => axiosInstance.post("/doctor", data);
 
-// getAllDoctorsAPI (already has cursor)
+
 export const getAllDoctorsAPI = async (cursor) => {
   const response = await axiosInstance.get("/doctor", {
     params: {
@@ -12,7 +12,6 @@ export const getAllDoctorsAPI = async (cursor) => {
   return response;
 };
 
-// Filter doctor list with cursor support
 export const filterDoctorAPI = (filters, cursor) =>
   axiosInstance.get("/doctor/filter", {
     params: {
@@ -21,7 +20,6 @@ export const filterDoctorAPI = (filters, cursor) =>
     },
   });
 
-// Search doctor with cursor support
 export const searchDoctorAPI = (searchTerm, cursor) =>
   axiosInstance.get(`/doctor/search`, {
     params: {

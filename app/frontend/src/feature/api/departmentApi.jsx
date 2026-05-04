@@ -4,25 +4,30 @@ import axiosInstance from "../../utils/axiosInstance";
 export const createDepartmentAPI = (data) =>
   axiosInstance.post("/department", data);
 
-// GET ALL (paginated)
-export const getAllDepartmentsAPI = (cursor, limit) =>
+// Normal departments list
+export const getAllDepartmentsAPI = (cursor) =>
   axiosInstance.get("/department", {
     params: {
-      cursor: cursor ? encodeURIComponent(cursor) : undefined,
-      limit,
+      cursor: cursor || undefined,
     },
   });
 
-// FILTER
-export const filterDepartmentAPI = (filters) =>
-  axiosInstance.get("/department/filter", {
-    params: filters,
+// Search departments
+export const searchDepartmentAPI = (searchTerm, cursor) =>
+  axiosInstance.get("/department/search", {
+    params: {
+      query: searchTerm,
+      cursor: cursor || undefined,
+    },
   });
 
-// SEARCH
-export const searchDepartmentAPI = (searchTerm) =>
-  axiosInstance.get("/department/search", {
-    params: { query: searchTerm },
+// Filter departments
+export const filterDepartmentAPI = (filters, cursor) =>
+  axiosInstance.get("/department/filter", {
+    params: {
+      ...filters,
+      cursor: cursor || undefined,
+    },
   });
 
 // GET BY ID

@@ -24,6 +24,7 @@ import {
 } from "@hospital/schemas";
 import { prisma } from "../lib/prisma";
 import { searchDoctor } from "../services/doctorService";
+import { validateSearchQuery } from "../utils/queryValidation";
 
 export const createAppointmentRecord = catchAsyncError(
   async (req: Request, res: Response, next: NextFunction) => {
@@ -80,8 +81,6 @@ export const getAppointmentRecordById = catchAsyncError(
     });
   },
 );
-
-
 
 export const updateAppointmentRecord = catchAsyncError(
   async (req: Request, res: Response, next: NextFunction) => {
@@ -151,101 +150,43 @@ export const deleteAppointmentRecord = catchAsyncError(
 );
 
 export const searchAppointmentResults = catchAsyncError(
-  async (req, res, next) => {
-    const { query } = req.query;
+  async (req: Request, res: Response, next: NextFunction) => {
+    const { query, cursor } = req.query;
 
-    const searchTerm = typeof query === "string" ? query : null;
-    if (!searchTerm) {
-      return sendResponse(res, {
-        success: true,
-        statusCode: StatusCodes.OK,
-        message: "No search query provided",
-        data: [],
-      });
-    }
+    const searchTerm = validateSearchQuery(query, next);
+    if (!searchTerm) return;
 
-    // 1️⃣ Direct appointment search
-    const appointmentsDirect = await searchAppointments(searchTerm);
+    const result = await searchAppointments(
+      searchTerm as string,
+      cursor as string,
+    );
 
-    // 2️⃣ Collect doctorIds
-    const doctorIds = [
-      ...new Set(appointmentsDirect.map((a: any) => a.doctorId)),
-    ];
-
-    // 3️⃣ Fetch doctors (batch)
-    const doctors = doctorIds.length
-      ? await prisma.doctor.findMany({
-          where: { id: { in: doctorIds } },
-          select: {
-            id: true,
-            fullName: true,
-          },
-        })
-      : [];
-
-    const doctorMap = new Map(doctors.map((d) => [d.id, d]));
-
-    // 4️⃣ Enrich direct results
-    const enrichedDirect = appointmentsDirect.map((a: any) => ({
-      ...a,
-      doctor: doctorMap.get(a.doctorId) || null,
-    }));
-
-    // 5️⃣ Search doctors by name (THIS is key part)
-    const matchedDoctors = await searchDoctor(searchTerm);
-    const matchedDoctorIds = matchedDoctors.map((d: any) => d.id);
-
-    // 6️⃣ Appointments via doctor name
-    const appointmentsViaDoctors = matchedDoctorIds.length
-      ? await prisma.appointment.findMany({
-          where: {
-            doctorId: { in: matchedDoctorIds },
-          },
-          include: { 
-            doctor: {
-              select: {
-                id: true,
-                fullName: true,
-              },
-            },
-          },
-          orderBy: { createdAt: "desc" },
-        })
-      : [];
-
-    // 7️⃣ Merge + dedupe
-    const mergedMap = new Map();
-
-    enrichedDirect.forEach((a: any) => mergedMap.set(a.id, a));
-    appointmentsViaDoctors.forEach((a: any) => mergedMap.set(a.id, a));
-
-    const mergedResults = Array.from(mergedMap.values());
-
-    // 8️⃣ Response
     sendResponse(res, {
       success: true,
       statusCode: StatusCodes.OK,
       message: "Search results fetched successfully",
-      data: mergedResults,
+      data: result.data,
+      pagination: {
+        nextCursor: result.pagination.nextCursor || undefined,
+        hasMore: result.pagination.hasMore,
+      },
     });
-  }
+  },
 );
 
 export const filterAppointments = catchAsyncError(async (req, res) => {
   const validated = appointmentFilterSchema.parse(req.query);
 
-  const { data, nextCursor, hasMore } =
-    await filterAppointmentsService(validated);
+  const result = await filterAppointmentsService(validated);
 
   sendResponse(res, {
     success: true,
     statusCode: StatusCodes.OK,
     message: "Filtered appointments fetched",
-    data,
+    data: result.data,
     pagination: {
-      nextCursor: nextCursor || undefined,
-      limit: validated.limit ?? PAGINATION_CONFIG.DEFAULT_LIMIT,
-      hasMore,
+      nextCursor: result.nextCursor || undefined,
+      hasMore: result.hasMore,
     },
   });
 });
@@ -265,4 +206,3 @@ export const runExpiredAppointmentsUpdate = catchAsyncError(
     });
   },
 );
-
