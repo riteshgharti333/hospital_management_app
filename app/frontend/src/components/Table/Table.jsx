@@ -48,8 +48,6 @@ const Table = ({
   ledger,
 }) => {
   const navigate = useNavigate();
-  console.log("table");
-
   // Local UI state
   const [showFilter, setShowFilter] = useState(false);
   const [localFilters, setLocalFilters] = useState(filters);
@@ -158,7 +156,7 @@ const Table = ({
       {/* Header */}
       <div className="flex flex-col sm:flex-row items-center justify-between p-4 border-b border-gray-200 gap-3">
         {/* Search */}
-        <div className="relative w-full sm:w-64 z-1">
+        <div className="relative w-full sm:w-80 z-1">
           <FiSearch className="absolute left-3 top-2.5 text-gray-400" />
           <input
             type="text"
@@ -171,9 +169,12 @@ const Table = ({
             className="block w-full pl-10 pr-3 py-2 border border-gray-300 outline-none rounded-lg focus:ring-1 focus:ring-blue-500 focus:border-blue-500 text-[12px]"
           />
           {debouncedTerm.length === 1 && (
-            <p className="text-xs text-amber-600 mt-1 absolute">
-              Type at least 2 characters to search
-            </p>
+            <div className="absolute left-5 top-full mt-2 z-10">
+              <div className="bg-blue-500 text-white text-[10px] rounded-lg py-1 px-2 shadow-lg whitespace-nowrap">
+                 Type at least 2 characters to search
+              </div>
+              <div className="w-2 h-2 bg-blue-500 rotate-45 absolute -top-1 left-4"></div>
+            </div>
           )}
         </div>
 

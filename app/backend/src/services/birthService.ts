@@ -47,7 +47,7 @@ export const deleteBirth = async (id: number) => {
 };
 
 export const searchBirth = createSearchService(prisma, {
-  tableName: "birth",
+  tableName: "Birth",
   exactFields: ["fathersName", "mothersName", "mobileNumber"],
   prefixFields: ["fathersName", "mothersName"],
   similarFields: ["fathersName", "mothersName"],

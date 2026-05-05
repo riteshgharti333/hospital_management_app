@@ -54,7 +54,7 @@ const DepartmentTable = () => {
         },
       },
     ],
-    []
+    [],
   );
 
   return (
@@ -71,7 +71,7 @@ const DepartmentTable = () => {
         columns={columns}
         path="department"
         searchConfig={{
-          placeholder: "Search by Department Name",
+          placeholder: "Search by Department Name or Doctor Name",
         }}
         filtersConfig={[
           {

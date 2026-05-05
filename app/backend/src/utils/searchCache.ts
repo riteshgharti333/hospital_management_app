@@ -32,10 +32,16 @@ export const createSearchService = (
   ): Promise<SearchResult> => {
     const start = performance.now();
 
+
+
+    
+
     // =========================
     // 1️⃣ Normalize input
     // =========================
     const normalizedTerm = searchTerm.trim().toLowerCase().replace(/\s+/g, " ");
+
+
 
     // =========================
     // 2️⃣ Min length guard
@@ -130,6 +136,7 @@ export const createSearchService = (
         );
       }
 
+      
       // Relation fields
       if (config.relationFields) {
         Object.entries(config.relationFields).forEach(

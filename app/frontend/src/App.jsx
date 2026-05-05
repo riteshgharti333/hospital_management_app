@@ -89,6 +89,7 @@ import NetworkProvider from "./utils/NetworkProvider";
 import RequireRole from "./utils/RequireRole";
 import { initToastConfig } from "./utils/toastConfig";
 import LandingPage from "./pages/LandingPage/LandingPage";
+import MediAI from "./ai-medicare/MediAI";
 
 /// ============================================
 /// MAIN APP COMPONENT
@@ -100,6 +101,7 @@ function App() {
     <div className="app">
       <NetworkProvider>
         <BrowserRouter>
+          {/* <MediAI /> */}
           <Toaster
             position="top-right"
             richColors

@@ -3,47 +3,16 @@ import { faker } from "@faker-js/faker";
 
 const prisma = new PrismaClient();
 
-async function seedMoneyReceipts() {
+const STATUSES = ["BOOKED", "CANCELLED", "EXPIRED"];
+
+async function seedAppointments(count = 50) {
   const batchSize = 25;
-  const paymentModes = ["Cash", "Cheque", "Card", "Online Transfer", "Other"];
-  const statuses = ["Active", "Cancelled", "Refunded"];
-  const staffNames = [
-    "Ritesh",
-    "John Smith",
-    "Sarah Johnson",
-    "Michael Brown",
-    "Emily Davis",
-  ];
 
-  // Use the same patient data for all receipts
-  const patientData = {
-    patientName: "Miss Melody Barrows-Luettgen",
-    mobile: "8130088706",
-    admissionNo: "ADM-2026-000049"
-  };
+  const step = 1000 * 30; // 30 sec gap
+  let baseTime = Date.now() - count * step; // ✅ start in past
 
-  console.log(`📊 Creating 50 money receipts for: ${patientData.patientName}`);
-
-  // Get the last money receipt to maintain chronological order
-  const lastReceipt = await prisma.moneyReceipt.findFirst({
-    orderBy: { id: "desc" },
-    select: {
-      id: true,
-      createdAt: true,
-    },
-  });
-
-  let baseTime = lastReceipt
-    ? new Date(lastReceipt.createdAt).getTime()
-    : Date.now() - 1000 * 60 * 60 * 24 * 30; // Start 30 days ago
-
-  const step = 1000 * 60 * 60 * 2; // 2 hours between receipts
-
-  console.log(`📋 Starting money receipt seed`);
-  console.time("Money Receipt Seeding");
-
-  let totalCreated = 0;
-  const count = 50;
+  console.log("📋 Starting appointment seed");
+  console.time("Appointment Seeding");
 
   for (let i = 0; i < count; i += batchSize) {
     const batch = [];
@@ -52,116 +21,68 @@ async function seedMoneyReceipts() {
       baseTime += step;
 
       const createdAt = new Date(baseTime);
-      
-      // Generate receipt date (within last 30 days)
-      const receiptDate = new Date(
-        createdAt.getTime() - 1000 * 60 * 60 * faker.number.int({ min: 1, max: 48 })
-      );
-      
-      // Set to start of day for consistency
-      receiptDate.setHours(0, 0, 0, 0);
+      const updatedAt = createdAt;
 
-      // Generate amount between 100 and 50000
-      const amount = faker.number.int({ min: 100, max: 50000 });
+      // ✅ Appointment date (same day or near past)
+      const appointmentDate = faker.date.recent({
+        days: 10,
+        refDate: createdAt,
+      });
 
-      const paymentMode = faker.helpers.arrayElement(paymentModes);
-      const status = faker.helpers.arrayElement(statuses);
-      const receivedBy = faker.helpers.arrayElement(staffNames);
+      // ✅ Time HH:mm
+      const appointmentTime = faker.date
+        .between({
+          from: new Date(appointmentDate.setHours(9, 0, 0)),
+          to: new Date(appointmentDate.setHours(18, 0, 0)),
+        })
+        .toTimeString()
+        .slice(0, 5);
 
-      // Generate remarks based on payment mode
-      let remarks = "";
-      if (paymentMode === "Cheque") {
-        remarks = `Cheque No: ${faker.string.alphanumeric(6).toUpperCase()}`;
-      } else if (paymentMode === "Card") {
-        remarks = `Transaction ID: ${faker.string.alphanumeric(12).toUpperCase()}`;
-      } else if (paymentMode === "Online Transfer") {
-        remarks = `UTR: ${faker.string.alphanumeric(16).toUpperCase()}`;
-      } else if (paymentMode === "Cash") {
-        remarks = faker.helpers.arrayElement([
-          "Partial payment",
-          "Full payment",
-          "Advance payment",
-          "",
-        ]);
-      }
+      const doctorId = faker.number.int({ min: 1, max: 30 });
 
       batch.push({
-        date: receiptDate,
-        patientName: patientData.patientName,
-        mobile: patientData.mobile,
-        admissionNo: patientData.admissionNo,
-        amount,
-        paymentMode,
-        remarks: remarks || "",
-        receivedBy,
-        status,
+        appointmentDate,
+        appointmentTime,
+        doctorId,
+        status: faker.helpers.arrayElement(STATUSES),
         createdAt,
-        updatedAt: createdAt,
+        updatedAt,
       });
     }
 
-    const result = await prisma.moneyReceipt.createMany({
+    await prisma.appointment.createMany({
       data: batch,
       skipDuplicates: true,
     });
 
-    totalCreated += result.count;
-    console.log(`✅ Inserted ${Math.min(i + batchSize, count)}/${count} receipts`);
+    console.log(
+      `✅ Inserted ${Math.min(i + batchSize, count)}/${count} appointments`
+    );
   }
 
-  console.timeEnd("Money Receipt Seeding");
-  console.log(`\n📊 Total receipts created: ${totalCreated}`);
+  console.timeEnd("Appointment Seeding");
 }
 
-seedMoneyReceipts()
+seedAppointments(50)
   .then(async () => {
-    console.log("\n🎉 Done seeding 50 money receipts!");
+    console.log("\n🎉 Done seeding appointments!");
 
-    // Show sample of created receipts
-    const sample = await prisma.moneyReceipt.findMany({
+    const sample = await prisma.appointment.findMany({
       take: 5,
       orderBy: { createdAt: "desc" },
     });
 
-    console.log("\n📊 Latest 5 money receipts:");
-    sample.forEach((r) => {
-      console.log(`  ID: ${r.id} | Amount: ₹${r.amount}`);
-      console.log(`     Payment: ${r.paymentMode} | Status: ${r.status}`);
-      console.log(`     Received by: ${r.receivedBy} | Date: ${r.date.toISOString().split('T')[0]}`);
-      console.log("");
-    });
-
-    // Show statistics
-    const stats = await prisma.moneyReceipt.aggregate({
-      _count: true,
-      _sum: { amount: true },
-      _avg: { amount: true },
-      _min: { amount: true },
-      _max: { amount: true },
-    });
-
-    console.log("\n📊 Money Receipt Statistics:");
-    console.log(`  Total Receipts: ${stats._count}`);
-    console.log(`  Total Amount: ₹${stats._sum.amount || 0}`);
-    console.log(`  Average Amount: ₹${Math.round(stats._avg.amount || 0)}`);
-    console.log(`  Min Amount: ₹${stats._min.amount || 0}`);
-    console.log(`  Max Amount: ₹${stats._max.amount || 0}`);
-
-    // Payment mode breakdown
-    const paymentStats = await prisma.moneyReceipt.groupBy({
-      by: ["paymentMode"],
-      _count: true,
-    });
-
-    console.log("\n📊 Payment Mode Breakdown:");
-    paymentStats.forEach((stat) => {
-      console.log(`  ${stat.paymentMode}: ${stat._count} receipts`);
+    console.log("\n📊 Latest 5 appointments:");
+    sample.forEach((a) => {
+      console.log(
+        `Doctor: ${a.doctorId} | ${a.appointmentDate.toISOString()} | ${a.appointmentTime}`
+      );
     });
 
     await prisma.$disconnect();
   })
   .catch(async (err) => {
-    console.error("❌ Error seeding money receipts:", err);
+    console.error("❌ Error seeding appointments:", err);
     await prisma.$disconnect();
     process.exit(1);
   });

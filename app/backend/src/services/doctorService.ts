@@ -109,7 +109,6 @@ export const deleteDoctor = async (id: number) => {
   return deletedDoctor;
 };
 
-
 export const searchDoctor = createSearchService(prisma, {
   tableName: "Doctor",
   exactFields: ["fullName", "mobileNumber", "registrationNo"],

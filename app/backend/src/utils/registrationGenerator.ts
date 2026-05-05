@@ -1,18 +1,10 @@
-
-
-/**
- * Universal Registration Number Generator
- * Format: PREFIX-YYYY-XXXX
- * Counter resets every year.
- */
 export const generateRegistrationNumber = async (
-  model: any,      // prisma.doctor, prisma.nurse, etc.
-  prefix: string,  // "DOC", "NUR", "PAT"
-  field: string = "registrationNo" // field name to check
+  model: any,
+  prefix: string,
+  field: string = "registrationNo"
 ) => {
   const currentYear = new Date().getFullYear();
 
-  // Find last record of this year
   const lastRecord = await model.findFirst({
     where: {
       [field]: {
@@ -24,7 +16,6 @@ export const generateRegistrationNumber = async (
     },
   });
 
-  // Extract last counter
   let nextCounter = 1;
 
   if (lastRecord) {
@@ -33,6 +24,5 @@ export const generateRegistrationNumber = async (
     nextCounter = lastCounter + 1;
   }
 
-  const padded = String(nextCounter).padStart(4, "0");
-  return `${prefix}-${currentYear}-${padded}`;
+  return `${prefix}-${currentYear}-${nextCounter}`;
 };

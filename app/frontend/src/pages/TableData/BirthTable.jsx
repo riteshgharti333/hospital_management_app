@@ -26,6 +26,7 @@ const BirthTable = () => {
 
   const columns = useMemo(
     () => [
+       { accessorKey: "id", header: "ID" },
       {
         accessorKey: "birthDate",
         header: "Birth Date",
@@ -76,7 +77,7 @@ const BirthTable = () => {
             key: "babySex",
             label: "Baby Sex",
             type: "select",
-            options: ["Male", "Female", "Other"],
+            options: ["Male", "Female"],
           },
           {
             key: "deliveryType",

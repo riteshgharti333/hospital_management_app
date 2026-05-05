@@ -8,6 +8,7 @@ import {
   useSearchPatients,
 } from "../../feature/hooks/usePatient";
 import { useTableController } from "../../feature/hooks/useTableController";
+import { formatAge, formatDate } from "../../utils/format";
 
 const filterLabels = {
   gender: "Gender",
@@ -31,29 +32,23 @@ const PatientsTable = () => {
       { accessorKey: "gender", header: "Gender" },
       { accessorKey: "aadhaarNumber", header: "Aadhaar" },
       {
+        accessorKey: "dateOfBirth",
+        header: "Age",
+        cell: (info) => formatAge(info.getValue()),
+      },
+      {
         accessorKey: "createdAt",
         header: "Date",
-        cell: (info) => {
-          const date = new Date(info.getValue());
-          return isNaN(date)
-            ? info.getValue()
-            : date.toLocaleDateString("en-GB", {
-                day: "2-digit",
-                month: "short",
-                year: "numeric",
-              });
-        },
+        cell: (info) => formatDate(info.getValue()),
       },
     ],
-    []
+    [],
   );
 
   return (
     <div className="">
       <div className="flex justify-between items-center mb-4">
-        <h2 className="text-2xl font-bold text-gray-800">
-          Patients Entries
-        </h2>
+        <h2 className="text-2xl font-bold text-gray-800">Patients Entries</h2>
         <Link className="btn-primary" to="/new-patient-register">
           <FaPlus /> Enter Patient Register
         </Link>
