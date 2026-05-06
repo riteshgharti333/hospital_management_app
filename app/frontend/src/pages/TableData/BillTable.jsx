@@ -42,10 +42,10 @@ const BillTable = () => {
         },
       },
       { accessorKey: "billType", header: "Type" },
-      { accessorKey: "admissionNo", header: "Admission No" },
-      { accessorKey: "patientName", header: "Patient Name" },
-      { accessorKey: "mobile", header: "Mobile" },
-      { accessorKey: "patientSex", header: "Gender" },
+      { accessorKey: "admission.hospitalAdmissionId", header: "Admission No" },
+      { accessorKey: "patient.hospitalPatientId", header: "Patient ID" },
+      { accessorKey: "patient.fullName", header: "Patient Name" },
+      { accessorKey: "patient.mobileNumber", header: "Mobile" },
       {
         accessorKey: "status",
         header: "Status",
@@ -67,20 +67,6 @@ const BillTable = () => {
           );
         },
       },
-      {
-        accessorKey: "admissionDate",
-        header: "Admission Date",
-        cell: (info) => {
-          const date = new Date(info.getValue());
-          return isNaN(date)
-            ? info.getValue()
-            : date.toLocaleDateString("en-GB", {
-                day: "2-digit",
-                month: "short",
-                year: "numeric",
-              });
-        },
-      },
     ],
     [],
   );
@@ -99,7 +85,7 @@ const BillTable = () => {
         columns={columns}
         path="bill"
         searchConfig={{
-          placeholder: "Search by Admission No, Name, Mobile...",
+          placeholder: "Search by Patient ID, Name or Mobile",
         }}
         filtersConfig={[
           {
@@ -107,12 +93,6 @@ const BillTable = () => {
             label: "Bill Type",
             type: "select",
             options: ["OPD", "IPD", "Pharmacy", "Pathology", "Radiology"],
-          },
-          {
-            key: "patientSex",
-            label: "Gender",
-            type: "select",
-            options: ["Male", "Female", "Other"],
           },
           {
             key: "status",

@@ -8,7 +8,7 @@ export type BankInput = {
   bankName: string;
   accountNo: string;
   ifscCode?: string;
-  isActive?: boolean;
+  status: "ACTIVE" | "INACTIVE";
 };
 
 export const generateBankCode = async (): Promise<string> => {
@@ -57,7 +57,7 @@ export const updateBankAccount = async (id: number, data: Partial<BankInput>) =>
   const result = await prisma.bankAccount.update({
     where: { id },
     data,
-  });
+  }); 
 
   await bumpCacheVersion("bankaccount");
 
@@ -85,7 +85,7 @@ export const searchBankAccount = createSearchService(prisma, {
     "bankName",
     "accountNo",
     "ifscCode",
-    "isActive",
+    "status",
     "createdAt",
     "updatedAt",
   ],
@@ -94,7 +94,7 @@ export const searchBankAccount = createSearchService(prisma, {
 type FilterBankAccountParams = {
   fromDate?: Date;
   toDate?: Date;
-  isActive?: boolean;
+  status?: string;
   cursor?: string;
   limit?: number;
 };
@@ -102,13 +102,13 @@ type FilterBankAccountParams = {
 export const filterBankAccountsService = async (
   params: FilterBankAccountParams
 ) => {
-  const { fromDate, toDate, isActive, cursor, limit } = params;
+  const { fromDate, toDate, status, cursor } = params;
 
   const where: Record<string, any> = {};
 
   // ✅ Active status filter
-  if (isActive !== undefined) {
-    where.isActive = isActive;
+  if (status !== undefined) {
+    where.status = status;
   }
 
   // ✅ Date range filter
@@ -123,14 +123,13 @@ export const filterBankAccountsService = async (
     prisma,
     {
       model: "bankAccount",
-      limit,
       select: {
         id: true,
         code: true,
         bankName: true,
         accountNo: true,
         ifscCode: true,
-        isActive: true,
+        status: true,
         createdAt: true,
         updatedAt: true,
       },

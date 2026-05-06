@@ -8,11 +8,10 @@ const statusCodes_1 = require("../../constants/statusCodes");
 const billService_1 = require("../../services/transectionService/billService");
 const schemas_1 = require("@hospital/schemas");
 const queryValidation_1 = require("../../utils/queryValidation");
-const paginationConfig_1 = require("../../lib/paginationConfig");
 exports.createBillRecord = (0, catchAsyncError_1.catchAsyncError)(async (req, res, next) => {
     // Calculate totalAmount from billItems BEFORE validation
     const calculatedTotalAmount = req.body.billItems?.reduce((sum, item) => {
-        const itemTotal = item.totalAmount ?? (item.mrp * item.quantity);
+        const itemTotal = item.totalAmount ?? item.mrp * item.quantity;
         return sum + (itemTotal || 0);
     }, 0) || 0;
     // Add totalAmount to request body
@@ -67,7 +66,6 @@ exports.updateBillRecord = (0, catchAsyncError_1.catchAsyncError)(async (req, re
     // Transform data to match updateBill expectations
     const updateData = {
         ...validated,
-        dischargeDate: validated.dischargeDate ?? undefined,
         billItems: validated.billItems ?? undefined,
     };
     const updatedBill = await (0, billService_1.updateBill)(id, updateData);
@@ -98,30 +96,33 @@ exports.deleteBillRecord = (0, catchAsyncError_1.catchAsyncError)(async (req, re
     });
 });
 exports.searchBillsResults = (0, catchAsyncError_1.catchAsyncError)(async (req, res, next) => {
-    const { query } = req.query;
+    const { query, cursor } = req.query;
     const searchTerm = (0, queryValidation_1.validateSearchQuery)(query, next);
     if (!searchTerm)
         return;
-    const results = await (0, billService_1.searchBills)(searchTerm);
+    const result = await (0, billService_1.searchBills)(searchTerm, cursor);
     (0, sendResponse_1.sendResponse)(res, {
         success: true,
         statusCode: 200,
         message: "Bill search results fetched",
-        data: results,
+        data: result.data,
+        pagination: {
+            nextCursor: result.pagination.nextCursor || undefined,
+            hasMore: result.pagination.hasMore,
+        },
     });
 });
 exports.filterBills = (0, catchAsyncError_1.catchAsyncError)(async (req, res) => {
     const validated = schemas_1.billFilterSchema.parse(req.query);
-    const { data, nextCursor, hasMore } = await (0, billService_1.filterBillsService)(validated);
+    const result = await (0, billService_1.filterBillsService)(validated);
     (0, sendResponse_1.sendResponse)(res, {
         success: true,
         statusCode: statusCodes_1.StatusCodes.OK,
         message: "Filtered Bills fetched",
-        data,
+        data: result.data,
         pagination: {
-            nextCursor: nextCursor || undefined,
-            limit: validated.limit ?? paginationConfig_1.PAGINATION_CONFIG.DEFAULT_LIMIT,
-            hasMore,
+            nextCursor: result.nextCursor || undefined,
+            hasMore: result.hasMore,
         },
     });
 });

@@ -45,11 +45,11 @@ const formFields = [
       {
         label: "Status",
         type: "select",
-        name: "isActive",
+        name: "status",
         placeholder: "Select status",
         options: [
-          { label: "Active", value: true },
-          { label: "Inactive", value: false },
+          { label: "Active", value: "ACTIVE" },
+          { label: "Inactive", value: "INACTIVE" },
         ],
         required: true,
       },
@@ -69,7 +69,7 @@ const NewBank = () => {
       bankName: "",
       accountNo: "",
       ifscCode: "",
-      isActive: true,
+      status: "",
     },
   });
 
@@ -135,8 +135,8 @@ const NewBank = () => {
                               value === "true"
                                 ? true
                                 : value === "false"
-                                ? false
-                                : value,
+                                  ? false
+                                  : value,
                           })}
                           className={`block w-full px-4 py-2 border rounded-lg focus:ring-blue-500 focus:border-blue-500 appearance-none bg-white pr-8 ${
                             error ? "border-red-500" : "border-gray-300"
@@ -147,10 +147,7 @@ const NewBank = () => {
                             {field.placeholder}
                           </option>
                           {field.options.map((option, i) => (
-                            <option
-                              key={i}
-                              value={option.value.toString()}
-                            >
+                            <option key={i} value={option.value.toString()}>
                               {option.label}
                             </option>
                           ))}

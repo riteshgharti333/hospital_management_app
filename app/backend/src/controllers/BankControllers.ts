@@ -16,7 +16,6 @@ import {
 import { bankSchema, bankFilterSchema } from "@hospital/schemas";
 import { PrismaClientKnownRequestError } from "@prisma/client/runtime/library";
 import { validateSearchQuery } from "../utils/queryValidation";
-import { PAGINATION_CONFIG } from "../lib/paginationConfig";
 
 export const createBankAccountRecord = catchAsyncError(
   async (req: Request, res: Response, next: NextFunction) => {

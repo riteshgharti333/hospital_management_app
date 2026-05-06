@@ -23,10 +23,10 @@ const getAllDepartments = async (cursor) => {
         include: {
             head: {
                 select: {
-                    fullName: true
-                }
-            }
-        }
+                    fullName: true,
+                },
+            },
+        },
     }, cursor);
 };
 exports.getAllDepartments = getAllDepartments;
@@ -64,9 +64,21 @@ exports.searchDepartment = (0, searchCache_1.createSearchService)(prisma_1.prism
     exactFields: ["name"],
     prefixFields: ["name"],
     similarFields: ["name", "description"],
+    relationFields: {
+        doctor: ["fullName"],
+    },
+    include: {
+        head: {
+            select: {
+                id: true,
+                fullName: true,
+            },
+        },
+    },
+    sortField: "createdAt",
 });
 const filterDepartmentsService = async (params) => {
-    const { fromDate, toDate, status, cursor, limit } = params;
+    const { fromDate, toDate, status, cursor } = params;
     const where = {};
     // ✅ Status filter
     if (status) {
@@ -81,14 +93,6 @@ const filterDepartmentsService = async (params) => {
     }
     return (0, filterPaginate_1.filterPaginate)(prisma_1.prisma, {
         model: "department",
-        limit,
-        // 🔥 Optional optimization
-        // select: {
-        //   id: true,
-        //   fullName: true,
-        //   status: true,
-        //   createdAt: true,
-        // },
     }, cursor, where);
 };
 exports.filterDepartmentsService = filterDepartmentsService;

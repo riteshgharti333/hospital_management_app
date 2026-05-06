@@ -31,8 +31,8 @@ const getCashAccountByName = async (cashName) => {
         where: {
             cashName: {
                 equals: cashName,
-                mode: "insensitive"
-            }
+                mode: "insensitive",
+            },
         },
     });
 };
@@ -71,21 +71,14 @@ exports.searchCashAccount = (0, searchCache_1.createSearchService)(prisma_1.pris
     exactFields: ["cashName", "code"],
     prefixFields: ["cashName", "code"],
     similarFields: ["cashName"],
-    selectFields: [
-        "id",
-        "code",
-        "cashName",
-        "isActive",
-        "createdAt",
-        "updatedAt",
-    ],
+    selectFields: ["id", "code", "cashName", "status", "createdAt", "updatedAt"],
 });
 const filterCashAccountsService = async (params) => {
-    const { fromDate, toDate, isActive, cursor, limit } = params;
+    const { fromDate, toDate, status, cursor, limit } = params;
     const where = {};
     // Active status filter
-    if (isActive !== undefined) {
-        where.isActive = isActive;
+    if (status !== undefined) {
+        where.status = status;
     }
     // Date range filter
     if (fromDate || toDate) {

@@ -22,13 +22,14 @@ type PaginationOptions<T extends keyof PrismaClient> = {
   select?: Record<string, any>;
   include?: Record<string, any>;
   orderBy?: any;
+  where?: Record<string, any>;  // ✅ ADD THIS LINE
 };
 
 export async function cursorPaginate<T extends keyof PrismaClient, R = any>(
   prisma: PrismaClient,
   options: PaginationOptions<T>,
-  rawCursor?: unknown, // ✅ safer input
-  extraWhere?: any,
+  rawCursor?: unknown,
+  extraWhere?: any,  // Keep for backward compatibility
 ): Promise<{
   data: R[];
   pagination: { nextCursor: string | null; hasMore: boolean };
@@ -39,6 +40,7 @@ export async function cursorPaginate<T extends keyof PrismaClient, R = any>(
     select,
     include,
     orderBy = [{ createdAt: "desc" }, { id: "desc" }],
+    where: optionsWhere,  // ✅ DESTRUCTURE THE WHERE FROM OPTIONS
   } = options;
 
   // ✅ FIX: Normalize model name to lowercase for consistent cache keys
@@ -93,11 +95,11 @@ export async function cursorPaginate<T extends keyof PrismaClient, R = any>(
   // ✅ REDIS CACHE
   try {
     const redisData = await upstashGet(cacheKey);
-    if (redisData) {
-      const parsed = JSON.parse(redisData);
-      memoryCache.set(cacheKey, { ...parsed, timestamp: Date.now() });
-      return parsed;
-    }
+    // if (redisData) {
+    //   const parsed = JSON.parse(redisData);
+    //   memoryCache.set(cacheKey, { ...parsed, timestamp: Date.now() });
+    //   return parsed;
+    // }
   } catch (e) {
     console.warn("Redis GET failed (safe fallback)");
   }
@@ -106,9 +108,10 @@ export async function cursorPaginate<T extends keyof PrismaClient, R = any>(
     console.log("🔥 DB QUERY:", modelName);
   }
 
-  // ✅ WHERE CONDITION
+  // ✅ WHERE CONDITION - MERGE optionsWhere AND extraWhere
   const whereCondition = {
-    ...(extraWhere || {}),
+    ...(optionsWhere || {}),      // ✅ Add where from options
+    ...(extraWhere || {}),        // Add extraWhere for backward compatibility
     ...(cursorDate !== null && cursorId !== null
       ? {
           OR: [

@@ -6,7 +6,6 @@ const errorHandler_1 = require("../../middlewares/errorHandler");
 const sendResponse_1 = require("../../utils/sendResponse");
 const statusCodes_1 = require("../../constants/statusCodes");
 const moneyReceiptService_1 = require("../../services/transectionService/moneyReceiptService");
-const paginationConfig_1 = require("../../lib/paginationConfig");
 const schemas_1 = require("@hospital/schemas");
 const queryValidation_1 = require("../../utils/queryValidation");
 exports.createMoneyReceiptRecord = (0, catchAsyncError_1.catchAsyncError)(async (req, res, next) => {
@@ -84,30 +83,33 @@ exports.deleteMoneyReceiptRecord = (0, catchAsyncError_1.catchAsyncError)(async 
     });
 });
 exports.searchMoneyReceiptResults = (0, catchAsyncError_1.catchAsyncError)(async (req, res, next) => {
-    const { query } = req.query;
+    const { query, cursor } = req.query;
     const searchTerm = (0, queryValidation_1.validateSearchQuery)(query, next);
     if (!searchTerm)
         return;
-    const receipts = await (0, moneyReceiptService_1.searchMoneyReceipts)(searchTerm);
+    const result = await (0, moneyReceiptService_1.searchMoneyReceipts)(searchTerm, cursor);
     (0, sendResponse_1.sendResponse)(res, {
         success: true,
         statusCode: statusCodes_1.StatusCodes.OK,
         message: "Search results fetched successfully",
-        data: receipts,
+        data: result.data,
+        pagination: {
+            nextCursor: result.pagination.nextCursor || undefined,
+            hasMore: result.pagination.hasMore,
+        },
     });
 });
 exports.filterMoneyReceipts = (0, catchAsyncError_1.catchAsyncError)(async (req, res) => {
     const validated = schemas_1.moneyReceiptFilterSchema.parse(req.query);
-    const { data, nextCursor, hasMore } = await (0, moneyReceiptService_1.filterMoneyReceiptsService)(validated);
+    const result = await (0, moneyReceiptService_1.filterMoneyReceiptsService)(validated);
     (0, sendResponse_1.sendResponse)(res, {
         success: true,
         statusCode: statusCodes_1.StatusCodes.OK,
         message: "Filtered money receipts fetched",
-        data,
+        data: result.data,
         pagination: {
-            nextCursor: nextCursor || undefined,
-            limit: validated.limit ?? paginationConfig_1.PAGINATION_CONFIG.DEFAULT_LIMIT,
-            hasMore,
+            nextCursor: result.nextCursor || undefined,
+            hasMore: result.hasMore,
         },
     });
 });

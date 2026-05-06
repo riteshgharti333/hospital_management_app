@@ -164,35 +164,43 @@ const EditAdmission = () => {
   const [searchDoctorQuery, setSearchDoctorQuery] = useState("");
 
   // Fetch admission data
-  const { data: admissionData, isLoading: isLoadingAdmission } = useGetAdmissionById(id);
-  
+  const { data: admissionData, isLoading: isLoadingAdmission } =
+    useGetAdmissionById(id);
+
   // Extract patient and doctor IDs from admission data - FIXED
   const patientId = admissionData?.patientId;
   const doctorId = admissionData?.doctorId;
-  
+
   // Fetch patient and doctor details
-  const { data: patientData, isLoading: isLoadingPatient } = useGetPatientById(patientId, {
-    enabled: !!patientId,
-  });
-  
-  const { data: doctorData, isLoading: isLoadingDoctor } = useGetDoctorById(doctorId, {
-    enabled: !!doctorId,
-  });
+  const { data: patientData, isLoading: isLoadingPatient } = useGetPatientById(
+    patientId,
+    {
+      enabled: !!patientId,
+    },
+  );
+
+  const { data: doctorData, isLoading: isLoadingDoctor } = useGetDoctorById(
+    doctorId,
+    {
+      enabled: !!doctorId,
+    },
+  );
 
   const { mutateAsync: updateAdmission, isPending: isUpdating } =
     useUpdateAdmission();
   const { mutateAsync: deleteAdmission, isPending: isDeleting } =
     useDeleteAdmission();
 
-  const { data: patientSearchResults, isLoading: searchingPatients } =
-    useSearchPatients(searchPatientQuery, {
-      enabled: searchPatientQuery.length >= 2 && editMode,
-    });
+  // To this:
+  const { data: patientSearchResponse, isLoading: searchingPatients } =
+    useSearchPatients(searchPatientQuery);
 
-  const { data: doctorSearchResults, isLoading: searchingDoctors } =
-    useSearchDoctors(searchDoctorQuery, {
-      enabled: searchDoctorQuery.length >= 2 && editMode,
-    });
+  const { data: doctorSearchResponse, isLoading: searchingDoctors } =
+    useSearchDoctors(searchDoctorQuery);
+
+  // Get the actual results from the nested data
+  const patientSearchResults = patientSearchResponse?.data || [];
+  const doctorSearchResults = doctorSearchResponse?.data || [];
 
   const optionalFields = ["dischargeDate"];
 
@@ -234,9 +242,9 @@ const EditAdmission = () => {
       console.log("Admission Data:", admissionData);
       console.log("Patient Data:", patientData);
       console.log("Doctor Data:", doctorData);
-      
+
       const formattedData = {
-        admissionDate: admissionData.admissionDate 
+        admissionDate: admissionData.admissionDate
           ? new Date(admissionData.admissionDate).toISOString().slice(0, 16)
           : "",
         dischargeDate: admissionData.dischargeDate
@@ -245,15 +253,25 @@ const EditAdmission = () => {
         patientId: admissionData.patientId || "",
         doctorId: admissionData.doctorId || "",
         // Set display fields from fetched data
-        displayPatientId: patientData?.hospitalPatientId || patientData?.patientId || `P-${patientData?.id}` || "",
+        displayPatientId:
+          patientData?.hospitalPatientId ||
+          patientData?.patientId ||
+          `P-${patientData?.id}` ||
+          "",
         patientName: patientData?.fullName || patientData?.patientName || "",
-        phoneNumber: patientData?.mobileNumber || patientData?.phoneNumber || "",
-        aadhaarNumber: patientData?.aadhaarNumber || patientData?.aadhaarNo || "",
-        displayDoctorId: doctorData?.registrationNo || doctorData?.doctorId || `D-${doctorData?.id}` || "",
+        phoneNumber:
+          patientData?.mobileNumber || patientData?.phoneNumber || "",
+        aadhaarNumber:
+          patientData?.aadhaarNumber || patientData?.aadhaarNo || "",
+        displayDoctorId:
+          doctorData?.registrationNo ||
+          doctorData?.doctorId ||
+          `D-${doctorData?.id}` ||
+          "",
         doctorName: doctorData?.fullName || doctorData?.doctorName || "",
         specialization: doctorData?.specialization || "",
       };
-      
+
       console.log("Formatted Data for Form:", formattedData);
       reset(formattedData);
     }
@@ -262,19 +280,19 @@ const EditAdmission = () => {
   // Handle patient selection from search
   const handlePatientSelect = (patient) => {
     if (!editMode) return;
-    
+
     setValue("patientId", patient.id);
     setValue(
       "displayPatientId",
-      patient.hospitalPatientId || patient.patientId || `P-${patient.id}`
+      patient.hospitalPatientId || patient.patientId || `P-${patient.id}`,
     );
     setValue(
       "patientName",
-      patient.fullName || patient.patientName || patient.name
+      patient.fullName || patient.patientName || patient.name,
     );
     setValue(
       "phoneNumber",
-      patient.mobileNumber || patient.phoneNumber || patient.phone
+      patient.mobileNumber || patient.phoneNumber || patient.phone,
     );
     setValue("aadhaarNumber", patient.aadhaarNumber || patient.aadhaarNo);
 
@@ -287,11 +305,11 @@ const EditAdmission = () => {
   // Handle doctor selection from search
   const handleDoctorSelect = (doctor) => {
     if (!editMode) return;
-    
+
     setValue("doctorId", doctor.id);
     setValue(
       "displayDoctorId",
-      doctor.registrationNo || doctor.doctorId || `D-${doctor.id}`
+      doctor.registrationNo || doctor.doctorId || `D-${doctor.id}`,
     );
     setValue("doctorName", doctor.fullName || doctor.doctorName || doctor.name);
     setValue("specialization", doctor.specialization || "");
@@ -311,7 +329,9 @@ const EditAdmission = () => {
     if (!formData.patientId || formData.patientId === "") {
       toast.error("Please select a patient from the search results");
       setTimeout(() => {
-        const patientSearchInput = document.querySelector('.patient-search-container input');
+        const patientSearchInput = document.querySelector(
+          ".patient-search-container input",
+        );
         if (patientSearchInput) {
           patientSearchInput.focus();
         }
@@ -323,7 +343,9 @@ const EditAdmission = () => {
     if (!formData.doctorId || formData.doctorId === "") {
       toast.error("Please select a doctor from the search results");
       setTimeout(() => {
-        const doctorSearchInput = document.querySelector('.doctor-search-container input');
+        const doctorSearchInput = document.querySelector(
+          ".doctor-search-container input",
+        );
         if (doctorSearchInput) {
           doctorSearchInput.focus();
         }
@@ -341,7 +363,7 @@ const EditAdmission = () => {
     if (formData.dischargeDate) {
       const admissionDate = new Date(formData.admissionDate);
       const dischargeDate = new Date(formData.dischargeDate);
-      
+
       if (dischargeDate <= admissionDate) {
         toast.error("Discharge date must be after admission date");
         return;
@@ -369,9 +391,10 @@ const EditAdmission = () => {
       }
     } catch (error) {
       console.error("Admission update error:", error);
-      
-      const errorMessage = error.response?.data?.message || error.message || "An error occurred";
-      
+
+      const errorMessage =
+        error.response?.data?.message || error.message || "An error occurred";
+
       if (errorMessage.toLowerCase().includes("patient")) {
         toast.error("Please select a valid patient");
       } else if (errorMessage.toLowerCase().includes("doctor")) {
@@ -390,7 +413,7 @@ const EditAdmission = () => {
     // Reset to original admission data
     if (admissionData && patientData && doctorData) {
       const formattedData = {
-        admissionDate: admissionData.admissionDate 
+        admissionDate: admissionData.admissionDate
           ? new Date(admissionData.admissionDate).toISOString().slice(0, 16)
           : "",
         dischargeDate: admissionData.dischargeDate
@@ -398,11 +421,21 @@ const EditAdmission = () => {
           : "",
         patientId: admissionData.patientId || "",
         doctorId: admissionData.doctorId || "",
-        displayPatientId: patientData?.hospitalPatientId || patientData?.patientId || `P-${patientData?.id}` || "",
+        displayPatientId:
+          patientData?.hospitalPatientId ||
+          patientData?.patientId ||
+          `P-${patientData?.id}` ||
+          "",
         patientName: patientData?.fullName || patientData?.patientName || "",
-        phoneNumber: patientData?.mobileNumber || patientData?.phoneNumber || "",
-        aadhaarNumber: patientData?.aadhaarNumber || patientData?.aadhaarNo || "",
-        displayDoctorId: doctorData?.registrationNo || doctorData?.doctorId || `D-${doctorData?.id}` || "",
+        phoneNumber:
+          patientData?.mobileNumber || patientData?.phoneNumber || "",
+        aadhaarNumber:
+          patientData?.aadhaarNumber || patientData?.aadhaarNo || "",
+        displayDoctorId:
+          doctorData?.registrationNo ||
+          doctorData?.doctorId ||
+          `D-${doctorData?.id}` ||
+          "",
         doctorName: doctorData?.fullName || doctorData?.doctorName || "",
         specialization: doctorData?.specialization || "",
       };
@@ -424,7 +457,9 @@ const EditAdmission = () => {
       }
     } catch (error) {
       console.error("Delete error:", error);
-      toast.error(error.response?.data?.message || "Failed to delete admission");
+      toast.error(
+        error.response?.data?.message || "Failed to delete admission",
+      );
     } finally {
       setShowDeleteModal(false);
     }
@@ -475,10 +510,16 @@ const EditAdmission = () => {
   // Handle click outside to close search results
   useEffect(() => {
     const handleClickOutside = (event) => {
-      if (showPatientSearch && !event.target.closest('.patient-search-container')) {
+      if (
+        showPatientSearch &&
+        !event.target.closest(".patient-search-container")
+      ) {
         setShowPatientSearch(false);
       }
-      if (showDoctorSearch && !event.target.closest('.doctor-search-container')) {
+      if (
+        showDoctorSearch &&
+        !event.target.closest(".doctor-search-container")
+      ) {
         setShowDoctorSearch(false);
       }
     };
@@ -503,17 +544,28 @@ const EditAdmission = () => {
       />
 
       {/* Header */}
-      <div className="mb-8">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center">
-            <BackButton />
-            <h2 className="text-2xl font-bold text-gray-800 flex items-center ml-2">
-              <FaProcedures className="mr-2 text-blue-600" />
-              {editMode ? "Edit Admission" : "View Admission"}
-            </h2>
-          </div>
-        </div>
-      </div>
+     <div className="mb-8">
+  <div className="flex items-center justify-between">
+    <div className="flex items-center">
+      <BackButton />
+      <h2 className="text-2xl font-bold text-gray-800 flex items-center ml-2">
+        <FaProcedures className="mr-2 text-blue-600" />
+        {editMode ? "Edit Admission" : "View Admission"}
+      </h2>
+    </div>
+    
+    {admissionData?.hospitalAdmissionId && (
+  <div className="flex items-center gap-2 bg-gray-100 px-4 py-2 rounded-lg">
+    <FaIdCard className="text-gray-400" />
+  
+      <p className="font-mono font-semibold text-gray-800">
+        {admissionData.hospitalAdmissionId}
+      </p>
+   
+  </div>
+)}
+  </div>
+</div>
 
       {/* Form */}
       <form
@@ -658,9 +710,9 @@ const EditAdmission = () => {
                           value={fieldValue || ""}
                           className={`block w-full px-4 py-2 border rounded-lg focus:ring-blue-500 focus:border-blue-500 ${
                             field.icon ? "pl-10" : ""
-                          } ${error ? "border-red-500" : "border-gray-300"} ${
-                            getDisabledStyles(isDisabled)
-                          }`}
+                          } ${error ? "border-red-500" : "border-gray-300"} ${getDisabledStyles(
+                            isDisabled,
+                          )}`}
                           aria-invalid={error ? "true" : "false"}
                           readOnly
                         />
@@ -753,9 +805,9 @@ const EditAdmission = () => {
                           maxLength={field.maxLength}
                           className={`block w-full px-4 py-2 border rounded-lg focus:ring-blue-500 focus:border-blue-500 ${
                             field.icon ? "pl-10" : ""
-                          } ${error ? "border-red-500" : "border-gray-300"} ${
-                            getDisabledStyles(isDisabled)
-                          }`}
+                          } ${error ? "border-red-500" : "border-gray-300"} ${getDisabledStyles(
+                            isDisabled,
+                          )}`}
                           aria-invalid={error ? "true" : "false"}
                         />
                         {field.icon && (
@@ -790,7 +842,10 @@ const EditAdmission = () => {
           ) : (
             <>
               <CancelButton onClick={handleCancel} />
-              <SaveButton type="submit" isLoading={isUpdating || isSubmitting} />
+              <SaveButton
+                type="submit"
+                isLoading={isUpdating || isSubmitting}
+              />
             </>
           )}
         </div>

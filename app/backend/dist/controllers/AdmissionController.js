@@ -8,9 +8,7 @@ const statusCodes_1 = require("../constants/statusCodes");
 const admissionService_1 = require("../services/admissionService");
 const schemas_1 = require("@hospital/schemas");
 const queryValidation_1 = require("../utils/queryValidation");
-const patientService_1 = require("../services/patientService");
 const prisma_1 = require("../lib/prisma");
-const paginationConfig_1 = require("../lib/paginationConfig");
 // CREATE
 exports.createAdmission = (0, catchAsyncError_1.catchAsyncError)(async (req, res, next) => {
     // 1️⃣ Validate body
@@ -93,80 +91,20 @@ exports.deleteAdmission = (0, catchAsyncError_1.catchAsyncError)(async (req, res
 });
 //////////// SEARCH ADMISSIONS
 exports.searchAdmissionsResults = (0, catchAsyncError_1.catchAsyncError)(async (req, res, next) => {
-    const { query } = req.query;
+    const { query, cursor } = req.query;
     const searchTerm = (0, queryValidation_1.validateSearchQuery)(query, next);
     if (!searchTerm)
         return;
-    // 1️⃣ Direct admission search (admissionId etc.)
-    const admissionsDirect = await (0, admissionService_1.searchAdmissions)(searchTerm);
-    // Enrich direct admissions with patient and doctor data
-    const enrichedDirectAdmissions = await Promise.all(admissionsDirect.map(async (admission) => {
-        const [patient, doctor] = await Promise.all([
-            prisma_1.prisma.patient.findUnique({
-                where: { id: admission.patientId },
-                select: {
-                    id: true,
-                    fullName: true,
-                    gender: true,
-                    mobileNumber: true,
-                    aadhaarNumber: true,
-                    hospitalPatientId: true,
-                    address: true
-                },
-            }),
-            prisma_1.prisma.doctor.findUnique({
-                where: { id: admission.doctorId },
-                select: {
-                    id: true,
-                    fullName: true,
-                    specialization: true,
-                    mobileNumber: true,
-                },
-            }),
-        ]);
-        return { ...admission, patient, doctor };
-    }));
-    // 2️⃣ Patient search
-    const patients = await (0, patientService_1.searchPatient)(searchTerm);
-    const patientIds = patients.map((p) => p.id);
-    // 3️⃣ Admissions via patients (already has include)
-    const admissionsViaPatients = patientIds.length
-        ? await prisma_1.prisma.admission.findMany({
-            where: {
-                patientId: { in: patientIds },
-            },
-            include: {
-                patient: {
-                    select: {
-                        id: true,
-                        hospitalPatientId: true,
-                        fullName: true,
-                        gender: true,
-                        mobileNumber: true,
-                        aadhaarNumber: true,
-                    },
-                },
-                doctor: {
-                    select: {
-                        id: true,
-                        fullName: true,
-                        specialization: true,
-                    },
-                },
-            },
-            orderBy: { createdAt: "desc" },
-        })
-        : [];
-    // 4️⃣ Merge + deduplicate by admission.id
-    const mergedMap = new Map();
-    enrichedDirectAdmissions.forEach((a) => mergedMap.set(a.id, a));
-    admissionsViaPatients.forEach((a) => mergedMap.set(a.id, a));
-    const mergedResults = Array.from(mergedMap.values());
+    const result = await (0, admissionService_1.searchAdmissions)(searchTerm, cursor);
     (0, sendResponse_1.sendResponse)(res, {
         success: true,
         statusCode: statusCodes_1.StatusCodes.OK,
-        message: "Admission search results fetched successfully",
-        data: mergedResults,
+        message: "Search results fetched successfully",
+        data: result.data,
+        pagination: {
+            nextCursor: result.pagination.nextCursor || undefined,
+            hasMore: result.pagination.hasMore,
+        },
     });
 });
 /////////// FILTER ADMISSIONS
@@ -180,7 +118,6 @@ exports.filterAdmissions = (0, catchAsyncError_1.catchAsyncError)(async (req, re
         data,
         pagination: {
             nextCursor: nextCursor || undefined,
-            limit: validated.limit ?? paginationConfig_1.PAGINATION_CONFIG.DEFAULT_LIMIT,
             hasMore,
         },
     });

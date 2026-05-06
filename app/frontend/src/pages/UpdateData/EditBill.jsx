@@ -1,15 +1,17 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import {
   FaCalendarAlt,
   FaListAlt,
-  FaMobileAlt,
-  FaIdCard,
-  FaUser,
-  FaHome,
   FaBox,
   FaPlus,
   FaTrash,
+  FaSearch,
+  FaHospitalUser,
+  FaPhone,
+  FaUserMd,
+  FaUser,
+  FaIdCard,
 } from "react-icons/fa";
 import { useForm, useFieldArray, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -42,6 +44,7 @@ const EditBill = () => {
 
   const [editMode, setEditMode] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const searchRef = useRef(null);
 
   const [productData, setProductData] = useState({
     company: "",
@@ -52,10 +55,13 @@ const EditBill = () => {
   });
 
   // Admission Search
-  const [searchAdmission, setSearchAdmission] = useState("");
+  const [searchTerm, setSearchTerm] = useState("");
   const [showDropdown, setShowDropdown] = useState(false);
+  const [selectedAdmission, setSelectedAdmission] = useState(null);
 
-  const { data: admissionResults = [] } = useSearchAdmissions(searchAdmission);
+  const { data: searchResponse, isLoading: isSearching } =
+    useSearchAdmissions(searchTerm);
+  const admissions = searchResponse?.data || [];
 
   const billTypes = ["OPD", "IPD", "Pharmacy", "Pathology", "Radiology"];
   const billStatusOptions = [
@@ -65,8 +71,25 @@ const EditBill = () => {
     "Cancelled",
     "Refunded",
   ];
-  const companies = ["Company A", "Company B", "Company C", "Company D"];
-  const services = ["Service 1", "Service 2", "Service 3", "Service 4"];
+  const companies = [
+    "Sun Pharma",
+    "Cipla",
+    "Dr. Reddy's",
+    "Abbott",
+    "Mankind Pharma",
+  ];
+  const services = [
+    "Paracetamol 500mg",
+    "Amoxicillin 250mg",
+    "Omeprazole 20mg",
+    "CBC Test",
+    "X-Ray Chest",
+    "Ultrasound",
+    "Consultation Fee",
+    "Room Charges",
+    "Nursing Care",
+    "IV Fluids",
+  ];
 
   const { data: billData, isLoading } = useGetBillById(id);
   const { mutateAsync: updateBill, isPending: isUpdating } = useUpdateBill();
@@ -79,8 +102,18 @@ const EditBill = () => {
     reset,
     formState: { errors },
     setValue,
+    getValues,
   } = useForm({
     resolver: zodResolver(billSchema),
+    defaultValues: {
+      billDate: "",
+      billType: "",
+      status: "Pending",
+      admissionId: "",
+      patientId: "",
+      billItems: [],
+      totalAmount: 0,
+    },
   });
 
   const { fields, append, remove } = useFieldArray({
@@ -95,25 +128,52 @@ const EditBill = () => {
       errors[name] ? "border-red-500" : "border-gray-300"
     } ${disabled ? "bg-gray-100 cursor-not-allowed opacity-90" : "bg-white"}`;
 
+  // Handle click outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (searchRef.current && !searchRef.current.contains(event.target)) {
+        setShowDropdown(false);
+      }
+    };
+    document.addEventListener("click", handleClickOutside);
+    return () => document.removeEventListener("click", handleClickOutside);
+  }, []);
+
   // Load bill data
   useEffect(() => {
     if (billData) {
+      console.log("Bill Data:", billData);
+      1;
+      // Reset form with bill data
       reset({
-        ...billData,
-        billDate: billData.billDate?.split("T")[0],
-        admissionDate: billData.admissionDate?.split("T")[0],
-        dischargeDate: billData.dischargeDate?.split("T")[0] || "",
+        billDate: billData.billDate?.split("T")[0] || "",
+        billType: billData.billType || "",
+        status: billData.status || "Pending",
+        admissionId: billData.admissionId || "",
+        patientId: billData.patientId || "",
+        billItems: billData.billItems || [],
+        totalAmount: billData.totalAmount || 0,
       });
 
-      setSearchAdmission(billData.admissionNo);
+      // Set selected admission if exists
+      if (billData.admission) {
+        setSelectedAdmission(billData);
+        setSearchTerm(billData.admission.hospitalAdmissionId || "");
+      }
     }
   }, [billData, reset]);
 
   const calculateTotal = () =>
     (watchedItems || []).reduce(
-      (sum, item) => sum + (item.totalAmount || 0),
-      0
+      (sum, item) => sum + (Number(item.totalAmount) || 0),
+      0,
     );
+
+  // Update total amount when items change
+  useEffect(() => {
+    const total = calculateTotal();
+    setValue("totalAmount", total);
+  }, [watchedItems, setValue]);
 
   const handleProductChange = (e) => {
     const { name, value } = e.target;
@@ -161,55 +221,64 @@ const EditBill = () => {
     });
   };
 
-  // Auto-fill patient data when selecting admission
-  const handleSelectAdmission = (item) => {
+  const handleSearchChange = (e) => {
+    const value = e.target.value;
+    setSearchTerm(value);
+    setShowDropdown(value.length >= 2);
+    if (value.length < 2) {
+      setSelectedAdmission(null);
+      setValue("admissionId", "");
+      setValue("patientId", "");
+    }
+  };
+
+  const handleSelectAdmission = (admission) => {
+    setSelectedAdmission(admission);
+    setValue("admissionId", admission.id);
+    setValue("patientId", admission.patient?.id);
+    setSearchTerm(admission.hospitalAdmissionId || `ADM-${admission.id}`);
     setShowDropdown(false);
-
-    setSearchAdmission(item.gsRsRegNo);
-    setValue("admissionNo", item.gsRsRegNo);
-
-    setValue("patientName", item.patientName);
-    setValue("mobile", item.phoneNo);
-    setValue("admissionDate", item.admissionDate.split("T")[0]);
-    setValue("patientAge", item.patientAge);
-    setValue("patientSex", item.patientSex);
-    setValue("address", item.patientAddress);
-    setValue(
-      "dischargeDate",
-      item.dischargeDate ? item.dischargeDate.split("T")[0] : ""
-    );
-
-    toast.success("Patient details auto-filled");
+    toast.success("Admission selected successfully");
   };
 
   const onSubmit = async (formData) => {
     try {
-      const processedItems = formData.billItems.map((item) => ({
-        ...item,
+      if (!selectedAdmission && editMode) {
+        toast.error("Please select an admission");
+        return;
+      }
+
+      // Process bill items
+      const processedItems = (formData.billItems || []).map((item) => ({
+        company: item.company,
+        itemOrService: item.itemOrService,
+        quantity: Number(item.quantity),
         mrp: Number(item.mrp),
         totalAmount: Number(item.totalAmount),
       }));
 
-      // Calculate total bill amount
-      const grandTotal = processedItems.reduce(
-        (sum, item) => sum + (item.totalAmount || 0),
-        0
-      );
-
+      // Prepare payload matching the schema
       const payload = {
-        ...formData,
+        billDate: new Date(formData.billDate).toISOString(),
+        billType: formData.billType,
+        totalAmount: Number(formData.totalAmount) || calculateTotal(),
+        admissionId: Number(formData.admissionId),
+        patientId: Number(formData.patientId),
+        status: formData.status,
         billItems: processedItems,
-        totalAmount: grandTotal, // <-- 🔥 ADD THIS FIX
       };
+
+      console.log("Updating bill with payload:", payload);
 
       const res = await updateBill({ id, data: payload });
 
       if (res?.data?.success) {
-        toast.success(res.data.message);
+        toast.success(res.data.message || "Bill updated successfully");
         setEditMode(false);
       }
     } catch (e) {
-      console.log(e);
+      console.error("Update error:", e);
+      toast.error(e?.response?.data?.message || "Failed to update bill");
     }
   };
 
@@ -239,7 +308,6 @@ const EditBill = () => {
         loading={isDeleting}
       />
 
-      {/* Header (same as your EditBill) */}
       <div className="mb-5">
         <div className="flex items-center">
           <BackButton />
@@ -254,8 +322,8 @@ const EditBill = () => {
         onSubmit={handleSubmit(onSubmit)}
         className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden"
       >
-        {/* Bill Information Section (same design as NewBillEntry) */}
         <div className="p-6">
+          {/* Bill Information Section */}
           <div className="flex items-center mb-6">
             <FaListAlt className="text-blue-500" />
             <h3 className="ml-2 text-lg font-semibold text-gray-800">
@@ -263,7 +331,7 @@ const EditBill = () => {
             </h3>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {/* Bill Date */}
             <div className="space-y-1">
               <label className="block text-sm font-medium text-gray-700">
@@ -292,25 +360,20 @@ const EditBill = () => {
               <label className="block text-sm font-medium text-gray-700">
                 Bill Type<span className="text-red-500 ml-1">*</span>
               </label>
-              <div className="relative">
-                <select
-                  {...register("billType")}
-                  disabled={!editMode}
-                  className={`${getInputClass(
-                    "billType",
-                    !editMode
-                  )} bg-white pr-8`}
-                >
-                  <option value="" disabled hidden>
-                    Select bill type
+              <select
+                {...register("billType")}
+                disabled={!editMode}
+                className={`${getInputClass("billType", !editMode)} bg-white`}
+              >
+                <option value="" disabled hidden>
+                  Select bill type
+                </option>
+                {billTypes.map((type) => (
+                  <option key={type} value={type}>
+                    {type}
                   </option>
-                  {billTypes.map((type) => (
-                    <option key={type} value={type}>
-                      {type}
-                    </option>
-                  ))}
-                </select>
-              </div>
+                ))}
+              </select>
               {errors.billType && (
                 <p className="text-red-600 text-sm mt-1">
                   {errors.billType.message}
@@ -323,22 +386,17 @@ const EditBill = () => {
               <label className="block text-sm font-medium text-gray-700">
                 Bill Status<span className="text-red-500 ml-1">*</span>
               </label>
-              <div className="relative">
-                <select
-                  {...register("status")}
-                  disabled={!editMode}
-                  className={`${getInputClass(
-                    "status",
-                    !editMode
-                  )} bg-white pr-8`}
-                >
-                  {billStatusOptions.map((s) => (
-                    <option key={s} value={s}>
-                      {s}
-                    </option>
-                  ))}
-                </select>
-              </div>
+              <select
+                {...register("status")}
+                disabled={!editMode}
+                className={`${getInputClass("status", !editMode)} bg-white`}
+              >
+                {billStatusOptions.map((s) => (
+                  <option key={s} value={s}>
+                    {s}
+                  </option>
+                ))}
+              </select>
               {errors.status && (
                 <p className="text-red-600 text-sm mt-1">
                   {errors.status.message}
@@ -348,275 +406,206 @@ const EditBill = () => {
           </div>
         </div>
 
-        {/* Patient Information Section (same design as NewBillEntry) */}
+        {/* Admission Section */}
         <div className="p-6 border-t border-gray-100">
           <div className="flex items-center mb-6">
-            <FaUser className="text-blue-500" />
+            <FaHospitalUser className="text-blue-500" />
             <h3 className="ml-2 text-lg font-semibold text-gray-800">
-              Patient Information
+              Admission Information
             </h3>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {/* Admission No (Searchable) */}
-            <div className="space-y-1 relative">
+          {/* Search Input - Only visible in edit mode */}
+          {editMode ? (
+            <div className="space-y-1 relative" ref={searchRef}>
               <label className="block text-sm font-medium text-gray-700">
-                Admission No<span className="text-red-500 ml-1">*</span>
+                Search Admission<span className="text-red-500 ml-1">*</span>
               </label>
-
               <div className="relative">
                 <input
                   type="text"
-                  value={searchAdmission}
-                  disabled={!editMode}
-                  onChange={(e) => {
-                    if (!editMode) return;
-                    setSearchAdmission(e.target.value);
-                    setShowDropdown(true);
+                  value={searchTerm}
+                  onChange={handleSearchChange}
+                  onFocus={() => {
+                    if (searchTerm.length >= 2 && admissions.length > 0) {
+                      setShowDropdown(true);
+                    }
                   }}
-                  placeholder="Enter admission number"
-                  className={`${getInputClass("admissionNo", !editMode)} pl-10`}
+                  placeholder="Search by Admission ID, Patient Name, or Mobile No"
                   autoComplete="off"
+                  className={`${getInputClass("admissionId", false)} pl-10`}
                 />
-
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <FaIdCard className="text-gray-400" />
+                  <FaSearch className="text-gray-400" />
                 </div>
               </div>
 
-              {/* dropdown results */}
-              {editMode &&
-                showDropdown &&
-                searchAdmission &&
-                admissionResults?.length > 0 && (
-                  <ul className="absolute z-50 mt-1 w-full bg-white border border-gray-300 rounded-lg shadow-sm max-h-60 overflow-y-auto">
-                    {admissionResults.slice(0, 10).map((item) => (
+              {/* Search Results Dropdown */}
+              {showDropdown && searchTerm.length >= 2 && (
+                <ul className="absolute z-50 bg-white w-full border border-gray-300 rounded-lg shadow-lg max-h-60 overflow-y-auto mt-1">
+                  {isSearching ? (
+                    <li className="px-4 py-3 text-center text-gray-500">
+                      <div className="flex items-center justify-center">
+                        <svg
+                          className="animate-spin h-5 w-5 mr-2"
+                          viewBox="0 0 24 24"
+                        >
+                          <circle
+                            className="opacity-25"
+                            cx="12"
+                            cy="12"
+                            r="10"
+                            stroke="currentColor"
+                            strokeWidth="4"
+                            fill="none"
+                          />
+                          <path
+                            className="opacity-75"
+                            fill="currentColor"
+                            d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                          />
+                        </svg>
+                        Searching admissions...
+                      </div>
+                    </li>
+                  ) : admissions.length > 0 ? (
+                    admissions.slice(0, 10).map((admission) => (
                       <li
-                        key={item.id}
-                        onClick={() => handleSelectAdmission(item)}
-                        className="px-4 py-2 cursor-pointer hover:bg-gray-100"
+                        key={admission.id}
+                        onClick={() => handleSelectAdmission(admission)}
+                        className="px-4 py-3 cursor-pointer hover:bg-blue-50 border-b border-gray-100 last:border-b-0 transition-colors"
                       >
-                        <p className="font-medium text-[12px] text-gray-800">
-                          {item.gsRsRegNo} — {item.patientName}
-                        </p>
-                        <p className="text-[12px] text-gray-500">
-                          {item.phoneNo}
-                        </p>
+                        <div className="flex items-center justify-between">
+                          <div className="flex-1">
+                            <p className="font-medium text-gray-800">
+                              {admission.patient?.fullName || "Unknown Patient"}
+                            </p>
+                            <div className="flex items-center gap-3 mt-1">
+                              <p className="text-sm text-gray-600">
+                                <span className="font-medium">Admission:</span>{" "}
+                                {admission.hospitalAdmissionId ||
+                                  `ADM-${admission.id}`}
+                              </p>
+                              <p className="text-sm text-gray-600">
+                                <span className="font-medium">Patient ID:</span>{" "}
+                                {admission.patient?.hospitalPatientId || "N/A"}
+                              </p>
+                            </div>
+                            <div className="flex items-center gap-3 mt-1">
+                              <p className="text-sm text-gray-600 flex items-center">
+                                <FaPhone
+                                  className="mr-1 text-gray-400"
+                                  size={12}
+                                />
+                                {admission.patient?.mobileNumber || "N/A"}
+                              </p>
+                            </div>
+                            <p className="text-xs text-gray-500 mt-1">
+                              Admitted:{" "}
+                              {new Date(
+                                admission.admissionDate,
+                              ).toLocaleDateString()}
+                            </p>
+                          </div>
+                          <FaIdCard className="text-gray-400 ml-3" />
+                        </div>
                       </li>
-                    ))}
-                  </ul>
-                )}
-
-              {errors.admissionNo && (
-                <p className="text-red-600 text-sm mt-1">
-                  {errors.admissionNo.message}
-                </p>
+                    ))
+                  ) : (
+                    <li className="px-4 py-3 text-center text-gray-500">
+                      <div className="flex flex-col items-center">
+                        <FaSearch className="text-gray-400 mb-2" size={20} />
+                        <p>No admissions found</p>
+                      </div>
+                    </li>
+                  )}
+                </ul>
               )}
             </div>
+          ) : null}
 
-            {/* Patient Name */}
-            <div className="space-y-1">
-              <label className="block text-sm font-medium text-gray-700">
-                Patient Name<span className="text-red-500 ml-1">*</span>
-              </label>
-              <div className="relative">
-                <input
-                  type="text"
-                  {...register("patientName")}
-                  disabled
-                  placeholder="Enter patient name"
-                  className={`${getInputClass(
-                    "patientName",
-                    true
-                  )} bg-gray-100 cursor-not-allowed pl-10`}
-                />
-
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <FaUser className="text-gray-400" />
-                </div>
-              </div>
-              {errors.patientName && (
-                <p className="text-red-600 text-sm mt-1">
-                  {errors.patientName.message}
-                </p>
-              )}
-            </div>
-
-            {/* Patient Age */}
-            <div className="space-y-1">
-              <label className="block text-sm font-medium text-gray-700">
-                Patient Age<span className="text-red-500 ml-1">*</span>
-              </label>
-              <div className="relative">
-                <input
-                  type="number"
-                  {...register("patientAge")}
-                  disabled
-                  placeholder="Enter patient age"
-                  className={`${getInputClass(
-                    "patientAge",
-                    true
-                  )} bg-gray-100 cursor-not-allowed`}
-                />
-              </div>
-              {errors.patientAge && (
-                <p className="text-red-600 text-sm mt-1">
-                  {errors.patientAge.message}
-                </p>
-              )}
-            </div>
-
-            {/* Mobile */}
-            <div className="space-y-1">
-              <label className="block text-sm font-medium text-gray-700">
-                Mobile<span className="text-red-500 ml-1">*</span>
-              </label>
-              <div className="relative">
-                <input
-                  type="tel"
-                  {...register("mobile")}
-                  disabled
-                  placeholder="Enter mobile number"
-                  className={`${getInputClass(
-                    "mobile",
-                    true
-                  )} bg-gray-100 cursor-not-allowed pl-10`}
-                />
-
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <FaMobileAlt className="text-gray-400" />
-                </div>
-              </div>
-              {errors.mobile && (
-                <p className="text-red-600 text-sm mt-1">
-                  {errors.mobile.message}
-                </p>
-              )}
-            </div>
-
-            {/* Admission Date */}
-            <div className="space-y-1">
-              <label className="block text-sm font-medium text-gray-700">
-                Admission Date<span className="text-red-500 ml-1">*</span>
-              </label>
-              <div className="relative">
-                <input
-                  type="date"
-                  {...register("admissionDate")}
-                  disabled
-                  className={`${getInputClass(
-                    "admissionDate",
-                    true
-                  )} bg-gray-100 cursor-not-allowed pl-10`}
-                />
-
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <FaCalendarAlt className="text-gray-400" />
-                </div>
-              </div>
-              {errors.admissionDate && (
-                <p className="text-red-600 text-sm mt-1">
-                  {errors.admissionDate.message}
-                </p>
-              )}
-            </div>
-
-            {/* Patient Sex */}
-            <div className="space-y-1">
-              <label className="block text-sm font-medium text-gray-700">
-                Patient Sex<span className="text-red-500 ml-1">*</span>
-              </label>
-              <div className="relative">
-                <select
-                  {...register("patientSex")}
-                  disabled
-                  className={`${getInputClass(
-                    "patientSex",
-                    true
-                  )} bg-gray-100 cursor-not-allowed pr-8`}
-                >
-                  <option value="Male">Male</option>
-                  <option value="Female">Female</option>
-                  <option value="Other">Other</option>
-                </select>
-              </div>
-              {errors.patientSex && (
-                <p className="text-red-600 text-sm mt-1">
-                  {errors.patientSex.message}
-                </p>
-              )}
-            </div>
-
-            {/* Discharge Date */}
-            <div className="space-y-1">
-              <label className="block text-sm font-medium text-gray-700">
-                Discharge Date
-              </label>
-              <div className="relative">
-                <input
-                  type="date"
-                  {...register("dischargeDate")}
-                  disabled
-                  className={`${getInputClass(
-                    "dischargeDate",
-                    true
-                  )} bg-gray-100 cursor-not-allowed pl-10`}
-                />
-
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <FaCalendarAlt className="text-gray-400" />
-                </div>
-              </div>
-              {errors.dischargeDate && (
-                <p className="text-red-600 text-sm mt-1">
-                  {errors.dischargeDate.message}
-                </p>
-              )}
-            </div>
-          </div>
-        </div>
-
-        {/* Address Section (same as NewBillEntry) */}
-        <div className="p-6 border-t border-gray-100">
-          <div className="flex items-center mb-6">
-            <FaHome className="text-blue-500" />
-            <h3 className="ml-2 text-lg font-semibold text-gray-800">
-              Address
-            </h3>
-          </div>
-          <div className="space-y-1">
-            <label className="block text-sm font-medium text-gray-700">
-              Address<span className="text-red-500 ml-1">*</span>
-            </label>
-            <textarea
-              {...register("address")}
-              disabled
-              placeholder="Enter patient address"
-              rows={3}
-              className={`${getInputClass(
-                "address",
-                true
-              )} bg-gray-100 cursor-not-allowed`}
-            />
-
-            {errors.address && (
-              <p className="text-red-600 text-sm mt-1">
-                {errors.address.message}
+          {/* Current/Selected Admission Details Card - Shows in BOTH modes */}
+          {selectedAdmission && (
+            <div
+              className={`mt-4 p-4 rounded-lg border ${
+                editMode
+                  ? "bg-blue-50 border-blue-200"
+                  : "bg-green-50 border-green-200"
+              }`}
+            >
+              <p
+                className={`text-sm font-medium mb-2 ${
+                  editMode ? "text-blue-900" : "text-green-900"
+                }`}
+              >
+                {editMode
+                  ? "Selected Admission Details:"
+                  : "Current Admission Details:"}
               </p>
-            )}
-          </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
+                <p className={editMode ? "text-blue-800" : "text-green-800"}>
+                  <span className="font-medium">Admission ID:</span>{" "}
+                  {selectedAdmission.admission?.hospitalAdmissionId ||
+                    `ADM-${selectedAdmission.id}`}
+                </p>
+                <p className={editMode ? "text-blue-800" : "text-green-800"}>
+                  <span className="font-medium">Patient ID:</span>{" "}
+                  {selectedAdmission.patient?.hospitalPatientId || "N/A"}
+                </p>
+                <p className={editMode ? "text-blue-800" : "text-green-800"}>
+                  <span className="font-medium">Patient Name:</span>{" "}
+                  {selectedAdmission.patient?.fullName || "N/A"}
+                </p>
+                <p className={editMode ? "text-blue-800" : "text-green-800"}>
+                  <span className="font-medium">Mobile:</span>{" "}
+                  {selectedAdmission.patient?.mobileNumber || "N/A"}
+                </p>
+                <p className={editMode ? "text-blue-800" : "text-green-800"}>
+                  <span className="font-medium">Admitted On:</span>{" "}
+                  {new Date(
+                    selectedAdmission.admissionDate,
+                  ).toLocaleDateString()}
+                </p>
+                <p className={editMode ? "text-blue-800" : "text-green-800"}>
+                  <span className="font-medium">Gender:</span>{" "}
+                  {selectedAdmission.patient?.gender || "N/A"}
+                </p>
+                <p className={editMode ? "text-blue-800" : "text-green-800"}>
+                  <span className="font-medium">Address:</span>{" "}
+                  {selectedAdmission.patient?.address || "N/A"}
+                </p>
+              </div>
+            </div>
+          )}
+
+          {/* No Admission Selected Message */}
+          {!selectedAdmission && (
+            <div className="mt-4 p-4 bg-yellow-50 rounded-lg border border-yellow-200">
+              <p className="text-sm text-yellow-800">
+                {editMode
+                  ? "Please search and select an admission"
+                  : "No admission information available"}
+              </p>
+            </div>
+          )}
         </div>
 
-        {/* Product Data Section (same as NewBillEntry) */}
+        {/* Hidden inputs for IDs */}
+        <input type="hidden" {...register("admissionId")} />
+        <input type="hidden" {...register("patientId")} />
+        <input type="hidden" {...register("totalAmount")} />
+
+        {/* Add Items Section (only in edit mode) */}
         {editMode && (
           <div className="p-6 border-t border-gray-100">
             <div className="flex items-center mb-6">
               <FaBox className="text-blue-500" />
               <h3 className="ml-2 text-lg font-semibold text-gray-800">
-                Product Data
+                Add Items/Services
               </h3>
             </div>
-            <div className="grid grid-cols-1 md:grid-cols-5 gap-6 mb-6">
+
+            <div className="grid grid-cols-1 md:grid-cols-5 gap-4 mb-6">
               <div className="space-y-1">
                 <label className="block text-sm font-medium text-gray-700">
                   Select Company<span className="text-red-500 ml-1">*</span>
@@ -625,7 +614,7 @@ const EditBill = () => {
                   name="company"
                   value={productData.company}
                   onChange={handleProductChange}
-                  className="block w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 bg-white pr-8"
+                  className="block w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 bg-white"
                 >
                   <option value="" disabled hidden>
                     Select company
@@ -637,6 +626,7 @@ const EditBill = () => {
                   ))}
                 </select>
               </div>
+
               <div className="space-y-1">
                 <label className="block text-sm font-medium text-gray-700">
                   Select Item/Service
@@ -646,7 +636,7 @@ const EditBill = () => {
                   name="itemOrService"
                   value={productData.itemOrService}
                   onChange={handleProductChange}
-                  className="block w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 bg-white pr-8"
+                  className="block w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 bg-white"
                 >
                   <option value="" disabled hidden>
                     Select item/service
@@ -658,6 +648,7 @@ const EditBill = () => {
                   ))}
                 </select>
               </div>
+
               <div className="space-y-1">
                 <label className="block text-sm font-medium text-gray-700">
                   Quantity<span className="text-red-500 ml-1">*</span>
@@ -671,9 +662,10 @@ const EditBill = () => {
                   className="block w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
                 />
               </div>
+
               <div className="space-y-1">
                 <label className="block text-sm font-medium text-gray-700">
-                  MRP<span className="text-red-500 ml-1">*</span>
+                  MRP (₹)<span className="text-red-500 ml-1">*</span>
                 </label>
                 <input
                   type="number"
@@ -682,44 +674,42 @@ const EditBill = () => {
                   onChange={handleProductChange}
                   min="0"
                   step="0.01"
+                  placeholder="0.00"
                   className="block w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
                 />
               </div>
+
               <div className="space-y-1">
                 <label className="block text-sm font-medium text-gray-700">
-                  Total Amount<span className="text-red-500 ml-1">*</span>
+                  Total Amount (₹)
                 </label>
                 <input
                   type="number"
                   name="totalAmount"
                   value={productData.totalAmount}
-                  onChange={handleProductChange}
-                  min="0"
-                  step="0.01"
                   readOnly
-                  className="block w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 bg-gray-100"
+                  className="block w-full px-4 py-2 border border-gray-300 rounded-lg bg-gray-100 cursor-not-allowed"
                 />
               </div>
             </div>
+
             <button
               type="button"
               onClick={handleAddItem}
-              className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 flex items-center"
+              className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 flex items-center transition-colors"
             >
               <FaPlus className="mr-2" />
               Add Item
             </button>
-            {errors.billItems && (
-              <p className="text-red-600 text-sm mt-2">
-                {errors.billItems.message}
-              </p>
-            )}
           </div>
         )}
 
-        {/* Items Table (styled like NewBillEntry, but respects editMode Action col) */}
+        {/* Items Table */}
         {fields.length > 0 && (
           <div className="p-6 border-t border-gray-100">
+            <h4 className="text-md font-semibold text-gray-800 mb-4">
+              Added Items
+            </h4>
             <div className="overflow-x-auto">
               <table className="min-w-full divide-y divide-gray-200">
                 <thead className="bg-gray-50">
@@ -734,13 +724,13 @@ const EditBill = () => {
                       Item/Service
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      MRP
+                      MRP (₹)
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                       Qty
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Total Amount
+                      Total (₹)
                     </th>
                     {editMode && (
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -751,24 +741,24 @@ const EditBill = () => {
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
                   {fields.map((item, index) => (
-                    <tr key={item.id}>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm">
+                    <tr key={item.id} className="hover:bg-gray-50">
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                         {index + 1}
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm">
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                         {item.company}
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm">
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                         {item.itemOrService}
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm">
-                        {Number(item.mrp).toFixed(2)}
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                        ₹{Number(item.mrp).toFixed(2)}
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm">
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                         {item.quantity}
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm">
-                        {Number(item.totalAmount).toFixed(2)}
+                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                        ₹{Number(item.totalAmount).toFixed(2)}
                       </td>
                       {editMode && (
                         <td className="px-6 py-4 whitespace-nowrap text-sm">
@@ -788,12 +778,12 @@ const EditBill = () => {
                   <tr className="bg-gray-50">
                     <td
                       colSpan={editMode ? 5 : 5}
-                      className="px-6 py-4 text-right font-medium text-sm text-gray-800"
+                      className="px-6 py-4 text-right font-semibold text-sm text-gray-800"
                     >
-                      Total:
+                      Grand Total:
                     </td>
                     <td className="px-6 py-4 font-bold text-sm text-gray-900">
-                      {calculateTotal().toFixed(2)}
+                      ₹{calculateTotal().toFixed(2)}
                     </td>
                     {editMode && <td />}
                   </tr>
@@ -803,7 +793,7 @@ const EditBill = () => {
           </div>
         )}
 
-        {/* Action Buttons (same as your EditBill, unchanged) */}
+        {/* Action Buttons */}
         <div className="bg-gray-50 px-6 py-4 border-t border-gray-200 flex justify-end gap-3">
           {!editMode ? (
             <>
@@ -823,3 +813,4 @@ const EditBill = () => {
 };
 
 export default EditBill;
+``;

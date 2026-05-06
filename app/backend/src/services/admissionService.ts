@@ -100,7 +100,7 @@ export const searchAdmissions = createSearchService(prisma, {
   similarFields: [],
 
   relationFields: {
-    patient: ["fullName"],
+    patient: ["fullName","aadhaarNumber"],
   },
 
   include: {
@@ -110,6 +110,8 @@ export const searchAdmissions = createSearchService(prisma, {
         fullName: true,
         hospitalPatientId: true,
         mobileNumber: true,
+        aadhaarNumber: true,
+        gender:true,
       },
     }, 
     doctor: {
@@ -136,7 +138,7 @@ type FilterAdmissionParams = {
 export const filterAdmissionsService = async (
   params: FilterAdmissionParams,
 ) => {
-  const { fromDate, toDate, gender, cursor, limit } = params;
+  const { fromDate, toDate, gender, cursor } = params;
 
   const where: Record<string, any> = {};
 
@@ -160,7 +162,6 @@ export const filterAdmissionsService = async (
     prisma,
     {
       model: "admission",
-      limit,
       include: {
         patient: {
           select: {

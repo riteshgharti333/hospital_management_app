@@ -8,7 +8,6 @@ const statusCodes_1 = require("../constants/statusCodes");
 const departmentService_1 = require("../services/departmentService");
 const schemas_1 = require("@hospital/schemas");
 const queryValidation_1 = require("../utils/queryValidation");
-const paginationConfig_1 = require("../lib/paginationConfig");
 const prisma_1 = require("../lib/prisma");
 exports.createDepartmentRecord = (0, catchAsyncError_1.catchAsyncError)(async (req, res, next) => {
     const validated = schemas_1.departmentSchema.parse(req.body);
@@ -26,7 +25,7 @@ exports.createDepartmentRecord = (0, catchAsyncError_1.catchAsyncError)(async (r
     }
     // Check if doctor is already assigned to a department
     const existingHead = await prisma_1.prisma.department.findUnique({
-        where: { headId: validated.headId },
+        where: { doctorId: validated.doctorId },
     });
     if (existingHead) {
         return (0, sendResponse_1.sendResponse)(res, {
@@ -106,10 +105,10 @@ exports.updateDepartmentRecord = (0, catchAsyncError_1.catchAsyncError)(async (r
         }
     }
     // 🔴 Check doctor already assigned (exclude current)
-    if (validatedData.headId) {
+    if (validatedData.doctorId) {
         const existingHead = await prisma_1.prisma.department.findFirst({
             where: {
-                headId: validatedData.headId,
+                doctorId: validatedData.doctorId,
                 NOT: { id },
             },
         });
@@ -147,30 +146,33 @@ exports.deleteDepartmentRecord = (0, catchAsyncError_1.catchAsyncError)(async (r
     });
 });
 exports.searchDepartmentResults = (0, catchAsyncError_1.catchAsyncError)(async (req, res, next) => {
-    const { query } = req.query;
+    const { query, cursor } = req.query;
     const searchTerm = (0, queryValidation_1.validateSearchQuery)(query, next);
     if (!searchTerm)
         return;
-    const departments = await (0, departmentService_1.searchDepartment)(searchTerm);
+    const result = await (0, departmentService_1.searchDepartment)(searchTerm, cursor);
     (0, sendResponse_1.sendResponse)(res, {
         success: true,
         statusCode: statusCodes_1.StatusCodes.OK,
         message: "Search results fetched successfully",
-        data: departments,
+        data: result.data,
+        pagination: {
+            nextCursor: result.pagination.nextCursor || undefined,
+            hasMore: result.pagination.hasMore,
+        },
     });
 });
 exports.filterDepartments = (0, catchAsyncError_1.catchAsyncError)(async (req, res) => {
     const validated = schemas_1.departmentFilterSchema.parse(req.query);
-    const { data, nextCursor, hasMore } = await (0, departmentService_1.filterDepartmentsService)(validated);
+    const result = await (0, departmentService_1.filterDepartmentsService)(validated);
     (0, sendResponse_1.sendResponse)(res, {
         success: true,
         statusCode: statusCodes_1.StatusCodes.OK,
         message: "Filtered departments fetched",
-        data,
+        data: result.data,
         pagination: {
-            nextCursor: nextCursor || undefined,
-            limit: validated.limit ?? paginationConfig_1.PAGINATION_CONFIG.DEFAULT_LIMIT,
-            hasMore,
+            nextCursor: result.nextCursor || undefined,
+            hasMore: result.hasMore,
         },
     });
 });

@@ -40,8 +40,9 @@ const MoneyReceiptTable = () => {
               });
         },
       },
-      { accessorKey: "patientName", header: "Patient" },
-      { accessorKey: "mobile", header: "Mobile" },
+      { accessorKey: "patient.fullName", header: "Patient Name" },
+      { accessorKey: "patient.hospitalPatientId", header: "Patient ID" },
+      { accessorKey: "patient.mobileNumber", header: "Mobile" },
       {
         accessorKey: "amount",
         header: "Amount (₹)",
@@ -94,9 +95,8 @@ const MoneyReceiptTable = () => {
           );
         },
       },
-      { accessorKey: "remarks", header: "Remarks" },
     ],
-    []
+    [],
   );
 
   return (
@@ -112,21 +112,16 @@ const MoneyReceiptTable = () => {
         {...controller}
         columns={columns}
         path="money-receipt"
+        path="money-receipt"
         searchConfig={{
-          placeholder: "Search by Name, Mobile or Admission No...",
+          placeholder: "Search by Patient ID, Name or Mobile",
         }}
         filtersConfig={[
           {
             key: "paymentMode",
             label: "Payment Mode",
             type: "select",
-            options: [
-              "Cash",
-              "Cheque",
-              "Card",
-              "Online Transfer",
-              "Other",
-            ],
+            options: ["Cash", "Cheque", "Card", "Online Transfer", "Other"],
           },
           {
             key: "status",

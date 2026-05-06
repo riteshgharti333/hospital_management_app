@@ -36,7 +36,7 @@ const deleteBirth = async (id) => {
 };
 exports.deleteBirth = deleteBirth;
 exports.searchBirth = (0, searchCache_1.createSearchService)(prisma_1.prisma, {
-    tableName: "birth",
+    tableName: "Birth",
     exactFields: ["fathersName", "mothersName", "mobileNumber"],
     prefixFields: ["fathersName", "mothersName"],
     similarFields: ["fathersName", "mothersName"],
@@ -56,7 +56,7 @@ exports.searchBirth = (0, searchCache_1.createSearchService)(prisma_1.prisma, {
     ],
 });
 const filterBirthsService = async (params) => {
-    const { fromDate, toDate, babySex, deliveryType, cursor, limit } = params;
+    const { fromDate, toDate, babySex, deliveryType, cursor } = params;
     const where = {};
     if (babySex) {
         where.babySex = {
@@ -78,7 +78,6 @@ const filterBirthsService = async (params) => {
     }
     return (0, filterPaginate_1.filterPaginate)(prisma_1.prisma, {
         model: "birth",
-        limit,
     }, cursor, where);
 };
 exports.filterBirthsService = filterBirthsService;

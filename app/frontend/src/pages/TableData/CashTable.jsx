@@ -10,7 +10,7 @@ import {
 import { useTableController } from "../../feature/hooks/useTableController";
 
 const filterLabels = {
-  isActive: "Status",
+  status: "Status",
   fromDate: "From Date",
   toDate: "To Date",
 };
@@ -28,19 +28,19 @@ const CashTable = () => {
       { accessorKey: "code", header: "Cash Account Code" },
       { accessorKey: "cashName", header: "Cash Account Name" },
       {
-        accessorKey: "isActive",
+        accessorKey: "status",
         header: "Status",
         cell: (info) => {
-          const value = info.getValue();
+          const value = info.getValue(); // Returns "Active" or "Inactive"
           return (
             <span
               className={`px-2 py-1 rounded text-xs font-medium ${
-                value
+                value === "ACTIVE"
                   ? "bg-green-100 text-green-700"
                   : "bg-red-100 text-red-700"
               }`}
             >
-              {value ? "Active" : "Inactive"}
+              {value}
             </span>
           );
         },
@@ -81,10 +81,10 @@ const CashTable = () => {
         }}
         filtersConfig={[
           {
-            key: "isActive",
+            key: "status",
             label: "Status",
             type: "select",
-            options: ["Active", "Inactive"],
+            options: ["ACTIVE", "INACTIVE"],
           },
           {
             key: "fromDate",

@@ -128,6 +128,49 @@ const NewLedger = () => {
   const navigate = useNavigate();
   const { mutateAsync: createLedger, isPending } = useCreateLedger();
 
+  const patientSearch = useSearchPatients(searchTerm);
+  const doctorSearch = useSearchDoctors(searchTerm);
+  const cashSearch = useSearchCashAccounts(searchTerm);
+  const bankSearch = useSearchBanks(searchTerm);
+
+  const patientResults = patientSearch.data?.data || [];
+  const doctorResults = doctorSearch.data?.data || [];
+  const cashResults = cashSearch.data?.data || [];
+  const bankResults = bankSearch.data?.data || [];
+
+  const getSearchResults = () => {
+    switch (selectedLedgerType.value) {
+      case "PATIENT":
+        return patientResults;
+      case "DOCTOR":
+        return doctorResults;
+      case "CASH":
+        return cashResults;
+      case "BANK":
+        return bankResults;
+      default:
+        return [];
+    }
+  };
+
+  const getIsLoading = () => {
+    switch (selectedLedgerType.value) {
+      case "PATIENT":
+        return patientSearch.isLoading;
+      case "DOCTOR":
+        return doctorSearch.isLoading;
+      case "CASH":
+        return cashSearch.isLoading;
+      case "BANK":
+        return bankSearch.isLoading;
+      default:
+        return false;
+    }
+  };
+
+  const searchResults = getSearchResults();
+  const searching = getIsLoading();
+
   const {
     register,
     handleSubmit,
@@ -151,12 +194,6 @@ const NewLedger = () => {
   });
 
   const entityType = watch("entityType");
-
-  // Use the appropriate search hook based on selected ledger type
-  const SearchHook = selectedLedgerType.searchHook;
-  const { data: searchResults, isLoading: searching } = SearchHook(searchTerm, {
-    enabled: searchTerm.length >= 2,
-  });
 
   const handleLedgerTypeChange = (ledgerType) => {
     setSelectedLedgerType(ledgerType);
@@ -235,8 +272,6 @@ const NewLedger = () => {
       referenceId: data.referenceId?.trim() || "",
       remarks: data.remarks?.trim() || "",
     };
-
-    console.log("Formatted data:", formattedData);
 
     try {
       const response = await createLedger(formattedData);

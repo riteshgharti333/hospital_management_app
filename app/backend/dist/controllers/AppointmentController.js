@@ -6,10 +6,8 @@ const errorHandler_1 = require("../middlewares/errorHandler");
 const sendResponse_1 = require("../utils/sendResponse");
 const statusCodes_1 = require("../constants/statusCodes");
 const appointmentService_1 = require("../services/appointmentService");
-const paginationConfig_1 = require("../lib/paginationConfig");
 const schemas_1 = require("@hospital/schemas");
-const prisma_1 = require("../lib/prisma");
-const doctorService_1 = require("../services/doctorService");
+const queryValidation_1 = require("../utils/queryValidation");
 exports.createAppointmentRecord = (0, catchAsyncError_1.catchAsyncError)(async (req, res, next) => {
     const validated = schemas_1.appointmentSchema.parse(req.body);
     const appointment = await (0, appointmentService_1.createAppointment)(validated);
@@ -98,83 +96,33 @@ exports.deleteAppointmentRecord = (0, catchAsyncError_1.catchAsyncError)(async (
     });
 });
 exports.searchAppointmentResults = (0, catchAsyncError_1.catchAsyncError)(async (req, res, next) => {
-    const { query } = req.query;
-    const searchTerm = typeof query === "string" ? query : null;
-    if (!searchTerm) {
-        return (0, sendResponse_1.sendResponse)(res, {
-            success: true,
-            statusCode: statusCodes_1.StatusCodes.OK,
-            message: "No search query provided",
-            data: [],
-        });
-    }
-    // 1️⃣ Direct appointment search
-    const appointmentsDirect = await (0, appointmentService_1.searchAppointments)(searchTerm);
-    // 2️⃣ Collect doctorIds
-    const doctorIds = [
-        ...new Set(appointmentsDirect.map((a) => a.doctorId)),
-    ];
-    // 3️⃣ Fetch doctors (batch)
-    const doctors = doctorIds.length
-        ? await prisma_1.prisma.doctor.findMany({
-            where: { id: { in: doctorIds } },
-            select: {
-                id: true,
-                fullName: true,
-            },
-        })
-        : [];
-    const doctorMap = new Map(doctors.map((d) => [d.id, d]));
-    // 4️⃣ Enrich direct results
-    const enrichedDirect = appointmentsDirect.map((a) => ({
-        ...a,
-        doctor: doctorMap.get(a.doctorId) || null,
-    }));
-    // 5️⃣ Search doctors by name (THIS is key part)
-    const matchedDoctors = await (0, doctorService_1.searchDoctor)(searchTerm);
-    const matchedDoctorIds = matchedDoctors.map((d) => d.id);
-    // 6️⃣ Appointments via doctor name
-    const appointmentsViaDoctors = matchedDoctorIds.length
-        ? await prisma_1.prisma.appointment.findMany({
-            where: {
-                doctorId: { in: matchedDoctorIds },
-            },
-            include: {
-                doctor: {
-                    select: {
-                        id: true,
-                        fullName: true,
-                    },
-                },
-            },
-            orderBy: { createdAt: "desc" },
-        })
-        : [];
-    // 7️⃣ Merge + dedupe
-    const mergedMap = new Map();
-    enrichedDirect.forEach((a) => mergedMap.set(a.id, a));
-    appointmentsViaDoctors.forEach((a) => mergedMap.set(a.id, a));
-    const mergedResults = Array.from(mergedMap.values());
-    // 8️⃣ Response
+    const { query, cursor } = req.query;
+    const searchTerm = (0, queryValidation_1.validateSearchQuery)(query, next);
+    if (!searchTerm)
+        return;
+    const result = await (0, appointmentService_1.searchAppointments)(searchTerm, cursor);
     (0, sendResponse_1.sendResponse)(res, {
         success: true,
         statusCode: statusCodes_1.StatusCodes.OK,
         message: "Search results fetched successfully",
-        data: mergedResults,
+        data: result.data,
+        pagination: {
+            nextCursor: result.pagination.nextCursor || undefined,
+            hasMore: result.pagination.hasMore,
+        },
     });
 });
 exports.filterAppointments = (0, catchAsyncError_1.catchAsyncError)(async (req, res) => {
     const validated = schemas_1.appointmentFilterSchema.parse(req.query);
-    const { data, nextCursor, hasMore } = await (0, appointmentService_1.filterAppointmentsService)(validated);
+    const result = await (0, appointmentService_1.filterAppointmentsService)(validated);
     (0, sendResponse_1.sendResponse)(res, {
         success: true,
         statusCode: statusCodes_1.StatusCodes.OK,
         message: "Filtered appointments fetched",
-        data,
+        data: result.data,
         pagination: {
-            nextCursor: nextCursor || undefined,
-            limit: validated.limit ?? paginationConfig_1.PAGINATION_CONFIG.DEFAULT_LIMIT,
-            hasMore,
+            nextCursor: result.nextCursor || undefined,
+            hasMore: result.hasMore,
         },
     });
 });

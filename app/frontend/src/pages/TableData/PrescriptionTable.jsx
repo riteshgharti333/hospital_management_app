@@ -31,9 +31,8 @@ const PrescriptionTable = () => {
         cell: (info) => info.getValue() || "-",
       },
       {
-        accessorKey: "admissionId",
+        accessorKey: "admission.hospitalAdmissionId",
         header: "Admission ID",
-        cell: (info) => info.getValue() || "-",
       },
       {
         accessorKey: "prescriptionDate",
@@ -96,7 +95,7 @@ const PrescriptionTable = () => {
         columns={columns}
         path="prescription"
         searchConfig={{
-          placeholder: "Search by Prescription No or Patient Name...",
+          placeholder: "Search by Prescription No. or Admission ID",
         }}
         filtersConfig={[
           {

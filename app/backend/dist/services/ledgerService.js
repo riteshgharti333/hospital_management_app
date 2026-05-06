@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.filterLedgersService = exports.searchLedger = exports.deleteLedger = exports.updateLedger = exports.getCurrentBalance = exports.getLedgersByEntity = exports.getLedgerById = exports.getAllLedgers = exports.getLedgerByCode = exports.createLedger = exports.calculateBalance = exports.generateLedgerCode = void 0;
+exports.filterLedgersService = exports.searchLedger = exports.deleteLedger = exports.updateLedger = exports.getCurrentBalance = exports.getLedgerById = exports.getLedgersByEntity = exports.getAllLedgers = exports.getLedgerByCode = exports.createLedger = exports.calculateBalance = exports.generateLedgerCode = void 0;
 const prisma_1 = require("../lib/prisma");
 const pagination_1 = require("../utils/pagination");
 const filterPaginate_1 = require("../utils/filterPaginate");
@@ -55,21 +55,19 @@ const getAllLedgers = async (cursor) => {
     return (0, pagination_1.cursorPaginate)(prisma_1.prisma, { model: "ledger" }, cursor);
 };
 exports.getAllLedgers = getAllLedgers;
+const getLedgersByEntity = async (entityType, cursor) => {
+    return (0, pagination_1.cursorPaginate)(prisma_1.prisma, {
+        model: "ledger",
+        where: {
+            entityType,
+        },
+    }, cursor);
+};
+exports.getLedgersByEntity = getLedgersByEntity;
 const getLedgerById = async (id) => {
     return prisma_1.prisma.ledger.findUnique({ where: { id } });
 };
 exports.getLedgerById = getLedgerById;
-const getLedgersByEntity = async (entityType) => {
-    return prisma_1.prisma.ledger.findMany({
-        where: {
-            entityType,
-        },
-        orderBy: {
-            transactionDate: "desc",
-        },
-    });
-};
-exports.getLedgersByEntity = getLedgersByEntity;
 const getCurrentBalance = async (entityType, entityId) => {
     const lastTransaction = await prisma_1.prisma.ledger.findFirst({
         where: {
@@ -129,7 +127,7 @@ exports.searchLedger = (0, searchCache_1.createSearchService)(prisma_1.prisma, {
     ],
 });
 const filterLedgersService = async (params, forcedEntityType) => {
-    const { fromDate, toDate, entityType: paramEntityType, amountType, paymentMode, cursor, limit, } = params;
+    const { fromDate, toDate, entityType: paramEntityType, amountType, paymentMode, cursor, } = params;
     const where = {};
     // Entity filter - prioritize forcedEntityType from path over query param
     const effectiveEntityType = forcedEntityType || paramEntityType;
@@ -162,7 +160,6 @@ const filterLedgersService = async (params, forcedEntityType) => {
     }
     return (0, filterPaginate_1.filterPaginate)(prisma_1.prisma, {
         model: "ledger",
-        limit,
         select: {
             id: true,
             code: true,
@@ -181,7 +178,7 @@ const filterLedgersService = async (params, forcedEntityType) => {
             updatedAt: true,
         },
         orderBy: {
-            transactionDate: 'desc',
+            transactionDate: "desc",
         },
     }, cursor, where);
 };

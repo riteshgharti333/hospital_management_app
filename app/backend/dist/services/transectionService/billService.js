@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.filterBillsService = exports.searchBills = exports.deleteBill = exports.updateBill = exports.getBillsByPatient = exports.getBillById = exports.getAllBillsService = exports.createBill = void 0;
+exports.filterBillsService = exports.searchBills = exports.deleteBill = exports.updateBill = exports.getBillById = exports.getAllBillsService = exports.createBill = void 0;
 const prisma_1 = require("../../lib/prisma");
 const filterPaginate_1 = require("../../utils/filterPaginate");
 const pagination_1 = require("../../utils/pagination");
@@ -22,14 +22,9 @@ const createBill = async (data) => {
     const billData = {
         billDate: new Date(data.billDate),
         billType: data.billType,
-        mobile: data.mobile,
-        admissionNo: data.admissionNo,
-        patientName: data.patientName,
-        admissionDate: new Date(data.admissionDate),
-        patientSex: data.patientSex,
-        dischargeDate: data.dischargeDate ? new Date(data.dischargeDate) : null,
-        totalAmount: billTotalAmount, // Use calculated total, not data.totalAmount
-        address: data.address,
+        admissionId: data.admissionId,
+        patientId: data.patientId,
+        totalAmount: billTotalAmount,
         status: data.status,
         billItems: {
             create: processedItems,
@@ -43,24 +38,26 @@ const createBill = async (data) => {
 };
 exports.createBill = createBill;
 const getAllBillsService = async (cursor) => {
-    return (0, pagination_1.cursorPaginate)(prisma_1.prisma, { model: "bill" }, cursor);
+    return (0, pagination_1.cursorPaginate)(prisma_1.prisma, {
+        model: "bill",
+        include: {
+            admission: true,
+            patient: true,
+        },
+    }, cursor);
 };
 exports.getAllBillsService = getAllBillsService;
 const getBillById = async (id) => {
     return prisma_1.prisma.bill.findUnique({
         where: { id },
-        include: { billItems: true },
+        include: {
+            billItems: true,
+            admission: true,
+            patient: true,
+        },
     });
 };
 exports.getBillById = getBillById;
-const getBillsByPatient = async (mobile) => {
-    return prisma_1.prisma.bill.findMany({
-        where: { mobile },
-        orderBy: { billDate: "desc" },
-        include: { billItems: true },
-    });
-};
-exports.getBillsByPatient = getBillsByPatient;
 const updateBill = async (id, data) => {
     const processedItems = data.billItems?.map((item) => {
         const total = item.totalAmount ?? item.mrp * item.quantity;
@@ -77,13 +74,8 @@ const updateBill = async (id, data) => {
             billDate: data.billDate,
             billType: data.billType,
             status: data.status,
-            mobile: data.mobile,
-            admissionNo: data.admissionNo,
-            patientName: data.patientName,
-            admissionDate: data.admissionDate,
-            patientSex: data.patientSex,
-            dischargeDate: data.dischargeDate ?? null,
-            address: data.address,
+            admissionId: data.admissionId,
+            patientId: data.patientId,
             totalAmount: grandTotal, // ⭐ SAVE BILL TOTAL
             billItems: {
                 deleteMany: {}, // Remove all old items
@@ -109,24 +101,20 @@ const deleteBill = async (id) => {
 };
 exports.deleteBill = deleteBill;
 exports.searchBills = (0, searchCache_1.createSearchService)(prisma_1.prisma, {
-    tableName: "bill",
-    exactFields: ["admissionNo"],
-    prefixFields: ["admissionNo", "patientName"],
-    similarFields: ["patientName", "mobile"],
-    // selectFields: [
-    //   "id",
-    //   "admissionNo",
-    //   "patientName",
-    //   "mobile",
-    //   "amount",
-    //   "paymentMode",
-    //   "date",
-    //   "status",
-    //   "createdAt",
-    // ],
+    tableName: "Bill",
+    exactFields: [],
+    prefixFields: [],
+    similarFields: [],
+    relationFields: {
+        patient: ["fullName", "hospitalPatientId", "mobileNumber"],
+    },
+    include: {
+        admission: true,
+        patient: true,
+    },
 });
 const filterBillsService = async (params) => {
-    const { fromDate, toDate, billType, patientSex, status, cursor, limit } = params;
+    const { fromDate, toDate, billType, patientSex, status, cursor } = params;
     const where = {};
     // ✅ Bill Type filter
     if (billType) {
@@ -158,7 +146,10 @@ const filterBillsService = async (params) => {
     }
     return (0, filterPaginate_1.filterPaginate)(prisma_1.prisma, {
         model: "bill",
-        limit,
+        include: {
+            admission: true,
+            patient: true,
+        },
     }, cursor, where);
 };
 exports.filterBillsService = filterBillsService;

@@ -29,7 +29,6 @@ const NurseTable = () => {
       { accessorKey: "fullName", header: "Nurse Name" },
       { accessorKey: "mobileNumber", header: "Mobile No." },
       { accessorKey: "registrationNo", header: "Registration No." },
-      { accessorKey: "address", header: "Address" },
       { accessorKey: "department", header: "Department" },
       {
         accessorKey: "shift",

@@ -71,10 +71,10 @@ const deleteNurse = async (id) => {
 };
 exports.deleteNurse = deleteNurse;
 exports.searchNurse = (0, searchCache_1.createSearchService)(prisma_1.prisma, {
-    tableName: "nurse",
-    exactFields: ["fullName", "mobileNumber", "registrationNo", "email"],
+    tableName: "Nurse",
+    exactFields: ["fullName", "mobileNumber", "registrationNo"],
     prefixFields: ["fullName"],
-    similarFields: ["fullName", "department"],
+    similarFields: ["fullName"],
     selectFields: [
         "id",
         "registrationNo",
@@ -89,7 +89,7 @@ exports.searchNurse = (0, searchCache_1.createSearchService)(prisma_1.prisma, {
     ],
 });
 const filterNursesService = async (params) => {
-    const { fromDate, toDate, shift, status, cursor, limit } = params;
+    const { fromDate, toDate, shift, status, cursor } = params;
     const where = {};
     if (shift) {
         where.shift = {
@@ -111,7 +111,6 @@ const filterNursesService = async (params) => {
     }
     return (0, filterPaginate_1.filterPaginate)(prisma_1.prisma, {
         model: "nurse",
-        limit,
     }, cursor, where);
 };
 exports.filterNursesService = filterNursesService;

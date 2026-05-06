@@ -49,11 +49,7 @@ const CashLedger = () => {
               });
         },
       },
-      {
-        accessorKey: "description",
-        header: "Description",
-        cell: (info) => info.getValue() || "-",
-      },
+      
       {
         accessorKey: "amountType",
         header: "Type",
@@ -183,13 +179,13 @@ const CashLedger = () => {
             key: "amountType",
             label: "Transaction Type",
             type: "select",
-            options: ["Credit", "Debit"],
+            options: ["CREDIT", "DEBIT"],
           },
           {
             key: "paymentMode",
             label: "Payment Mode",
             type: "select",
-            options: ["Cash", "Card", "UPI", "Bank Transfer", "Cheque"],
+            options: ["CASH", "CARD", "UPI", "BANK_TRANSFER", "CHEQUE"],
           },
           {
             key: "fromDate",

@@ -142,15 +142,14 @@ const NewAdmission = () => {
   const [searchPatientQuery, setSearchPatientQuery] = useState("");
   const [searchDoctorQuery, setSearchDoctorQuery] = useState("");
 
-  const { data: patientSearchResults, isLoading: searchingPatients } =
-    useSearchPatients(searchPatientQuery, {
-      enabled: searchPatientQuery.length >= 2,
-    });
+  const { data: patientSearchResponse, isLoading: searchingPatients } =
+    useSearchPatients(searchPatientQuery);
 
-  const { data: doctorSearchResults, isLoading: searchingDoctors } =
-    useSearchDoctors(searchDoctorQuery, {
-      enabled: searchDoctorQuery.length >= 2,
-    });
+  const { data: doctorSearchResponse, isLoading: searchingDoctors } =
+    useSearchDoctors(searchDoctorQuery);
+
+  const patientSearchResults = patientSearchResponse?.data || [];
+  const doctorSearchResults = doctorSearchResponse?.data || [];
 
   const optionalFields = ["dischargeDate"];
 
@@ -188,15 +187,15 @@ const NewAdmission = () => {
     setValue("patientId", patient.id);
     setValue(
       "displayPatientId",
-      patient.hospitalPatientId || patient.patientId || `P-${patient.id}`
+      patient.hospitalPatientId || patient.patientId || `P-${patient.id}`,
     );
     setValue(
       "patientName",
-      patient.fullName || patient.patientName || patient.name
+      patient.fullName || patient.patientName || patient.name,
     );
     setValue(
       "phoneNumber",
-      patient.mobileNumber || patient.phoneNumber || patient.phone
+      patient.mobileNumber || patient.phoneNumber || patient.phone,
     );
     setValue("aadhaarNumber", patient.aadhaarNumber || patient.aadhaarNo);
 
@@ -211,7 +210,7 @@ const NewAdmission = () => {
     setValue("doctorId", doctor.id);
     setValue(
       "displayDoctorId",
-      doctor.registrationNo || doctor.doctorId || `D-${doctor.id}`
+      doctor.registrationNo || doctor.doctorId || `D-${doctor.id}`,
     );
     setValue("doctorName", doctor.fullName || doctor.doctorName || doctor.name);
     setValue("specialization", doctor.specialization || "");
@@ -230,7 +229,9 @@ const NewAdmission = () => {
       toast.error("Please select a patient from the search results");
       // Focus on patient search field
       setTimeout(() => {
-        const patientSearchInput = document.querySelector('.patient-search-container input');
+        const patientSearchInput = document.querySelector(
+          ".patient-search-container input",
+        );
         if (patientSearchInput) {
           patientSearchInput.focus();
         }
@@ -243,7 +244,9 @@ const NewAdmission = () => {
       toast.error("Please select a doctor from the search results");
       // Focus on doctor search field
       setTimeout(() => {
-        const doctorSearchInput = document.querySelector('.doctor-search-container input');
+        const doctorSearchInput = document.querySelector(
+          ".doctor-search-container input",
+        );
         if (doctorSearchInput) {
           doctorSearchInput.focus();
         }
@@ -261,7 +264,7 @@ const NewAdmission = () => {
     if (formData.dischargeDate) {
       const admissionDate = new Date(formData.admissionDate);
       const dischargeDate = new Date(formData.dischargeDate);
-      
+
       if (dischargeDate <= admissionDate) {
         toast.error("Discharge date must be after admission date");
         return;
@@ -289,10 +292,11 @@ const NewAdmission = () => {
       }
     } catch (error) {
       console.error("Admission submission error:", error);
-      
+
       // Extract error message
-      const errorMessage = error.response?.data?.message || error.message || "An error occurred";
-      
+      const errorMessage =
+        error.response?.data?.message || error.message || "An error occurred";
+
       // Show appropriate toast message
       if (errorMessage.toLowerCase().includes("patient")) {
         toast.error("Please select a valid patient");
@@ -302,7 +306,10 @@ const NewAdmission = () => {
         toast.error("Please fill all required fields");
       } else if (errorMessage.toLowerCase().includes("date")) {
         toast.error("Please check the dates entered");
-      } else if (errorMessage.toLowerCase().includes("unique") || errorMessage.toLowerCase().includes("exist")) {
+      } else if (
+        errorMessage.toLowerCase().includes("unique") ||
+        errorMessage.toLowerCase().includes("exist")
+      ) {
         toast.error("This admission already exists or contains invalid data");
       } else {
         toast.error(errorMessage);
@@ -355,10 +362,16 @@ const NewAdmission = () => {
   // Handle click outside to close search results
   useEffect(() => {
     const handleClickOutside = (event) => {
-      if (showPatientSearch && !event.target.closest('.patient-search-container')) {
+      if (
+        showPatientSearch &&
+        !event.target.closest(".patient-search-container")
+      ) {
         setShowPatientSearch(false);
       }
-      if (showDoctorSearch && !event.target.closest('.doctor-search-container')) {
+      if (
+        showDoctorSearch &&
+        !event.target.closest(".doctor-search-container")
+      ) {
         setShowDoctorSearch(false);
       }
     };

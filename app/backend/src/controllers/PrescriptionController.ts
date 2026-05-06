@@ -223,13 +223,13 @@ export const searchPrescriptionResults = catchAsyncError(
     });
   },
 );
-
+   
 export const filterPrescriptions = catchAsyncError(async (req, res) => {
-  const validated = prescriptionFilterSchema.parse(req.query);
+  const validated = prescriptionFilterSchema.parse(req.query); 
 
-  const result = await filterPrescriptionsService(validated);
-
-  sendResponse(res, {
+  const result = await filterPrescriptionsService(validated);    
+   
+  sendResponse(res, { 
     success: true,
     statusCode: StatusCodes.OK,
     message: "Filtered prescriptions fetched",

@@ -30,13 +30,9 @@ const findActiveAdmissionByPatient = async (patientId) => {
     });
 };
 exports.findActiveAdmissionByPatient = findActiveAdmissionByPatient;
-const getAllAdmissionsService = async (cursor, limit) => {
+const getAllAdmissionsService = async (cursor) => {
     return (0, pagination_1.cursorPaginate)(prisma_1.prisma, {
         model: "admission",
-        limit: limit || 50,
-        cacheExpiry: 600,
-        // ⚠️ IMPORTANT: must match pagination order
-        // (your cursorPaginate uses createdAt + id)
         select: {
             id: true,
             hospitalAdmissionId: true,
@@ -83,9 +79,31 @@ exports.searchAdmissions = (0, searchCache_1.createSearchService)(prisma_1.prism
     exactFields: ["hospitalAdmissionId"],
     prefixFields: [],
     similarFields: [],
+    relationFields: {
+        patient: ["fullName", "aadhaarNumber"],
+    },
+    include: {
+        patient: {
+            select: {
+                id: true,
+                fullName: true,
+                hospitalPatientId: true,
+                mobileNumber: true,
+                aadhaarNumber: true,
+                gender: true,
+            },
+        },
+        doctor: {
+            select: {
+                id: true,
+                fullName: true,
+            },
+        },
+    },
+    sortField: "createdAt",
 });
 const filterAdmissionsService = async (params) => {
-    const { fromDate, toDate, gender, cursor, limit } = params;
+    const { fromDate, toDate, gender, cursor } = params;
     const where = {};
     if (gender) {
         where.patient = {
@@ -103,7 +121,6 @@ const filterAdmissionsService = async (params) => {
     }
     return (0, filterPaginate_1.filterPaginate)(prisma_1.prisma, {
         model: "admission",
-        limit,
         include: {
             patient: {
                 select: {

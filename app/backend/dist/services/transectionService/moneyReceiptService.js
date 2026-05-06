@@ -12,11 +12,23 @@ const createMoneyReceipt = async (data) => {
 };
 exports.createMoneyReceipt = createMoneyReceipt;
 const getAllMoneyReceiptsService = async (cursor) => {
-    return (0, pagination_1.cursorPaginate)(prisma_1.prisma, { model: "moneyReceipt" }, cursor);
+    return (0, pagination_1.cursorPaginate)(prisma_1.prisma, {
+        model: "moneyReceipt",
+        include: {
+            admission: true,
+            patient: true,
+        },
+    }, cursor);
 };
 exports.getAllMoneyReceiptsService = getAllMoneyReceiptsService;
 const getMoneyReceiptById = async (id) => {
-    return prisma_1.prisma.moneyReceipt.findUnique({ where: { id } });
+    return prisma_1.prisma.moneyReceipt.findUnique({
+        where: { id },
+        include: {
+            patient: true,
+            admission: true,
+        },
+    });
 };
 exports.getMoneyReceiptById = getMoneyReceiptById;
 const getMoneyReceiptsByDateRange = async (startDate, endDate) => {
@@ -45,24 +57,20 @@ const deleteMoneyReceipt = async (id) => {
 };
 exports.deleteMoneyReceipt = deleteMoneyReceipt;
 exports.searchMoneyReceipts = (0, searchCache_1.createSearchService)(prisma_1.prisma, {
-    tableName: "moneyReceipt", // ✅ Fixed: was "MoneyReceipt"
-    exactFields: ["admissionNo"],
-    prefixFields: ["admissionNo", "patientName"],
-    similarFields: ["patientName", "mobile"],
-    // selectFields: [
-    //   "id",
-    //   "admissionNo",
-    //   "patientName",
-    //   "mobile",
-    //   "amount",
-    //   "paymentMode",
-    //   "date",
-    //   "status",
-    //   "createdAt",
-    // ],
+    tableName: "MoneyReceipt",
+    exactFields: [],
+    prefixFields: [],
+    similarFields: [],
+    relationFields: {
+        patient: ["fullName", "hospitalPatientId", "mobileNumber"],
+    },
+    include: {
+        admission: true,
+        patient: true,
+    },
 });
 const filterMoneyReceiptsService = async (params) => {
-    const { fromDate, toDate, paymentMode, status, cursor, limit } = params;
+    const { fromDate, toDate, paymentMode, status, cursor } = params;
     const where = {};
     // ✅ Payment Mode filter
     if (paymentMode) {
@@ -86,8 +94,11 @@ const filterMoneyReceiptsService = async (params) => {
         };
     }
     return (0, filterPaginate_1.filterPaginate)(prisma_1.prisma, {
-        model: "moneyReceipt", // ✅ "moneyReceipt"
-        limit,
+        model: "moneyReceipt",
+        include: {
+            admission: true,
+            patient: true,
+        },
     }, cursor, where);
 };
 exports.filterMoneyReceiptsService = filterMoneyReceiptsService;

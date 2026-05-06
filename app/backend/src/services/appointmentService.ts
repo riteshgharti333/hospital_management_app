@@ -142,7 +142,6 @@ type FilterAppointmentParams = {
   toDate?: Date;
   status?: string;
   cursor?: string;
-  limit?: number;
 };
 
 export const filterAppointmentsService = async (

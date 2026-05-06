@@ -6,7 +6,7 @@ import { bumpCacheVersion } from "../utils/cacheVersion";
 
 export type CashInput = {
   cashName: string;
-  isActive?: boolean;
+  status: "ACTIVE" | "INACTIVE";
 };
 
 export const generateCashCode = async (): Promise<string> => {
@@ -35,11 +35,11 @@ export const createCashAccount = async (data: CashInput) => {
 
 export const getCashAccountByName = async (cashName: string) => {
   return prisma.cashAccount.findFirst({
-    where: { 
+    where: {
       cashName: {
         equals: cashName,
-        mode: "insensitive"
-      }
+        mode: "insensitive",
+      },
     },
   });
 };
@@ -56,7 +56,10 @@ export const getCashAccountById = async (id: number) => {
   return prisma.cashAccount.findUnique({ where: { id } });
 };
 
-export const updateCashAccount = async (id: number, data: Partial<CashInput>) => {
+export const updateCashAccount = async (
+  id: number,
+  data: Partial<CashInput>,
+) => {
   const result = await prisma.cashAccount.update({
     where: { id },
     data,
@@ -82,34 +85,27 @@ export const searchCashAccount = createSearchService(prisma, {
   exactFields: ["cashName", "code"],
   prefixFields: ["cashName", "code"],
   similarFields: ["cashName"],
-  selectFields: [
-    "id",
-    "code",
-    "cashName",
-    "isActive",
-    "createdAt",
-    "updatedAt",
-  ],
+  selectFields: ["id", "code", "cashName", "status", "createdAt", "updatedAt"],
 });
 
 type FilterCashAccountParams = {
   fromDate?: Date;
   toDate?: Date;
-  isActive?: boolean;
+  status?: "ACTIVE" | "INACTIVE";
   cursor?: string;
   limit?: number;
 };
 
 export const filterCashAccountsService = async (
-  params: FilterCashAccountParams
+  params: FilterCashAccountParams,
 ) => {
-  const { fromDate, toDate, isActive, cursor, limit } = params;
+  const { fromDate, toDate, status, cursor, limit } = params;
 
   const where: Record<string, any> = {};
 
   // Active status filter
-  if (isActive !== undefined) {
-    where.isActive = isActive;
+  if (status !== undefined) {
+    where.status = status;
   }
 
   // Date range filter
@@ -127,6 +123,6 @@ export const filterCashAccountsService = async (
       limit,
     },
     cursor,
-    where
+    where,
   );
 };

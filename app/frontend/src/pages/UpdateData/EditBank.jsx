@@ -1,10 +1,5 @@
 import React, { useState, useEffect } from "react";
-import {
-  FaUniversity,
-  FaHashtag,
-  FaCode,
-  FaUser,
-} from "react-icons/fa";
+import { FaUniversity, FaHashtag, FaCode, FaUser } from "react-icons/fa";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import BackButton from "../../components/BackButton/BackButton";
@@ -46,7 +41,7 @@ const formFields = [
         icon: <FaHashtag className="text-gray-400" />,
         required: true,
       },
-     
+
       {
         label: "Bank Code",
         type: "text",
@@ -73,11 +68,11 @@ const formFields = [
       {
         label: "Status",
         type: "select",
-        name: "isActive",
+        name: "status",
         placeholder: "Select status",
         options: [
-          { label: "Active", value: true },
-          { label: "Inactive", value: false },
+          { label: "Active", value: "ACTIVE" },
+          { label: "Inactive", value: "INACTIVE" },
         ],
         required: true,
       },
@@ -92,10 +87,8 @@ const EditBank = () => {
   const [showDeleteModal, setShowDeleteModal] = useState(false);
 
   const { data: bankData, isLoading } = useGetBankById(id);
-  const { mutateAsync: updateBank, isPending: isUpdating } =
-    useUpdateBank();
-  const { mutateAsync: deleteBank, isPending: isDeleting } =
-    useDeleteBank();
+  const { mutateAsync: updateBank, isPending: isUpdating } = useUpdateBank();
+  const { mutateAsync: deleteBank, isPending: isDeleting } = useDeleteBank();
 
   const {
     register,
@@ -187,8 +180,8 @@ const EditBank = () => {
                             value === "true"
                               ? true
                               : value === "false"
-                              ? false
-                              : value,
+                                ? false
+                                : value,
                         })}
                         disabled={isDisabled}
                         className={`block w-full px-4 py-2 border rounded-lg ${

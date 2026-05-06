@@ -291,7 +291,7 @@ const NewPrescription = () => {
                     setShowDropdown(true);
                   }
                 }}
-                placeholder="Search by Admission ID, Patient Name, or Mobile Number (min. 2 characters)"
+                placeholder="Search by Admission ID, Patient Name, or Aadhaar No"
                 autoComplete="off"
                 className={`${inputClass(errors.admissionId)} pl-10`}
               />

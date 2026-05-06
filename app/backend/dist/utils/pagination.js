@@ -3,27 +3,41 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.cursorPaginate = cursorPaginate;
 const upstashRedisRest_1 = require("./upstashRedisRest");
 const cacheVersion_1 = require("./cacheVersion");
+const paginationConfig_1 = require("../lib/paginationConfig");
 const memoryCache = new Map();
-console.log(process.env.UPSTASH_REDIS_REST_URL);
 const MEMORY_CACHE_TTL = 30000;
 const MAX_MEMORY_ENTRIES = 1000;
-const DEFAULT_LIMIT = 50;
-const MAX_LIMIT = 100; // ✅ prevent abuse
-async function cursorPaginate(prisma, options, rawCursor, // ✅ safer input
-extraWhere) {
-    const { model, cacheExpiry = 3600, select, include, orderBy = [{ createdAt: "desc" }, { id: "desc" }], } = options;
+async function cursorPaginate(prisma, options, rawCursor, extraWhere) {
+    const { model, cacheExpiry = 3600, select, include, orderBy = [{ createdAt: "desc" }, { id: "desc" }], where: optionsWhere, // ✅ DESTRUCTURE THE WHERE FROM OPTIONS
+     } = options;
     // ✅ FIX: Normalize model name to lowercase for consistent cache keys
     const modelName = String(model).toLowerCase();
     // ✅ LIMIT CONTROL
-    let limit = options.limit ?? DEFAULT_LIMIT;
-    if (limit > MAX_LIMIT)
-        limit = MAX_LIMIT;
+    let limit = options.limit ?? paginationConfig_1.PAGINATION_CONFIG.DEFAULT_LIMIT;
+    if (limit > paginationConfig_1.PAGINATION_CONFIG.MAX_LIMIT)
+        limit = paginationConfig_1.PAGINATION_CONFIG.MAX_LIMIT;
     // ✅ Use normalized modelName for cache version
     const version = await (0, cacheVersion_1.getCacheVersion)(modelName);
-    // ✅ SAFE CURSOR
+    // ✅ PARSE CURSOR WITH COUNT TRACKING
+    let cursorDate = null;
+    let cursorId = null;
+    let currentCount = 0;
     const cursor = typeof rawCursor === "string" && rawCursor.includes("|")
         ? rawCursor
         : undefined;
+    if (cursor) {
+        const parts = cursor.split("|");
+        const date = parts[0];
+        const id = parts[1];
+        const countFromCursor = Number(parts[2] || 0);
+        const parsedDate = new Date(date);
+        const parsedId = Number(id);
+        if (!isNaN(parsedDate.getTime()) && !isNaN(parsedId)) {
+            cursorDate = parsedDate;
+            cursorId = parsedId;
+            currentCount = countFromCursor;
+        }
+    }
     const safeCursor = cursor ? encodeURIComponent(cursor) : "0";
     // ✅ Use normalized modelName in cache key
     const cacheKey = `p:${modelName}:v:${version}:c:${safeCursor}:l:${limit}:o:${encodeURIComponent(JSON.stringify(orderBy))}`;
@@ -35,11 +49,11 @@ extraWhere) {
     // ✅ REDIS CACHE
     try {
         const redisData = await (0, upstashRedisRest_1.upstashGet)(cacheKey);
-        if (redisData) {
-            const parsed = JSON.parse(redisData);
-            memoryCache.set(cacheKey, { ...parsed, timestamp: Date.now() });
-            return parsed;
-        }
+        // if (redisData) {
+        //   const parsed = JSON.parse(redisData);
+        //   memoryCache.set(cacheKey, { ...parsed, timestamp: Date.now() });
+        //   return parsed;
+        // }
     }
     catch (e) {
         console.warn("Redis GET failed (safe fallback)");
@@ -47,35 +61,16 @@ extraWhere) {
     if (process.env.NODE_ENV !== "production") {
         console.log("🔥 DB QUERY:", modelName);
     }
-    // ✅ SAFE CURSOR PARSING
-    let cursorDate = null;
-    let cursorId = null;
-    if (cursor) {
-        const [date, id] = cursor.split("|");
-        const parsedDate = new Date(date);
-        const parsedId = Number(id);
-        if (!isNaN(parsedDate.getTime()) && !isNaN(parsedId)) {
-            cursorDate = parsedDate;
-            cursorId = parsedId;
-        }
-        else {
-            // invalid cursor → ignore safely
-            cursorDate = null;
-            cursorId = null;
-        }
-    }
-    // ✅ WHERE CONDITION
+    // ✅ WHERE CONDITION - MERGE optionsWhere AND extraWhere
     const whereCondition = {
-        ...(extraWhere || {}),
+        ...(optionsWhere || {}), // ✅ Add where from options
+        ...(extraWhere || {}), // Add extraWhere for backward compatibility
         ...(cursorDate !== null && cursorId !== null
             ? {
                 OR: [
                     { createdAt: { lt: cursorDate } },
                     {
-                        AND: [
-                            { createdAt: cursorDate },
-                            { id: { lt: cursorId } },
-                        ],
+                        AND: [{ createdAt: cursorDate }, { id: { lt: cursorId } }],
                     },
                 ],
             }
@@ -89,12 +84,23 @@ extraWhere) {
         ...(select ? { select } : {}),
         ...(include ? { include } : {}),
     });
-    const hasMore = data.length > limit;
-    const results = hasMore ? data.slice(0, limit) : data;
+    // ✅ Check if there are more records after this fetch
+    const hasMoreData = data.length > limit;
+    // ✅ Get the actual results (limit them to the requested page size)
+    const results = hasMoreData ? data.slice(0, limit) : data;
+    // ✅ Update the count of records sent to client
+    const newCount = currentCount + results.length;
+    // ✅ Enforce the 300 record limit
+    let hasMore = hasMoreData;
+    if (newCount >= paginationConfig_1.PAGINATION_CONFIG.MAX_BROWSABLE) {
+        hasMore = false;
+    }
     let nextCursor = null;
+    // ✅ Only generate next cursor if we have more data AND we haven't reached the limit
     if (hasMore && results.length > 0) {
         const lastItem = results[results.length - 1];
-        nextCursor = `${lastItem.createdAt.toISOString()}|${lastItem.id}`;
+        // ✅ Include the count in the cursor
+        nextCursor = `${lastItem.createdAt.toISOString()}|${lastItem.id}|${newCount}`;
     }
     const response = {
         data: results,

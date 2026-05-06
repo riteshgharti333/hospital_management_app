@@ -172,7 +172,7 @@ export const getPrescriptionById = async (id: number) => {
               mobileNumber: true,
             },
           },
-           doctor: {
+          doctor: {
             select: {
               id: true,
               fullName: true,
@@ -281,17 +281,30 @@ export const searchPrescription = createSearchService(prisma, {
   exactFields: ["prescriptionNo"],
   prefixFields: ["prescriptionNo"],
   similarFields: [],
+
+  relationFields: {
+    admission: ["hospitalAdmissionId"],
+  },
+
   selectFields: [
     "id",
     "prescriptionNo",
     "admissionId",
     "prescriptionDate",
-    "prescriptionDoc",
-    "notes",
     "status",
     "createdAt",
     "updatedAt",
   ],
+
+  include: {
+    admission: {
+      select: {
+        hospitalAdmissionId: true,
+      },
+    },
+  },
+
+  sortField: "createdAt",
 });
 
 type FilterPrescriptionParams = {
@@ -306,7 +319,7 @@ type FilterPrescriptionParams = {
 export const filterPrescriptionsService = async (
   params: FilterPrescriptionParams,
 ) => {
-  const { fromDate, toDate, status, admissionId, cursor, limit } = params;
+  const { fromDate, toDate, status, admissionId, cursor } = params;
 
   const where: Record<string, any> = {};
 
@@ -331,7 +344,6 @@ export const filterPrescriptionsService = async (
     prisma,
     {
       model: "prescription",
-      limit,
       include: {
         medicines: true,
         admission: {

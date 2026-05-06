@@ -12,7 +12,7 @@ export const getAllLedgersAPI = (cursor) =>
 
 // Get ledgers by entity type
 export const getLedgersByEntityAPI = (entityType, cursor) =>
-  axiosInstance.get(`/ledger/${entityType}`, {
+  axiosInstance.get(`/ledger/entity/${entityType}`, {
     params: {
       cursor: cursor || undefined,
     },

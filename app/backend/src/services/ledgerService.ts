@@ -82,19 +82,24 @@ export const getAllLedgers = async (cursor?: string) => {
   return cursorPaginate(prisma, { model: "ledger" }, cursor);
 };
 
-export const getLedgerById = async (id: number) => {
-  return prisma.ledger.findUnique({ where: { id } });
+export const getLedgersByEntity = async (
+  entityType: string,
+  cursor?: string,
+) => {
+  return cursorPaginate(
+    prisma,
+    {
+      model: "ledger",
+      where: {
+        entityType,
+      },
+    },
+    cursor,
+  );
 };
 
-export const getLedgersByEntity = async (entityType: string) => {
-  return prisma.ledger.findMany({
-    where: {
-      entityType,
-    },
-    orderBy: {
-      transactionDate: "desc",
-    },
-  });
+export const getLedgerById = async (id: number) => {
+  return prisma.ledger.findUnique({ where: { id } });
 };
 
 export const getCurrentBalance = async (
@@ -140,19 +145,18 @@ export const deleteLedger = async (id: number) => {
   return result;
 };
 
-
 export const searchLedger = createSearchService(prisma, {
   tableName: "Ledger",
-  exactFields: ["code", "entityId"],  // Only search by code and entityId
-  prefixFields: [],  // Remove prefix fields
-  similarFields: [],  // Remove similar fields
+  exactFields: ["code", "entityId"], // Only search by code and entityId
+  prefixFields: [], // Remove prefix fields
+  similarFields: [], // Remove similar fields
   selectFields: [
     "id",
     "code",
     "entityType",
     "entityId",
-    "transactionDate", 
-    "description", 
+    "transactionDate",
+    "description",
     "amountType",
     "amount",
     "balance",
@@ -165,7 +169,6 @@ export const searchLedger = createSearchService(prisma, {
   ],
 });
 
-
 type FilterLedgerParams = {
   fromDate?: Date;
   toDate?: Date;
@@ -173,12 +176,11 @@ type FilterLedgerParams = {
   amountType?: AmountType;
   paymentMode?: PaymentMode;
   cursor?: string;
-  limit?: number;
 };
 
 export const filterLedgersService = async (
   params: FilterLedgerParams,
-  forcedEntityType?: string
+  forcedEntityType?: string,
 ) => {
   const {
     fromDate,
@@ -187,14 +189,13 @@ export const filterLedgersService = async (
     amountType,
     paymentMode,
     cursor,
-    limit,
   } = params;
 
   const where: Record<string, any> = {};
 
   // Entity filter - prioritize forcedEntityType from path over query param
   const effectiveEntityType = forcedEntityType || paramEntityType;
-  
+
   if (effectiveEntityType) {
     where.entityType = effectiveEntityType;
   }
@@ -212,14 +213,14 @@ export const filterLedgersService = async (
   // Date range filter
   if (fromDate || toDate) {
     where.transactionDate = {};
-    
+
     if (fromDate) {
       // Set to start of day (00:00:00)
       const startDate = new Date(fromDate);
       startDate.setHours(0, 0, 0, 0);
       where.transactionDate.gte = startDate;
     }
-    
+
     if (toDate) {
       // Set to end of day (23:59:59)
       const endDate = new Date(toDate);
@@ -232,7 +233,6 @@ export const filterLedgersService = async (
     prisma,
     {
       model: "ledger",
-      limit,
       select: {
         id: true,
         code: true,
@@ -251,7 +251,7 @@ export const filterLedgersService = async (
         updatedAt: true,
       },
       orderBy: {
-        transactionDate: 'desc',
+        transactionDate: "desc",
       },
     },
     cursor,

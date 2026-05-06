@@ -33,8 +33,7 @@ export const generateHospitalId = async ({
     const lastSeq = Number(lastRecord[field].split("-")[2]);
     nextNumber = lastSeq + 1;
   }
+ 
 
-  const paddedSeq = String(nextNumber).padStart(6, "0");
-
-  return `${prefix}-${year}-${paddedSeq}`;
+  return `${prefix}-${year}-${nextNumber}`;
 };

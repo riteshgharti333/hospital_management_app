@@ -6,9 +6,8 @@ import { createSearchService } from "../../utils/searchCache";
 
 export type MoneyReceiptInput = {
   date: Date;
-  patientName: string;
-  admissionNo: string;
-  mobile: string;
+  admissionId: number;
+  patientId: number;
   amount: number;
   paymentMode: string;
   remarks?: string;
@@ -22,19 +21,34 @@ export const createMoneyReceipt = async (data: MoneyReceiptInput) => {
 };
 
 export const getAllMoneyReceiptsService = async (cursor?: string) => {
-  return cursorPaginate(prisma, { model: "moneyReceipt" }, cursor); 
+  return cursorPaginate(
+    prisma,
+    {
+      model: "moneyReceipt",
+      include: {
+        admission: true,
+        patient: true,
+      },
+    },
+    cursor,
+  );
 };
 
 export const getMoneyReceiptById = async (id: number) => {
-  return prisma.moneyReceipt.findUnique({ where: { id } });
+  return prisma.moneyReceipt.findUnique({
+    where: { id },
+    include: {
+      patient: true,
+      admission: true,
+    },
+  });
 };
-
 export const getMoneyReceiptsByDateRange = async (
   startDate: Date,
   endDate: Date,
 ) => {
   return prisma.moneyReceipt.findMany({
-    where: {
+    where: { 
       date: {
         gte: startDate,
         lte: endDate,
@@ -48,7 +62,7 @@ export const updateMoneyReceipt = async (
   id: number,
   data: Partial<MoneyReceiptInput>,
 ) => {
-  await bumpCacheVersion("moneyreceipt"); 
+  await bumpCacheVersion("moneyreceipt");
   return prisma.moneyReceipt.update({
     where: { id },
     data,
@@ -56,27 +70,23 @@ export const updateMoneyReceipt = async (
 };
 
 export const deleteMoneyReceipt = async (id: number) => {
-  await bumpCacheVersion("moneyreceipt"); 
+  await bumpCacheVersion("moneyreceipt");
   return prisma.moneyReceipt.delete({ where: { id } });
 };
 
-
 export const searchMoneyReceipts = createSearchService(prisma, {
-  tableName: "moneyReceipt", // ✅ Fixed: was "MoneyReceipt"
-  exactFields: ["admissionNo"],
-  prefixFields: ["admissionNo", "patientName"],
-  similarFields: ["patientName", "mobile"],
-  // selectFields: [
-  //   "id",
-  //   "admissionNo",
-  //   "patientName",
-  //   "mobile",
-  //   "amount",
-  //   "paymentMode",
-  //   "date",
-  //   "status",
-  //   "createdAt",
-  // ],
+  tableName: "MoneyReceipt",
+  exactFields: [],
+  prefixFields: [],
+  similarFields: [],
+  relationFields: {
+    patient: ["fullName", "hospitalPatientId", "mobileNumber"],
+  },
+
+  include: {
+    admission: true,
+    patient: true,
+  },
 });
 
 type FilterMoneyReceiptParams = {
@@ -85,13 +95,12 @@ type FilterMoneyReceiptParams = {
   paymentMode?: string;
   status?: string;
   cursor?: string;
-  limit?: number;
 };
 
 export const filterMoneyReceiptsService = async (
   params: FilterMoneyReceiptParams,
 ) => {
-  const { fromDate, toDate, paymentMode, status, cursor, limit } = params;
+  const { fromDate, toDate, paymentMode, status, cursor } = params;
 
   const where: Record<string, any> = {};
 
@@ -122,8 +131,12 @@ export const filterMoneyReceiptsService = async (
   return filterPaginate(
     prisma,
     {
-      model: "moneyReceipt", // ✅ "moneyReceipt"
-      limit,
+      model: "moneyReceipt",
+
+      include: {
+        admission: true,
+        patient: true,
+      },
     },
     cursor,
     where,

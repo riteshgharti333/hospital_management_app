@@ -19,7 +19,7 @@ export const createNurse = async (data: NurseInput) => {
   const registrationNo = await generateRegistrationNumber(
     prisma.nurse,
     "NUR",
-    "registrationNo"
+    "registrationNo",
   );
 
   const nurse = await prisma.nurse.create({
@@ -90,10 +90,10 @@ export const deleteNurse = async (id: number) => {
 };
 
 export const searchNurse = createSearchService(prisma, {
-  tableName: "nurse",
-  exactFields: ["fullName", "mobileNumber", "registrationNo", "email"],
+  tableName: "Nurse",
+  exactFields: ["fullName", "mobileNumber", "registrationNo"],
   prefixFields: ["fullName"],
-  similarFields: ["fullName", "department"],
+  similarFields: ["fullName"],
   selectFields: [
     "id",
     "registrationNo",
@@ -118,7 +118,7 @@ type FilterNurseParams = {
 };
 
 export const filterNursesService = async (params: FilterNurseParams) => {
-  const { fromDate, toDate, shift, status, cursor, limit } = params;
+  const { fromDate, toDate, shift, status, cursor } = params;
 
   const where: Record<string, any> = {};
 
@@ -147,7 +147,6 @@ export const filterNursesService = async (params: FilterNurseParams) => {
     prisma,
     {
       model: "nurse",
-      limit,
     },
     cursor,
     where,

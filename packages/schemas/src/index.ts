@@ -255,19 +255,45 @@ export const prescriptionSchema = z.object({
     .min(1, "At least one medicine is required"),
 });
 
-export const prescriptionFilterSchema = z.object({
-  fromDate: z.string().datetime().optional(),
-  toDate: z.string().datetime().optional(),
-  status: PrescriptionStatusEnum.optional(),
-  admissionId: z.string().optional(),
-  cursor: z.string().optional(),
-  limit: z.coerce.number().optional(),
-});
-
 // TRANSACTION SCHEMAS
+
+export const CompanyEnum = z.enum([
+  "Sun Pharma",
+  "Cipla",
+  "Dr. Reddy's",
+  "Abbott",
+  "Mankind Pharma",
+  "Zydus Cadila",
+  "Alkem Laboratories",
+  "Torrent Pharmaceuticals",
+]);
+
+export const services = z.enum([
+  "Paracetamol 500mg",
+  "Amoxicillin 250mg",
+  "Omeprazole 20mg",
+  "Metformin 500mg",
+  "Atorvastatin 10mg",
+  "CBC Test",
+  "X-Ray Chest",
+  "Ultrasound",
+  "Consultation Fee",
+  "Room Charges",
+  "Nursing Care",
+  "IV Fluids",
+]);
+
+export const billStatusOptions = z.enum([
+  "Pending",
+  "PartiallyPaid",
+  "Paid",
+  "Cancelled",
+  "Refunded",
+]);
+
 export const billItemSchema = z.object({
-  company: z.string().min(1, "Company is required"),
-  itemOrService: z.string().min(1, "Item/Service is required"),
+  company: CompanyEnum,
+  itemOrService: services,
   quantity: z.number().min(1, "Quantity must be at least 1"),
   mrp: z.number().min(0, "MRP must be a non-negative number"),
   totalAmount: z.number().min(0).optional(),
@@ -277,25 +303,10 @@ export const billSchema = z.object({
   billDate: z.coerce.date(),
   billType: z.string().min(1, "Bill type is required"),
   totalAmount: z.number().min(0, "Total amount must be positive"),
-  mobile: z.string().min(10, "Mobile must be at least 10 digits"),
-  patientName: z.string().min(1, "Patient name is required"),
-  admissionNo: z.string().min(1, "Admission number is required"),
-  admissionDate: z
-    .string()
-    .min(1, "Admission date is required")
-    .refine((val) => !isNaN(new Date(val).getTime()), {
-      message: "Invalid date format",
-    })
-    .transform((val) => new Date(val)),
-  patientSex: z.enum(["Male", "Female", "Other"]),
-  dischargeDate: z.preprocess(
-    (val) => (val === "" ? undefined : val),
-    z.coerce.date().optional(),
-  ),
-  address: z.string().min(1, "Address is required"),
-  status: z
-    .enum(["Pending", "PartiallyPaid", "Paid", "Cancelled", "Refunded"])
-    .default("Pending"),
+  admissionId: z.number().min(1, "Admission ID is required"),
+  patientId: z.number().min(1, "Patient ID is required"),
+
+  status: billStatusOptions.default("Pending"),
   billItems: z
     .array(billItemSchema)
     .min(1, "At least one bill item is required"),
@@ -303,9 +314,10 @@ export const billSchema = z.object({
 
 export const moneyReceiptSchema = z.object({
   date: z.string().transform((val) => new Date(val)),
-  patientName: z.string().min(1, "Patient name is required"),
-  mobile: z.string().min(10, "Mobile must be at least 10 digits"),
-  admissionNo: z.string().min(1, "Admission number is required"),
+
+   admissionId: z.number().min(1, "Admission ID is required"),
+  patientId: z.number().min(1, "Patient ID is required"),
+
   amount: z.coerce.number().min(0.01, "Amount must be greater than 0"),
   paymentMode: z.enum(["Cash", "Cheque", "Card", "Online Transfer", "Other"]),
   remarks: z.string().optional(),
@@ -316,21 +328,22 @@ export const moneyReceiptSchema = z.object({
     .default("Active"),
 });
 
+const BankeEnum = z.enum(["ACTIVE", "INACTIVE"]);
+
 // CASH & BANK SCHEMAS
 export const cashSchema = z.object({
   cashName: z.string().min(2, "Cash name is required").max(100),
-  isActive: z.boolean().optional(),
+  status: BankeEnum,
 });
 
 export const bankSchema = z.object({
   bankName: z.string().min(2, "Bank name is required").max(100),
   accountNo: z.string().min(6, "Account number is required").max(50),
   ifscCode: z.string().min(4, "Invalid IFSC").max(20).optional(),
-  isActive: z.boolean().optional(),
+  status: BankeEnum,
 });
 
 // LEDGER SCHEMAS
-const CashAmountTypeEnum = z.enum(["INCOME", "EXPENSE"]);
 
 export const AmountTypeEnum = z.enum(["CREDIT", "DEBIT"]);
 export const PaymentModeEnum = z.enum([
@@ -447,19 +460,13 @@ export const ledgerFilterSchema = z.object({
 
 // CASH FILTER SCHEMAS
 export const cashFilterSchema = z.object({
-  isActive: z
-    .enum(["true", "false"])
-    .optional()
-    .transform((val) => val === "true"),
+  status: BankeEnum.optional(),
   ...baseFilterSchema,
 });
 
 // BANK FILTER SCHEMAS
 export const bankFilterSchema = z.object({
-  isActive: z
-    .enum(["true", "false"])
-    .optional()
-    .transform((val) => val === "true"),
+  status: BankeEnum.optional(),
   ...baseFilterSchema,
 });
 
@@ -491,6 +498,12 @@ export const departmentFilterSchema = z.object({
 // APPOINTMENT FILTER SCHEMAS
 export const appointmentFilterSchema = z.object({
   department: z.string().optional(),
+  status: AppointmentStatus.optional(),
+  ...baseFilterSchema,
+});
+
+export const prescriptionFilterSchema = z.object({
+  status: PrescriptionStatusEnum.optional(),
   ...baseFilterSchema,
 });
 

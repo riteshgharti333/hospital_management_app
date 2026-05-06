@@ -92,8 +92,10 @@ export const getLedgersByEntityRecord = catchAsyncError(
       success: true,
       statusCode: StatusCodes.OK,
       message: "Entity ledger entries fetched",
-      data: {
-        transactions: ledgers,
+      data: ledgers.data,
+      pagination: {
+        nextCursor: ledgers.pagination.nextCursor || undefined,
+        hasMore: ledgers.pagination.hasMore,
       },
     });
   },

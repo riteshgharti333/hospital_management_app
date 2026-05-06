@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import {
   FaCalendarAlt,
@@ -8,6 +8,10 @@ import {
   FaMoneyBillWave,
   FaComment,
   FaFileInvoiceDollar,
+  FaSearch,
+  FaPhone,
+  FaUserMd,
+  FaHospitalUser,
 } from "react-icons/fa";
 
 import { useForm } from "react-hook-form";
@@ -43,22 +47,23 @@ const statusOptions = ["Active", "Cancelled", "Refunded"];
 const EditMoneyReceipt = () => {
   const { id } = useParams();
   const navigate = useNavigate();
+  const searchRef = useRef(null);
 
   const [editMode, setEditMode] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
 
-  // For searchable admission no
-  const [searchAdmission, setSearchAdmission] = useState("");
+  // Admission Search
+  const [searchTerm, setSearchTerm] = useState("");
   const [showDropdown, setShowDropdown] = useState(false);
+  const [selectedAdmission, setSelectedAdmission] = useState(null);
 
-  const { data: admissionResults = [] } = useSearchAdmissions(searchAdmission);
+  const { data: searchResponse, isLoading: isSearching } = useSearchAdmissions(searchTerm);
+  const admissions = searchResponse?.data || [];
 
   // Fetch receipt by its ID
   const { data: receiptData, isLoading } = useGetMoneyReceiptById(id);
-  const { mutateAsync: updateReceipt, isPending: isUpdating } =
-    useUpdateMoneyReceipt();
-  const { mutateAsync: deleteReceipt, isPending: isDeleting } =
-    useDeleteMoneyReceipt();
+  const { mutateAsync: updateReceipt, isPending: isUpdating } = useUpdateMoneyReceipt();
+  const { mutateAsync: deleteReceipt, isPending: isDeleting } = useDeleteMoneyReceipt();
 
   const {
     register,
@@ -68,54 +73,126 @@ const EditMoneyReceipt = () => {
     formState: { errors },
   } = useForm({
     resolver: zodResolver(moneyReceiptSchema),
+    defaultValues: {
+      date: "",
+      admissionId: "",
+      patientId: "",
+      amount: "",
+      paymentMode: "Cash",
+      remarks: "",
+      receivedBy: "",
+      status: "Active",
+    },
   });
 
+  // Handle click outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (searchRef.current && !searchRef.current.contains(event.target)) {
+        setShowDropdown(false);
+      }
+    };
+    document.addEventListener("click", handleClickOutside);
+    return () => document.removeEventListener("click", handleClickOutside);
+  }, []);
+
+  // Load receipt data
   useEffect(() => {
     if (receiptData) {
-      setSearchAdmission(receiptData.admissionNo);
-
+      console.log("Receipt Data:", receiptData);
+      
       reset({
-        ...receiptData,
         date: receiptData.date?.split("T")[0] || "",
+        admissionId: receiptData.admissionId || "",
+        patientId: receiptData.patientId || "",
+        amount: receiptData.amount || "",
+        paymentMode: receiptData.paymentMode || "Cash",
+        remarks: receiptData.remarks || "",
+        receivedBy: receiptData.receivedBy || "",
+        status: receiptData.status || "Active",
       });
+
+      // Set selected admission if exists
+      if (receiptData.admission) {
+        setSelectedAdmission(receiptData.admission);
+        setSearchTerm(receiptData.admission.hospitalAdmissionId || "");
+      }
     }
   }, [receiptData, reset]);
 
-  const handleSelectAdmission = (item) => {
-    setSearchAdmission(item.gsRsRegNo);
-    setShowDropdown(false);
-
-    setValue("admissionNo", item.gsRsRegNo);
-    setValue("patientName", item.patientName);
-    setValue("mobile", item.phoneNo);
-
-    toast.success("Patient details auto-filled");
+  const handleSearchChange = (e) => {
+    const value = e.target.value;
+    setSearchTerm(value);
+    setShowDropdown(value.length >= 2);
+    if (value.length < 2) {
+      setSelectedAdmission(null);
+      setValue("admissionId", "");
+      setValue("patientId", "");
+    }
   };
 
-  const getInputClass = (error, disabled) =>
-    `block w-full px-4 py-2 border rounded-lg focus:ring-blue-500 focus:border-blue-500 ${
-      error ? "border-red-500" : "border-gray-300"
-    } ${disabled ? "bg-gray-100 cursor-not-allowed" : "bg-white"}`;
+  const handleSelectAdmission = (admission) => {
+    setSelectedAdmission(admission);
+    setValue("admissionId", admission.id);
+    setValue("patientId", admission.patient?.id);
+    setSearchTerm(admission.hospitalAdmissionId || `ADM-${admission.id}`);
+    setShowDropdown(false);
+    toast.success("Admission selected successfully");
+  };
 
-  const onSubmit = async (data) => {
+  const getInputClass = (name, disabled) =>
+    `block w-full px-4 py-2 border rounded-lg focus:ring-blue-500 focus:border-blue-500 ${
+      errors[name] ? "border-red-500" : "border-gray-300"
+    } ${disabled ? "bg-gray-100 cursor-not-allowed opacity-90" : "bg-white"}`;
+
+  const onSubmit = async (formData) => {
     try {
-      const response = await updateReceipt({ id, data });
+      if (!selectedAdmission && editMode) {
+        toast.error("Please select an admission");
+        return;
+      }
+
+      const payload = {
+        date: new Date(formData.date).toISOString(),
+        admissionId: Number(formData.admissionId),
+        patientId: Number(formData.patientId),
+        amount: Number(formData.amount),
+        paymentMode: formData.paymentMode,
+        remarks: formData.remarks || "",
+        receivedBy: formData.receivedBy,
+        status: formData.status || "Active",
+      };
+
+      console.log("Updating money receipt:", payload);
+
+      const response = await updateReceipt({ id, data: payload });
+      
       if (response?.data?.success) {
-        toast.success(response.data.message);
+        toast.success(response.data.message || "Money receipt updated successfully");
         setEditMode(false);
       }
     } catch (error) {
-      console.log(error);
+      console.error("Update error:", error);
+      toast.error(error?.response?.data?.message || "Failed to update money receipt");
     }
   };
 
   const handleCancel = () => {
     if (!receiptData) return;
     reset({
-      ...receiptData,
       date: receiptData.date?.split("T")[0] || "",
+      admissionId: receiptData.admissionId || "",
+      patientId: receiptData.patientId || "",
+      amount: receiptData.amount || "",
+      paymentMode: receiptData.paymentMode || "Cash",
+      remarks: receiptData.remarks || "",
+      receivedBy: receiptData.receivedBy || "",
+      status: receiptData.status || "Active",
     });
-    setSearchAdmission(receiptData.admissionNo);
+    if (receiptData.admission) {
+      setSelectedAdmission(receiptData.admission);
+      setSearchTerm(receiptData.admission.hospitalAdmissionId || "");
+    }
     setEditMode(false);
   };
 
@@ -137,7 +214,7 @@ const EditMoneyReceipt = () => {
   if (!receiptData) return <NoData />;
 
   return (
-    <div className="">
+    <div className="max-w-6xl mx-auto">
       <ConfirmModal
         isOpen={showDeleteModal}
         onClose={() => setShowDeleteModal(false)}
@@ -145,16 +222,13 @@ const EditMoneyReceipt = () => {
         loading={isDeleting}
       />
 
-      {/* HEADER */}
       <div className="mb-5">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center">
-            <BackButton />
-            <h2 className="text-2xl font-bold text-gray-800 flex items-center ml-2">
-              <FaFileInvoiceDollar className="mr-2 text-blue-600" />
-              {editMode ? "Edit Money Receipt" : "View Money Receipt"}
-            </h2>
-          </div>
+        <div className="flex items-center">
+          <BackButton />
+          <h2 className="text-2xl font-bold text-gray-800 flex items-center ml-2">
+            <FaFileInvoiceDollar className="mr-2 text-blue-600" />
+            {editMode ? "Edit Money Receipt" : "View Money Receipt"}
+          </h2>
         </div>
       </div>
 
@@ -162,211 +236,46 @@ const EditMoneyReceipt = () => {
         onSubmit={handleSubmit(onSubmit)}
         className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden"
       >
-        {/* =======================
-          ADMISSION INFO
-        ======================= */}
-        <div className="p-6 border-b border-gray-100">
-          <h3 className="text-lg font-semibold flex items-center text-gray-800 mb-4">
-            <FaIdCard className="text-blue-500 mr-2" />
-            Admission Information
-          </h3>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {/* Admission No Searchable */}
-            <div className="space-y-1 relative">
-              <label className="block text-sm font-medium text-gray-700">
-                Admission No<span className="text-red-500">*</span>
-              </label>
-
-              <div className="relative">
-                <input
-                  type="text"
-                  value={searchAdmission}
-                  disabled={!editMode}
-                  onChange={(e) => {
-                    const val = e.target.value;
-                    setSearchAdmission(val);
-                    setValue("admissionNo", val);
-                    setShowDropdown(true);
-                  }}
-                  autoComplete="off"
-                  className={`${getInputClass(
-                    errors.admissionNo,
-                    !editMode
-                  )} pl-10`}
-                />
-
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <FaIdCard className="text-gray-400" />
-                </div>
-              </div>
-
-              {showDropdown &&
-                editMode &&
-                searchAdmission &&
-                admissionResults.length > 0 && (
-                  <ul className="absolute z-50 w-full bg-white border border-gray-300 rounded-lg shadow-sm max-h-60 overflow-y-auto mt-1">
-                    {admissionResults.slice(0, 10).map((item) => (
-                      <li
-                        key={item.id}
-                        onClick={() => handleSelectAdmission(item)}
-                        className="px-4 py-2 cursor-pointer hover:bg-gray-100"
-                      >
-                        <p className="font-medium text-sm text-gray-800">
-                          {item.gsRsRegNo} — {item.patientName}
-                        </p>
-                        <p className="text-xs text-gray-500">{item.phoneNo}</p>
-                      </li>
-                    ))}
-                  </ul>
-                )}
-
-              {errors.admissionNo && (
-                <p className="text-red-600 text-sm mt-1">
-                  {errors.admissionNo.message}
-                </p>
-              )}
-            </div>
-
-            {/* Patient Name */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700">
-                Patient Name
-              </label>
-              <input
-                type="text"
-                disabled
-                {...register("patientName")}
-                className={getInputClass(errors.patientName, true)}
-              />
-            </div>
-
-            {/* Mobile */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700">
-                Mobile
-              </label>
-              <input
-                type="text"
-                disabled
-                {...register("mobile")}
-                className={getInputClass(errors.mobile, true)}
-              />
-            </div>
-          </div>
-        </div>
-
-        {/* =======================
-          RECEIPT DETAILS
-        ======================= */}
         <div className="p-6">
-          <h3 className="text-lg font-semibold flex items-center text-gray-800 mb-4">
-            <FaMoneyBillWave className="text-blue-500 mr-2" />
-            Receipt Details
-          </h3>
+          {/* Receipt Information Section */}
+          <div className="flex items-center mb-6">
+            <FaMoneyBillWave className="text-green-500" />
+            <h3 className="ml-2 text-lg font-semibold text-gray-800">
+              Receipt Information
+            </h3>
+          </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
             {/* Date */}
-            <div>
+            <div className="space-y-1">
               <label className="block text-sm font-medium text-gray-700">
-                Date<span className="text-red-500">*</span>
+                Receipt Date<span className="text-red-500 ml-1">*</span>
               </label>
-
               <div className="relative">
                 <input
                   type="date"
                   {...register("date")}
                   disabled={!editMode}
-                  className={`${getInputClass(
-                    errors.date,
-                    !editMode
-                  )} pl-10`}
+                  className={`${getInputClass("date", !editMode)} pl-10`}
                 />
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                   <FaCalendarAlt className="text-gray-400" />
                 </div>
               </div>
-
               {errors.date && (
-                <p className="text-red-600 text-sm mt-1">
-                  {errors.date.message}
-                </p>
-              )}
-            </div>
-
-            {/* Amount */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700">
-                Amount<span className="text-red-500">*</span>
-              </label>
-              <input
-                type="number"
-                {...register("amount", { valueAsNumber: true })}
-                disabled={!editMode}
-                className={getInputClass(errors.amount, !editMode)}
-                placeholder="Enter amount"
-              />
-
-              {errors.amount && (
-                <p className="text-red-600 text-sm mt-1">
-                  {errors.amount.message}
-                </p>
-              )}
-            </div>
-
-            {/* Payment Mode */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700">
-                Payment Mode<span className="text-red-500">*</span>
-              </label>
-              <select
-                {...register("paymentMode")}
-                disabled={!editMode}
-                className={getInputClass(errors.paymentMode, !editMode)}
-              >
-                {paymentModes.map((pm) => (
-                  <option key={pm} value={pm}>
-                    {pm}
-                  </option>
-                ))}
-              </select>
-
-              {errors.paymentMode && (
-                <p className="text-red-600 text-sm mt-1">
-                  {errors.paymentMode.message}
-                </p>
-              )}
-            </div>
-
-            {/* Received By */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700">
-                Received By<span className="text-red-500">*</span>
-              </label>
-              <input
-                type="text"
-                {...register("receivedBy")}
-                disabled={!editMode}
-                placeholder="Enter staff name"
-                className={getInputClass(errors.receivedBy, !editMode)}
-              />
-
-              {errors.receivedBy && (
-                <p className="text-red-600 text-sm mt-1">
-                  {errors.receivedBy.message}
-                </p>
+                <p className="text-red-600 text-sm mt-1">{errors.date.message}</p>
               )}
             </div>
 
             {/* Status */}
-            <div>
+            <div className="space-y-1">
               <label className="block text-sm font-medium text-gray-700">
-                Status<span className="text-red-500">*</span>
+                Status<span className="text-red-500 ml-1">*</span>
               </label>
               <select
                 {...register("status")}
                 disabled={!editMode}
-                className={getInputClass(errors.status, !editMode)}
+                className={`${getInputClass("status", !editMode)} bg-white`}
               >
                 {statusOptions.map((s) => (
                   <option key={s} value={s}>
@@ -374,16 +283,224 @@ const EditMoneyReceipt = () => {
                   </option>
                 ))}
               </select>
-
               {errors.status && (
-                <p className="text-red-600 text-sm mt-1">
-                  {errors.status.message}
+                <p className="text-red-600 text-sm mt-1">{errors.status.message}</p>
+              )}
+            </div>
+          </div>
+
+          {/* Hidden inputs for IDs */}
+          <input type="hidden" {...register("admissionId")} />
+          <input type="hidden" {...register("patientId")} />
+
+          {/* Admission Section */}
+          <div className="space-y-1 relative" ref={searchRef}>
+            <label className="block text-sm font-medium text-gray-700">
+              Search Admission<span className="text-red-500 ml-1">*</span>
+            </label>
+            <div className="relative">
+              <input
+                type="text"
+                value={searchTerm}
+                onChange={handleSearchChange}
+                onFocus={() => {
+                  if (searchTerm.length >= 2 && admissions.length > 0) {
+                    setShowDropdown(true);
+                  }
+                }}
+                disabled={!editMode}
+                placeholder="Search by Admission ID, Patient Name, or Mobile No"
+                autoComplete="off"
+                className={`${getInputClass("admissionId", !editMode)} pl-10`}
+              />
+              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                <FaSearch className="text-gray-400" />
+              </div>
+            </div>
+
+            {/* Search Results Dropdown */}
+            {editMode && showDropdown && searchTerm.length >= 2 && (
+              <ul className="absolute z-50 bg-white w-full border border-gray-300 rounded-lg shadow-lg max-h-60 overflow-y-auto mt-1">
+                {isSearching ? (
+                  <li className="px-4 py-3 text-center text-gray-500">
+                    <div className="flex items-center justify-center">
+                      <svg className="animate-spin h-5 w-5 mr-2" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                      </svg>
+                      Searching admissions...
+                    </div>
+                  </li>
+                ) : admissions.length > 0 ? (
+                  admissions.slice(0, 10).map((admission) => (
+                    <li
+                      key={admission.id}
+                      onClick={() => handleSelectAdmission(admission)}
+                      className="px-4 py-3 cursor-pointer hover:bg-blue-50 border-b border-gray-100 last:border-b-0 transition-colors"
+                    >
+                      <div className="flex items-center justify-between">
+                        <div className="flex-1">
+                          <p className="font-medium text-gray-800">
+                            {admission.patient?.fullName || "Unknown Patient"}
+                          </p>
+                          <div className="flex items-center gap-3 mt-1">
+                            <p className="text-sm text-gray-600">
+                              <span className="font-medium">Admission:</span>{" "}
+                              {admission.hospitalAdmissionId || `ADM-${admission.id}`}
+                            </p>
+                            <p className="text-sm text-gray-600">
+                              <span className="font-medium">Patient ID:</span>{" "}
+                              {admission.patient?.hospitalPatientId || "N/A"}
+                            </p>
+                          </div>
+                          <div className="flex items-center gap-3 mt-1">
+                            <p className="text-sm text-gray-600 flex items-center">
+                              <FaUserMd className="mr-1 text-gray-400" size={12} />
+                              {admission.doctor?.fullName || "N/A"}
+                            </p>
+                            <p className="text-sm text-gray-600 flex items-center">
+                              <FaPhone className="mr-1 text-gray-400" size={12} />
+                              {admission.patient?.mobileNumber || "N/A"}
+                            </p>
+                          </div>
+                          <p className="text-xs text-gray-500 mt-1">
+                            Admitted: {new Date(admission.admissionDate).toLocaleDateString()}
+                          </p>
+                        </div>
+                        <FaIdCard className="text-gray-400 ml-3" />
+                      </div>
+                    </li>
+                  ))
+                ) : (
+                  <li className="px-4 py-3 text-center text-gray-500">
+                    <div className="flex flex-col items-center">
+                      <FaSearch className="text-gray-400 mb-2" size={20} />
+                      <p>No admissions found</p>
+                    </div>
+                  </li>
+                )}
+              </ul>
+            )}
+          </div>
+
+          {/* Selected Admission Details Card */}
+          {selectedAdmission && (
+            <div className={`mt-4 p-4 rounded-lg border ${
+              editMode 
+                ? "bg-blue-50 border-blue-200" 
+                : "bg-green-50 border-green-200"
+            }`}>
+              <p className={`text-sm font-medium mb-2 ${
+                editMode ? "text-blue-900" : "text-green-900"
+              }`}>
+                {editMode ? "Selected Admission Details:" : "Current Admission Details:"}
+              </p>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
+                <p className={editMode ? "text-blue-800" : "text-green-800"}>
+                  <span className="font-medium">Admission ID:</span> {selectedAdmission.hospitalAdmissionId || `ADM-${selectedAdmission.id}`}
                 </p>
+                <p className={editMode ? "text-blue-800" : "text-green-800"}>
+                  <span className="font-medium">Patient ID:</span> {selectedAdmission.patient?.hospitalPatientId || "N/A"}
+                </p>
+                <p className={editMode ? "text-blue-800" : "text-green-800"}>
+                  <span className="font-medium">Patient Name:</span> {selectedAdmission.patient?.fullName || "N/A"}
+                </p>
+                <p className={editMode ? "text-blue-800" : "text-green-800"}>
+                  <span className="font-medium">Mobile:</span> {selectedAdmission.patient?.mobileNumber || "N/A"}
+                </p>
+                <p className={editMode ? "text-blue-800" : "text-green-800"}>
+                  <span className="font-medium">Doctor:</span> {selectedAdmission.doctor?.fullName || "N/A"}
+                </p>
+                <p className={editMode ? "text-blue-800" : "text-green-800"}>
+                  <span className="font-medium">Admitted On:</span> {new Date(selectedAdmission.admissionDate).toLocaleDateString()}
+                </p>
+              </div>
+            </div>
+          )}
+
+          {/* No Admission Selected Message */}
+          {!selectedAdmission && (
+            <div className="mt-4 p-4 bg-yellow-50 rounded-lg border border-yellow-200">
+              <p className="text-sm text-yellow-800">
+                {editMode ? "Please search and select an admission" : "No admission information available"}
+              </p>
+            </div>
+          )}
+        </div>
+
+        {/* Receipt Details Section */}
+        <div className="p-6 border-t border-gray-100">
+          <div className="flex items-center mb-6">
+            <FaMoneyBillWave className="text-green-500" />
+            <h3 className="ml-2 text-lg font-semibold text-gray-800">
+              Payment Details
+            </h3>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {/* Amount */}
+            <div className="space-y-1">
+              <label className="block text-sm font-medium text-gray-700">
+                Amount (₹)<span className="text-red-500 ml-1">*</span>
+              </label>
+              <div className="relative">
+                <input
+                  type="number"
+                  step="0.01"
+                  {...register("amount", { valueAsNumber: true })}
+                  disabled={!editMode}
+                  placeholder="Enter amount"
+                  className={`${getInputClass("amount", !editMode)} pl-10`}
+                />
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <FaMoneyBillWave className="text-gray-400" />
+                </div>
+              </div>
+              {errors.amount && (
+                <p className="text-red-600 text-sm mt-1">{errors.amount.message}</p>
+              )}
+            </div>
+
+            {/* Payment Mode */}
+            <div className="space-y-1">
+              <label className="block text-sm font-medium text-gray-700">
+                Payment Mode<span className="text-red-500 ml-1">*</span>
+              </label>
+              <select
+                {...register("paymentMode")}
+                disabled={!editMode}
+                className={`${getInputClass("paymentMode", !editMode)} bg-white`}
+              >
+                {paymentModes.map((pm) => (
+                  <option key={pm} value={pm}>
+                    {pm}
+                  </option>
+                ))}
+              </select>
+              {errors.paymentMode && (
+                <p className="text-red-600 text-sm mt-1">{errors.paymentMode.message}</p>
+              )}
+            </div>
+
+            {/* Received By */}
+            <div className="space-y-1">
+              <label className="block text-sm font-medium text-gray-700">
+                Received By<span className="text-red-500 ml-1">*</span>
+              </label>
+              <input
+                type="text"
+                {...register("receivedBy")}
+                disabled={!editMode}
+                placeholder="Enter staff name"
+                className={getInputClass("receivedBy", !editMode)}
+              />
+              {errors.receivedBy && (
+                <p className="text-red-600 text-sm mt-1">{errors.receivedBy.message}</p>
               )}
             </div>
 
             {/* Remarks */}
-            <div className="md:col-span-2">
+            <div className="space-y-1 md:col-span-2">
               <label className="block text-sm font-medium text-gray-700">
                 Remarks
               </label>
@@ -392,19 +509,16 @@ const EditMoneyReceipt = () => {
                 rows={3}
                 disabled={!editMode}
                 placeholder="Optional remarks"
-                className={getInputClass(errors.remarks, !editMode)}
+                className={getInputClass("remarks", !editMode)}
               />
-
               {errors.remarks && (
-                <p className="text-red-600 text-sm mt-1">
-                  {errors.remarks.message}
-                </p>
+                <p className="text-red-600 text-sm mt-1">{errors.remarks.message}</p>
               )}
             </div>
           </div>
         </div>
 
-        {/* FOOTER BUTTONS */}
+        {/* Action Buttons */}
         <div className="bg-gray-50 px-6 py-4 border-t border-gray-200 flex justify-end gap-3">
           {!editMode ? (
             <>

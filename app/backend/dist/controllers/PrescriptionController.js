@@ -1,7 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.getPrescriptionsByAdmissionId = exports.filterPrescriptions = exports.searchPrescriptionResults = exports.deletePrescriptionRecord = exports.updatePrescriptionRecord = exports.uploadPrescriptionDoc = exports.getPrescriptionRecordById = exports.getAllPrescriptionRecords = exports.createPrescriptionRecord = void 0;
-const zod_1 = require("zod");
 const catchAsyncError_1 = require("../middlewares/catchAsyncError");
 const errorHandler_1 = require("../middlewares/errorHandler");
 const sendResponse_1 = require("../utils/sendResponse");
@@ -9,11 +8,10 @@ const statusCodes_1 = require("../constants/statusCodes");
 const prescriptionService_1 = require("../services/prescriptionService");
 const schemas_1 = require("@hospital/schemas");
 const queryValidation_1 = require("../utils/queryValidation");
-const paginationConfig_1 = require("../lib/paginationConfig");
 const s3_service_1 = require("../aws/s3.service");
 exports.createPrescriptionRecord = (0, catchAsyncError_1.catchAsyncError)(async (req, res, next) => {
     // Parse medicines if string
-    if (req.body.medicines && typeof req.body.medicines === 'string') {
+    if (req.body.medicines && typeof req.body.medicines === "string") {
         req.body.medicines = JSON.parse(req.body.medicines);
     }
     // Clean and trim string fields
@@ -24,11 +22,11 @@ exports.createPrescriptionRecord = (0, catchAsyncError_1.catchAsyncError)(async 
         req.body.notes = req.body.notes.trim();
     }
     // Remove empty fields
-    if (req.body.prescriptionDate === '') {
+    if (req.body.prescriptionDate === "") {
         delete req.body.prescriptionDate;
     }
     // Ensure admissionId is a valid number
-    if (!req.body.admissionId || req.body.admissionId === '') {
+    if (!req.body.admissionId || req.body.admissionId === "") {
         return next(new errorHandler_1.ErrorHandler("Admission ID is required", statusCodes_1.StatusCodes.BAD_REQUEST));
     }
     const admissionId = Number(req.body.admissionId);
@@ -96,7 +94,7 @@ exports.uploadPrescriptionDoc = (0, catchAsyncError_1.catchAsyncError)(async (re
 exports.updatePrescriptionRecord = (0, catchAsyncError_1.catchAsyncError)(async (req, res, next) => {
     const id = Number(req.params.id);
     // Parse medicines if string
-    if (req.body.medicines && typeof req.body.medicines === 'string') {
+    if (req.body.medicines && typeof req.body.medicines === "string") {
         req.body.medicines = JSON.parse(req.body.medicines);
     }
     // Convert admissionId to number
@@ -135,42 +133,33 @@ exports.deletePrescriptionRecord = (0, catchAsyncError_1.catchAsyncError)(async 
     });
 });
 exports.searchPrescriptionResults = (0, catchAsyncError_1.catchAsyncError)(async (req, res, next) => {
-    const { query } = req.query;
+    const { query, cursor } = req.query;
     const searchTerm = (0, queryValidation_1.validateSearchQuery)(query, next);
     if (!searchTerm)
         return;
-    const prescriptions = await (0, prescriptionService_1.searchPrescription)(searchTerm);
+    const result = await (0, prescriptionService_1.searchPrescription)(searchTerm, cursor);
     (0, sendResponse_1.sendResponse)(res, {
         success: true,
         statusCode: statusCodes_1.StatusCodes.OK,
         message: "Search results fetched successfully",
-        data: prescriptions,
+        data: result.data,
+        pagination: {
+            nextCursor: result.pagination.nextCursor || undefined,
+            hasMore: result.pagination.hasMore,
+        },
     });
 });
 exports.filterPrescriptions = (0, catchAsyncError_1.catchAsyncError)(async (req, res) => {
-    const filterSchema = zod_1.z.object({
-        fromDate: zod_1.z.string().datetime().optional(),
-        toDate: zod_1.z.string().datetime().optional(),
-        status: zod_1.z.enum(["ACTIVE", "COMPLETED", "CANCELLED"]).optional(),
-        admissionId: zod_1.z.coerce.number().optional(),
-        cursor: zod_1.z.string().optional(),
-        limit: zod_1.z.coerce.number().optional(),
-    });
-    const validated = filterSchema.parse(req.query);
-    const { data, nextCursor, hasMore } = await (0, prescriptionService_1.filterPrescriptionsService)({
-        ...validated,
-        fromDate: validated.fromDate ? new Date(validated.fromDate) : undefined,
-        toDate: validated.toDate ? new Date(validated.toDate) : undefined,
-    });
+    const validated = schemas_1.prescriptionFilterSchema.parse(req.query);
+    const result = await (0, prescriptionService_1.filterPrescriptionsService)(validated);
     (0, sendResponse_1.sendResponse)(res, {
         success: true,
         statusCode: statusCodes_1.StatusCodes.OK,
         message: "Filtered prescriptions fetched",
-        data,
+        data: result.data,
         pagination: {
-            nextCursor: nextCursor || undefined,
-            limit: validated.limit ?? paginationConfig_1.PAGINATION_CONFIG.DEFAULT_LIMIT,
-            hasMore,
+            nextCursor: result.nextCursor || undefined,
+            hasMore: result.hasMore,
         },
     });
 });

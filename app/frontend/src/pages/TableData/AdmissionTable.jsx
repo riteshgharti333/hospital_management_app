@@ -79,7 +79,7 @@ const AdmissionTable = () => {
         columns={columns}
         path="admission"
         searchConfig={{
-          placeholder: "Search by Name, Reg. No or Phone no...",
+          placeholder: "Search by Name, Admission ID or Aadhaar No",
         }}
         filtersConfig={[
           {

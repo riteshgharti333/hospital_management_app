@@ -15,7 +15,6 @@ import {
 } from "../../services/transectionService/billService";
 import { billSchema, billFilterSchema } from "@hospital/schemas";
 import { validateSearchQuery } from "../../utils/queryValidation";
-import { PAGINATION_CONFIG } from "../../lib/paginationConfig";
 
 export const createBillRecord = catchAsyncError(
   async (req: Request, res: Response, next: NextFunction) => {
@@ -96,7 +95,6 @@ export const updateBillRecord = catchAsyncError(
     // Transform data to match updateBill expectations
     const updateData = {
       ...validated,
-      dischargeDate: validated.dischargeDate ?? undefined,
       billItems: validated.billItems ?? undefined,
     };
 

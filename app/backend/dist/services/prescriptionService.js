@@ -237,20 +237,29 @@ exports.searchPrescription = (0, searchCache_1.createSearchService)(prisma_1.pri
     exactFields: ["prescriptionNo"],
     prefixFields: ["prescriptionNo"],
     similarFields: [],
+    relationFields: {
+        admission: ["hospitalAdmissionId"],
+    },
     selectFields: [
         "id",
         "prescriptionNo",
         "admissionId",
         "prescriptionDate",
-        "prescriptionDoc",
-        "notes",
         "status",
         "createdAt",
         "updatedAt",
     ],
+    include: {
+        admission: {
+            select: {
+                hospitalAdmissionId: true,
+            },
+        },
+    },
+    sortField: "createdAt",
 });
 const filterPrescriptionsService = async (params) => {
-    const { fromDate, toDate, status, admissionId, cursor, limit } = params;
+    const { fromDate, toDate, status, admissionId, cursor } = params;
     const where = {};
     if (status) {
         where.status = {
@@ -268,7 +277,6 @@ const filterPrescriptionsService = async (params) => {
     }
     return (0, filterPaginate_1.filterPaginate)(prisma_1.prisma, {
         model: "prescription",
-        limit,
         include: {
             medicines: true,
             admission: {

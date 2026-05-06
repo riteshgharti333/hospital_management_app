@@ -99,9 +99,10 @@ exports.searchDoctor = (0, searchCache_1.createSearchService)(prisma_1.prisma, {
         "createdAt",
         "email",
     ],
+    sortField: "createdAt",
 });
 const filterDoctorsService = async (params) => {
-    const { fromDate, toDate, status, cursor, limit } = params;
+    const { fromDate, toDate, status, cursor } = params;
     const where = {};
     // ✅ Status filter
     if (status) {
@@ -119,7 +120,6 @@ const filterDoctorsService = async (params) => {
     }
     return (0, filterPaginate_1.filterPaginate)(prisma_1.prisma, {
         model: "doctor",
-        limit,
         // 🔥 Optional optimization
         // select: {
         //   id: true,

@@ -8,7 +8,6 @@ const statusCodes_1 = require("../constants/statusCodes");
 const nurseService_1 = require("../services/nurseService");
 const schemas_1 = require("@hospital/schemas");
 const queryValidation_1 = require("../utils/queryValidation");
-const paginationConfig_1 = require("../lib/paginationConfig");
 exports.createNurseRecord = (0, catchAsyncError_1.catchAsyncError)(async (req, res, next) => {
     const validated = schemas_1.nurseSchema.parse(req.body);
     const existingEmail = await (0, nurseService_1.getNurseByEmail)(validated.email);
@@ -94,30 +93,33 @@ exports.deleteNurseRecord = (0, catchAsyncError_1.catchAsyncError)(async (req, r
     });
 });
 exports.searchNurseResults = (0, catchAsyncError_1.catchAsyncError)(async (req, res, next) => {
-    const { query } = req.query;
+    const { query, cursor } = req.query;
     const searchTerm = (0, queryValidation_1.validateSearchQuery)(query, next);
     if (!searchTerm)
         return;
-    const nurses = await (0, nurseService_1.searchNurse)(searchTerm);
+    const result = await (0, nurseService_1.searchNurse)(searchTerm, cursor);
     (0, sendResponse_1.sendResponse)(res, {
         success: true,
         statusCode: statusCodes_1.StatusCodes.OK,
         message: "Search results fetched successfully",
-        data: nurses,
+        data: result.data,
+        pagination: {
+            nextCursor: result.pagination.nextCursor || undefined,
+            hasMore: result.pagination.hasMore,
+        },
     });
 });
 exports.filterNurses = (0, catchAsyncError_1.catchAsyncError)(async (req, res) => {
     const validated = schemas_1.nurseFilterSchema.parse(req.query);
-    const { data, nextCursor, hasMore } = await (0, nurseService_1.filterNursesService)(validated);
+    const result = await (0, nurseService_1.filterNursesService)(validated);
     (0, sendResponse_1.sendResponse)(res, {
         success: true,
         statusCode: statusCodes_1.StatusCodes.OK,
         message: "Filtered nurses fetched",
-        data,
+        data: result.data,
         pagination: {
-            nextCursor: nextCursor || undefined,
-            limit: validated.limit ?? paginationConfig_1.PAGINATION_CONFIG.DEFAULT_LIMIT,
-            hasMore,
+            nextCursor: result.nextCursor || undefined,
+            hasMore: result.hasMore,
         },
     });
 });

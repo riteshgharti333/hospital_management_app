@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.moneyReceiptFilterSchema = exports.billFilterSchema = exports.doctorLedgerFilterSchema = exports.patientLedgerFilterSchema = exports.doctorFilterSchema = exports.nurseFilterSchema = exports.appointmentFilterSchema = exports.departmentFilterSchema = exports.patientFilterSchema = exports.birthFilterSchema = exports.admissionFilterSchema = exports.bankFilterSchema = exports.cashFilterSchema = exports.ledgerFilterSchema = exports.ledgerSchema = exports.REFERENCE_TYPES = exports.ENTITY_TYPES = exports.PaymentModeEnum = exports.AmountTypeEnum = exports.bankSchema = exports.cashSchema = exports.moneyReceiptSchema = exports.billSchema = exports.billItemSchema = exports.prescriptionFilterSchema = exports.prescriptionSchema = exports.medicineSchema = exports.PrescriptionStatusEnum = exports.patientSchema = exports.nurseSchema = exports.doctorSchema = exports.appointmentSchema = exports.AppointmentStatus = exports.departmentSchema = exports.DepartmentNameEnum = exports.DepartmentStatusEnum = exports.birthSchema = exports.admissionSchema = exports.loginSchema = exports.registerSchema = exports.changePasswordSchema = void 0;
+exports.moneyReceiptFilterSchema = exports.billFilterSchema = exports.doctorLedgerFilterSchema = exports.patientLedgerFilterSchema = exports.doctorFilterSchema = exports.nurseFilterSchema = exports.prescriptionFilterSchema = exports.appointmentFilterSchema = exports.departmentFilterSchema = exports.patientFilterSchema = exports.birthFilterSchema = exports.admissionFilterSchema = exports.bankFilterSchema = exports.cashFilterSchema = exports.ledgerFilterSchema = exports.ledgerSchema = exports.REFERENCE_TYPES = exports.ENTITY_TYPES = exports.PaymentModeEnum = exports.AmountTypeEnum = exports.bankSchema = exports.cashSchema = exports.moneyReceiptSchema = exports.billSchema = exports.billItemSchema = exports.billStatusOptions = exports.services = exports.CompanyEnum = exports.prescriptionSchema = exports.medicineSchema = exports.PrescriptionStatusEnum = exports.patientSchema = exports.nurseSchema = exports.doctorSchema = exports.appointmentSchema = exports.AppointmentStatus = exports.departmentSchema = exports.DepartmentNameEnum = exports.DepartmentStatusEnum = exports.birthSchema = exports.admissionSchema = exports.loginSchema = exports.registerSchema = exports.changePasswordSchema = void 0;
 const zod_1 = require("zod");
 // AUTHENTICATION SCHEMAS
 exports.changePasswordSchema = zod_1.z
@@ -202,18 +202,41 @@ exports.prescriptionSchema = zod_1.z.object({
     })
         .min(1, "At least one medicine is required"),
 });
-exports.prescriptionFilterSchema = zod_1.z.object({
-    fromDate: zod_1.z.string().datetime().optional(),
-    toDate: zod_1.z.string().datetime().optional(),
-    status: exports.PrescriptionStatusEnum.optional(),
-    admissionId: zod_1.z.string().optional(),
-    cursor: zod_1.z.string().optional(),
-    limit: zod_1.z.coerce.number().optional(),
-});
 // TRANSACTION SCHEMAS
+exports.CompanyEnum = zod_1.z.enum([
+    "Sun Pharma",
+    "Cipla",
+    "Dr. Reddy's",
+    "Abbott",
+    "Mankind Pharma",
+    "Zydus Cadila",
+    "Alkem Laboratories",
+    "Torrent Pharmaceuticals",
+]);
+exports.services = zod_1.z.enum([
+    "Paracetamol 500mg",
+    "Amoxicillin 250mg",
+    "Omeprazole 20mg",
+    "Metformin 500mg",
+    "Atorvastatin 10mg",
+    "CBC Test",
+    "X-Ray Chest",
+    "Ultrasound",
+    "Consultation Fee",
+    "Room Charges",
+    "Nursing Care",
+    "IV Fluids",
+]);
+exports.billStatusOptions = zod_1.z.enum([
+    "Pending",
+    "PartiallyPaid",
+    "Paid",
+    "Cancelled",
+    "Refunded",
+]);
 exports.billItemSchema = zod_1.z.object({
-    company: zod_1.z.string().min(1, "Company is required"),
-    itemOrService: zod_1.z.string().min(1, "Item/Service is required"),
+    company: exports.CompanyEnum,
+    itemOrService: exports.services,
     quantity: zod_1.z.number().min(1, "Quantity must be at least 1"),
     mrp: zod_1.z.number().min(0, "MRP must be a non-negative number"),
     totalAmount: zod_1.z.number().min(0).optional(),
@@ -222,31 +245,17 @@ exports.billSchema = zod_1.z.object({
     billDate: zod_1.z.coerce.date(),
     billType: zod_1.z.string().min(1, "Bill type is required"),
     totalAmount: zod_1.z.number().min(0, "Total amount must be positive"),
-    mobile: zod_1.z.string().min(10, "Mobile must be at least 10 digits"),
-    patientName: zod_1.z.string().min(1, "Patient name is required"),
-    admissionNo: zod_1.z.string().min(1, "Admission number is required"),
-    admissionDate: zod_1.z
-        .string()
-        .min(1, "Admission date is required")
-        .refine((val) => !isNaN(new Date(val).getTime()), {
-        message: "Invalid date format",
-    })
-        .transform((val) => new Date(val)),
-    patientSex: zod_1.z.enum(["Male", "Female", "Other"]),
-    dischargeDate: zod_1.z.preprocess((val) => (val === "" ? undefined : val), zod_1.z.coerce.date().optional()),
-    address: zod_1.z.string().min(1, "Address is required"),
-    status: zod_1.z
-        .enum(["Pending", "PartiallyPaid", "Paid", "Cancelled", "Refunded"])
-        .default("Pending"),
+    admissionId: zod_1.z.number().min(1, "Admission ID is required"),
+    patientId: zod_1.z.number().min(1, "Patient ID is required"),
+    status: exports.billStatusOptions.default("Pending"),
     billItems: zod_1.z
         .array(exports.billItemSchema)
         .min(1, "At least one bill item is required"),
 });
 exports.moneyReceiptSchema = zod_1.z.object({
     date: zod_1.z.string().transform((val) => new Date(val)),
-    patientName: zod_1.z.string().min(1, "Patient name is required"),
-    mobile: zod_1.z.string().min(10, "Mobile must be at least 10 digits"),
-    admissionNo: zod_1.z.string().min(1, "Admission number is required"),
+    admissionId: zod_1.z.number().min(1, "Admission ID is required"),
+    patientId: zod_1.z.number().min(1, "Patient ID is required"),
     amount: zod_1.z.coerce.number().min(0.01, "Amount must be greater than 0"),
     paymentMode: zod_1.z.enum(["Cash", "Cheque", "Card", "Online Transfer", "Other"]),
     remarks: zod_1.z.string().optional(),
@@ -256,19 +265,19 @@ exports.moneyReceiptSchema = zod_1.z.object({
         .optional()
         .default("Active"),
 });
+const BankeEnum = zod_1.z.enum(["ACTIVE", "INACTIVE"]);
 // CASH & BANK SCHEMAS
 exports.cashSchema = zod_1.z.object({
     cashName: zod_1.z.string().min(2, "Cash name is required").max(100),
-    isActive: zod_1.z.boolean().optional(),
+    status: BankeEnum,
 });
 exports.bankSchema = zod_1.z.object({
     bankName: zod_1.z.string().min(2, "Bank name is required").max(100),
     accountNo: zod_1.z.string().min(6, "Account number is required").max(50),
     ifscCode: zod_1.z.string().min(4, "Invalid IFSC").max(20).optional(),
-    isActive: zod_1.z.boolean().optional(),
+    status: BankeEnum,
 });
 // LEDGER SCHEMAS
-const CashAmountTypeEnum = zod_1.z.enum(["INCOME", "EXPENSE"]);
 exports.AmountTypeEnum = zod_1.z.enum(["CREDIT", "DEBIT"]);
 exports.PaymentModeEnum = zod_1.z.enum([
     "CASH",
@@ -366,18 +375,12 @@ exports.ledgerFilterSchema = zod_1.z.object({
 });
 // CASH FILTER SCHEMAS
 exports.cashFilterSchema = zod_1.z.object({
-    isActive: zod_1.z
-        .enum(["true", "false"])
-        .optional()
-        .transform((val) => val === "true"),
+    status: BankeEnum.optional(),
     ...baseFilterSchema,
 });
 // BANK FILTER SCHEMAS
 exports.bankFilterSchema = zod_1.z.object({
-    isActive: zod_1.z
-        .enum(["true", "false"])
-        .optional()
-        .transform((val) => val === "true"),
+    status: BankeEnum.optional(),
     ...baseFilterSchema,
 });
 // ADMISSION FILTER SCHEMAS
@@ -404,6 +407,11 @@ exports.departmentFilterSchema = zod_1.z.object({
 // APPOINTMENT FILTER SCHEMAS
 exports.appointmentFilterSchema = zod_1.z.object({
     department: zod_1.z.string().optional(),
+    status: exports.AppointmentStatus.optional(),
+    ...baseFilterSchema,
+});
+exports.prescriptionFilterSchema = zod_1.z.object({
+    status: exports.PrescriptionStatusEnum.optional(),
     ...baseFilterSchema,
 });
 // NURSE FILTER SCHEMAS

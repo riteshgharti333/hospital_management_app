@@ -48,22 +48,21 @@ const deletePatient = async (id) => {
     return patient;
 };
 exports.deletePatient = deletePatient;
-const commonSearchFields = [
-    "fullName",
-    "mobileNumber",
-    "aadhaarNumber",
-    "hospitalPatientId",
-];
 exports.searchPatient = (0, searchCache_1.createSearchService)(prisma_1.prisma, {
     tableName: "Patient",
-    exactFields: ["fullName", "mobileNumber", "aadhaarNumber", "hospitalPatientId"],
+    exactFields: [
+        "fullName",
+        "mobileNumber",
+        "aadhaarNumber",
+        "hospitalPatientId",
+    ],
     prefixFields: ["fullName"],
-    similarFields: ["fullName", "address"],
+    similarFields: ["fullName",],
     selectFields: [
         "id",
         "hospitalPatientId",
         "fullName",
-        // "dateOfBirth",
+        "dateOfBirth",
         "gender",
         "mobileNumber",
         "aadhaarNumber",
@@ -71,7 +70,7 @@ exports.searchPatient = (0, searchCache_1.createSearchService)(prisma_1.prisma, 
     ],
 });
 const filterPatientsService = async (params) => {
-    const { fromDate, toDate, gender, cursor, limit } = params;
+    const { fromDate, toDate, gender, cursor } = params;
     const where = {};
     if (gender) {
         where.gender = {
@@ -87,7 +86,6 @@ const filterPatientsService = async (params) => {
     }
     return (0, filterPaginate_1.filterPaginate)(prisma_1.prisma, {
         model: "patient",
-        limit,
     }, cursor, where);
 };
 exports.filterPatientsService = filterPatientsService;

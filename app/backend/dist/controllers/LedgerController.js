@@ -9,7 +9,6 @@ const ledgerService_1 = require("../services/ledgerService");
 const schemas_1 = require("@hospital/schemas");
 const library_1 = require("@prisma/client/runtime/library");
 const queryValidation_1 = require("../utils/queryValidation");
-const paginationConfig_1 = require("../lib/paginationConfig");
 exports.createLedgerRecord = (0, catchAsyncError_1.catchAsyncError)(async (req, res, next) => {
     const validated = schemas_1.ledgerSchema.parse(req.body);
     const ledger = await (0, ledgerService_1.createLedger)(validated);
@@ -61,8 +60,10 @@ exports.getLedgersByEntityRecord = (0, catchAsyncError_1.catchAsyncError)(async 
         success: true,
         statusCode: statusCodes_1.StatusCodes.OK,
         message: "Entity ledger entries fetched",
-        data: {
-            transactions: ledgers,
+        data: ledgers.data,
+        pagination: {
+            nextCursor: ledgers.pagination.nextCursor || undefined,
+            hasMore: ledgers.pagination.hasMore,
         },
     });
 });
@@ -107,7 +108,7 @@ exports.deleteLedgerRecord = (0, catchAsyncError_1.catchAsyncError)(async (req, 
     }
 });
 exports.searchLedgerResultsByEntity = (0, catchAsyncError_1.catchAsyncError)(async (req, res, next) => {
-    const { query } = req.query;
+    const { query, cursor } = req.query;
     const { entityType } = req.params;
     const entityTypeString = Array.isArray(entityType)
         ? entityType[0]
@@ -116,14 +117,18 @@ exports.searchLedgerResultsByEntity = (0, catchAsyncError_1.catchAsyncError)(asy
     if (!searchTerm)
         return;
     // Get search results
-    const allResults = await (0, ledgerService_1.searchLedger)(searchTerm);
+    const result = await (0, ledgerService_1.searchLedger)(searchTerm, cursor);
     // Filter by entityType
-    const filteredResults = allResults.filter((ledger) => ledger.entityType === entityTypeString);
+    const filteredResults = result.data.filter((ledger) => ledger.entityType === entityTypeString);
     (0, sendResponse_1.sendResponse)(res, {
         success: true,
         statusCode: statusCodes_1.StatusCodes.OK,
         message: `Search results fetched successfully for ${entityTypeString} ledgers`,
         data: filteredResults,
+        pagination: {
+            nextCursor: result.pagination.nextCursor || undefined,
+            hasMore: result.pagination.hasMore,
+        },
     });
 });
 exports.filterLedgers = (0, catchAsyncError_1.catchAsyncError)(async (req, res) => {
@@ -132,16 +137,15 @@ exports.filterLedgers = (0, catchAsyncError_1.catchAsyncError)(async (req, res) 
         ? entityType[0]
         : entityType;
     const validated = schemas_1.ledgerFilterSchema.parse(req.query);
-    const { data, nextCursor, hasMore } = await (0, ledgerService_1.filterLedgersService)(validated, entityTypeString);
+    const result = await (0, ledgerService_1.filterLedgersService)(validated, entityTypeString);
     (0, sendResponse_1.sendResponse)(res, {
         success: true,
         statusCode: statusCodes_1.StatusCodes.OK,
         message: "Filtered ledger entries fetched",
-        data,
+        data: result.data,
         pagination: {
-            nextCursor: nextCursor || undefined,
-            limit: validated.limit ?? paginationConfig_1.PAGINATION_CONFIG.DEFAULT_LIMIT,
-            hasMore,
+            nextCursor: result.nextCursor || undefined,
+            hasMore: result.hasMore,
         },
     });
 });

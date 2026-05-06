@@ -16,18 +16,12 @@ export type BillItemInput = {
 export type BillInput = {
   billDate: Date;
   billType: string;
-  mobile: string;
-  admissionNo: string;
-  patientName: string;
-  admissionDate: Date;
+  admissionId: number;
+  patientId: number;
   totalAmount: number;
-  patientSex: string;
-  dischargeDate?: Date | null;
-  address: string;
   status: string;
   billItems: BillItemInput[];
 };
-
 
 export const createBill = async (data: BillInput) => {
   // Calculate each item's totalAmount (qty × mrp)
@@ -42,8 +36,8 @@ export const createBill = async (data: BillInput) => {
   // Calculate full bill total (sum of all items)
   const billTotalAmount = processedItems.reduce(
     (sum, item) => sum + (item.totalAmount || 0),
-    0
-  ); 
+    0,
+  );
 
   await bumpCacheVersion("bill");
 
@@ -51,21 +45,16 @@ export const createBill = async (data: BillInput) => {
   const billData = {
     billDate: new Date(data.billDate),
     billType: data.billType,
-    mobile: data.mobile,
-    admissionNo: data.admissionNo,
-    patientName: data.patientName,
-    admissionDate: new Date(data.admissionDate),
-    patientSex: data.patientSex,
-    dischargeDate: data.dischargeDate ? new Date(data.dischargeDate) : null,
-    totalAmount: billTotalAmount, // Use calculated total, not data.totalAmount
-    address: data.address,
+    admissionId: data.admissionId,
+    patientId: data.patientId,
+    totalAmount: billTotalAmount,
     status: data.status,
     billItems: {
       create: processedItems,
     },
   };
 
-  await bumpCacheVersion("bill")
+  await bumpCacheVersion("bill");
 
   return prisma.bill.create({
     data: billData,
@@ -74,21 +63,27 @@ export const createBill = async (data: BillInput) => {
 };
 
 export const getAllBillsService = async (cursor?: string) => {
-  return cursorPaginate(prisma, { model: "bill" }, cursor); 
+  return cursorPaginate(
+    prisma,
+    {
+      model: "bill",
+      include: {
+        admission: true,
+        patient: true,
+      },
+    },
+    cursor,
+  );
 };
 
 export const getBillById = async (id: number) => {
   return prisma.bill.findUnique({
     where: { id },
-    include: { billItems: true },
-  });
-};
-
-export const getBillsByPatient = async (mobile: string) => {
-  return prisma.bill.findMany({
-    where: { mobile },
-    orderBy: { billDate: "desc" },
-    include: { billItems: true },
+    include: {
+      billItems: true,
+      admission: true,
+      patient: true,
+    },
   });
 };
 
@@ -104,10 +99,10 @@ export const updateBill = async (id: number, data: Partial<BillInput>) => {
 
   const grandTotal = processedItems.reduce(
     (sum, item) => sum + (item.totalAmount || 0),
-    0
+    0,
   );
 
-   await bumpCacheVersion("bill");
+  await bumpCacheVersion("bill");
 
   return prisma.bill.update({
     where: { id },
@@ -115,13 +110,9 @@ export const updateBill = async (id: number, data: Partial<BillInput>) => {
       billDate: data.billDate,
       billType: data.billType,
       status: data.status,
-      mobile: data.mobile,
-      admissionNo: data.admissionNo,
-      patientName: data.patientName,
-      admissionDate: data.admissionDate,
-      patientSex: data.patientSex,
-      dischargeDate: data.dischargeDate ?? null,
-      address: data.address,
+      admissionId: data.admissionId,
+      patientId: data.patientId,
+
       totalAmount: grandTotal, // ⭐ SAVE BILL TOTAL
 
       billItems: {
@@ -140,7 +131,7 @@ export const updateBill = async (id: number, data: Partial<BillInput>) => {
 };
 
 export const deleteBill = async (id: number) => {
-   await bumpCacheVersion("bill");
+  await bumpCacheVersion("bill");
   return prisma.bill.delete({
     where: { id },
     include: { billItems: true },
@@ -148,23 +139,19 @@ export const deleteBill = async (id: number) => {
 };
 
 export const searchBills = createSearchService(prisma, {
-  tableName: "bill",
-  exactFields: ["admissionNo"],
-  prefixFields: ["admissionNo", "patientName"],
-  similarFields: ["patientName", "mobile"],
-  // selectFields: [
-  //   "id",
-  //   "admissionNo",
-  //   "patientName",
-  //   "mobile",
-  //   "amount",
-  //   "paymentMode",
-  //   "date",
-  //   "status",
-  //   "createdAt",
-  // ],
-});
+  tableName: "Bill",
+  exactFields: [],
+  prefixFields: [],
+  similarFields: [],
+  relationFields: {
+    patient: ["fullName", "hospitalPatientId", "mobileNumber"],
+  },
 
+  include: {
+    admission: true,
+    patient: true,
+  },
+});
 
 type FilterBillParams = {
   fromDate?: Date;
@@ -173,13 +160,10 @@ type FilterBillParams = {
   patientSex?: string;
   status?: string;
   cursor?: string;
-  limit?: number;
 };
 
-export const filterBillsService = async (
-  params: FilterBillParams,
-) => {
-  const { fromDate, toDate, billType, patientSex, status, cursor, limit } = params;
+export const filterBillsService = async (params: FilterBillParams) => {
+  const { fromDate, toDate, billType, patientSex, status, cursor } = params;
 
   const where: Record<string, any> = {};
 
@@ -218,8 +202,12 @@ export const filterBillsService = async (
   return filterPaginate(
     prisma,
     {
-      model: "bill", 
-      limit,
+      model: "bill",
+
+      include: {
+        admission: true,
+        patient: true,
+      },
     },
     cursor,
     where,

@@ -72,17 +72,17 @@ exports.searchBankAccount = (0, searchCache_1.createSearchService)(prisma_1.pris
         "bankName",
         "accountNo",
         "ifscCode",
-        "isActive",
+        "status",
         "createdAt",
         "updatedAt",
     ],
 });
 const filterBankAccountsService = async (params) => {
-    const { fromDate, toDate, isActive, cursor, limit } = params;
+    const { fromDate, toDate, status, cursor } = params;
     const where = {};
     // ✅ Active status filter
-    if (isActive !== undefined) {
-        where.isActive = isActive;
+    if (status !== undefined) {
+        where.status = status;
     }
     // ✅ Date range filter
     if (fromDate || toDate) {
@@ -93,14 +93,13 @@ const filterBankAccountsService = async (params) => {
     }
     return (0, filterPaginate_1.filterPaginate)(prisma_1.prisma, {
         model: "bankAccount",
-        limit,
         select: {
             id: true,
             code: true,
             bankName: true,
             accountNo: true,
             ifscCode: true,
-            isActive: true,
+            status: true,
             createdAt: true,
             updatedAt: true,
         },

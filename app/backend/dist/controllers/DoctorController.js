@@ -9,7 +9,6 @@ const doctorService_1 = require("../services/doctorService");
 const schemas_1 = require("@hospital/schemas");
 const library_1 = require("@prisma/client/runtime/library");
 const queryValidation_1 = require("../utils/queryValidation");
-const paginationConfig_1 = require("../lib/paginationConfig");
 exports.createDoctorRecord = (0, catchAsyncError_1.catchAsyncError)(async (req, res, next) => {
     const validated = schemas_1.doctorSchema.parse(req.body);
     const existingDoctor = await (0, doctorService_1.getDoctorByEmail)(validated.email);
@@ -102,30 +101,33 @@ exports.deleteDoctorRecord = (0, catchAsyncError_1.catchAsyncError)(async (req, 
     }
 });
 exports.searchDoctorResults = (0, catchAsyncError_1.catchAsyncError)(async (req, res, next) => {
-    const { query } = req.query;
+    const { query, cursor } = req.query;
     const searchTerm = (0, queryValidation_1.validateSearchQuery)(query, next);
     if (!searchTerm)
         return;
-    const doctors = await (0, doctorService_1.searchDoctor)(searchTerm);
+    const result = await (0, doctorService_1.searchDoctor)(searchTerm, cursor);
     (0, sendResponse_1.sendResponse)(res, {
         success: true,
         statusCode: statusCodes_1.StatusCodes.OK,
         message: "Search results fetched successfully",
-        data: doctors,
+        data: result.data,
+        pagination: {
+            nextCursor: result.pagination.nextCursor || undefined, // Convert null to undefined
+            hasMore: result.pagination.hasMore,
+        },
     });
 });
 exports.filterDoctors = (0, catchAsyncError_1.catchAsyncError)(async (req, res) => {
     const validated = schemas_1.doctorFilterSchema.parse(req.query);
-    const { data, nextCursor, hasMore } = await (0, doctorService_1.filterDoctorsService)(validated);
+    const result = await (0, doctorService_1.filterDoctorsService)(validated);
     (0, sendResponse_1.sendResponse)(res, {
         success: true,
         statusCode: statusCodes_1.StatusCodes.OK,
         message: "Filtered doctors fetched",
-        data,
+        data: result.data,
         pagination: {
-            nextCursor: nextCursor || undefined,
-            limit: validated.limit ?? paginationConfig_1.PAGINATION_CONFIG.DEFAULT_LIMIT,
-            hasMore,
+            nextCursor: result.nextCursor || undefined,
+            hasMore: result.hasMore,
         },
     });
 });

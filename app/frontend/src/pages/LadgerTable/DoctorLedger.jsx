@@ -22,7 +22,7 @@ const DoctorLedger = () => {
     normalDataHook: useGetLedgersByEntity,
     searchDataHook: useSearchLedgersByEntity,
     filterDataHook: useFilterLedgers,
-    entityType: "DOCTOR", // Pass entity type here
+    entityType: "DOCTOR",
   });
 
   const columns = useMemo(
@@ -49,11 +49,7 @@ const DoctorLedger = () => {
               });
         },
       },
-      {
-        accessorKey: "description",
-        header: "Description",
-        cell: (info) => info.getValue() || "-",
-      },
+      
       {
         accessorKey: "amountType",
         header: "Type",
@@ -146,24 +142,23 @@ const DoctorLedger = () => {
         },
       },
     ],
-    []
+    [],
   );
 
   return (
     <div className="">
       <div className="flex justify-between items-center mb-4">
         <div>
-          <h2 className="text-2xl font-bold text-gray-800">
-            Doctor Ledger
-          </h2>
-          {controller.currentBalance !== null && controller.currentBalance !== undefined && (
-            <p className="text-sm text-gray-600 mt-1">
-              Current Balance:{" "}
-              <span className="font-semibold text-green-600">
-                ₹ {parseFloat(controller.currentBalance).toFixed(2)}
-              </span>
-            </p>
-          )}
+          <h2 className="text-2xl font-bold text-gray-800">Doctor Ledger</h2>
+          {controller.currentBalance !== null &&
+            controller.currentBalance !== undefined && (
+              <p className="text-sm text-gray-600 mt-1">
+                Current Balance:{" "}
+                <span className="font-semibold text-green-600">
+                  ₹ {parseFloat(controller.currentBalance).toFixed(2)}
+                </span>
+              </p>
+            )}
         </div>
         <Link className="btn-primary" to="/new-ledger">
           <FaPlus /> New Transaction
@@ -183,13 +178,13 @@ const DoctorLedger = () => {
             key: "amountType",
             label: "Transaction Type",
             type: "select",
-            options: ["Credit", "Debit"],
+            options: ["CREDIT", "DEBIT"],
           },
           {
             key: "paymentMode",
             label: "Payment Mode",
             type: "select",
-            options: ["Cash", "Card", "UPI", "Bank Transfer", "Cheque"],
+            options: ["CASH", "CARD", "UPI", "BANK_TRANSFER", "CHEQUE"],
           },
           {
             key: "fromDate",

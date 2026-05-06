@@ -54,11 +54,11 @@ const formFields = [
       {
         label: "Status",
         type: "select",
-        name: "isActive",
+        name: "status",
         placeholder: "Select status",
         options: [
-          { label: "Active", value: true },
-          { label: "Inactive", value: false },
+          { label: "Active", value: "ACTIVE" },
+          { label: "Inactive", value: "INACTIVE" },
         ],
         required: true,
       },

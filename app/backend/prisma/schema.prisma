@@ -82,6 +82,8 @@ model Patient {
   updatedAt          DateTime @updatedAt
 
   admissions         Admission[]
+  bill               Bill[]
+  moneyReceipt               MoneyReceipt[]
 }
 
 // ADMISSION STATUS
@@ -109,7 +111,9 @@ model Admission {
   patient              Patient  @relation(fields: [patientId], references: [id])
   doctor               Doctor   @relation(fields: [doctorId], references: [id])
 
-  prescriptions        Prescription[]   
+  prescriptions        Prescription[]    
+  bill                 Bill[]
+   moneyReceipt               MoneyReceipt[]
 
   @@index([patientId])
   @@index([doctorId])
@@ -340,7 +344,7 @@ model CashAccount {
   code      String   @unique
   cashName  String   @db.VarChar(100)
 
-  isActive  Boolean  @default(true)
+  status  String 
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -355,7 +359,7 @@ model BankAccount {
   accountNo String   @db.VarChar(50)  @unique
   ifscCode  String?  @db.VarChar(20)
 
-  isActive  Boolean  @default(true)
+  status  String  
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -365,21 +369,25 @@ model BankAccount {
 
 // BILL MANAGEMENT
 model Bill {
-  id             Int          @id @default(autoincrement())
-  billDate       DateTime
-  billType       String
-  mobile         String
-  admissionNo    String
-  patientName    String
-  admissionDate  DateTime
-  patientSex     String
-  dischargeDate  DateTime?
-  totalAmount    Float
-  address        String
-  status         String       @default("Pending")
-  createdAt      DateTime     @default(now())
-  updatedAt      DateTime     @updatedAt
-  billItems      BillItem[]
+  id              Int          @id @default(autoincrement())
+
+  admissionId     Int
+  patientId       Int
+  patient         Patient     @relation(fields: [patientId], references: [id])
+  admission       Admission    @relation(fields: [admissionId], references: [id])
+
+  billDate        DateTime     @default(now())
+
+  billType        String
+
+  totalAmount     Decimal      @db.Decimal(10,2)
+
+  status          String       @default("PENDING")
+
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
+
+  billItems       BillItem[]
 }
 
 // BILL ITEMS MANAGEMENT
@@ -399,19 +407,21 @@ model BillItem {
 model MoneyReceipt {
   id           Int       @id @default(autoincrement())
   date         DateTime
-  patientName  String
-  mobile       String
+  
+   admissionId     Int
+  patientId       Int
+  patient         Patient     @relation(fields: [patientId], references: [id])
+  admission       Admission    @relation(fields: [admissionId], references: [id])
+
+
   amount       Float
   paymentMode  String
-  admissionNo  String
   remarks      String?
   receivedBy   String
   status       String    @default("Active")
   createdAt    DateTime  @default(now())
   updatedAt    DateTime  @updatedAt
 
-  @@index([mobile])
-  @@index([patientName])
   @@index([amount])
   @@index([paymentMode])
 }

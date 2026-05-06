@@ -97,14 +97,23 @@ exports.searchAppointments = (0, searchCache_1.createSearchService)(prisma_1.pri
     tableName: "Appointment",
     exactFields: [],
     prefixFields: [],
-    similarFields: [],
+    similarFields: ["appointmentTime"],
+    relationFields: {
+        doctor: ["fullName"],
+    },
+    include: {
+        doctor: {
+            select: {
+                id: true,
+                fullName: true,
+            },
+        },
+    },
+    sortField: "createdAt",
 });
 const filterAppointmentsService = async (params) => {
-    const { fromDate, toDate, doctorId, status, cursor, limit } = params;
+    const { fromDate, toDate, status, cursor } = params;
     const where = {};
-    if (doctorId) {
-        where.doctorId = doctorId;
-    }
     if (status) {
         where.status = status;
     }
@@ -116,14 +125,6 @@ const filterAppointmentsService = async (params) => {
     }
     return (0, filterPaginate_1.filterPaginate)(prisma_1.prisma, {
         model: "appointment",
-        limit,
-        include: {
-            doctor: {
-                select: {
-                    fullName: true,
-                },
-            },
-        },
     }, cursor, where);
 };
 exports.filterAppointmentsService = filterAppointmentsService;
