@@ -84,7 +84,6 @@ import EditBill from "./pages/UpdateData/EditBill";
 import EditMoneyReceipt from "./pages/UpdateData/EditMoneyReceipt";
 
 /// UTILITIES
-import { Toaster, toast } from "sonner";
 import NetworkProvider from "./utils/NetworkProvider";
 import RequireRole from "./utils/RequireRole";
 import { initToastConfig } from "./utils/toastConfig";
@@ -101,12 +100,7 @@ function App() {
     <div className="app">
       <NetworkProvider>
         <BrowserRouter>
-          {/* <MediAI /> */}
-          <Toaster
-            position="top-right"
-            richColors
-            style={{ zIndex: 2147483647 }} // max safe z-index
-          />
+         
           <Routes>
             /// LANDING PAGE
             <Route path="/medi-care" element={<LandingPage />} />

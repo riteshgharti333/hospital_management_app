@@ -21,7 +21,7 @@ const AuthBootstrap = ({ children }) => {
         try {
           // 2️⃣ Try refresh token
           await dispatch(refreshTokenThunk()).unwrap();
-          await dispatch(getUserProfile()).unwrap();
+        await dispatch(getUserProfile()).unwrap();
         } catch {
           // 3️⃣ Fully logged out
           dispatch(logoutAsyncUser());

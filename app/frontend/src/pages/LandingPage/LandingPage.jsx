@@ -1,3 +1,4 @@
+import "./LandingPage.css";
 import React, { useEffect, useRef } from "react";
 import LPNavbar from "../../components/LandingPageComponents/LPNavbar";
 import LPBanner from "../../components/LandingPageComponents/LPBanner";

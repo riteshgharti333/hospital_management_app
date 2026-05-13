@@ -146,8 +146,8 @@ const Navbar = () => {
 
   return (
     <header
-      className={`relative rounded-2xl px-2 top-0 z-50 transition-all duration-300
-      bg-white/95 backdrop-blur-sm`}
+      className={`relative rounded-2xl px-2 top-0  transition-all duration-300
+      bg-white/95 backdrop-blur-sm z-50`}
     >
       <div className="">
         <div className="flex items-center justify-between h-16">
@@ -172,7 +172,7 @@ const Navbar = () => {
 
               {/* SEARCH DROPDOWN */}
               {showSearchDropdown && searchResults.length > 0 && (
-                <div className="absolute mt-2 w-full bg-white shadow-lg rounded-lg py-2 border border-gray-100 z-50">
+                <div className="absolute mt-2 w-full bg-white shadow-lg rounded-lg py-2 border border-gray-100 z-60">
                   {searchResults.map((item, index) => (
                     <Link
                       to={item.path}

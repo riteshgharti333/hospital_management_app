@@ -95,13 +95,13 @@ export async function cursorPaginate<T extends keyof PrismaClient, R = any>(
   // ✅ REDIS CACHE
   try {
     const redisData = await upstashGet(cacheKey);
-    // if (redisData) {
-    //   const parsed = JSON.parse(redisData);
-    //   memoryCache.set(cacheKey, { ...parsed, timestamp: Date.now() });
-    //   return parsed;
-    // }
+    if (redisData) {
+      const parsed = JSON.parse(redisData);
+      memoryCache.set(cacheKey, { ...parsed, timestamp: Date.now() });
+      return parsed;
+    }
   } catch (e) {
-    console.warn("Redis GET failed (safe fallback)");
+    console.warn("Redis GET failed (safe fallback)");  
   }
 
   if (process.env.NODE_ENV !== "production") {

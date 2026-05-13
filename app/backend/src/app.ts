@@ -20,6 +20,8 @@ import cash from "./routes/cashRoute";
 import bank from "./routes/bankRoute";
 import ledger from "./routes/ledgerRoute";
 
+import aiRoutes from "./modules/ai/routes/ai.routes"
+ 
 // Admin
 import adminRoutes from "./routes/adminRoutes";
 
@@ -40,7 +42,7 @@ dotenv.config();
 const app: Application = express();
 
 const allowedOrigins = [
-  "http://localhost:5173",
+  "http://localhost:5173", 
   "https://hospital-management-app-nine.vercel.app",
 ];
 
@@ -89,6 +91,8 @@ app.use("/api/v1/cash", cash);
 app.use("/api/v1/bank", bank); 
 
 app.use("/api/v1/ledger", ledger); 
+
+app.use('/api/v1/ai', aiRoutes);
 
 
 // transection

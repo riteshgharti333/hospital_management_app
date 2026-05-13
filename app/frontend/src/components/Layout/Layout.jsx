@@ -4,10 +4,10 @@ import Sidebar from "../../components/Sidebar/Sidebar.jsx";
 
 const Layout = () => {
   return (
-    <div className="p-2 max-w-[1600px] mx-auto overflow-auto">
+    <div className="p-2 max-w-[1600px] mx-auto overflow-visible">
       <div className="flex flex-col lg:flex-row gap-2 relative">
         <div
-          className={`fixed left-0 lg:static z-50 h-screen lg:h-auto transition-transform duration-300 ease-in-out 
+          className={`fixed left-0 lg:static h-screen lg:h-auto transition-transform duration-300 ease-in-out 
           `}
         >
           <Sidebar />

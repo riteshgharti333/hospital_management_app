@@ -21,7 +21,7 @@ export const createAccessToken = (payload: {
  */
 export const createRefreshToken = (payload: { id: string }) => {
   return jwt.sign(payload, process.env.JWT_REFRESH_SECRET!, {
-    expiresIn: "7d", // 🔥 Hardcoded → FIXES TYPE ERROR
+    expiresIn: "30d", // 🔥 Hardcoded → FIXES TYPE ERROR
   });
 };
 
@@ -38,7 +38,7 @@ export const sendTokenCookie = (
   },
   res: Response,
   message: string,
-  statusCode: number
+  statusCode: number,
 ) => {
   const accessToken = createAccessToken(payload);
   const refreshToken = createRefreshToken({ id: payload.id });
