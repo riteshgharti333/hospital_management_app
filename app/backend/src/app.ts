@@ -36,11 +36,11 @@ import { ErrorHandler } from "./middlewares/errorHandler";
 
 //
 import dashboardRoutes from "./routes/dashboardRoute";
-
+  
 dotenv.config();
 
 const app: Application = express();
-
+    
 const allowedOrigins = [
   "http://localhost:5173", 
   "https://hospital-management-app-nine.vercel.app",
@@ -73,12 +73,12 @@ app.use("/api/v1/auth", authRoutes);
 app.use("/api/v1/admin", adminRoutes);
 
 // password reset routes
-app.use("/api/v1/password", passwordRoutes);
+app.use("/api/v1/password", passwordRoutes);  
 
 // dashboard route
 app.use("/api/v1/dashboard", dashboardRoutes);
 
-app.use("/api/v1/admission", admissionRoutes);
+app.use("/api/v1/admission", admissionRoutes); 
 app.use("/api/v1/birth", birthRoutes);
 app.use("/api/v1/patient", patientRoutes);
 app.use("/api/v1/department", departmentRoutes);

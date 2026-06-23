@@ -117,7 +117,7 @@ const LPTech = () => {
   ];
 
   return (
-    <section className="relative overflow-hidden">
+    <section className="relative overflow-hidden pb-10">
       {/* Background Elements */}
       <div className="absolute inset-0">
         <div className="absolute top-0 right-0 w-[600px] h-[600px] bg-blue-400/5 rounded-full mix-blend-multiply filter blur-3xl"></div>
@@ -125,14 +125,14 @@ const LPTech = () => {
         <div className="tech-grid-pattern absolute inset-0 opacity-[0.02]"></div>
       </div>
 
-      <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="relative z-10 max-w-7xl mx-auto px-2 sm:px-6 lg:px-8">
         {/* Section Header */}
         <div className="text-center max-w-3xl mx-auto mb-16 lg:mb-20 fade-in-up">
           <span className="inline-flex items-center gap-2 px-4 py-1.5 bg-gradient-to-r from-blue-50 to-purple-50 text-blue-700 text-sm font-semibold rounded-full mb-6 border border-blue-100">
             <TbTools className="text-base" />
             Technology Stack
           </span>
-          <h2 className="text-4xl sm:text-5xl lg:text-6xl font-bold tracking-tight mb-6">
+          <h2 className="text-3xl sm:text-5xl lg:text-6xl font-bold tracking-tight mb-6">
             <span className="text-gray-900">Built with Modern</span>
             <br />
             <span className="bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 bg-clip-text text-transparent">
@@ -202,7 +202,7 @@ const LPTech = () => {
 
               {/* Category Badge */}
               <div
-                className={`absolute -top-3 -right-3 w-8 h-8 flex items-center justify-center rounded-full bg-gradient-to-br ${category.color} text-white text-xs font-bold shadow-lg`}
+                className={`absolute -top-3 -right-2 w-8 h-8 flex items-center justify-center rounded-full bg-gradient-to-br ${category.color} text-white text-xs font-bold shadow-lg`}
               >
                 {catIndex + 1}
               </div>

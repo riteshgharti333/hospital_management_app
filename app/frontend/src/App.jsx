@@ -100,9 +100,9 @@ function App() {
     <div className="app">
       <NetworkProvider>
         <BrowserRouter>
-         
           <Routes>
             /// LANDING PAGE
+            <Route path="/" element={<LandingPage />} />
             <Route path="/medi-care" element={<LandingPage />} />
             /// AUTH ROUTES
             <Route path="/login" element={<Login />} />
@@ -113,7 +113,6 @@ function App() {
             <Route path="/help-center" element={<Help />} />
             /// PROTECTED ROUTES WITH LAYOUT
             <Route element={<Layout />}>
-              <Route path="/" element={<Navigate to="/dashboard" replace />} />
               <Route path="/dashboard" element={<Dashboard />} />
               <Route path="/profile" element={<Profile />} />
               /// ADMIN ONLY ROUTES

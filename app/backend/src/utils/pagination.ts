@@ -22,14 +22,14 @@ type PaginationOptions<T extends keyof PrismaClient> = {
   select?: Record<string, any>;
   include?: Record<string, any>;
   orderBy?: any;
-  where?: Record<string, any>;  // ✅ ADD THIS LINE
+  where?: Record<string, any>; 
 };
 
 export async function cursorPaginate<T extends keyof PrismaClient, R = any>(
   prisma: PrismaClient,
   options: PaginationOptions<T>,
   rawCursor?: unknown,
-  extraWhere?: any,  // Keep for backward compatibility
+  extraWhere?: any, 
 ): Promise<{
   data: R[];
   pagination: { nextCursor: string | null; hasMore: boolean };
@@ -40,20 +40,20 @@ export async function cursorPaginate<T extends keyof PrismaClient, R = any>(
     select,
     include,
     orderBy = [{ createdAt: "desc" }, { id: "desc" }],
-    where: optionsWhere,  // ✅ DESTRUCTURE THE WHERE FROM OPTIONS
+    where: optionsWhere,  //  DESTRUCTURE THE WHERE FROM OPTIONS
   } = options;
 
-  // ✅ FIX: Normalize model name to lowercase for consistent cache keys
+  //  FIX: Normalize model name to lowercase for consistent cache keys
   const modelName = String(model).toLowerCase();
 
-  // ✅ LIMIT CONTROL
+  //  LIMIT CONTROL
   let limit = options.limit ?? PAGINATION_CONFIG.DEFAULT_LIMIT;
   if (limit > PAGINATION_CONFIG.MAX_LIMIT) limit = PAGINATION_CONFIG.MAX_LIMIT;
 
-  // ✅ Use normalized modelName for cache version
+  //  Use normalized modelName for cache version
   const version = await getCacheVersion(modelName);
 
-  // ✅ PARSE CURSOR WITH COUNT TRACKING
+  //  PARSE CURSOR WITH COUNT TRACKING
   let cursorDate: Date | null = null;
   let cursorId: number | null = null;
   let currentCount = 0;
@@ -81,18 +81,18 @@ export async function cursorPaginate<T extends keyof PrismaClient, R = any>(
 
   const safeCursor = cursor ? encodeURIComponent(cursor) : "0";
 
-  // ✅ Use normalized modelName in cache key
+  //  Use normalized modelName in cache key
   const cacheKey = `p:${modelName}:v:${version}:c:${safeCursor}:l:${limit}:o:${encodeURIComponent(
     JSON.stringify(orderBy),
   )}`;
 
-  // ✅ MEMORY CACHE
+  //  MEMORY CACHE
   const memoryHit = memoryCache.get(cacheKey);
   if (memoryHit && Date.now() - memoryHit.timestamp < MEMORY_CACHE_TTL) {
     return memoryHit;
   }
 
-  // ✅ REDIS CACHE
+  //  REDIS CACHE
   try {
     const redisData = await upstashGet(cacheKey);
     if (redisData) {
@@ -108,9 +108,9 @@ export async function cursorPaginate<T extends keyof PrismaClient, R = any>(
     console.log("🔥 DB QUERY:", modelName);
   }
 
-  // ✅ WHERE CONDITION - MERGE optionsWhere AND extraWhere
+  //  WHERE CONDITION - MERGE optionsWhere AND extraWhere
   const whereCondition = {
-    ...(optionsWhere || {}),      // ✅ Add where from options
+    ...(optionsWhere || {}),      //  Add where from options
     ...(extraWhere || {}),        // Add extraWhere for backward compatibility
     ...(cursorDate !== null && cursorId !== null
       ? {
@@ -124,7 +124,7 @@ export async function cursorPaginate<T extends keyof PrismaClient, R = any>(
       : {}),
   };
 
-  // ✅ Keep original 'model' for Prisma query (not modelName)
+  //  Keep original 'model' for Prisma query (not modelName)
   const data = await (prisma[model] as any).findMany({
     where: whereCondition,
     orderBy,
@@ -133,16 +133,16 @@ export async function cursorPaginate<T extends keyof PrismaClient, R = any>(
     ...(include ? { include } : {}),
   });
 
-  // ✅ Check if there are more records after this fetch
+  //  Check if there are more records after this fetch
   const hasMoreData = data.length > limit;
 
-  // ✅ Get the actual results (limit them to the requested page size)
+  //  Get the actual results (limit them to the requested page size)
   const results = hasMoreData ? data.slice(0, limit) : data;
 
-  // ✅ Update the count of records sent to client
+  //  Update the count of records sent to client
   const newCount = currentCount + results.length;
 
-  // ✅ Enforce the 300 record limit
+  //  Enforce the 300 record limit
   let hasMore = hasMoreData;
   if (newCount >= PAGINATION_CONFIG.MAX_BROWSABLE) {
     hasMore = false;
@@ -150,10 +150,10 @@ export async function cursorPaginate<T extends keyof PrismaClient, R = any>(
 
   let nextCursor: string | null = null;
 
-  // ✅ Only generate next cursor if we have more data AND we haven't reached the limit
+  //  Only generate next cursor if we have more data AND we haven't reached the limit
   if (hasMore && results.length > 0) {
     const lastItem = results[results.length - 1];
-    // ✅ Include the count in the cursor
+    //  Include the count in the cursor
     nextCursor = `${lastItem.createdAt.toISOString()}|${lastItem.id}|${newCount}`;
   }
 
@@ -167,7 +167,7 @@ export async function cursorPaginate<T extends keyof PrismaClient, R = any>(
 
   const cachePayload = JSON.stringify(response);
 
-  // ✅ SAFE CACHE WRITE
+  //  SAFE CACHE WRITE
   Promise.all([
     upstashSet(cacheKey, cachePayload, cacheExpiry).catch(() => {}),
     new Promise<void>((resolve) => {

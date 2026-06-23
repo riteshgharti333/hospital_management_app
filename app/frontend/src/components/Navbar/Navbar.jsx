@@ -172,7 +172,7 @@ const Navbar = () => {
 
               {/* SEARCH DROPDOWN */}
               {showSearchDropdown && searchResults.length > 0 && (
-                <div className="absolute mt-2 w-full bg-white shadow-lg rounded-lg py-2 border border-gray-100 z-60">
+                <div className="absolute mt-2 w-full bg-white shadow-lg rounded-lg border border-blue-600 z-60 ">
                   {searchResults.map((item, index) => (
                     <Link
                       to={item.path}

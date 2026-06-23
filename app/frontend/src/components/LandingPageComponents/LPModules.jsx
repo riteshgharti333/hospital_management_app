@@ -10,112 +10,106 @@ import {
   MdChildCare, 
   MdAccountBalance, 
   MdAdminPanelSettings, 
-  MdDashboard 
+  MdDashboard, 
+  MdLightbulb
 } from 'react-icons/md';
 import './lp.css';
 
 const LPModules = () => {
-  const modules = [
+ 
+
+    const modules = [
     {
       icon: <MdPerson className="text-2xl" />,
       title: "Patient Management",
-      description: "Manage patient records, profiles, and medical history efficiently.",
+      description: "Maintain patient profiles, demographics, medical history, and hospital records.",
       color: "from-blue-500 to-blue-600",
       bgColor: "bg-blue-50",
       textColor: "text-blue-600",
-      borderColor: "border-blue-200"
-    },
-    {
-      icon: <MdGroup className="text-2xl" />,
-      title: "Doctor & Staff Management",
-      description: "Handle doctors, nurses, and staff with role-based access and structured data.",
-      color: "from-indigo-500 to-indigo-600",
-      bgColor: "bg-indigo-50",
-      textColor: "text-indigo-600",
-      borderColor: "border-indigo-200"
-    },
-    {
-      icon: <MdLocalHospital className="text-2xl" />,
-      title: "Admissions Management",
-      description: "Track patient admissions, discharges, and room allocation seamlessly.",
-      color: "from-cyan-500 to-cyan-600",
-      bgColor: "bg-cyan-50",
-      textColor: "text-cyan-600",
-      borderColor: "border-cyan-200"
     },
     {
       icon: <MdCalendarToday className="text-2xl" />,
-      title: "Appointments System",
-      description: "Schedule and manage appointments between patients and healthcare providers.",
-      color: "from-emerald-500 to-emerald-600",
-      bgColor: "bg-emerald-50",
-      textColor: "text-emerald-600",
-      borderColor: "border-emerald-200"
+      title: "Appointments",
+      description: "Schedule, track, and manage patient appointments with healthcare providers.",
+      color: "from-green-500 to-green-600",
+      bgColor: "bg-green-50",
+      textColor: "text-green-600",
     },
     {
-      icon: <MdReceipt className="text-2xl" />,
-      title: "Billing & Transactions",
-      description: "Process billing, payments, and financial records with structured transaction handling.",
-      color: "from-purple-500 to-purple-600",
-      bgColor: "bg-purple-50",
-      textColor: "text-purple-600",
-      borderColor: "border-purple-200"
-    },
-    {
-      icon: <MdBusiness className="text-2xl" />,
-      title: "Department Management",
-      description: "Organize hospital departments and streamline internal operations.",
-      color: "from-orange-500 to-orange-600",
-      bgColor: "bg-orange-50",
-      textColor: "text-orange-600",
-      borderColor: "border-orange-200"
-    },
-    {
-      icon: <MdMedication className="text-2xl" />,
-      title: "Prescription Management",
-      description: "Manage prescriptions and treatment records for patients.",
-      color: "from-teal-500 to-teal-600",
-      bgColor: "bg-teal-50",
-      textColor: "text-teal-600",
-      borderColor: "border-teal-200"
-    },
-    {
-      icon: <MdChildCare className="text-2xl" />,
-      title: "Birth Records Management",
-      description: "Maintain and track birth records within the hospital system.",
-      color: "from-pink-500 to-pink-600",
-      bgColor: "bg-pink-50",
-      textColor: "text-pink-600",
-      borderColor: "border-pink-200"
-    },
-    {
-      icon: <MdAccountBalance className="text-2xl" />,
-      title: "Financial Systems",
-      description: "Handle financial flows, account tracking, and ledger management.",
-      color: "from-amber-500 to-amber-600",
-      bgColor: "bg-amber-50",
-      textColor: "text-amber-600",
-      borderColor: "border-amber-200"
-    },
-    {
-      icon: <MdAdminPanelSettings className="text-2xl" />,
-      title: "Admin & Access Control",
-      description: "Centralized admin panel to manage users, roles, and permissions.",
+      icon: <MdLocalHospital className="text-2xl" />,
+      title: "Admissions",
+      description: "Handle admissions, discharges, and inpatient workflows with complete tracking.",
       color: "from-red-500 to-red-600",
       bgColor: "bg-red-50",
       textColor: "text-red-600",
-      borderColor: "border-red-200"
+    },
+    {
+      icon: <MdGroup className="text-2xl" />,
+      title: "Doctors & Nurses",
+      description: "Manage healthcare staff, specializations, departments, and professional records.",
+      color: "from-purple-500 to-purple-600",
+      bgColor: "bg-purple-50",
+      textColor: "text-purple-600",
+    },
+    {
+      icon: <MdMedication className="text-2xl" />,
+      title: "Prescriptions",
+      description: "Create and organize digital prescriptions, medicines, and treatment details.",
+      color: "from-indigo-500 to-indigo-600",
+      bgColor: "bg-indigo-50",
+      textColor: "text-indigo-600",
+    },
+    {
+      icon: <MdReceipt className="text-2xl" />,
+      title: "Billing & Receipts",
+      description: "Generate bills, track payments, and manage money receipts efficiently.",
+      color: "from-teal-500 to-teal-600",
+      bgColor: "bg-teal-50",
+      textColor: "text-teal-600",
+    },
+    {
+      icon: <MdAccountBalance className="text-2xl" />,
+      title: "Ledger & Accounts",
+      description: "Manage ledgers, cash accounts, bank accounts, and financial transactions.",
+      color: "from-orange-500 to-orange-600",
+      bgColor: "bg-orange-50",
+      textColor: "text-orange-600",
+    },
+    {
+      icon: <MdBusiness className="text-2xl" />,
+      title: "Departments",
+      description: "Organize hospital departments, assign heads, and streamline operations.",
+      color: "from-cyan-500 to-cyan-600",
+      bgColor: "bg-cyan-50",
+      textColor: "text-cyan-600",
+    },
+    {
+      icon: <MdChildCare className="text-2xl" />,
+      title: "Birth Records",
+      description: "Maintain digital birth registrations with parent and newborn information.",
+      color: "from-pink-500 to-pink-600",
+      bgColor: "bg-pink-50",
+      textColor: "text-pink-600",
+    },
+    {
+      icon: <MdAdminPanelSettings className="text-2xl" />,
+      title: "Access Management",
+      description: "Secure staff access with role-based permissions and administrative controls.",
+      color: "from-amber-500 to-amber-600",
+      bgColor: "bg-amber-50",
+      textColor: "text-amber-600",
     },
     {
       icon: <MdDashboard className="text-2xl" />,
-      title: "Dashboard & Analytics",
-      description: "Real-time insights into hospital operations, performance, and data trends.",
+      title: "Analytics Dashboard",
+      description: "Visualize admissions, revenue, payments, demographics, and operational KPIs.",
       color: "from-violet-500 to-violet-600",
       bgColor: "bg-violet-50",
       textColor: "text-violet-600",
-      borderColor: "border-violet-200"
-    }
+    },
+    
   ];
+
 
   return (
     <section className="relative  overflow-hidden">
@@ -126,7 +120,7 @@ const LPModules = () => {
         <div className="modules-grid-pattern absolute inset-0 opacity-[0.02]"></div>
       </div>
 
-      <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="relative z-10 max-w-7xl mx-auto px-2 sm:px-6 lg:px-8">
         
         {/* Section Header */}
         <div className="text-center max-w-3xl mx-auto mb-16 lg:mb-20 fade-in-up">
@@ -134,7 +128,7 @@ const LPModules = () => {
             <MdLocalHospital className="text-base" />
             What It Manages
           </span>
-          <h2 className="text-4xl sm:text-5xl lg:text-6xl font-bold tracking-tight mb-6">
+          <h2 className="text-3xl sm:text-5xl lg:text-6xl font-bold tracking-tight mb-6">
             <span className="text-gray-900">
               Comprehensive Hospital
             </span>

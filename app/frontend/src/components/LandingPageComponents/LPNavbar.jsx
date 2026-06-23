@@ -4,12 +4,14 @@ import { FaGithub, FaStar } from "react-icons/fa";
 import { HiPlay, HiMenuAlt3, HiX } from "react-icons/hi";
 import { BsArrowRight } from "react-icons/bs";
 import { APP_CONFIG } from "../../config";
+import { Link } from "react-router-dom";
 
 const navLinks = [
   { label: "Features", href: "#features" },
-  { label: "Modules", href: "#modules" },
   { label: "System Capabilities", href: "#capabilities" },
+  { label: "Modules", href: "#modules" },
   { label: "Tech Stack", href: "#tech" },
+  { label: "Impact", href: "#impact" },
 ];
 
 const LPNavbar = () => {
@@ -28,11 +30,11 @@ const LPNavbar = () => {
     <nav
       className={`fixed top-4 left-1/2 -translate-x-1/2 z-50 w-[95%] max-w-6xl transition-all duration-500 ${
         isScrolled
-          ? "bg-white shadow-2xl shadow-blue-500/10 rounded-full mt-0"
+          ? "bg-white shadow-2xl shadow-blue-500/10 rounded-lg mt-0"
           : "bg-white/90 backdrop-blur-xl rounded-3xl mt-0"
       }`}
     >
-      <div className="px-6 lg:px-8">
+      <div className="px-3 lg:px-8">
         <div className="flex items-center justify-between h-16">
           {/* Logo Section */}
           <a href="#" className="flex items-center gap-3 group">
@@ -67,18 +69,18 @@ const LPNavbar = () => {
 
           {/* CTA Buttons */}
           <div className="hidden lg:flex items-center gap-3">
-            <a
-               href={APP_CONFIG.liveDemo}
-              target="_blank" rel="noopener noreferrer"
+            <Link
+              to="/dashboard"
               className="group flex items-center gap-2 px-4 py-2 text-sm font-semibold text-blue-700 bg-blue-50 hover:bg-blue-100 rounded-xl transition-all duration-300 hover:scale-105"
             >
               <HiPlay className="text-lg" />
               <span>Live Demo</span>
               <BsArrowRight className="text-sm group-hover:translate-x-1 transition-transform" />
-            </a>
+            </Link>
             <a
               href={APP_CONFIG.github}
-              target="_blank" rel="noopener noreferrer"
+              target="_blank"
+              rel="noopener noreferrer"
               className="flex items-center gap-2 px-5 py-2.5 text-sm font-semibold text-white bg-gradient-to-r from-gray-900 to-gray-800 hover:from-gray-800 hover:to-gray-700 rounded-xl shadow-lg shadow-gray-500/20 hover:shadow-gray-500/40 transition-all duration-300 hover:scale-105"
             >
               <FaGithub className="text-base" />
@@ -89,7 +91,7 @@ const LPNavbar = () => {
           {/* Mobile Menu Toggle */}
           <button
             onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-            className="lg:hidden relative w-10 h-10 flex items-center justify-center rounded-xl bg-gray-100 hover:bg-gray-200 transition-all duration-300"
+            className="lg:hidden relative w-10 h-10 flex items-center justify-center rounded-md bg-gray-100 hover:bg-gray-200 transition-all duration-300"
           >
             {isMobileMenuOpen ? (
               <HiX className="text-xl text-gray-700" />
@@ -103,47 +105,46 @@ const LPNavbar = () => {
         <div
           className={`lg:hidden overflow-hidden transition-all duration-500 ease-in-out ${
             isMobileMenuOpen
-              ? "max-h-96 opacity-100 mt-4 pb-4"
+              ? "max-h-[600px] opacity-100 mt-4 pb-4"
               : "max-h-0 opacity-0"
           }`}
         >
-          <div className="space-y-2 border-t border-gray-100 pt-4">
-            <a
-              href="#features"
-              onClick={() => setIsMobileMenuOpen(false)}
-              className="flex items-center gap-3 px-4 py-3 text-sm font-medium text-gray-700 hover:text-blue-600 hover:bg-blue-50 rounded-xl transition-all duration-300"
-            >
-              <span className="w-8 h-8 flex items-center justify-center bg-blue-100 rounded-lg text-blue-600 text-xs font-bold">
-                F
-              </span>
-              Features
-            </a>
-            <a
-              href="#tech"
-              onClick={() => setIsMobileMenuOpen(false)}
-              className="flex items-center gap-3 px-4 py-3 text-sm font-medium text-gray-700 hover:text-blue-600 hover:bg-blue-50 rounded-xl transition-all duration-300"
-            >
-              <span className="w-8 h-8 flex items-center justify-center bg-purple-100 rounded-lg text-purple-600 text-xs font-bold">
-                A
-              </span>
-              Architecture
-            </a>
-            <div className="grid grid-cols-2 gap-3 pt-3">
+          <div className="space-y-1 border-t border-gray-100 pt-4">
+            {/* All Navigation Links */}
+            {navLinks.map((link, index) => (
               <a
-                href="#demo"
+                key={index}
+                href={link.href}
                 onClick={() => setIsMobileMenuOpen(false)}
-                className="flex items-center justify-center gap-2 px-4 py-3 text-sm font-semibold text-blue-700 bg-blue-50 hover:bg-blue-100 rounded-xl transition-all duration-300"
+                className="flex items-center gap-3 px-4 py-3 text-sm font-medium text-gray-700 hover:text-blue-600 hover:bg-blue-50 rounded-xl transition-all duration-300"
+              >
+                <span className="w-8 h-8 flex items-center justify-center bg-blue-100 rounded-lg text-blue-600 text-xs font-bold">
+                  {link.label.charAt(0)}
+                </span>
+                {link.label}
+              </a>
+            ))}
+
+            {/* Mobile CTA Buttons */}
+            <div className="grid grid-cols-2 gap-3 pt-4 border-t border-gray-100">
+              <Link
+                to="/dashboard"
+                onClick={() => setIsMobileMenuOpen(false)}
+                className="group flex items-center justify-center gap-2 px-4 py-3 text-sm font-semibold text-blue-700 bg-blue-50 hover:bg-blue-100 rounded-xl transition-all duration-300"
               >
                 <HiPlay className="text-lg" />
-                Live Demo
-              </a>
+                <span>Live Demo</span>
+                <BsArrowRight className="text-sm group-hover:translate-x-1 transition-transform" />
+              </Link>
               <a
-                href="#github"
+                href={APP_CONFIG.github}
+                target="_blank"
+                rel="noopener noreferrer"
                 onClick={() => setIsMobileMenuOpen(false)}
                 className="flex items-center justify-center gap-2 px-4 py-3 text-sm font-semibold text-white bg-gray-900 hover:bg-gray-800 rounded-xl transition-all duration-300"
               >
                 <FaGithub className="text-base" />
-                GitHub
+                <span>GitHub</span>
               </a>
             </div>
           </div>

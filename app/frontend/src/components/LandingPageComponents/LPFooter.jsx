@@ -17,6 +17,7 @@ import {
 import { HiExternalLink } from "react-icons/hi";
 import "./lp.css";
 import { APP_CONFIG } from "../../config";
+import { Link } from "react-router-dom";
 
 const LPFooter = () => {
   const scrollToTop = () => {
@@ -25,74 +26,70 @@ const LPFooter = () => {
 
   const currentYear = new Date().getFullYear();
 
-  const footerLinks = {
-    product: {
-      title: "Product",
-      links: [
-        { name: "Features", href: "#features" },
-        { name: "Modules", href: "#modules" },
-        { name: "System Capabilities", href: "#system" },
-        { name: "Tech Stack", href: "#tech" },
-        { name: "Live Demo", href: APP_CONFIG.liveDemo },
-      ],
-    },
+  // Product Links (Internal page links)
+  const productLinks = [
+    { name: "Features", href: "#features" },
+    { name: "System Capabilities", href: "#system" },
+    { name: "Modules", href: "#modules" },
+    { name: "Tech Stack", href: "#tech" },
+    { name: "Impact", href: "#impact" },
+  ];
 
-    company: {
-      title: "Company",
-      links: [
-        {
-          name: "About",
-          href: APP_CONFIG.about,
-          icon: <HiExternalLink className="text-xs" />,
-        },
-        {
-          name: "Portfolio",
-          href: APP_CONFIG.portfolio,
-          icon: <HiExternalLink className="text-xs" />,
-        },
-        {
-          name: "Resume",
-          href: APP_CONFIG.resume,
-          icon: <HiExternalLink className="text-xs" />,
-        },
-        {
-          name: "Contact",
-          href: APP_CONFIG.contact,
-          icon: <HiExternalLink className="text-xs" />,
-        },
-      ],
+  // Company Links (External links)
+  const companyLinks = [
+    { name: "About", href: APP_CONFIG.about },
+    { name: "Portfolio", href: APP_CONFIG.portfolio },
+    { name: "Resume", href: APP_CONFIG.resume },
+    { name: "Contact", href: `${APP_CONFIG.portfolio}#contact` },
+  ];
+
+  // Connect Links (External links)
+  const connectLinks = [
+    {
+      name: "GitHub",
+      href: APP_CONFIG.githubProfile,
+      icon: <FaGithub className="text-xs" />,
     },
-    connect: {
+    {
+      name: "LinkedIn",
+      href: APP_CONFIG.linkedin,
+      icon: <FaLinkedin className="text-xs" />,
+    },
+    {
+      name: "Email",
+      href: "mailto:riteshgharti333@gmail.com",
+      icon: <MdEmail className="text-xs" />,
+    },
+  ];
+
+  // Footer sections configuration
+  const footerSections = [
+    {
+      title: "Product",
+      links: productLinks,
+      isExternal: false,
+    },
+    {
+      title: "Developer",
+      links: companyLinks,
+      isExternal: true,
+    },
+    {
       title: "Connect",
-      links: [
-        {
-          name: "GitHub",
-          href: APP_CONFIG.githubProfile,
-          icon: <FaGithub className="text-xs" />,
-        },
-        {
-          name: "LinkedIn",
-          href: APP_CONFIG.linkedin,
-          icon: <FaLinkedin className="text-xs" />,
-        },
-        {
-          name: "Email",
-          href: "#email",
-          icon: <MdEmail className="text-xs" />,
-        },
-      ],
+      links: connectLinks,
+      isExternal: true,
     },
-  };
+  ];
 
   return (
-    <footer className="relative  pt-20 pb-8 overflow-hidden">
+    <footer className="relative pt-20 pb-8 overflow-hidden">
       {/* Background Pattern */}
       <div className="absolute inset-0 footer-pattern opacity-[0.03]"></div>
 
       {/* Top Gradient Line */}
       <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-blue-500 via-purple-500 to-emerald-500"></div>
 
-      <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="relative z-10 max-w-7xl mx-auto px-2 sm:px-6 lg:px-8">
         {/* Main Footer Content */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-8 lg:gap-12 mb-12">
           {/* Brand Column */}
@@ -146,7 +143,7 @@ const LPFooter = () => {
           </div>
 
           {/* Link Columns */}
-          {Object.values(footerLinks).map((section, index) => (
+          {footerSections.map((section, index) => (
             <div key={index} className="lg:col-span-1">
               <h3 className="text-sm font-bold text-gray-900 uppercase tracking-wider mb-4">
                 {section.title}
@@ -154,24 +151,40 @@ const LPFooter = () => {
               <ul className="space-y-2.5">
                 {section.links.map((link, linkIndex) => (
                   <li key={linkIndex}>
-                    <a
-                      href={link.href}
-                      className="inline-flex items-center gap-2 text-sm text-gray-600 hover:text-blue-600 transition-all duration-300 hover:translate-x-1 group"
-                    >
-                      <span className="w-1 h-1 bg-gray-400 group-hover:bg-blue-600 rounded-full transition-colors"></span>
-                      {link.name}
-                      {link.icon && (
-                        <span className="text-gray-400 group-hover:text-blue-600 transition-colors">
-                          {link.icon}
-                        </span>
-                      )}
-                    </a>
+                    {section.isExternal ? (
+                      <a
+                        href={link.href}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-2 text-sm text-gray-600 hover:text-blue-600 transition-all duration-300 hover:translate-x-1 group"
+                      >
+                        <span className="w-1 h-1 bg-gray-400 group-hover:bg-blue-600 rounded-full transition-colors"></span>
+                        {link.name}
+                        {link.icon ? (
+                          <span className="text-gray-400 group-hover:text-blue-600 transition-colors">
+                            {link.icon}
+                          </span>
+                        ) : (
+                          <HiExternalLink className="text-xs text-gray-400 group-hover:text-blue-600 transition-colors" />
+                        )}
+                      </a>
+                    ) : (
+                      <a
+                        href={link.href}
+                        className="inline-flex items-center gap-2 text-sm text-gray-600 hover:text-blue-600 transition-all duration-300 hover:translate-x-1 group"
+                      >
+                        <span className="w-1 h-1 bg-gray-400 group-hover:bg-blue-600 rounded-full transition-colors"></span>
+                        {link.name}
+                      </a>
+                    )}
                   </li>
                 ))}
               </ul>
             </div>
           ))}
         </div>
+
+        {/* Bottom Bar */}
 
         {/* Bottom Bar */}
         <div className="pt-8 border-t border-gray-200">
@@ -181,6 +194,11 @@ const LPFooter = () => {
               <span>© {currentYear} MediCare Platform.</span>
               <span className="hidden sm:inline">|</span>
               <span className="hidden sm:inline">All rights reserved.</span>
+              <span className="hidden sm:inline">|</span>
+              <span className="flex items-center gap-1">
+                Made with <MdFavorite className="text-red-500" /> by Ritesh
+                Gharti
+              </span>
             </div>
 
             {/* Back to Top Button */}
@@ -197,32 +215,32 @@ const LPFooter = () => {
         {/* Additional Footer Links */}
         <div className="mt-6 pt-6 border-t border-gray-200">
           <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-xs text-gray-500">
-            <a
-              href={APP_CONFIG.privacyPolicy}
+            <Link
+              to="/privacy-policy"
               target="_blank"
               rel="noopener noreferrer"
               className="hover:text-blue-600 transition-colors"
             >
               Privacy Policy
-            </a>
+            </Link>
             <span className="hidden sm:inline">•</span>
-            <a
-              href={APP_CONFIG.terms}
+            <Link
+              to="/terms-&-conditions"
               target="_blank"
               rel="noopener noreferrer"
               className="hover:text-blue-600 transition-colors"
             >
-              Terms of Service
-            </a>
+              Terms & Conditions
+            </Link>
             <span className="hidden sm:inline">•</span>
-            <a
-              href={APP_CONFIG.helpCenter}
+            <Link
+              to="/help-center"
               target="_blank"
               rel="noopener noreferrer"
               className="hover:text-blue-600 transition-colors"
             >
               Help Center
-            </a>
+            </Link>
           </div>
         </div>
       </div>

@@ -239,9 +239,6 @@ const EditAdmission = () => {
   // Set form values when all data loads
   useEffect(() => {
     if (admissionData && patientData && doctorData) {
-      console.log("Admission Data:", admissionData);
-      console.log("Patient Data:", patientData);
-      console.log("Doctor Data:", doctorData);
 
       const formattedData = {
         admissionDate: admissionData.admissionDate

@@ -7,61 +7,72 @@ import {
   MdAccountTree, 
   MdTrendingUp,
   MdCheckCircle,
-  MdArrowForward
+  MdArrowForward,
+  MdCloudDone,
+  MdViewModule,
+  MdDashboard,
+  MdSearch
 } from 'react-icons/md';
 import './lp.css';
 
 const LPSystem = () => {
+  
   const capabilities = [
-    {
-      icon: <MdStorage className="text-3xl" />,
-      title: "Handles Large Datasets Efficiently",
-      description: "Tested with million-scale admission records, ensuring stable performance under heavy data load.",
-      stat: "1M+",
-      statLabel: "Records Tested",
-      gradient: "from-blue-500 to-blue-600"
-    },
-    {
-      icon: <MdFilterList className="text-3xl" />,
-      title: "Cursor-Based Pagination",
-      description: "Implements efficient pagination to handle large datasets without performance degradation, avoiding costly offset queries.",
-      stat: "10x",
-      statLabel: "Faster Queries",
-      gradient: "from-indigo-500 to-indigo-600"
-    },
-    {
-      icon: <MdCached className="text-3xl" />,
-      title: "Multi-Layer Caching Strategy",
-      description: "Uses in-memory and Redis caching to reduce database load and improve response times for frequently accessed data.",
-      stat: "95%",
-      statLabel: "Cache Hit Rate",
-      gradient: "from-cyan-500 to-cyan-600"
-    },
-    {
-      icon: <MdQueryStats className="text-3xl" />,
-      title: "Optimized Database Queries",
-      description: "Leverages indexing and selective data fetching to ensure fast and efficient query execution across modules.",
-      stat: "50ms",
-      statLabel: "Avg Response",
-      gradient: "from-emerald-500 to-emerald-600"
-    },
-    {
-      icon: <MdAccountTree className="text-3xl" />,
-      title: "Efficient Data Access Patterns",
-      description: "Reusable query structure across modules ensures consistent performance for patients, admissions, and billing systems.",
-      stat: "3x",
-      statLabel: "Code Reusability",
-      gradient: "from-purple-500 to-purple-600"
-    },
-    {
-      icon: <MdTrendingUp className="text-3xl" />,
-      title: "Scalable Backend Architecture",
-      description: "Designed to support growing datasets and multiple interconnected modules without compromising speed or reliability.",
-      stat: "∞",
-      statLabel: "Scalability",
-      gradient: "from-orange-500 to-orange-600"
-    }
-  ];
+  {
+    icon: <MdStorage className="text-3xl" />,
+    title: "Million-Scale Data Management",
+    description:
+      "Built to efficiently manage healthcare datasets with over 1M+ records while maintaining consistent performance.",
+    stat: "1M+",
+    statLabel: "Records",
+    gradient: "from-blue-500 to-blue-600",
+  },
+  {
+    icon: <MdSearch className="text-3xl" />,
+    title: "Intelligent Search Engine",
+    description:
+      "Full-text search with optimized indexing enables rapid discovery of patients, admissions, and financial records.",
+    stat: "40x+",
+    statLabel: "Faster Search",
+    gradient: "from-cyan-500 to-cyan-600",
+  },
+  {
+    icon: <MdAccountTree className="text-3xl" />,
+    title: "Unified Monorepo Architecture",
+    description:
+      "Frontend and backend share 33 Zod schemas for end-to-end type safety and consistent validation.",
+    stat: "33",
+    statLabel: "Shared Schemas",
+    gradient: "from-purple-500 to-purple-600",
+  },
+  {
+    icon: <MdDashboard className="text-3xl" />,
+    title: "Data-Driven Dashboards",
+    description:
+      "Visualize admissions, revenue, billing, payments, demographics, and operational KPIs in real time.",
+    stat: "11",
+    statLabel: "Analytics APIs",
+    gradient: "from-emerald-500 to-emerald-600",
+  },
+  {
+    icon: <MdViewModule className="text-3xl" />,
+    title: "Rich Frontend Experience",
+    description:
+      "Developed with 51+ pages, reusable components, and custom hooks for a scalable and maintainable UI.",
+    stat: "51+",
+    statLabel: "Pages",
+    gradient: "from-orange-500 to-orange-600",
+  },
+  {
+    icon: <MdCloudDone className="text-3xl" />,
+    title: "Production-Ready Foundation",
+    description:
+      "Powered by React, Express, TypeScript, Prisma, and PostgreSQL with secure, modular, and extensible architecture.",
+    stat: "18+",
+    statLabel: "Data Models",
+    gradient: "from-indigo-500 to-indigo-600",
+  },
+];
 
   return (
     <section className="relative  overflow-hidden">
@@ -73,7 +84,7 @@ const LPSystem = () => {
         <div className="system-grid-pattern absolute inset-0 opacity-[0.03]"></div>
       </div>
 
-      <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="relative z-10 max-w-7xl mx-auto px-2 sm:px-6 lg:px-8">
         
         {/* Section Header */}
         <div className="text-center max-w-3xl mx-auto mb-16 lg:mb-20 fade-in-up">
@@ -81,7 +92,7 @@ const LPSystem = () => {
             <MdCheckCircle className="text-base" />
             System Capabilities
           </span>
-          <h2 className="text-4xl sm:text-5xl lg:text-6xl font-bold tracking-tight mb-6">
+          <h2 className="text-3xl sm:text-5xl lg:text-6xl font-bold tracking-tight mb-6">
             <span className="text-gray-900">
               Built for High-Volume
             </span>

@@ -9,6 +9,7 @@ import LPTech from "../../components/LandingPageComponents/LPTech";
 import LPImpact from "../../components/LandingPageComponents/LPImpact";
 import LPAction from "../../components/LandingPageComponents/LPAction";
 import LPFooter from "../../components/LandingPageComponents/LPFooter";
+import ScrollProgress from "../../components/LandingPageComponents/ScrollProgress";
 
 const LandingPage = () => {
   const canvasRef = useRef(null);
@@ -129,6 +130,14 @@ const LandingPage = () => {
 
   return (
     <div className="landing-page ">
+      <ScrollProgress
+        color="from-blue-500 via-indigo-500 to-purple-500"
+        height="h-1"
+        position="top"
+        borderRadius="rounded-full"
+        showPercentage={false}
+      />
+
       {/* Particle Canvas Background */}
       <canvas ref={canvasRef} className="particle-canvas" />
 

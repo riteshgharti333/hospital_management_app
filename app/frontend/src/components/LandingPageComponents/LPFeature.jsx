@@ -8,72 +8,76 @@ import {
   MdCloudQueue,
   MdAccountTree,
   MdExtension,
+  MdLocalHospital,
+  MdVerifiedUser,
+  MdInsights,
 } from "react-icons/md";
 import "./lp.css";
 import { APP_CONFIG } from "../../config";
+import {Link} from "react-router-dom"
 
 const LPFeature = () => {
   const features = [
     {
-      icon: <MdSecurity className="text-3xl" />,
-      title: "Secure Role-Based Access",
+      icon: <MdLocalHospital className="text-3xl" />,
+      title: "Comprehensive Hospital Management",
       description:
-        "Control access across doctors, nurses, and staff with a robust authentication system, ensuring sensitive data stays protected.",
+        "Manage patients, admissions, appointments, doctors, nurses, prescriptions, billing, ledgers, and birth records from a unified platform.",
       color: "blue",
     },
     {
-      icon: <MdSync className="text-3xl" />,
-      title: "Real-Time Data Synchronization",
+      icon: <MdVerifiedUser className="text-3xl" />,
+      title: "Enterprise Security & RBAC",
       description:
-        "Data updates instantly across the system with automatic caching and background syncing—no manual refresh required.",
+        "Protect sensitive healthcare data with JWT authentication, bcrypt password hashing, cookie-based sessions, and role-based access control.",
       color: "indigo",
     },
     {
-      icon: <MdSearch className="text-3xl" />,
-      title: "Advanced Search & Filtering",
-      description:
-        "Quickly find patients, admissions, and records using fast, optimized search with efficient filtering.",
-      color: "cyan",
-    },
-    {
       icon: <MdSpeed className="text-3xl" />,
-      title: "High-Performance Backend",
+      title: "High-Performance Data Engine",
       description:
-        "Built with an optimized backend that handles large datasets smoothly using efficient queries and caching strategies.",
+        "Optimized with dual-layer caching, indexed queries, and efficient pagination to deliver sub-100ms responses for cached operations.",
       color: "emerald",
     },
     {
-      icon: <MdStorage className="text-3xl" />,
-      title: "Multi-Layer Caching System",
+      icon: <MdSearch className="text-3xl" />,
+      title: "Lightning-Fast Search",
       description:
-        "Implements memory and Redis caching to reduce database load and deliver faster response times for frequently accessed data.",
+        "PostgreSQL full-text search combined with Redis acceleration enables rapid discovery of patients, admissions, bills, and medical records.",
+      color: "cyan",
+    },
+    {
+      icon: <MdInsights className="text-3xl" />,
+      title: "Interactive Analytics Dashboard",
+      description:
+        "Monitor revenue, admissions, payments, patient demographics, and operational KPIs through real-time charts and visual reports.",
       color: "purple",
     },
     {
-      icon: <MdCloudQueue className="text-3xl" />,
-      title: "Scalable Data Handling",
-      description:
-        "Designed to manage large volumes of healthcare data with efficient pagination and structured data access.",
-      color: "orange",
-    },
-    {
       icon: <MdAccountTree className="text-3xl" />,
-      title: "Monorepo Architecture with Shared Schemas",
+      title: "Shared Schema Monorepo",
       description:
-        "Frontend and backend share validation schemas, ensuring type safety, consistency, and reduced duplication across the system.",
+        "Built with a scalable monorepo architecture using shared Zod validation schemas to ensure consistency between frontend and backend.",
       color: "teal",
     },
     {
-      icon: <MdExtension className="text-3xl" />,
-      title: "Modular & Maintainable Architecture",
+      icon: <MdStorage className="text-3xl" />,
+      title: "Scalable Database Architecture",
       description:
-        "Structured system with reusable components and clean separation of concerns, making it easy to scale and maintain.",
+        "Powered by PostgreSQL and Prisma with 18+ relational models designed for reliable, structured, and maintainable healthcare data.",
+      color: "orange",
+    },
+    {
+      icon: <MdExtension className="text-3xl" />,
+      title: "Modern React Experience",
+      description:
+        "Features 50+ responsive pages, reusable components, custom hooks, and data-rich tables for an efficient and intuitive user experience.",
       color: "rose",
     },
   ];
 
   return (
-    <section className="relative  overflow-hidden">
+    <section className="relative  overflow-hidden pb-10">
       {/* Background Pattern */}
       <div className="absolute inset-0 features-grid-pattern opacity-[0.02]"></div>
 
@@ -81,13 +85,13 @@ const LPFeature = () => {
       <div className="absolute top-0 left-1/4 w-96 h-96 bg-blue-400/5 rounded-full mix-blend-multiply filter blur-3xl"></div>
       <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-indigo-400/5 rounded-full mix-blend-multiply filter blur-3xl"></div>
 
-      <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="relative z-10 max-w-7xl mx-auto px-2 sm:px-6 lg:px-8">
         {/* Section Header */}
         <div className="text-center max-w-3xl mx-auto mb-16 lg:mb-20 fade-in-up">
           <span className="inline-block px-4 py-1.5 bg-blue-50 text-blue-700 text-sm font-semibold rounded-full mb-6 border border-emerald-100">
             ✨ Core Features
           </span>
-          <h2 className="text-4xl sm:text-5xl lg:text-6xl font-bold tracking-tight mb-6">
+          <h2 className="text-3xl sm:text-5xl lg:text-6xl font-bold tracking-tight mb-6">
             <span className="bg-gradient-to-r from-gray-900 to-gray-700 bg-clip-text text-transparent">
               Powerful Features Built for
             </span>
@@ -152,10 +156,8 @@ const LPFeature = () => {
           <p className="text-gray-600 mb-8 text-lg">
             Want to see how these features work together?
           </p>
-          <a
-            href={APP_CONFIG.liveDemo}
-            target="_blank"
-            rel="noopener noreferrer"
+          <Link
+            to="/dashboard"
             className="inline-flex items-center gap-2 px-8 py-4 text-base font-semibold text-white bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 rounded-2xl shadow-xl shadow-blue-500/25 hover:shadow-blue-500/40 transform hover:-translate-y-1 transition-all duration-300"
           >
             <MdSpeed className="text-xl" />
@@ -173,7 +175,7 @@ const LPFeature = () => {
                 d="M13 7l5 5m0 0l-5 5m5-5H6"
               />
             </svg>
-          </a>
+          </Link>
         </div>
       </div>
     </section>

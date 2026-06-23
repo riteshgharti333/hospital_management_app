@@ -14,11 +14,7 @@ ReactDOM.createRoot(document.getElementById("root")).render(
   <React.StrictMode>
     <QueryClientProvider client={queryClient}>
       <Provider store={store}>
-    <Toaster
-  position="top-left"
-  richColors
-  expand
-/>
+        <Toaster position="top-center" richColors expand />
 
         <AuthBootstrap>
           <App />

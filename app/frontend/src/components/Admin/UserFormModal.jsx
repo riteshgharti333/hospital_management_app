@@ -32,22 +32,21 @@ const UserFormModal = ({
   const [selectedUser, setSelectedUser] = useState(null);
   const dropdownRef = useRef(null);
 
-  // Use search hooks based on selected type
-  const { data: doctorData, isLoading: loadingDoctors } = useSearchDoctors(
-    searchType === "doctor" && searchTerm.trim().length >= 2 ? searchTerm : ""
-  );
+  // Separate search queries for each type
+  const [searchDoctorQuery, setSearchDoctorQuery] = useState("");
+  const [searchNurseQuery, setSearchNurseQuery] = useState("");
 
-  const { data: nurseData, isLoading: loadingNurses } = useSearchNurseRecords(
-    searchType === "nurse" && searchTerm.trim().length >= 2 ? searchTerm : ""
-  );
+  // Use search hooks - always active, no length restriction
+  const { data: doctorSearchResponse, isLoading: searchingDoctors } = useSearchDoctors(searchDoctorQuery);
+  const { data: nurseSearchResponse, isLoading: searchingNurses } = useSearchNurseRecords(searchNurseQuery);
+
+  // Get the actual results from the nested data
+  const doctorSearchResults = doctorSearchResponse?.data || [];
+  const nurseSearchResults = nurseSearchResponse?.data || [];
 
   // Get results based on selected type
-  const searchResults =
-    searchType === "doctor"
-      ? (doctorData || []).slice(0, 10)
-      : (nurseData || []).slice(0, 10);
-
-  const isLoading = searchType === "doctor" ? loadingDoctors : loadingNurses;
+  const searchResults = searchType === "doctor" ? doctorSearchResults : nurseSearchResults;
+  const isLoading = searchType === "doctor" ? searchingDoctors : searchingNurses;
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -61,10 +60,19 @@ const UserFormModal = ({
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  // Handle search input change
+  // Handle search input change - no length restriction
   const handleSearchChange = (value) => {
     setSearchTerm(value);
-    if (value.trim().length >= 2) {
+    
+    // Update the appropriate search query based on type
+    if (searchType === "doctor") {
+      setSearchDoctorQuery(value);
+    } else {
+      setSearchNurseQuery(value);
+    }
+    
+    // Show dropdown if there's any search term
+    if (value.trim().length > 0) {
       setShowDropdown(true);
     } else {
       setShowDropdown(false);
@@ -84,6 +92,11 @@ const UserFormModal = ({
     setSearchTerm(""); // Clear search term when switching type
     setSelectedUser(null);
     setShowDropdown(false);
+    
+    // Clear the search queries
+    setSearchDoctorQuery("");
+    setSearchNurseQuery("");
+    
     // Clear form fields
     if (setValue) {
       setValue("name", "");
@@ -123,6 +136,13 @@ const UserFormModal = ({
     setSearchTerm("");
     setSelectedUser(null);
     setShowDropdown(false);
+    
+    // Clear search queries
+    if (searchType === "doctor") {
+      setSearchDoctorQuery("");
+    } else {
+      setSearchNurseQuery("");
+    }
 
     // Clear form fields
     if (setValue) {
@@ -212,7 +232,7 @@ const UserFormModal = ({
                     <button
                       type="button"
                       onClick={() => handleSearchTypeChange("doctor")}
-                      className={`flex items-center px-4 py-2 rounded-lg border  cursor-pointer not-target:transition-colors ${
+                      className={`flex items-center px-4 py-2 rounded-lg border cursor-pointer transition-colors ${
                         searchType === "doctor"
                           ? "bg-red-50 border-red-300 text-red-700"
                           : "bg-white border-gray-300 text-gray-700 hover:bg-gray-50"
@@ -236,7 +256,7 @@ const UserFormModal = ({
                     <button
                       type="button"
                       onClick={() => handleSearchTypeChange("nurse")}
-                      className={`flex items-center px-4 py-2 rounded-lg border  cursor-pointer transition-colors ${
+                      className={`flex items-center px-4 py-2 rounded-lg border cursor-pointer transition-colors ${
                         searchType === "nurse"
                           ? "bg-green-50 border-green-300 text-green-700"
                           : "bg-white border-gray-300 text-gray-700 hover:bg-gray-50"
@@ -268,13 +288,11 @@ const UserFormModal = ({
                       type="text"
                       placeholder={`Search ${
                         searchType === "doctor" ? "doctors" : "nurses"
-                      } by name or registration ID (min. 2 characters)`}
+                      } by name or registration ID`}
                       className="w-full pl-10 pr-24 py-2.5 border border-blue-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none bg-white"
                       value={searchTerm}
                       onChange={(e) => handleSearchChange(e.target.value)}
-                      onFocus={() =>
-                        searchTerm.length >= 2 && setShowDropdown(true)
-                      }
+                      onFocus={() => searchTerm.length > 0 && setShowDropdown(true)}
                     />
 
                     <div className="absolute inset-y-0 right-0 flex items-center pr-3">
@@ -289,8 +307,7 @@ const UserFormModal = ({
                     <div className="mt-2 flex items-center space-x-2 text-sm text-blue-600">
                       <div className="w-4 h-4 border-2 border-blue-600 border-t-transparent rounded-full animate-spin" />
                       <span>
-                        Searching{" "}
-                        {searchType === "doctor" ? "doctors" : "nurses"}...
+                        Searching {searchType === "doctor" ? "doctors" : "nurses"}...
                       </span>
                     </div>
                   )}
@@ -307,8 +324,7 @@ const UserFormModal = ({
                         <div className="flex justify-between items-center">
                           <p className="text-xs text-gray-500 font-medium">
                             {searchResults.length}{" "}
-                            {searchType === "doctor" ? "doctors" : "nurses"}{" "}
-                            found
+                            {searchType === "doctor" ? "doctors" : "nurses"} found
                           </p>
                           <span
                             className={`text-xs px-2 py-0.5 rounded ${
@@ -368,13 +384,12 @@ const UserFormModal = ({
 
                   {/* No Results Message */}
                   {showDropdown &&
-                    searchTerm.length >= 2 &&
+                    searchTerm.length > 0 &&
                     !isLoading &&
                     searchResults.length === 0 && (
                       <div className="absolute left-0 right-0 mt-2 bg-white border border-gray-200 rounded-lg shadow-lg z-50 p-4">
                         <p className="text-gray-600 text-center">
-                          No {searchType === "doctor" ? "doctors" : "nurses"}{" "}
-                          found matching "
+                          No {searchType === "doctor" ? "doctors" : "nurses"} found matching "
                           <span className="font-medium">{searchTerm}</span>"
                         </p>
                         <p className="text-gray-500 text-sm text-center mt-1">
@@ -424,8 +439,7 @@ const UserFormModal = ({
                             </div>
                             <div>
                               <p className="font-medium text-green-800">
-                                ✓ Selected{" "}
-                                {searchType === "doctor" ? "Doctor" : "Nurse"}:{" "}
+                                ✓ Selected {searchType === "doctor" ? "Doctor" : "Nurse"}:{" "}
                                 {selectedUser.fullName}
                               </p>
                               <p className="text-xs text-green-700 mt-1">

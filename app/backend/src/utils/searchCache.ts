@@ -1,5 +1,6 @@
 import { PrismaClient } from "@prisma/client";
 import { PAGINATION_CONFIG } from "../lib/paginationConfig";
+import { upstashGet, upstashSet } from "./upstashRedisRest"; // ✅ ADD THIS
 
 interface SearchConfig {
   tableName: string;
@@ -30,22 +31,32 @@ export const createSearchService = (
     cursor?: string,
     limit?: number,
   ): Promise<SearchResult> => {
+    // ============================================
+    // ✅ NEW: CHECK CACHE FIRST
+    // ============================================
+    const normalizedTermForCache = searchTerm.trim().toLowerCase();
+    const cacheKey = `search:${config.tableName}:${normalizedTermForCache}`;
+
+    try {
+      const cached = await upstashGet(cacheKey);
+      if (cached && !cursor) {
+        // Only cache first page (no cursor)
+        console.log(`⚡ SEARCH CACHE HIT: "${searchTerm}"`);
+        return JSON.parse(cached);
+      }
+    } catch (e) {
+      // Silent fail - continue to database
+    }
+
+    // ============================================
+    // YOUR EXISTING CODE START
+    // ============================================
     const start = performance.now();
 
-
-
-    
-
-    // =========================
     // 1️⃣ Normalize input
-    // =========================
     const normalizedTerm = searchTerm.trim().toLowerCase().replace(/\s+/g, " ");
 
-
-
-    // =========================
     // 2️⃣ Min length guard
-    // =========================
     if (normalizedTerm.length < 2) {
       return {
         data: [],
@@ -56,16 +67,12 @@ export const createSearchService = (
       };
     }
 
-    // =========================
     // 3️⃣ Limit control
-    // =========================
     let safeLimit = limit ?? PAGINATION_CONFIG.DEFAULT_LIMIT;
     if (safeLimit > PAGINATION_CONFIG.MAX_LIMIT)
       safeLimit = PAGINATION_CONFIG.MAX_LIMIT;
 
-    // =========================
     // 4️⃣ Parse cursor with count tracking
-    // =========================
     let cursorDate: Date | null = null;
     let cursorId: number | null = null;
     let currentCount = 0;
@@ -86,33 +93,26 @@ export const createSearchService = (
       }
     }
 
-    // =========================
     // Split multi-word queries
-    // =========================
     const searchWords = normalizedTerm.split(/\s+/);
     const isMultiWord = searchWords.length > 1;
     const useSimilarity = normalizedTerm.length >= 3;
 
     const escapeField = (f: string) => `"${f}"`;
 
-    // Helper to get the correct Prisma model name
     const getModelName = (relation: string): string => {
       const modelName = relation.charAt(0).toUpperCase() + relation.slice(1);
       return modelName;
     };
 
-    // Helper to escape relation fields
     const escapeRelationField = (relation: string, field: string) => {
       const modelName = getModelName(relation);
       return `"${modelName}"."${field}"`;
     };
 
-    // =========================
     // BUILD WHERE CLAUSE
-    // =========================
     let whereClause = "";
 
-    // Collect all search fields including relation fields
     const getAllSearchFields = () => {
       const fields: {
         type: "exact" | "prefix" | "similar";
@@ -120,7 +120,6 @@ export const createSearchService = (
         paramIndex?: number;
       }[] = [];
 
-      // Main table fields
       config.exactFields?.forEach((f: string) =>
         fields.push({ type: "exact", expression: `LOWER(${escapeField(f)})` }),
       );
@@ -136,8 +135,6 @@ export const createSearchService = (
         );
       }
 
-      
-      // Relation fields
       if (config.relationFields) {
         Object.entries(config.relationFields).forEach(
           ([relation, relationFieldList]) => {
@@ -164,7 +161,6 @@ export const createSearchService = (
       return fields;
     };
 
-    // Get all search fields to build the query
     const searchFields = getAllSearchFields();
 
     if (isMultiWord) {
@@ -230,10 +226,7 @@ export const createSearchService = (
       };
     }
 
-    // =========================
     // CURSOR CONDITION
-    // =========================
-
     let cursorCondition = "";
     if (cursorDate !== null && cursorId !== null) {
       cursorCondition = `
@@ -247,9 +240,7 @@ export const createSearchService = (
       `;
     }
 
-    // =========================
     // RANKING LOGIC
-    // =========================
     let caseWhen: string[] = [];
     if (!isMultiWord) {
       let paramCounter = 1;
@@ -313,9 +304,7 @@ export const createSearchService = (
           })()}) AS rank_score`
         : `0 AS rank_score`;
 
-    // =========================
     // BUILD JOINS FOR RELATION FIELDS
-    // =========================
     let joinClauses = "";
     if (config.relationFields) {
       Object.keys(config.relationFields).forEach((relation) => {
@@ -326,11 +315,7 @@ export const createSearchService = (
       });
     }
 
-    // =========================
     // SELECT FIELDS
-    // =========================
-    // If include is specified, we only need IDs from SQL (relations fetched later)
-    // Otherwise, select all requested fields
     const selectFields = config.include
       ? `"${config.tableName}".id`
       : config.selectFields?.length
@@ -339,9 +324,7 @@ export const createSearchService = (
             .join(", ")
         : `"${config.tableName}".*`;
 
-    // =========================
     // FINAL QUERY WITH PAGINATION
-    // =========================
     const query = `
       SELECT ${selectFields},
              ${caseExpr},
@@ -359,10 +342,8 @@ export const createSearchService = (
     if (isMultiWord) {
       results = await prisma.$queryRawUnsafe<any[]>(query);
     } else {
-      // Build parameters array for single word search
       const params: string[] = [];
 
-      // Count parameters needed
       const exactCount = searchFields.filter((f) => f.type === "exact").length;
       const prefixCount = searchFields.filter(
         (f) => f.type === "prefix",
@@ -371,7 +352,6 @@ export const createSearchService = (
         (f) => f.type === "similar",
       ).length;
 
-      // Add parameters in order: exact, prefix, similar
       for (let i = 0; i < exactCount; i++) params.push(normalizedTerm);
       for (let i = 0; i < prefixCount; i++) params.push(`${normalizedTerm}%`);
       for (let i = 0; i < similarCount; i++) params.push(normalizedTerm);
@@ -379,9 +359,7 @@ export const createSearchService = (
       results = await prisma.$queryRawUnsafe<any[]>(query, ...params);
     }
 
-    // =========================
     // PAGINATION LOGIC
-    // =========================
     const hasMoreData = results.length > safeLimit;
     const paginatedResults = hasMoreData
       ? results.slice(0, safeLimit)
@@ -406,19 +384,15 @@ export const createSearchService = (
       nextCursor = `${cursorValue}|${lastItem.id}|${newCount}`;
     }
 
-    // =========================
-    // FETCH FULL DATA WITH RELATIONS (only if include is specified)
-    // =========================
+    // FETCH FULL DATA WITH RELATIONS
     let finalData = paginatedResults;
 
     if (config.include && paginatedResults.length > 0) {
       const ids = paginatedResults.map((item: any) => item.id);
 
-      // Get the Prisma model name (lowercase first letter)
       const modelName =
         config.tableName.charAt(0).toLowerCase() + config.tableName.slice(1);
 
-      // Fetch full data with relations
       const fullResults = await (prisma as any)[modelName].findMany({
         where: {
           id: {
@@ -428,10 +402,8 @@ export const createSearchService = (
         include: config.include,
       });
 
-      // Create a map for quick lookup
       const dataMap = new Map(fullResults.map((item: any) => [item.id, item]));
 
-      // Merge search metadata with full data while maintaining order
       finalData = paginatedResults.map((searchItem: any) => {
         const fullItem = dataMap.get(searchItem.id);
         if (fullItem) {
@@ -445,9 +417,6 @@ export const createSearchService = (
       });
     }
 
-    // =========================
-    // Performance logging
-    // =========================
     const duration = performance.now() - start;
     if (duration > 100) {
       console.log(
@@ -455,12 +424,26 @@ export const createSearchService = (
       );
     }
 
-    return {
+    const response = {
       data: finalData,
       pagination: {
         nextCursor,
         hasMore,
       },
     };
+
+    // ============================================
+    // ✅ NEW: SAVE TO CACHE (only for first page, no cursor)
+    // ============================================
+    if (!cursor) {
+      try {
+        await upstashSet(cacheKey, JSON.stringify(response), 3600);
+        console.log(`💾 SEARCH CACHED: "${searchTerm}"`);
+      } catch (e) {
+        // Silent fail
+      }
+    }
+
+    return response;
   };
 };

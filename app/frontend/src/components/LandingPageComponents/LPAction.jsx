@@ -10,6 +10,7 @@ import { FaGithub, FaLinkedin, FaTwitter } from "react-icons/fa";
 import { MdLocalHospital, MdStars } from "react-icons/md";
 import "./lp.css";
 import { APP_CONFIG } from "../../config";
+import {Link} from "react-router-dom";
 
 const LPAction = () => {
   return (
@@ -24,7 +25,7 @@ const LPAction = () => {
         <div className="absolute inset-0 cta-pattern"></div>
       </div>
 
-      <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="relative z-10 max-w-7xl mx-auto px-2 sm:px-6 lg:px-8">
         {/* Main CTA Card */}
         <div className="relative bg-gradient-to-br from-blue-600 via-indigo-600 to-purple-700 rounded-[3rem] p-8 sm:p-12 lg:p-16 overflow-hidden shadow-2xl shadow-blue-500/30 fade-in-up">
           {/* Background Decorations */}
@@ -49,7 +50,7 @@ const LPAction = () => {
               </div>
 
               {/* Heading */}
-              <h2 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-white mb-6 tracking-tight">
+              <h2 className="text-3xl sm:text-5xl lg:text-6xl font-bold text-white mb-6 tracking-tight">
                 Start Building Better
                 <br />
                 <span className="text-transparent bg-clip-text bg-gradient-to-r from-yellow-200 to-yellow-400">
@@ -66,16 +67,14 @@ const LPAction = () => {
 
             {/* Primary Action Buttons */}
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-8">
-              <a
-                href={APP_CONFIG.liveDemo}
-                target="_blank"
-                rel="noopener noreferrer"
+              <Link
+                to="/dashboard"
                 className="group w-full sm:w-auto inline-flex items-center justify-center gap-3 px-8 py-4 text-base font-semibold text-blue-700 bg-white hover:bg-gray-50 rounded-2xl shadow-xl shadow-blue-900/20 transform hover:-translate-y-1 hover:shadow-2xl transition-all duration-300"
               >
                 <HiPlay className="text-xl" />
                 Try Live Demo
                 <HiArrowRight className="text-lg group-hover:translate-x-1 transition-transform" />
-              </a>
+              </Link>
               <a
                 href={APP_CONFIG.github}
                 target="_blank"
@@ -143,7 +142,7 @@ const LPAction = () => {
             </h3>
             <div className="flex items-center justify-center gap-3">
               <a
-                href={APP_CONFIG.github}
+                href={APP_CONFIG.githubProfile}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="w-12 h-12 flex items-center justify-center rounded-xl bg-gray-900 text-white hover:bg-gray-800 hover:scale-110 transition-all duration-300 shadow-lg"
